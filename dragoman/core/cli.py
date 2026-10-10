@@ -127,7 +127,7 @@ def parse(command, argv):
         elif option == '--sentence-per-line':
             options.sentence_per_line = True
         elif option == '--html':
-            options.html = arg
+            options.html = check_html_path(arg)
         elif option == '--pdf':
             options.pdf = arg
         elif option == '--english-glosses':
@@ -217,6 +217,13 @@ def run(command, argv=None, texts=None):
                 speech.pause_while_speaking()
     if notebook is not None:
         save_notebook(notebook, options)
+
+
+def check_html_path(path):
+    """--html の書き出し先: .pdf なら解析の前に止める (既存の PDF を HTML で上書きしない)"""
+    if path.lower().endswith('.pdf'):
+        sys.exit('--html の書き出し先が .pdf: %s (PDF は --pdf=FILE で)' % path)
+    return path
 
 
 def save_notebook(notebook, options):

@@ -43,6 +43,31 @@ class NotebookTestCase(unittest.TestCase):
         for part in ('行間逐語訳', '図A 弧', '図B 入れ子', '語の詳細', 'class="w c-Nom"', 'videō'):
             self.assertIn(part, page)
 
+    def test_no_markup_injection(self):
+        # 原文の %DATA% や <svg …> で、本文にタグを作らない (置換は一度だけ、JSON の < は \\u003c)
+        import html.parser
+        page = self.note('Puella %DATA% <svg/onload=alert(1)> </script> cantat.').html()
+
+        class Tags(html.parser.HTMLParser):
+            found = []
+
+            def handle_starttag(self, tag, attrs):
+                self.found.append((tag, dict(attrs)))
+        parser = Tags()
+        parser.feed(page)
+        self.assertFalse([t for t, a in parser.found if t == 'svg' and 'onload' in a])
+        self.assertEqual(page.count('<script>'), 1)
+        self.assertNotIn('</script> cantat', page)
+
+    def test_write_refuses_pdf_before_writing(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, 'old.pdf')
+            open(path, 'w').write('%PDF-1.4')
+            with self.assertRaises(ValueError):
+                self.note('Puella cantat.').write(path)
+            self.assertEqual(open(path).read(), '%PDF-1.4')
+
     def test_rtl_heading(self):
         self.assertIn('dir="rtl"', notebook.heading('בָּרָא (bārā)'))
 

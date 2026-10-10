@@ -443,6 +443,23 @@ class AblativeAbsoluteTestCase(unittest.TestCase):
         # 前置詞に支配された奪格は独立奪格ではない
         self.assertEqual(analyze('Cum hīs rēbus cognitīs vēnit.').absolutes, [])
 
+class EmptyCoordinationTestCase(unittest.TestCase):
+    """間に語の無い並列の接続詞 (et et、neque neque) で解析が止まらない"""
+
+    def test_no_crash(self):
+        for text in ('et et', 'neque neque', 'Puella neque neque cantat.'):
+            analyses = list(analyzer.analyze_text(text))
+            self.assertTrue(analyses)
+            self.assertFalse(any(isinstance(n, AndOr) and not n.words_slots for a in analyses for n in a.nodes))
+
+    def test_following_sentences(self):
+        analyses = list(analyzer.analyze_text('Puella cantat. Neque neque. Puer cantat.'))
+        self.assertEqual(len(analyses), 3)
+
+    def test_empty_andor_has_attributes(self):
+        empty = AndOr('et')
+        self.assertEqual((empty._, empty.surface), ([], ''))
+
 
 if __name__ == '__main__':
     unittest.main()

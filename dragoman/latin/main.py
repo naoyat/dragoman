@@ -265,7 +265,8 @@ class Options:
             elif option in ('-E', '--etymology'):
                 self.show_etymology = True
             elif option == '--html':
-                self.html = arg
+                from dragoman.core.cli import check_html_path
+                self.html = check_html_path(arg)
             elif option == '--pdf':
                 self.pdf = arg
             elif option in ('-h', '--help'):

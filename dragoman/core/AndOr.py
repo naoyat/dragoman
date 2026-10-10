@@ -66,6 +66,9 @@ class AndOr (LatinObject):
 
         self.surfaces = []
         self.messages = []  # 解析の途中経過 (品詞・格の不一致など)
+        self._ = []         # 格・数・性の候補 (要素を add すると決まる。要素が無くても後の処理が読めるように)
+        self.surface = ''
+        self.surface_len = 0
 
     def add(self, words):
         if not words:  # et et のように間に語が無い

@@ -225,6 +225,8 @@ def detect_and_or(words, trace):
                     cl.add(ws)
                 else:
                     pass # ERROR: type mismatch
+                if not cl.words_slots:
+                    continue   # 要素が1つも無い (et et、neque neque): 並列句にせず、語はそのまま
 
                 # print "CL: [%d..%d)" % (aos[0], idx)
                 # cl.dump()

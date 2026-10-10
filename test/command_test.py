@@ -98,5 +98,70 @@ class DragomanCommandTestCase(unittest.TestCase):
         self.assertIn('--no-word-detail', result.stdout)
 
 
+class ArgumentTestCase(unittest.TestCase):
+    """引数の解析: オプションの値を言語の符号・入力ファイルと取り違えない"""
+
+    def setUp(self):
+        sys.path.insert(0, ROOT)
+        from dragoman import main
+        self.main = main
+
+    def test_option_values(self):
+        self.assertEqual(self.main.parse_args(['-t', 'say', '-e', 'Rōma magna est.']),
+                         (None, ['-t', 'say'], ['Rōma magna est.']))   # say は言語でない
+        self.assertEqual(self.main.parse_args(['grc', '--pron', 'modern', 'FILE']), ('grc', ['--pron', 'modern', 'FILE'], []))
+
+    def test_input_files(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            note, text = os.path.join(tmp, 'note.html'), os.path.join(tmp, 'in.txt')
+            for path in (note, text):
+                open(path, 'w').write('Puella cantat.\n')
+            args = ['--html', note, text]
+            self.assertEqual(self.main.input_files(args), [text])   # 既存の書き出し先は入力でない
+            self.assertEqual(self.main._without(args, [text]), ['--html', note])
+
+    def test_value_options_cover_commands(self):
+        # 言語ごとのコマンドの値を取るオプションは、すべて main.VALUE_OPTIONS にある (新しく足したときの見張り)
+        from dragoman.core import cli
+        wanted = {'-' + c for c, nxt in zip(cli.COMMON_SHORT, cli.COMMON_SHORT[1:] + ' ') if nxt == ':'}
+        wanted |= {'--' + o[:-1] for o in cli.COMMON_LONG if o.endswith('=')}
+        for code in self.main.LANGUAGES:
+            if code == 'la':
+                continue   # ラテン語は latin/main.py (--tts, --accent, --html, --pdf)
+            command = self.main.command_for(code)
+            short = command.short_options or ''
+            wanted |= {'-' + c for c, nxt in zip(short, short[1:] + ' ') if nxt == ':'}
+            wanted |= {'--' + o[:-1] for o in command.long_options if o.endswith('=')}
+        wanted |= {'--accent'}
+        self.assertEqual(wanted - self.main.VALUE_OPTIONS, set())
+
+    def test_latin_temporary_file_removed(self):
+        # -e の文を渡す一時ファイルは、終わったら (例外でも) 消す
+        from unittest import mock
+        from dragoman.latin import main as latin_main
+        passed = []
+
+        def fake(args):
+            passed.append(args[-1])
+            self.assertTrue(os.path.exists(args[-1]))
+            raise RuntimeError('stop')
+        with mock.patch.object(latin_main, 'main', fake):
+            with self.assertRaises(RuntimeError):
+                self.main.main(['la', '-e', 'Sēcrētum.'])
+        self.assertFalse(os.path.exists(passed[0]))
+
+    def test_html_to_pdf_path_refused(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            path = os.path.join(tmp, 'old.pdf')
+            open(path, 'w').write('%PDF-1.4')
+            for lang in ('la', 'grc'):
+                result = subprocess.run([sys.executable, 'dragoman.py', lang, '--html=' + path, '-e', 'Puella cantat.'],
+                                        cwd=ROOT, capture_output=True, text=True)
+                self.assertNotEqual(result.returncode, 0)
+                self.assertEqual(open(path).read(), '%PDF-1.4')   # 既存の PDF はそのまま
+
+
 if __name__ == '__main__':
     unittest.main()

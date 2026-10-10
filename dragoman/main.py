@@ -95,6 +95,12 @@ def language_list():
                      ['  auto 文字から推定する'])
 
 
+# 値を取るオプション (言語ごとのコマンドに渡すもの)。値を言語の符号・入力ファイルと取り違えないように
+# (-t say を言語 say と、--html note.html を入力と読まない)。新しいオプションは test/main_test.py が見張る
+VALUE_OPTIONS = {'-t', '--tts', '--html', '--pdf', '--accent', '--pron', '--binyan', '--divine-name',
+                 '--compound-labels', '--voice', '-v'}
+
+
 def parse_args(argv):
     """(言語, 言語に渡す引数, -e の文のリスト)。言語は --lang=LANG か、最初の引数が言語の符号のとき"""
     lang, args, texts = None, [], []
@@ -102,6 +108,10 @@ def parse_args(argv):
     i = 0
     while i < len(argv):
         arg = argv[i]
+        if arg in VALUE_OPTIONS and i + 1 < len(argv):
+            args += [arg, argv[i + 1]]   # オプションと値はそのまま言語のコマンドへ
+            i += 2
+            continue
         if arg.startswith('--lang='):
             lang = arg.split('=', 1)[1]
         elif arg == '--lang' and i + 1 < len(argv):
@@ -126,6 +136,36 @@ def parse_args(argv):
     return lang, args, texts
 
 
+def input_files(args):
+    """言語に渡す引数のうち入力ファイル (オプションの値は除く)"""
+    files, skip = [], False
+    for a in args:
+        if skip:
+            skip = False
+        elif a in VALUE_OPTIONS:
+            skip = True
+        elif not a.startswith('-') and os.path.exists(a):
+            files.append(a)
+    return files
+
+
+def _without(args, files):
+    """args から入力ファイルを除く (オプションの値は、同じ名前のファイルでも残す)"""
+    out, skip, rest = [], False, list(files)
+    for a in args:
+        if skip:
+            out.append(a)
+            skip = False
+        elif a in VALUE_OPTIONS:
+            out.append(a)
+            skip = True
+        elif a in rest:
+            rest.remove(a)
+        else:
+            out.append(a)
+    return out
+
+
 def main(argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
     if '-L' in argv or '--languages' in argv:
@@ -145,9 +185,9 @@ def main(argv=None):
         # 言語を推定するためにテキストを先に読む (ファイルの指定はオプションでない引数)
         from dragoman.core import cli
         if texts is None:
-            files = [a for a in args if not a.startswith('-') and os.path.exists(a)]
+            files = input_files(args)
             texts = cli.read_texts(files)
-            args = [a for a in args if a not in files]
+            args = _without(args, files)
         detected = detect('\n'.join(texts))
         lang = detected or 'la'
         # 推定した言語を標準エラー出力に (解析結果の出力は汚さない)
@@ -158,18 +198,23 @@ def main(argv=None):
         from dragoman.core import cli
         args = [a for a in args if a != '--sentence-per-line']
         if texts is None:
-            files = [a for a in args if not a.startswith('-') and os.path.exists(a)]
+            files = input_files(args)
             texts = cli.read_texts(files)
-            args = [a for a in args if a not in files]
+            args = _without(args, files)
         texts = [chunk if chunk.rstrip().endswith(('.', '!', '?', ';', ':')) else chunk + '.'
                  for text in texts for chunk in cli.split_lines(text)]
     if lang == 'la':
         from dragoman.latin import main as latin_main
-        if texts is not None:  # 文はラテン語のコマンドに一時ファイルで渡す
-            with tempfile.NamedTemporaryFile('w', suffix='.txt', delete=False, encoding='utf-8') as fp:
-                fp.write('\n'.join(texts) + '\n')
-            args.append(fp.name)
-        latin_main.main(args)
+        if texts is None:
+            latin_main.main(args)
+            return
+        # 文はラテン語のコマンドに一時ファイルで渡す。終わったら (例外でも) 消す
+        with tempfile.NamedTemporaryFile('w', suffix='.txt', delete=False, encoding='utf-8') as fp:
+            fp.write('\n'.join(texts) + '\n')
+        try:
+            latin_main.main(args + [fp.name])
+        finally:
+            os.unlink(fp.name)
         return
     from dragoman.core import cli
     cli.run(command_for(lang), args, texts)

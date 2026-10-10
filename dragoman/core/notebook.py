@@ -372,14 +372,17 @@ class Notebook:
             body.append(sentence_html(n, s))
         data = json.dumps([{'words': s['words'], 'arcs': s['arcs'], 'rtl': s['rtl']} for s in self.sentences],
                           ensure_ascii=False)
-        return TEMPLATE.replace('%TITLE%', html.escape(self.title)).replace('%BODY%', '\n'.join(body)) \
-            .replace('%DATA%', data.replace('</', '<\\/'))
+        # <script> の中の JSON: < > & は \uXXXX に (原文の </script> や <svg …> でタグを閉じたり作ったりさせない)
+        data = data.replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026')
+        parts = {'%TITLE%': html.escape(self.title), '%BODY%': '\n'.join(body), '%DATA%': data}
+        # 置換はテンプレートに一度だけ (差し込んだ本文の中の %DATA% などはもう一度置き換えない)
+        return PLACEHOLDER.sub(lambda m: parts[m.group(0)], TEMPLATE)
 
     def write(self, path):
+        if path.lower().endswith('.pdf'):   # 書き込む前に (既存の PDF を HTML で上書きしない)
+            raise ValueError('PDF には write_pdf を使う: %s' % path)
         with open(path, 'w', encoding='utf-8') as f:
             f.write(self.html())
-        if path.endswith('.pdf'):
-            raise ValueError('use write_pdf')
 
     def write_pdf(self, path):
         """Chrome (Chromium) のヘッドレス印刷で PDF に"""
@@ -392,6 +395,9 @@ class Notebook:
             subprocess.run([chrome, '--headless', '--disable-gpu', '--no-pdf-header-footer',
                             '--virtual-time-budget=10000', '--print-to-pdf=' + os.path.abspath(path),
                             'file://' + page], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+
+PLACEHOLDER = re.compile('%(TITLE|BODY|DATA)%')
 
 
 def find_chrome():
