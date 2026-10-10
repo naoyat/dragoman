@@ -116,6 +116,12 @@ class NotebookTestCase(unittest.TestCase):
         for _, label, _ in notebook.LEGEND:
             self.assertTrue(label in demo or any(d.startswith(label.rstrip('N')) for d in demo), label)
         self.assertIn('legend-demo', legend.html())
+        # 凡例と再現条件の両方: 再現条件は凡例のページ (front) に1回だけ
+        legend.provenance = [('言語', 'la')]
+        page = legend.html()
+        front = page[page.index('<div class="front">'):page.index('<section class="sentence"')]
+        self.assertIn('class="part provenance"', front)
+        self.assertEqual(page.count('class="part provenance"'), 1)
 
     def test_rtl_heading(self):
         self.assertIn('dir="rtl"', notebook.heading('בָּרָא (bārā)'))

@@ -468,14 +468,18 @@ class Notebook:
                                'rtl': bool(RTL.search(' '.join(analysis.surfaces)))})
 
     def html(self):
-        body = [legend_html()] if self.legend else []
+        body = []
+        if self.legend:
+            # 凡例 (と再現条件) を最初のページに。印刷では凡例の後で改ページし、再現条件はそのページの下部に
+            front = legend_html() + (provenance_html(self.provenance) if self.provenance else '')
+            body.append('<div class="front">%s</div>' % front)
         for n, s in enumerate(self.sentences, 1):
             body.append(sentence_html(n, s))
         data = json.dumps([{'words': s['words'], 'arcs': s['arcs'], 'rtl': s['rtl']} for s in self.sentences],
                           ensure_ascii=False)
         # <script> の中の JSON: < > & は \uXXXX に (原文の </script> や <svg …> でタグを閉じたり作ったりさせない)
         data = data.replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026')
-        if self.provenance:
+        if self.provenance and not self.legend:
             body.append(provenance_html(self.provenance))
         parts = {'%TITLE%': html.escape(self.title), '%BODY%': '\n'.join(body), '%DATA%': data,
                  '%CONTROLS%': controls_html(self.marks, bool(self.provenance))}
@@ -657,7 +661,7 @@ h2 .num { font-family: sans-serif; font-size: .8rem; color: var(--sub); vertical
 .legend { border-bottom: 1px solid var(--line); padding-bottom: 1rem; margin-bottom: .5rem; }   /* 凡例と最初の文の境 */
 .legend table { border-collapse: collapse; font-size: .8rem; } .legend td { padding: .1rem .5rem .1rem 0; }
 .legend .legend-note { font-family: sans-serif; font-size: .7rem; color: var(--sub); margin-top: .2rem; }
-.legend-demo { margin-top: .8rem; } .legend-demo .ttl { font-family: sans-serif; font-size: .7rem; color: var(--sub); }
+.legend-demo { margin-top: 1.8rem; } .legend-demo .ttl { font-family: sans-serif; font-size: .7rem; color: var(--sub); }
 .legend-demo .demo-text { margin: .2rem 0 .4rem; } .legend-demo .demo-ja { display: block; font-size: .8rem; color: var(--sub); }
 .sf.mark-check { text-decoration: underline dotted #d08020; text-underline-offset: 3px; }
 .sf.mark-note { text-decoration: underline dotted #aaa; text-underline-offset: 3px; }
@@ -695,7 +699,10 @@ pre.rendered { white-space: pre-wrap; font-size: .85rem; }
 .provenance td, .provenance th { vertical-align: top; padding: .05rem .4rem .05rem 0; }
 body.no-interlinear .interlinear, body.no-arcs .arcs, body.no-tree .tree, body.no-translation .translation,
 body.no-detail .detail, body.no-provenance .provenance { display: none; }
-@media print { .controls { display: none; } body { max-width: none; padding: 0; } @page { size: A4; margin: 15mm; } }
+@media print { .controls { display: none; } body { max-width: none; padding: 0; } @page { size: A4; margin: 15mm; }
+  /* 凡例のページ: 凡例の後で改ページ、再現条件はページの下部に (A4 の高さ 297mm − 余白 30mm の少し内側) */
+  .front { display: flex; flex-direction: column; min-height: 262mm; break-after: page; }
+  .front .legend { border-bottom: none; } .front .provenance { margin-top: auto; } }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) { --ink: #ddd; --sub: #999; --line: #444; --bg: #1b1b1b; --box: #242424;
          --nom: #6ea8ff; --acc: #eee; --gen: #7cc47f; --abl: #e0b84a; --dat: #e07ad8; --verb: #ff6b6b; }
