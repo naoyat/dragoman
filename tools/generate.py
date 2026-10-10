@@ -9,6 +9,8 @@
 #   python3 tools/generate.py --to=en,ru,sa "…"     作る言語 (既定: en,la と、語の置き換えの表があれば ru,sa,grc,id,ja,kobun)
 #   python3 tools/generate.py --from=grc "ἡ κόρη τὸ καλὸν ῥόδον βλέπει."   ロシア語 (ru)・サンスクリット (sa)・古典ギリシア語から
 #   python3 tools/generate.py --from=ja "少女が庭で美しい薔薇を見た。"   日本語の文から (MeCab と規則で文の枠に)
+#   python3 tools/generate.py --compare "Rosam in hortō vīdit."   要素ごとに各言語の手段を並べる (前置詞と格・語順・助詞、
+#                                                                 書かれていない主語を補うか …)
 #
 # ラテン語に戻した文が元の文と同じ語 (順序は問わない) になれば ✓。違えば、違う語を出す。
 # ファイルは1行1文 (# で始まる行は飛ばす。samples/samples.txt の形)
@@ -58,8 +60,7 @@ def run(text):
         if not clauses:
             print('  (述語が見つからない)\n')
             continue
-        for clause in clauses:
-            print(frame.describe(clause))
+        show_frame(clauses)
         if 'en' in TARGETS:
             print('  英語:     ' + english.sentence(clauses))
         for lang, label, module in OTHERS:
@@ -89,6 +90,16 @@ def run(text):
 
 
 TARGETS = ['en', 'la']
+COMPARE = []   # --compare: 文の枠の要素ごとに、各言語がどの手段で表すかの表も出す (表に出す言語の符号)
+
+
+def show_frame(clauses):
+    for clause in clauses:
+        print(frame.describe(clause))
+    if COMPARE:
+        from dragoman.generate import compare
+        print('  要素ごとの比較:')
+        print(compare.text_table(clauses, [lang for lang in compare.LANGS if lang in COMPARE]))
 OTHERS = [('ru', 'ロシア語:', russian), ('sa', '梵語:    ', sanskrit), ('grc', 'ギリシア語:', greek),
           ('id', 'インドネシア語:', indonesian), ('ja', '日本語:  ', japanese), ('kobun', '古文:    ', kobun)]
 
@@ -104,8 +115,7 @@ def run_japanese(text):
         if not clauses:
             print('  (述語が見つからない)\n')
             continue
-        for clause in clauses:
-            print(frame.describe(clause))
+        show_frame(clauses)
         for lang, label, module in [('ja', '日本語:  ', japanese), ('la', 'ラテン語:', latin),
                                     ('en', '英語:    ', english)] + [o for o in OTHERS if o[0] != 'ja']:
             if lang in TARGETS:
@@ -129,8 +139,7 @@ def run_other(text, source):
         if not clauses:
             print('  (述語が見つからない)\n')
             continue
-        for clause in clauses:
-            print(frame.describe(clause))
+        show_frame(clauses)
         for lang in ['ja', 'kobun', 'la', 'en', 'ru', 'sa', 'grc', 'id']:
             if lang not in TARGETS and lang != source:
                 continue
@@ -170,7 +179,7 @@ def _source_words(text, lang):
 def main():
     import getopt
     latindic.load()
-    opts, args = getopt.gnu_getopt(sys.argv[1:], '', ['to=', 'from='])
+    opts, args = getopt.gnu_getopt(sys.argv[1:], '', ['to=', 'from=', 'compare'])
     TARGETS[:] = ['en', 'la'] + [lang for lang, _, module in OTHERS if module.available()]
     source = 'la'
     for opt, value in opts:
@@ -178,6 +187,10 @@ def main():
             TARGETS[:] = value.split(',')
         elif opt == '--from':
             source = value
+        elif opt == '--compare':
+            COMPARE.append(True)
+    if COMPARE:   # 比べる言語: 作る言語と元の言語
+        COMPARE[:] = list(dict.fromkeys(TARGETS + [source] + (['la'] if source != 'la' else [])))
     global run
     if source in ('ru', 'sa', 'grc'):
         def run(text, source=source):

@@ -559,5 +559,41 @@ class KobunTestCase(unittest.TestCase):
         self.assertEqual(self.kobun('Urbe captā, cīvēs fūgērunt.'), '都の捕へられて、民どもは逃げけり。')
 
 
+class CompareTestCase(unittest.TestCase):
+    """文の枠の要素ごとに、各言語の形と手段を並べる"""
+
+    @classmethod
+    def setUpClass(cls):
+        latindic.load()
+
+    def rows(self, text, langs=('la', 'en', 'ja', 'kobun')):
+        from dragoman.generate import compare
+        analysis, = analyzer.analyze_text(text)
+        return dict(compare.rows(frame.frames(analysis)[0], langs))
+
+    def test_prepositional_phrase(self):
+        rows = self.rows('Rosam in hortō vīdit.')
+        place = rows['前置詞句 (in + 奪格)']
+        self.assertEqual(place['la'], ('in hortō', 'in + 奪格'))
+        self.assertEqual(place['en'], ('in the garden', '前置詞 in'))
+        self.assertEqual(place['ja'], ('庭で', '助詞 で'))
+        self.assertEqual(place['kobun'], ('庭にて', '助詞 にて'))
+
+    def test_dropped_subject(self):
+        rows = self.rows('Rosam in hortō vīdit.')
+        dropped = rows['主語 (書かれていない)']
+        self.assertEqual(dropped['la'][0], '')            # ラテン語は書かない
+        self.assertEqual(dropped['en'], ('he', '代名詞を補う'))   # 英語は補う
+        self.assertEqual(rows['述語 (完了)']['en'][0], 'saw')   # 補った代名詞は述語の行に入れない
+
+    @unittest.skipUnless(greek.available() and russian.available(), 'ギリシア語かロシア語の表が無い')
+    def test_cases_and_agent(self):
+        rows = self.rows('Puer ā magistrō laudātus est.', ('la', 'grc', 'ru', 'ja'))
+        agent = rows['前置詞句 (ā + 奪格)']
+        self.assertEqual(agent['grc'][1], 'ὑπό + 属格')
+        self.assertEqual(agent['ru'][1], '造格 (動作主)')
+        self.assertEqual(rows['主語']['grc'][1], '主格 + 冠詞')
+
+
 if __name__ == '__main__':
     unittest.main()
