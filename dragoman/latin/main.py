@@ -222,6 +222,9 @@ class Options:
                                              "etymology",
                                              "html=",
                                              "pdf=",
+                                             "marks",
+                                             "legend",
+                                             "provenance",
                                              "help"])
         except getopt.GetoptError:
             self.usage()
@@ -239,6 +242,7 @@ class Options:
         self.show_etymology = False
         self.html = None
         self.pdf = None
+        self.marks = self.legend = self.provenance = False
         self.notebook = None
 
         for option, arg in opts:
@@ -269,10 +273,16 @@ class Options:
                 self.html = check_html_path(arg)
             elif option == '--pdf':
                 self.pdf = arg
+            elif option == '--marks':
+                self.marks = True
+            elif option == '--legend':
+                self.marks = self.legend = True
+            elif option == '--provenance':
+                self.provenance = True
             elif option in ('-h', '--help'):
                 self.usage()
                 sys.exit()
-        if self.html or self.pdf:
+        if self.provenance:
             from dragoman.core import provenance
             provenance.start()   # ノートの再現条件: 使ったデータを記録 (辞書を読み込む前に)
 
@@ -291,6 +301,9 @@ class Options:
         print("  -E, --etymology                    Show etymology (ancestors, cognates) of each word.")
         print("      --html=FILE                    Write a notebook (HTML): interlinear gloss, diagrams, translation.")
         print("      --pdf=FILE                     Write the notebook as PDF (headless Google Chrome).")
+        print("      --marks                        Notebook: mark uncertain analyses (unknown, guessed, ambiguous ...).")
+        print("      --legend                       Notebook: print a legend of the marks (implies --marks).")
+        print("      --provenance                   Notebook: add the reproduction info (code version, data, options).")
         print("  -h, --help                         Print this message and exit.")
 
 
@@ -303,7 +316,7 @@ def main(argv=None):
     latindic.load()
     if options.html or options.pdf:
         from dragoman.core.notebook import Notebook
-        options.notebook = Notebook('ラテン語 — dragoman')
+        options.notebook = Notebook('ラテン語 — dragoman', marks=options.marks, legend=options.legend)
 
     if len(options.args) == 0:
         # repl mode

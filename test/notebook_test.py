@@ -16,8 +16,8 @@ class NotebookTestCase(unittest.TestCase):
     def setUpClass(cls):
         latindic.load()
 
-    def note(self, text):
-        nb = notebook.Notebook('test')
+    def note(self, text, **options):
+        nb = notebook.Notebook('test', **options)
         for a in analyzer.analyze_text(text):
             nb.add(a)
         return nb
@@ -93,6 +93,24 @@ class NotebookTestCase(unittest.TestCase):
         page = nb.html()
         self.assertIn('再現条件', page)
         self.assertIn('wiktionary.sqlite', page)
+
+    def test_marks_are_optional(self):
+        text = 'Puella rosam in hortō videt quam Xyzzus dedit.'
+        plain = self.note(text)
+        self.assertFalse(any(w.get('marks') for w in plain.sentences[0]['words']))
+        self.assertNotIn('data-part="marks"', plain.html())
+        self.assertNotIn('data-part="provenance"', plain.html())
+        marked = self.note(text, marks=True)
+        labels = {w['surface']: [m['label'] for m in w['marks']] for w in marked.sentences[0]['words'] if w.get('marks')}
+        self.assertEqual(labels['Xyzzus'], ['辞書に無い'])
+        self.assertIn('格 奪/与', labels['hortō'])
+        self.assertTrue(any(l.startswith('候補') for l in labels['quam']))
+        self.assertIn('主語は語尾から', labels['dedit'])
+        self.assertIn('data-part="marks"', marked.html())
+        self.assertNotIn('確かさの印 (凡例)', marked.html())
+        legend = self.note(text, legend=True)   # 凡例は印も
+        self.assertTrue(legend.marks)
+        self.assertIn('確かさの印 (凡例)', legend.html())
 
     def test_rtl_heading(self):
         self.assertIn('dir="rtl"', notebook.heading('בָּרָא (bārā)'))

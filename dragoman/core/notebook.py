@@ -94,6 +94,67 @@ def readings(word):
     return out
 
 
+# ----------------------------------------------------------------------
+# 確かさの印: 読み手が確かめたほうがよい所 (check: 橙) と、参考 (note: 灰)
+
+GUESS_SOURCES = {'morpheus': 'Morpheus の解析で推測した語形', 'rule': '規則で推測した語形', 'dialect': '方言の形から読み替えた'}
+CASE_LABELS = {'Nom': '主', 'Acc': '対', 'Gen': '属', 'Dat': '与', 'Abl': '奪', 'Loc': '処', 'Ins': '具'}
+
+
+UNKNOWN_MARK = {'level': 'check', 'label': '辞書に無い', 'title': '辞書に見つからない語'}
+LEGEND = [('check', '辞書に無い', '辞書に見つからない語。綴り・固有名詞を確かめる'),
+          ('check', '推測', '辞書に無く、解析器 (Morpheus など) や規則で推測した語形'),
+          ('check', '構造の外', '述語の格の枠にも修飾にも入らなかった語。係り先を自分で確かめる'),
+          ('note', '候補N', '品詞の違う読みが N 個あり、先頭のものを使った'),
+          ('note', '格 奪/与', '格が一つに決まらない (奪格か与格か など)'),
+          ('note', '主語は語尾から', '主語が書かれていない。動詞の人称・数から補った')]
+
+
+def legend_html():
+    rows = ''.join('<tr><td><span class="m m-%s">%s</span></td><td>%s</td></tr>' % (level, esc(label), esc(text))
+                   for level, label, text in LEGEND)
+    return ('<section class="part legend"><div class="ttl">確かさの印 (凡例)</div><table>%s</table>'
+            '<div class="legend-note">橙は確かめたほうがよい所、灰は参考。語の下の点線も同じ色</div></section>' % rows)
+
+
+def marks_context(analysis):
+    """文の中で印の要る語の位置: 構造に入らなかった語、主語の書かれていない定動詞"""
+    isolated, subjectless = set(), set()
+    arcs = Arcs(analysis.words)
+    for clause in analysis.clauses:
+        for node in clause.not_solved:
+            if isinstance(node, Word) and node.items and node.items[0].pos in ('conj', 'adv'):
+                continue   # 結びつかない接続詞・副詞はふつう (文全体に掛かる)
+            isolated.update(arcs.heads(node))
+        pred = clause.predicate
+        mood = pred.first_item.attrib('mood') if pred.first_item else None
+        if not pred.case_slot.get('Nom') and mood not in ('infinitive', 'imperative') and pred.verb.index is not None \
+                and not pred.is_sum:
+            subjectless.add(pred.verb.index)
+    return {'isolated': isolated, 'subjectless': subjectless}
+
+
+def marks(word, context):
+    out = []
+    item = word.items[0]
+    source = item.attrib('source')
+    if source in GUESS_SOURCES:
+        out.append({'level': 'check', 'label': '推測', 'title': GUESS_SOURCES[source]})
+    if word.index in context['isolated']:
+        out.append({'level': 'check', 'label': '構造の外', 'title': '文の構造 (述語の格の枠・修飾) に入らなかった語'})
+    kinds = list(dict.fromkeys(POS_NAMES.get(i.pos, i.pos) for i in word.items))
+    if len(kinds) > 1:
+        out.append({'level': 'note', 'label': '候補%d' % len(kinds),
+                    'title': '品詞の違う読みの候補: %s (先頭のものを使った)' % '・'.join(kinds)})
+    cases = list(dict.fromkeys(c for c, _, _ in item._ or [] if c in CASE_LABELS))
+    if len(cases) > 1:
+        out.append({'level': 'note', 'label': '格 ' + '/'.join(CASE_LABELS[c] for c in cases),
+                    'title': '格が一つに決まらない: %s' % '・'.join(CASE_NAMES.get(c, c) for c in cases)})
+    if word.index in context['subjectless']:
+        out.append({'level': 'note', 'label': '主語は語尾から', 'title': '主語が書かれていない (動詞の人称・数から)'})
+    return out
+
+
 def first_gloss(item):
     ja = item.ja or ''
     if isinstance(ja, (list, tuple)):
@@ -322,8 +383,10 @@ def slot(label, objs):
 # ノート
 
 class Notebook:
-    def __init__(self, title='dragoman'):
+    def __init__(self, title='dragoman', marks=False, legend=False):
         self.title = title
+        self.marks = marks or legend   # 確かさの印 (--marks)
+        self.legend = legend           # 印の凡例 (--legend)
         self.sentences = []
         self.provenance = None   # 再現条件 [(項目, 値)] (core/provenance.info。書き出す前に入れる)
 
@@ -337,19 +400,22 @@ class Notebook:
                                    'detail': False, 'rendered': plain(rendered), 'rtl': bool(RTL.search(text))})
             return
         words = []
+        context = marks_context(analysis)
         for word in analysis.words:
             if not word.items:
                 if word.items is None:   # 句読点
                     words.append({'surface': word.surface, 'punct': True})
                 else:
-                    words.append({'surface': word.surface, 'unknown': True})
+                    words.append({'surface': word.surface, 'unknown': True,
+                                  'marks': [UNKNOWN_MARK] if self.marks else []})
                 continue
             item = word.items[0]
             notes = [{'kind': note_kind(line), 'text': plain(line)} for line in (word_notes(word) if word_notes else [])]
             words.append({'surface': word.surface, 'roman': romanize(word.surface) if romanize else '',
                           'lemma': lemma_of(item), 'grammar': grammar_of(item), 'gloss': first_gloss(item),
                           'cls': case_class(word), 'pos': item.pos,
-                          'detail': readings(word), 'notes': notes})
+                          'detail': readings(word), 'notes': notes,
+                          'marks': marks(word, context) if self.marks else []})
         translations = []
         if show_translation and rendered is None:
             for clause in analysis.clauses:
@@ -368,7 +434,7 @@ class Notebook:
                                'rtl': bool(RTL.search(' '.join(analysis.surfaces)))})
 
     def html(self):
-        body = []
+        body = [legend_html()] if self.legend else []
         for n, s in enumerate(self.sentences, 1):
             body.append(sentence_html(n, s))
         data = json.dumps([{'words': s['words'], 'arcs': s['arcs'], 'rtl': s['rtl']} for s in self.sentences],
@@ -377,7 +443,8 @@ class Notebook:
         data = data.replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026')
         if self.provenance:
             body.append(provenance_html(self.provenance))
-        parts = {'%TITLE%': html.escape(self.title), '%BODY%': '\n'.join(body), '%DATA%': data}
+        parts = {'%TITLE%': html.escape(self.title), '%BODY%': '\n'.join(body), '%DATA%': data,
+                 '%CONTROLS%': controls_html(self.marks, bool(self.provenance))}
         # 置換はテンプレートに一度だけ (差し込んだ本文の中の %DATA% などはもう一度置き換えない)
         return PLACEHOLDER.sub(lambda m: parts[m.group(0)], TEMPLATE)
 
@@ -400,7 +467,15 @@ class Notebook:
                             'file://' + page], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 
-PLACEHOLDER = re.compile('%(TITLE|BODY|DATA)%')
+PLACEHOLDER = re.compile('%(TITLE|BODY|DATA|CONTROLS)%')
+PARTS = [('translation', '訳'), ('interlinear', '行間逐語訳'), ('marks', '確かさの印'), ('arcs', '図A 弧'),
+         ('tree', '図B 入れ子'), ('detail', '語の詳細'), ('provenance', '再現条件')]
+
+
+def controls_html(marks, provenance):
+    """画面で表示する部分を選ぶチェックボックス (ノートに載せた部分だけ。印刷では隠れる)"""
+    shown = [(k, name) for k, name in PARTS if (k != 'marks' or marks) and (k != 'provenance' or provenance)]
+    return '\n'.join('  <label><input type="checkbox" data-part="%s" checked> %s</label>' % (k, name) for k, name in shown)
 
 
 def find_chrome():
@@ -440,6 +515,18 @@ def _size(n):
         n /= 1024
 
 
+def mark_class(w):
+    levels = {m['level'] for m in w.get('marks', [])}
+    return ' mark-check' if 'check' in levels else ' mark-note' if 'note' in levels else ''
+
+
+def marks_html(w):
+    if not w.get('marks'):
+        return ''
+    return '<div class="mk" dir="ltr">%s</div>' % ''.join(
+        '<span class="m m-%s" title="%s">%s</span>' % (m['level'], esc(m['title']), esc(m['label'])) for m in w['marks'])
+
+
 def heading(text):
     """見出しの文。ラテン文字以外の文に転写の括弧が付いていれば (लड़के … (laṛke …)) 転写を薄く小さく。
     右から左の文字 (בָּרָא … (bārā …)) は向きを分けて次の行に"""
@@ -467,13 +554,14 @@ def sentence_html(n, s):
             cols.append('<div class="col punct"><div class="sf">%s</div></div>' % esc(w['surface']))
             continue
         if w.get('unknown'):
-            cols.append('<div class="col"><div class="sf">%s</div><div class="gl">?</div></div>' % esc(w['surface']))
+            cols.append('<div class="col"><div class="sf mark-check">%s</div><div class="gl">?</div>%s</div>'
+                        % (esc(w['surface']), marks_html(w)))
             continue
         cols.append('<div class="col"><div class="sf w %s">%s</div>%s<div class="lm" dir="auto">%s</div>'
-                    '<div class="gr" dir="ltr">%s</div><div class="gl" dir="ltr">%s</div></div>'
-                    % (w['cls'], esc(w['surface']),
+                    '<div class="gr" dir="ltr">%s</div><div class="gl" dir="ltr">%s</div>%s</div>'
+                    % (w['cls'] + mark_class(w), esc(w['surface']),
                        '<div class="rm" dir="ltr">%s</div>' % esc(w['roman']) if w['roman'] else '',
-                       esc(w['lemma']), esc(w['grammar']), esc(w['gloss'])))
+                       esc(w['lemma']), esc(w['grammar']), esc(w['gloss']), marks_html(w)))
     out.append('<div class="part interlinear"><div class="ttl">行間逐語訳</div><div class="cols"%s>%s</div></div>'
                % (' dir="rtl"' if s['rtl'] else '', ''.join(cols)))
     out.append('<div class="part arcs"><div class="ttl">図A 弧</div><svg class="arcsvg"></svg></div>')
@@ -506,7 +594,9 @@ body { font-family: "Gentium Plus", "Noto Serif", "Times New Roman", "Noto Serif
        color: var(--ink); background: var(--bg); margin: 0 auto; max-width: 60rem; padding: 1rem; line-height: 1.5; }
 .controls { font-family: sans-serif; font-size: .8rem; color: var(--sub); border-bottom: 1px solid var(--line);
             padding-bottom: .5rem; margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: .25rem 1rem; }
-.sentence { border-bottom: 1px solid var(--line); padding: .5rem 0 1.25rem; break-inside: avoid-page; }
+.sentence { border-bottom: 1px solid var(--line); padding: .5rem 0 1.25rem; }
+.sentence > h2, .part > .ttl { break-after: avoid-page; } .part { break-inside: avoid-page; }
+.part.detail { break-inside: auto; } .detail tr { break-inside: avoid-page; }
 h2 { font-size: 1.25rem; font-weight: normal; margin: .5rem 0; }
 h2 .rm { font-size: .8em; color: var(--sub); opacity: .75; font-style: italic; }
 h2 .num { font-family: sans-serif; font-size: .8rem; color: var(--sub); vertical-align: middle; }
@@ -520,6 +610,15 @@ h2 .num { font-family: sans-serif; font-size: .8rem; color: var(--sub); vertical
 .col .gl { font-size: .85rem; max-width: 9em; }
 .cols[dir="rtl"] .col > div { text-align: right; }
 .col.punct { justify-content: flex-start; }
+.mk { display: flex; flex-wrap: wrap; gap: .15rem; margin-top: .15rem; }
+.m { font-family: sans-serif; font-size: .6rem; border-radius: 3px; padding: 0 .25rem; border: 1px solid; }
+.m.m-check { color: #b35c00; border-color: #e0a060; background: #fff4e6; }
+.m.m-note { color: var(--sub); border-color: var(--line); }
+.legend table { border-collapse: collapse; font-size: .8rem; } .legend td { padding: .1rem .5rem .1rem 0; }
+.legend .legend-note { font-family: sans-serif; font-size: .7rem; color: var(--sub); margin-top: .2rem; }
+.sf.mark-check { text-decoration: underline dotted #d08020; text-underline-offset: 3px; }
+.sf.mark-note { text-decoration: underline dotted #aaa; text-underline-offset: 3px; }
+body.no-marks .mk { display: none; } body.no-marks .sf { text-decoration: none; }
 .w.c-Nom { color: var(--nom); font-weight: bold; } .w.c-Acc { color: var(--acc); font-weight: bold; }
 .w.c-Gen { color: var(--gen); font-weight: bold; } .w.c-Abl, .w.c-Loc, .w.c-Ins { color: var(--abl); font-weight: bold; }
 .w.c-Dat { color: var(--dat); font-weight: bold; } .w.verb { color: var(--verb); font-weight: bold; }
@@ -530,6 +629,8 @@ h2 .num { font-family: sans-serif; font-size: .8rem; color: var(--sub); vertical
 .arcsvg path.subject { stroke: var(--nom); } .arcsvg path.object { stroke: #444; }
 .arcsvg path.clause { stroke: var(--verb); stroke-dasharray: 4 2; } .arcsvg path.gap { stroke: #bbb; stroke-dasharray: 2 2; }
 .arcsvg path.mod { stroke: #999; }
+.arcsvg .mkline { stroke-dasharray: 2 2; stroke-width: 1.2; } .arcsvg .mkline.check { stroke: #d08020; }
+.arcsvg .mkline.note { stroke: #aaa; } body.no-marks .arcsvg .mkline { display: none; }
 .box { border: 1px solid var(--line); border-radius: 4px; padding: .2rem .4rem; margin: .15rem 0; background: var(--box); }
 .box .box { background: var(--bg); }
 .box .head { white-space: nowrap; } .box .info, .box .gloss { font-size: .75rem; color: var(--sub); }
@@ -562,12 +663,7 @@ body.no-detail .detail, body.no-provenance .provenance { display: none; }
 </head>
 <body>
 <div class="controls">
-  <label><input type="checkbox" data-part="translation" checked> 訳</label>
-  <label><input type="checkbox" data-part="interlinear" checked> 行間逐語訳</label>
-  <label><input type="checkbox" data-part="arcs" checked> 図A 弧</label>
-  <label><input type="checkbox" data-part="tree" checked> 図B 入れ子</label>
-  <label><input type="checkbox" data-part="detail" checked> 語の詳細</label>
-  <label><input type="checkbox" data-part="provenance" checked> 再現条件</label>
+%CONTROLS%
 </div>
 %BODY%
 <script>
@@ -639,6 +735,11 @@ function drawArcs(svg, data) {
     t.textContent = w.surface;
     const g = el('text', {x: center(i), y: base + 27, 'text-anchor': 'middle', 'class': 'gl'}, svg);
     g.textContent = short(w.gloss);
+    const levels = (w.marks || []).map(m => m.level);
+    if (levels.length) {   // 確かさの印: 語の下に点線 (確かめたい 橙、参考 灰)
+      el('line', {x1: center(i) - ws[i] / 2, x2: center(i) + ws[i] / 2, y1: base + 14, y2: base + 14,
+                  'class': 'mkline ' + (levels.includes('check') ? 'check' : 'note')}, svg);
+    }
   });
 }
 document.querySelectorAll('section.sentence').forEach(sec => {
