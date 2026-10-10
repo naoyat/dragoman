@@ -272,6 +272,9 @@ class Options:
             elif option in ('-h', '--help'):
                 self.usage()
                 sys.exit()
+        if self.html or self.pdf:
+            from dragoman.core import provenance
+            provenance.start()   # ノートの再現条件: 使ったデータを記録 (辞書を読み込む前に)
 
     def usage(self):
         print("Usage: python %s [options] [FILENAME]" % sys.argv[0])
@@ -319,7 +322,7 @@ def main(argv=None):
             analyse_text(text, options)
     if options.notebook is not None:
         from dragoman.core.cli import save_notebook
-        save_notebook(options.notebook, options)
+        save_notebook(options.notebook, options, 'la')
 
 if __name__ == '__main__':
     main()

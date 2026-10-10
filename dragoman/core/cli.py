@@ -24,7 +24,7 @@ import getopt
 import sys
 from dataclasses import dataclass, field
 
-from dragoman.core import ansi_color, descendants, etymology, render
+from dragoman.core import ansi_color, descendants, etymology, provenance, render
 
 COMMON_SHORT = 'wDEst:rh'
 COMMON_LONG = ['no-word-detail', 'descendants', 'etymology', 'speech', 'tts=', 'romanize', 'no-explain',
@@ -128,8 +128,10 @@ def parse(command, argv):
             options.sentence_per_line = True
         elif option == '--html':
             options.html = check_html_path(arg)
+            provenance.start()   # ノートの再現条件: 使ったデータを記録
         elif option == '--pdf':
             options.pdf = arg
+            provenance.start()
         elif option == '--english-glosses':
             from dragoman.core import en_ja
             en_ja.ENABLED = False
@@ -216,7 +218,7 @@ def run(command, argv=None, texts=None):
             if speech:
                 speech.pause_while_speaking()
     if notebook is not None:
-        save_notebook(notebook, options)
+        save_notebook(notebook, options, command.lang)
 
 
 def check_html_path(path):
@@ -226,7 +228,8 @@ def check_html_path(path):
     return path
 
 
-def save_notebook(notebook, options):
+def save_notebook(notebook, options, lang):
+    notebook.provenance = provenance.info(lang)   # 再現条件 (コードの版・使ったデータ・オプション)
     if options.html:
         notebook.write(options.html)
         print('ノート: %s' % options.html, file=sys.stderr)

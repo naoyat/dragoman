@@ -325,6 +325,7 @@ class Notebook:
     def __init__(self, title='dragoman'):
         self.title = title
         self.sentences = []
+        self.provenance = None   # 再現条件 [(項目, 値)] (core/provenance.info。書き出す前に入れる)
 
     def add(self, analysis, header=None, word_notes=None, romanize=None, show_word_detail=True,
             show_translation=True, rendered=None):
@@ -374,6 +375,8 @@ class Notebook:
                           ensure_ascii=False)
         # <script> の中の JSON: < > & は \uXXXX に (原文の </script> や <svg …> でタグを閉じたり作ったりさせない)
         data = data.replace('<', '\\u003c').replace('>', '\\u003e').replace('&', '\\u0026')
+        if self.provenance:
+            body.append(provenance_html(self.provenance))
         parts = {'%TITLE%': html.escape(self.title), '%BODY%': '\n'.join(body), '%DATA%': data}
         # 置換はテンプレートに一度だけ (差し込んだ本文の中の %DATA% などはもう一度置き換えない)
         return PLACEHOLDER.sub(lambda m: parts[m.group(0)], TEMPLATE)
@@ -410,6 +413,31 @@ def find_chrome():
         if found:
             return found
     return None
+
+
+def provenance_html(rows):
+    """再現条件の欄: 項目と値。使ったデータは (パス, 更新日, 大きさ, ファイルの数) の表"""
+    items = []
+    for name, value in rows:
+        if isinstance(value, list):
+            if not value:
+                cell = '(なし)'
+            else:
+                cell = '<table>%s</table>' % ''.join(
+                    '<tr><td>%s</td><td>%s</td><td>%s</td></tr>' % (
+                        esc(path), esc(date), esc(_size(size) + (' / %d ファイル' % count if count > 1 else '')))
+                    for path, date, size, count in value)
+        else:
+            cell = esc(value)
+        items.append('<tr><th>%s</th><td>%s</td></tr>' % (esc(name), cell))
+    return '<section class="part provenance"><div class="ttl">再現条件</div><table>%s</table></section>' % ''.join(items)
+
+
+def _size(n):
+    for unit in ('B', 'KB', 'MB', 'GB'):
+        if n < 1024 or unit == 'GB':
+            return ('%d %s' if unit == 'B' else '%.1f %s') % (n, unit)
+        n /= 1024
 
 
 def heading(text):
@@ -518,8 +546,11 @@ h2 .num { font-family: sans-serif; font-size: .8rem; color: var(--sub); vertical
 .note { font-size: .8rem; } .note.explain { color: var(--gen); } .note.descendants { color: #00838f; }
 .note.etymology { color: var(--dat); }
 pre.rendered { white-space: pre-wrap; font-size: .85rem; }
+.provenance { font-family: sans-serif; font-size: .7rem; color: var(--sub); margin-top: 1.5rem; }
+.provenance table { border-collapse: collapse; } .provenance th { text-align: left; font-weight: normal; padding-right: 1em; }
+.provenance td, .provenance th { vertical-align: top; padding: .05rem .4rem .05rem 0; }
 body.no-interlinear .interlinear, body.no-arcs .arcs, body.no-tree .tree, body.no-translation .translation,
-body.no-detail .detail { display: none; }
+body.no-detail .detail, body.no-provenance .provenance { display: none; }
 @media print { .controls { display: none; } body { max-width: none; padding: 0; } @page { size: A4; margin: 15mm; } }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) { --ink: #ddd; --sub: #999; --line: #444; --bg: #1b1b1b; --box: #242424;
@@ -536,6 +567,7 @@ body.no-detail .detail { display: none; }
   <label><input type="checkbox" data-part="arcs" checked> 図A 弧</label>
   <label><input type="checkbox" data-part="tree" checked> 図B 入れ子</label>
   <label><input type="checkbox" data-part="detail" checked> 語の詳細</label>
+  <label><input type="checkbox" data-part="provenance" checked> 再現条件</label>
 </div>
 %BODY%
 <script>

@@ -68,6 +68,32 @@ class NotebookTestCase(unittest.TestCase):
                 self.note('Puella cantat.').write(path)
             self.assertEqual(open(path).read(), '%PDF-1.4')
 
+    def test_provenance(self):
+        # 再現条件: データの置き場所の下で開いたファイル、コードの版、文を除いたオプション
+        import tempfile
+        from unittest import mock
+        from dragoman.core import provenance, paths
+        with tempfile.TemporaryDirectory() as tmp:
+            os.makedirs(os.path.join(tmp, 'xx'))
+            for name in ('xx/a.sqlite', 'xx/deep/b.bin', 'xx/deep/c.bin'):
+                os.makedirs(os.path.dirname(os.path.join(tmp, name)), exist_ok=True)
+                open(os.path.join(tmp, name), 'w').write('data')
+            with mock.patch.object(paths, 'DATA_DIR', tmp), mock.patch.object(provenance, '_used', set()):
+                provenance.start()
+                for name in ('xx/a.sqlite', 'xx/deep/b.bin', 'xx/deep/c.bin'):
+                    open(os.path.join(tmp, name)).read()
+                open(__file__).read()   # データの置き場所の外は記録しない
+                used = {path: count for path, _, _, count in provenance.used_data()}
+                self.assertEqual(used, {os.path.join('xx', 'a.sqlite'): 1, os.path.join('xx', 'deep'): 2})
+                rows = dict(provenance.info('la', ['la', '-D', '-e', 'Puella cantat.', '-weRōma.', '--html=n.html']))
+        self.assertEqual(rows['オプション'], 'la -D -w --html=n.html')   # 解析の文は記録しない
+        self.assertTrue(rows['コード'].startswith(('git ', 'dragoman ', '不明')))
+        nb = self.note('Puella cantat.')
+        nb.provenance = [('言語', 'la'), ('使ったデータ', [('wiktionary.sqlite', '2026-10-10', 2048, 1)])]
+        page = nb.html()
+        self.assertIn('再現条件', page)
+        self.assertIn('wiktionary.sqlite', page)
+
     def test_rtl_heading(self):
         self.assertIn('dir="rtl"', notebook.heading('בָּרָא (bārā)'))
 
