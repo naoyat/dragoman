@@ -1,36 +1,26 @@
 
-C .
+C. Caesar dictātor , rubicōne superātō , cīvīlī bellō , commīlitōnēs suōs hīc in forō arīminēnsī adlocūtus est .
 
   --- 
-   0  C  (?)
-   1  .  
-  --- 
-
-
-NO VERB FOUND.
-
-
-Caesar dictātor , rubicōne superātō , cīvīlī bellō , commīlitōnēs suōs hīc in forō arīminēnsī adlocūtus est .
-
-  --- 
-   0  Caesar        (?)
-   1  dictātor      (?)
-   2  ,             
-   3  rubicōne      (?)
-   4  superātō      (superō) v.超える,上を行く,打ち勝つ 2sg 命令法.能動.未来 | (superō) v.超える,上を行く,打ち勝つ 3sg 命令法.能動.未来 | (superātus) p.超えられた,上を行かれた,打ち勝たれた [Dat.sg.m|Abl.sg.m|Dat.sg.n|Abl.sg.n]
-   5  ,             
-   6  cīvīlī        (?)
-   7  bellō         (bellum) 戦争 [Dat.sg.n|Abl.sg.n] // []
-   8  ,             
-   9  commīlitōnēs  (?)
-  10  suōs          (suus) a.自分の [Acc.pl.m]
-  11  hīc           pronoun この,これ {'person':3, 'desc':'指示代名詞', '_':[('Nom', 'sg', 'm')]}
-  12  in            prep<Acc> 〜へ,〜の中へ,〜の上へ,〜に向かって,〜に対して | prep<Abl> 〜で,〜の中で,〜の上で
-  13  forō          (forum) 市場,広場 [Dat.sg.n|Abl.sg.n] // []
-  14  arīminēnsī    (?)
-  15  adlocūtus     (?)
-  16  est           (sum) v.〜である 3sg 直説法.能動.現在
-  17  .             
+   0  C.            (Gāius) ガイウス [Nom.sg.m|Gen.sg.m|Dat.sg.m|Acc.sg.m|Abl.sg.m|Voc.sg.m] // []
+   1  Caesar        (?)
+   2  dictātor      (?)
+   3  ,             
+   4  rubicōne      (?)
+   5  superātō      (superō) v.超える,上を行く,打ち勝つ 2sg 命令法.能動.未来 | (superō) v.超える,上を行く,打ち勝つ 3sg 命令法.能動.未来 | (superātus) p.超えられた,上を行かれた,打ち勝たれた [Dat.sg.m|Abl.sg.m|Dat.sg.n|Abl.sg.n]
+   6  ,             
+   7  cīvīlī        (?)
+   8  bellō         (bellum) 戦争 [Dat.sg.n|Abl.sg.n] // []
+   9  ,             
+  10  commīlitōnēs  (?)
+  11  suōs          (suus) a.自分の [Acc.pl.m]
+  12  hīc           pronoun この,これ {'person':3, 'desc':'指示代名詞', '_':[('Nom', 'sg', 'm')]}
+  13  in            prep<Acc> 〜へ,〜の中へ,〜の上へ,〜に向かって,〜に対して | prep<Abl> 〜で,〜の中で,〜の上で
+  14  forō          (forum) 市場,広場 [Dat.sg.n|Abl.sg.n] // []
+  15  arīminēnsī    (?)
+  16  adlocūtus     (?)
+  17  est           (sum) v.〜である 3sg 直説法.能動.現在
+  18  .             
   --- 
 
 // ADJ#10 (suōs) -> no target noun detected

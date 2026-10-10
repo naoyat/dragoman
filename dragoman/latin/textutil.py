@@ -23,9 +23,17 @@ def _split_parens(word):
     return tokens + [')'] * closes
 
 
+# ローマ人の個人名 (praenōmen) の略: C. Caesar (= Gāius)、M. Tullius (= Mārcus)。後ろに名が続けば文の終わりでない
+def _abbreviation(word, following):
+    """略した個人名 (C. の点) か: 表の略 (latindic.PRAENOMINA) で、次の語が大文字で始まる (C. Caesar)"""
+    from .latindic import PRAENOMINA
+    return word in PRAENOMINA and following[:1].isupper()
+
+
 def word_stream_from_text(text):
     in_sentence = False
-    for word in text.split():
+    words = text.split()
+    for i, word in enumerate(words):
         if word[0] in ['"', "'"]:
             yield word[0]
             word = word[1:]
@@ -44,7 +52,9 @@ def word_stream_from_text(text):
         else:
             end_quote = None
 
-        if last_char in ['.', ';', ':', '?', '!']:
+        if not end_quote and _abbreviation(word, words[i + 1] if i + 1 < len(words) else ''):
+            yield word   # C. Caesar: 点は略の印 (文を区切らない)
+        elif last_char in ['.', ';', ':', '?', '!']:
             yield from _split_parens(word[:-1])
             yield last_char
             yield "EOS"

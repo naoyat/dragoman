@@ -23,7 +23,7 @@ from . import textutil
 def lookup_all(surfaces_uc):
     def lookup(surface, use_wiktionary=True):
         # 手作りの辞書 (そのまま → 小文字化 → -que を外す) → Wiktionary (同じ順) の順に引く
-        sources = [latindic.lookup_hand]
+        sources = [latindic.lookup_abbreviation, latindic.lookup_hand]   # 個人名の略 (C.) を先に
         if use_wiktionary:
             sources.append(latindic.lookup_wiktionary)
         for source in sources:
@@ -128,6 +128,16 @@ def tagger_enabled():
     return USE_TAGGER and rftagger.available()
 
 
+def attach_praenomina(words):
+    """個人名の略 (C. Caesar の C.) を後ろの名の修飾語に (格は後ろの名と同じ。解析の対象からは外れる)"""
+    for word, following in zip(words, words[1:]):
+        if word.items and word.items[0].attrib('desc') == '個人名の略' and following.items is not None and \
+                following.surface[:1].isupper():   # 名は辞書に無いことが多い (Caesar (?)) ので、大文字の語なら付ける
+            cases = {c for item in following.items for c, _, _ in item._ or []}
+            word.restrict_cases(cases or [c for c, _, _ in word.items[0]._])
+            following.add_modifier(word)
+
+
 def analyze_sentence(surfaces, tags=None):
     """文 (語の列) を解析する。tags は語ごとの品詞タグ (省略するとこの文だけでタガーを呼ぶ)"""
     words = lookup_all(surfaces)
@@ -136,6 +146,7 @@ def analyze_sentence(surfaces, tags=None):
         if tags is None:
             tags, = rftagger.tag_sentences([list(surfaces)])
         apply_tags(words, _word_tags(words, tags))
+    attach_praenomina(words)
     with language.using(profile.LATIN):
         return analyze_words(surfaces, words, word_details)
 

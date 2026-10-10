@@ -85,9 +85,28 @@ def _drop_unused(word, items):
     return items
 
 
+# 個人名 (praenōmen) の略 → (名, 日本語)。碑文・史書の C. Caesar、M. Tullius Cicerō
+PRAENOMINA = {'A.': ('Aulus', 'アウルス'), 'Ap.': ('Appius', 'アッピウス'), 'C.': ('Gāius', 'ガイウス'),
+              'Cn.': ('Gnaeus', 'グナエウス'), 'D.': ('Decimus', 'デキムス'), 'K.': ('Kaesō', 'カエソ'),
+              'L.': ('Lūcius', 'ルキウス'), 'M.': ('Mārcus', 'マルクス'), "M'.": ('Mānius', 'マニウス'),
+              'Mam.': ('Māmercus', 'マメルクス'), 'N.': ('Numerius', 'ヌメリウス'), 'P.': ('Pūblius', 'プブリウス'),
+              'Q.': ('Quīntus', 'クィントゥス'), 'Ser.': ('Servius', 'セルウィウス'), 'Sex.': ('Sextus', 'セクストゥス'),
+              'Sp.': ('Spurius', 'スプリウス'), 'T.': ('Titus', 'ティトゥス'), 'Ti.': ('Tiberius', 'ティベリウス'),
+              'V.': ('Vibius', 'ウィビウス')}
+
+
+def lookup_abbreviation(word):
+    """個人名の略 (C. → Gāius)。略は変化しないので格は名に合わせて決まる (どの格の候補も持つ)"""
+    if word not in PRAENOMINA:
+        return None
+    base, ja = PRAENOMINA[word]
+    return [{'pos': 'noun', 'base': base, 'ja': ja, 'surface': word, 'desc': '個人名の略', 'proper': True,
+             '_': [(case, 'sg', 'm') for case in ('Nom', 'Gen', 'Dat', 'Acc', 'Abl', 'Voc')]}]
+
+
 def lookup(word):
-    """手作りの辞書を優先し、無ければ Wiktionary 由来の補助辞書を引く"""
-    return lookup_hand(word) or lookup_wiktionary(word)
+    """手作りの辞書を優先し、無ければ Wiktionary 由来の補助辞書を引く。個人名の略 (C.) は表から"""
+    return lookup_abbreviation(word) or lookup_hand(word) or lookup_wiktionary(word)
 
 
 def dump():

@@ -461,5 +461,20 @@ class EmptyCoordinationTestCase(unittest.TestCase):
         self.assertEqual((empty._, empty.surface), ([], ''))
 
 
+class PraenomenTestCase(unittest.TestCase):
+    """個人名の略 (C. Caesar): 文を区切らず、後ろの名の修飾語に"""
+
+    def test_not_sentence_end(self):
+        self.assertEqual([' '.join(s) for s in analyzer.sentences('C. Caesar vēnit. M. Tullius cantat.')],
+                         ['C. Caesar vēnit .', 'M. Tullius cantat .'])
+        self.assertEqual(len(list(analyzer.sentences('Puella cantat. C. est littera.'))), 3)   # 後ろが小文字なら区切る
+
+    def test_attached_to_name(self):
+        a = analyze('C. Caesar vēnit.')
+        caesar = next(w for w in a.words if w.surface == 'Caesar')
+        self.assertEqual([m.surface for m in caesar.modifiers], ['C.'])
+        self.assertEqual(caesar.modifiers[0].items[0].attrib('base'), 'Gāius')
+
+
 if __name__ == '__main__':
     unittest.main()
