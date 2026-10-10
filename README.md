@@ -221,6 +221,7 @@ dragoman/                パッケージ
   latin/                   ラテン語
     analyzer.py profile.py 辞書引き・品詞タガーによる前処理と、ラテン語の設定
     latindic.py words.py   辞書 (手作りの辞書の読み込みと検索)
+    data/                  手作りの辞書 (*.def。パッケージに同梱)
     latin_noun.py latin_adj.py latin_verb_reg.py ...      変化形の生成
     wiktionary.py morpheus.py ldt.py rftagger.py          補助辞書と品詞タガー
     orthography.py katakana.py                            綴りの流儀の吸収、固有名詞のカタカナ表記
@@ -251,8 +252,7 @@ dragoman/                パッケージ
                            from_japanese.py ja_lexicon.py 日本語の文 → 文の枠、connectives.py 節のつなぎ、
                            reverse.py 辞書の語形の逆引き)
 tools/                   マクロン推定・音読のコマンド、データの作成・取り込み、評価、文の生成 (generate.py)
-latin/                   ラテン語のデータ
-  words/                 手作りの辞書 (*.def)
+latin/                   ラテン語のデータ (テキスト。手作りの辞書は dragoman/latin/data/)
   texts/                 テキストと目録 (catalog.json)。src/ は大文字で長母音を書いた原稿 (make で .txt に)
   scripts/               原稿の変換 (trans.sed: 大文字 → 長母音)
 samples/                 解析・翻訳のサンプル (tools/samples.py で表示)

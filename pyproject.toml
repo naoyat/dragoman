@@ -25,3 +25,6 @@ dragoman = "dragoman.main:main"
 
 [tool.setuptools.packages.find]
 include = ["dragoman*"]
+
+[tool.setuptools.package-data]
+"dragoman.latin" = ["data/*.def"]   # ラテン語の手作りの辞書 (wheel に同梱する)

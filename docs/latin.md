@@ -188,7 +188,7 @@ python3 tools/speak.py -b mbrola -a stress -w out.wav "..."   # 強弱アクセ�
 
 ### 辞書
 
-手作りの辞書（`latin/words/*.def`。日本語の訳語付き）を優先し、そこに無い語は Wiktionary 由来の補助辞書で引きます。
+手作りの辞書（`dragoman/latin/data/*.def`。日本語の訳語付き）を優先し、そこに無い語は Wiktionary 由来の補助辞書で引きます。
 
 ```
 mkdir -p ~/.local/share/dragoman-data && cd ~/.local/share/dragoman-data

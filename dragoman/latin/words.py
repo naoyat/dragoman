@@ -1,12 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# 辞書ファイル (latin/words/*.def) の場所
+# 手作りの辞書ファイル (dragoman/latin/data/*.def) の場所。パッケージの中に置き、wheel にも同梱する (pyproject.toml)
 #
-from dragoman.core import paths
 import os
 
-WORDS_DIR = os.path.join(paths.LATIN_DIR, 'words')
+WORDS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 
 
 def words_path(name):

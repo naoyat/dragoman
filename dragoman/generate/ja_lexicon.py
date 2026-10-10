@@ -3,7 +3,7 @@
 #
 # 日本語の見出し → ラテン語の語 (Lex) の逆引き (日本語の文を文の枠に入れるときの語の置き換え)
 #
-#   ラテン語の辞書 (手作りの辞書 latin/words/、Wiktionary 由来の wiktionary.sqlite) の日本語の訳語を逆にする。
+#   ラテン語の辞書 (手作りの辞書 dragoman/latin/data/、Wiktionary 由来の wiktionary.sqlite) の日本語の訳語を逆にする。
 #   手作りの辞書の語を先に、訳語の並びで前にあるほど良い (見る → videō、少女 → puella)。
 #   ラテン語の Lex は、ラテン語に戻す (語形を作る) ときに辞書の項目と照らせるよう、その項目の訳語 (ja) を持つ
 #

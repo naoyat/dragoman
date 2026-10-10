@@ -6,13 +6,13 @@
     "macrons: full (マクロンが信頼できる) / partial / none",
     "hidden: 隠れた長音 (māgnus/magnus など) の流儀。mark (印を付ける) / nomark (付けない) / mixed",
     "family: 内容が重なるテキストのまとまり。評価するときは同じ family のテキストを知識から除く (省略時はファイル名)",
-    "used_for_dictionary: 手作りの辞書 (words/*.def) を作るのに使った。評価に使うと精度が高く出すぎるので既定の評価からは除く",
+    "used_for_dictionary: 手作りの辞書 (dragoman/latin/data/*.def) を作るのに使った。評価に使うと精度が高く出すぎるので既定の評価からは除く",
     "knowledge: マクロン推定の知識 (頻度・隠れた長音) に使うか (省略時は macrons が full なら true)",
     "evaluation: マクロン推定の既定の評価データに使うか (省略時は macrons が full で used_for_dictionary でなければ true)"
   ],
   "dictionary": {
     "hidden": "mixed",
-    "notes": "手作りの辞書 (words/*.def) の隠れた長音の流儀"
+    "notes": "手作りの辞書 (dragoman/latin/data/*.def) の隠れた長音の流儀"
   },
   "texts": {
     "GLORIA.txt": {
