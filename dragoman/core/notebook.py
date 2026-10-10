@@ -110,11 +110,45 @@ LEGEND = [('check', '辞書に無い', '辞書に見つからない語。綴り�
           ('note', '主語は語尾から', '主語が書かれていない。動詞の人称・数から補った')]
 
 
+def _demo_mark(label, shown=None, title=None):
+    level, _, text = next(entry for entry in LEGEND if entry[1] == label)
+    return {'level': level, 'label': shown or label, 'title': title or text}
+
+
+# 凡例の見本 (解析結果ではなく固定の例。どの言語のノートでも、6種類の印がそろって見えるように)
+#   Mārcus in hortō Cornēliam vīdit, quam amāvēre poētae; deinde cantat.
+#   「マルクスは庭で、詩人たちが愛したコルネーリアを見た。それから歌う」
+DEMO_WORDS = [
+    {'surface': 'Mārcus', 'lemma': 'Mārcus', 'grammar': 'Nom.sg.m', 'gloss': 'マルクス', 'cls': 'c-Nom'},
+    {'surface': 'in', 'lemma': 'in', 'grammar': '前置詞', 'gloss': '〜で'},
+    {'surface': 'hortō', 'lemma': 'hortus', 'grammar': 'Abl.sg.m|Dat.sg.m', 'gloss': '庭', 'cls': 'c-Abl',
+     'marks': [_demo_mark('格 奪/与')]},
+    {'surface': 'Cornēliam', 'unknown': True, 'marks': [_demo_mark('辞書に無い')]},
+    {'surface': 'vīdit', 'lemma': 'videō', 'grammar': '3sg 完了 直説法 能動', 'gloss': '見る', 'cls': 'verb'},
+    {'surface': ',', 'punct': True},
+    {'surface': 'quam', 'lemma': 'quī', 'grammar': 'Acc.sg.f', 'gloss': '〜ところの', 'cls': 'c-Acc',
+     'marks': [_demo_mark('候補N', '候補4', '品詞の違う読みの候補: 代・副・接・前 (先頭のものを使った)')]},
+    {'surface': 'amāvēre', 'lemma': 'amō', 'grammar': '3pl 完了 直説法 能動', 'gloss': '愛する', 'cls': 'verb',
+     'marks': [_demo_mark('推測', title='辞書に無く、規則で推測した語形 (amāvērunt の詩の形)')]},
+    {'surface': 'poētae', 'lemma': 'poēta', 'grammar': 'Nom.pl.m|Gen.sg.m|Dat.sg.m', 'gloss': '詩人', 'cls': 'c-Nom',
+     'marks': [_demo_mark('構造の外')]},
+    {'surface': ';', 'punct': True},
+    {'surface': 'deinde', 'lemma': 'deinde', 'grammar': '副詞', 'gloss': 'それから'},
+    {'surface': 'cantat', 'lemma': 'cantō', 'grammar': '3sg 現在 直説法 能動', 'gloss': '歌う', 'cls': 'verb',
+     'marks': [_demo_mark('主語は語尾から')]},
+    {'surface': '.', 'punct': True},
+]
+
+
 def legend_html():
     rows = ''.join('<tr><td><span class="m m-%s">%s</span></td><td>%s</td></tr>' % (level, esc(label), esc(text))
                    for level, label, text in LEGEND)
+    demo = ('<div class="legend-demo"><div class="ttl">見本 (印の付き方の例。解析結果ではない)</div>'
+            '<div class="demo-text">Mārcus in hortō Cornēliam vīdit, quam amāvēre poētae; deinde cantat.'
+            '<span class="demo-ja">マルクスは庭で、詩人たちが愛したコルネーリアを見た。それから歌う。</span></div>'
+            '<div class="cols">%s</div></div>' % ''.join(interlinear_columns(DEMO_WORDS)))
     return ('<section class="part legend"><div class="ttl">確かさの印 (凡例)</div><table>%s</table>'
-            '<div class="legend-note">橙は確かめたほうがよい所、灰は参考。語の下の点線も同じ色</div></section>' % rows)
+            '<div class="legend-note">橙は確かめたほうがよい所、灰は参考。語の下の点線も同じ色</div>%s</section>' % (rows, demo))
 
 
 def marks_context(analysis):
@@ -539,17 +573,10 @@ def heading(text):
     return '<bdi class="text" dir="auto">%s</bdi>' % esc(text)
 
 
-def sentence_html(n, s):
-    out = ['<section class="sentence" data-n="%d">' % (n - 1)]
-    out.append('<h2><span class="num">%d</span> %s</h2>' % (n, heading(s['text'])))
-    if s['rendered']:
-        out.append('<pre class="rendered">%s</pre></section>' % esc(s['rendered']))
-        return '\n'.join(out)
-    if s['translations']:
-        out.append('<div class="part translation"><div class="ttl">訳</div><ul>%s</ul></div>'
-                   % ''.join('<li>%s</li>' % esc(t) for t in s['translations']))
+def interlinear_columns(words):
+    """行間逐語訳の列 (語ごとに 原文 / 転写 / 見出し語 / 文法 / 訳語 / 確かさの印)"""
     cols = []
-    for w in s['words']:
+    for w in words:
         if w.get('punct'):
             cols.append('<div class="col punct"><div class="sf">%s</div></div>' % esc(w['surface']))
             continue
@@ -559,9 +586,22 @@ def sentence_html(n, s):
             continue
         cols.append('<div class="col"><div class="sf w %s">%s</div>%s<div class="lm" dir="auto">%s</div>'
                     '<div class="gr" dir="ltr">%s</div><div class="gl" dir="ltr">%s</div>%s</div>'
-                    % (w['cls'] + mark_class(w), esc(w['surface']),
-                       '<div class="rm" dir="ltr">%s</div>' % esc(w['roman']) if w['roman'] else '',
+                    % (w.get('cls', '') + mark_class(w), esc(w['surface']),
+                       '<div class="rm" dir="ltr">%s</div>' % esc(w['roman']) if w.get('roman') else '',
                        esc(w['lemma']), esc(w['grammar']), esc(w['gloss']), marks_html(w)))
+    return cols
+
+
+def sentence_html(n, s):
+    out = ['<section class="sentence" data-n="%d">' % (n - 1)]
+    out.append('<h2><span class="num">%d</span> %s</h2>' % (n, heading(s['text'])))
+    if s['rendered']:
+        out.append('<pre class="rendered">%s</pre></section>' % esc(s['rendered']))
+        return '\n'.join(out)
+    if s['translations']:
+        out.append('<div class="part translation"><div class="ttl">訳</div><ul>%s</ul></div>'
+                   % ''.join('<li>%s</li>' % esc(t) for t in s['translations']))
+    cols = interlinear_columns(s['words'])
     out.append('<div class="part interlinear"><div class="ttl">行間逐語訳</div><div class="cols"%s>%s</div></div>'
                % (' dir="rtl"' if s['rtl'] else '', ''.join(cols)))
     out.append('<div class="part arcs"><div class="ttl">図A 弧</div><svg class="arcsvg"></svg></div>')
@@ -617,6 +657,8 @@ h2 .num { font-family: sans-serif; font-size: .8rem; color: var(--sub); vertical
 .legend { border-bottom: 1px solid var(--line); padding-bottom: 1rem; margin-bottom: .5rem; }   /* 凡例と最初の文の境 */
 .legend table { border-collapse: collapse; font-size: .8rem; } .legend td { padding: .1rem .5rem .1rem 0; }
 .legend .legend-note { font-family: sans-serif; font-size: .7rem; color: var(--sub); margin-top: .2rem; }
+.legend-demo { margin-top: .8rem; } .legend-demo .ttl { font-family: sans-serif; font-size: .7rem; color: var(--sub); }
+.legend-demo .demo-text { margin: .2rem 0 .4rem; } .legend-demo .demo-ja { display: block; font-size: .8rem; color: var(--sub); }
 .sf.mark-check { text-decoration: underline dotted #d08020; text-underline-offset: 3px; }
 .sf.mark-note { text-decoration: underline dotted #aaa; text-underline-offset: 3px; }
 body.no-marks .mk { display: none; } body.no-marks .sf { text-decoration: none; }

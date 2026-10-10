@@ -111,6 +111,11 @@ class NotebookTestCase(unittest.TestCase):
         legend = self.note(text, legend=True)   # 凡例は印も
         self.assertTrue(legend.marks)
         self.assertIn('確かさの印 (凡例)', legend.html())
+        # 凡例の見本の文には、凡例のすべての印が付いている
+        demo = {m['label'] for w in notebook.DEMO_WORDS for m in w.get('marks', [])}
+        for _, label, _ in notebook.LEGEND:
+            self.assertTrue(label in demo or any(d.startswith(label.rstrip('N')) for d in demo), label)
+        self.assertIn('legend-demo', legend.html())
 
     def test_rtl_heading(self):
         self.assertIn('dir="rtl"', notebook.heading('בָּרָא (bārā)'))
