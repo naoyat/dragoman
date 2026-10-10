@@ -614,6 +614,7 @@ h2 .num { font-family: sans-serif; font-size: .8rem; color: var(--sub); vertical
 .m { font-family: sans-serif; font-size: .6rem; border-radius: 3px; padding: 0 .25rem; border: 1px solid; }
 .m.m-check { color: #b35c00; border-color: #e0a060; background: #fff4e6; }
 .m.m-note { color: var(--sub); border-color: var(--line); }
+.legend { border-bottom: 1px solid var(--line); padding-bottom: 1rem; margin-bottom: .5rem; }   /* 凡例と最初の文の境 */
 .legend table { border-collapse: collapse; font-size: .8rem; } .legend td { padding: .1rem .5rem .1rem 0; }
 .legend .legend-note { font-family: sans-serif; font-size: .7rem; color: var(--sub); margin-top: .2rem; }
 .sf.mark-check { text-decoration: underline dotted #d08020; text-underline-offset: 3px; }
