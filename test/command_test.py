@@ -111,6 +111,17 @@ class ArgumentTestCase(unittest.TestCase):
                          (None, ['-t', 'say'], ['Rōma magna est.']))   # say は言語でない
         self.assertEqual(self.main.parse_args(['grc', '--pron', 'modern', 'FILE']), ('grc', ['--pron', 'modern', 'FILE'], []))
 
+    def test_short_option_clusters(self):
+        # まとめた短いオプション: 最後の字が値を取れば次が値 (-wt say)、続きがあればそれが値 (-wtsay)、e は文 (-we TEXT)
+        parse = self.main.parse_args
+        self.assertEqual(parse(['-wt', 'say', '-e', 'Rōma magna est.']), (None, ['-wt', 'say'], ['Rōma magna est.']))
+        self.assertEqual(parse(['-wtsay', '-e', 'Rōma.']), (None, ['-wtsay'], ['Rōma.']))
+        self.assertEqual(parse(['-we', 'Rōma magna est.']), (None, ['-w'], ['Rōma magna est.']))
+        self.assertEqual(parse(['-weRōma.']), (None, ['-w'], ['Rōma.']))
+        self.assertEqual(parse(['bo', '-rv', 'voice', 'FILE']), ('bo', ['-rv', 'voice', 'FILE'], []))
+        self.assertEqual(self.main.input_files(['-wt', __file__]), [])   # 値はファイルでも入力にしない
+        self.assertEqual(self.main.input_files(['-wtsay', __file__]), [__file__])
+
     def test_input_files(self):
         import tempfile
         with tempfile.TemporaryDirectory() as tmp:

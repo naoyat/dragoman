@@ -99,6 +99,38 @@ def language_list():
 # (-t say を言語 say と、--html note.html を入力と読まない)。新しいオプションは test/main_test.py が見張る
 VALUE_OPTIONS = {'-t', '--tts', '--html', '--pdf', '--accent', '--pron', '--binyan', '--divine-name',
                  '--compound-labels', '--voice', '-v'}
+VALUE_SHORT = {o[1] for o in VALUE_OPTIONS if len(o) == 2}   # 値を取る短いオプションの字 (t, v)
+
+
+def _short_cluster(arg):
+    """短いオプションのまとまり (-wt、-wtsay、-we) か"""
+    return arg.startswith('-') and not arg.startswith('--') and len(arg) > 1
+
+
+def takes_next(arg):
+    """この引数の次の引数がオプションの値か: -t / --html / まとまりの最後が値を取る字 (-wt)。
+    値がくっついていれば (-tsay、-wtsay、--html=FILE) 次は値でない。getopt と同じ規則"""
+    if arg in VALUE_OPTIONS:
+        return True
+    if not _short_cluster(arg):
+        return False
+    for k, c in enumerate(arg[1:], 1):
+        if c in VALUE_SHORT:
+            return k == len(arg) - 1
+    return False
+
+
+def _split_e(arg):
+    """まとまりの中の -e (-we TEXT、-weTEXT): (e の前のオプション, e の後ろの文 (無ければ '')) か None。
+    e より前に値を取る字があれば (-te …) e はその値の一部"""
+    if not _short_cluster(arg) or arg.startswith('-e'):
+        return None
+    for k, c in enumerate(arg[1:], 1):
+        if c in VALUE_SHORT:
+            return None
+        if c == 'e':
+            return arg[:k], arg[k + 1:]
+    return None
 
 
 def parse_args(argv):
@@ -108,8 +140,20 @@ def parse_args(argv):
     i = 0
     while i < len(argv):
         arg = argv[i]
-        if arg in VALUE_OPTIONS and i + 1 < len(argv):
-            args += [arg, argv[i + 1]]   # オプションと値はそのまま言語のコマンドへ
+        cluster_e = _split_e(arg)
+        if cluster_e is not None:   # -we TEXT・-weTEXT: e の前のオプションは言語のコマンドへ、文は -e と同じく
+            options, text = cluster_e
+            if options != '-':
+                args.append(options)
+            if text:
+                texts.append(text)
+            elif i + 1 < len(argv):
+                texts.append(argv[i + 1])
+                i += 1
+            i += 1
+            continue
+        if takes_next(arg) and i + 1 < len(argv):
+            args += [arg, argv[i + 1]]   # オプションと値はそのまま言語のコマンドへ (-t say、-wt say、--html FILE)
             i += 2
             continue
         if arg.startswith('--lang='):
@@ -142,7 +186,7 @@ def input_files(args):
     for a in args:
         if skip:
             skip = False
-        elif a in VALUE_OPTIONS:
+        elif takes_next(a):
             skip = True
         elif not a.startswith('-') and os.path.exists(a):
             files.append(a)
@@ -156,7 +200,7 @@ def _without(args, files):
         if skip:
             out.append(a)
             skip = False
-        elif a in VALUE_OPTIONS:
+        elif takes_next(a):
             out.append(a)
             skip = True
         elif a in rest:
