@@ -6,18 +6,19 @@
 import sys
 
 from dragoman.core.cli import Command
+from dragoman.core.options import Option
 from . import analyzer, buddhist, compound, dictionary, morphology, script
 
 USAGE = '''
   echo "रामो वनं गच्छति ।" | python3 dragoman.py --lang=sa
   echo "rāmo vanaṃ gacchati" | python3 dragoman.py --lang=sa      (IAST でも)
 '''
-OPTION_HELP = '''
-  --compound-labels=STYLE  複合語の種類の名前: sa (tatpuruṣa など。既定) / ja (依主釈など) / en (determinative など)
-  -v, --voice=VOICE        音読の MBROLA の音声 (in1 / in2)
-  --buddhist / --no-buddhist  仏典の語彙 (漢訳語: rūpa → 色、prajñā → 般若) を使う / 使わない
-                           (既定は文章に bodhisattva, śāriputra, prajñāpāramitā などがあれば使う)
-'''
+OPTIONS = (Option('compound-labels', value='STYLE',
+                  help='複合語の種類の名前: sa (tatpuruṣa など。既定) / ja (依主釈など) / en (determinative など)'),
+           Option('voice', 'v', 'VOICE', '音読の MBROLA の音声 (in1 / in2)'),
+           Option('buddhist', help='仏典の語彙 (漢訳語: rūpa → 色、prajñā → 般若) を使う\n'
+                                   '(既定は文章に bodhisattva, śāriputra, prajñāpāramitā などがあれば使う)'),
+           Option('no-buddhist', help='仏典の語彙を使わない'))
 
 
 def header(analysis, options):
@@ -48,5 +49,5 @@ def available():
 
 COMMAND = Command(lang='sa', name='サンスクリット', analyzer=analyzer, dictionary=dictionary, available=available,
                   usage=USAGE, header=header, descendant_langs=('pi', 'hi', 'en', 'ja'), fallback_langs=('bn', 'mr'),
-                  short_options='v:', long_options=('compound-labels=', 'voice=', 'buddhist', 'no-buddhist'), option_help=OPTION_HELP,
+                  options=OPTIONS,
                   handle_option=handle_option)

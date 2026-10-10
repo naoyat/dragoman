@@ -132,20 +132,28 @@ class ArgumentTestCase(unittest.TestCase):
             self.assertEqual(self.main.input_files(args), [text])   # 既存の書き出し先は入力でない
             self.assertEqual(self.main._without(args, [text]), ['--html', note])
 
-    def test_value_options_cover_commands(self):
-        # 言語ごとのコマンドの値を取るオプションは、すべて main.VALUE_OPTIONS にある (新しく足したときの見張り)
-        from dragoman.core import cli
-        wanted = {'-' + c for c, nxt in zip(cli.COMMON_SHORT, cli.COMMON_SHORT[1:] + ' ') if nxt == ':'}
-        wanted |= {'--' + o[:-1] for o in cli.COMMON_LONG if o.endswith('=')}
+    def test_value_options_from_definitions(self):
+        # 値を取るオプションの一覧は定義 (core/options.py・各言語の Command.options) から作る
+        from dragoman.core import options
+        self.assertTrue({'-t', '--tts', '--html', '--pdf', '--accent', '--pron', '--binyan', '--divine-name',
+                         '--compound-labels', '--voice', '-v'} <= self.main.value_options())
+        self.assertNotIn('-w', self.main.value_options())
+        self.assertEqual(options.getopt_spec([options.Option('tts', 't', 'BACKEND'), options.Option('speech', 's')]),
+                         ('t:s', ['tts=', 'speech']))
+
+    def test_help_lists_options(self):
+        # 説明の表示も定義から: 共通のオプションと言語ごとのオプション
         for code in self.main.LANGUAGES:
             if code == 'la':
-                continue   # ラテン語は latin/main.py (--tts, --accent, --html, --pdf)
-            command = self.main.command_for(code)
-            short = command.short_options or ''
-            wanted |= {'-' + c for c, nxt in zip(short, short[1:] + ' ') if nxt == ':'}
-            wanted |= {'--' + o[:-1] for o in command.long_options if o.endswith('=')}
-        wanted |= {'--accent'}
-        self.assertEqual(wanted - self.main.VALUE_OPTIONS, set())
+                continue
+            from dragoman.core import cli
+            text = cli.help_text(self.main.command_for(code))
+            self.assertIn('--no-word-detail', text)
+            for o in self.main.command_for(code).options:
+                self.assertIn('--' + o.long, text)
+        result = subprocess.run([sys.executable, 'dragoman.py', 'la', '--help'], cwd=ROOT, capture_output=True, text=True)
+        for name in ('--auto-macron', '--no-wiktionary', '--html=FILE', '--legend'):
+            self.assertIn(name, result.stdout)
 
     def test_latin_temporary_file_removed(self):
         # -e の文を渡す一時ファイルは、終わったら (例外でも) 消す

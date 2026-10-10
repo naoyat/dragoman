@@ -9,9 +9,7 @@ from . import analyzer, dictionary, morphology, script
 USAGE = '''
   echo "Мальчик читает книгу." | python3 dragoman.py --lang=ru
 '''
-OPTION_HELP = '''
-  見出しの行には強勢記号を付けた文と転写を添える。音読は macOS の say のロシア語音声 Milena (無ければ espeak-ng)
-'''
+NOTES = '  見出しの行には強勢記号を付けた文と転写を添える。音読は macOS の say のロシア語音声 Milena (無ければ espeak-ng)'
 
 
 def stressed_text(surfaces):
@@ -45,4 +43,4 @@ def available():
 
 COMMAND = Command(lang='ru', name='ロシア語', analyzer=analyzer, dictionary=dictionary, available=available,
                   usage=USAGE, header=header, speech_text=lambda a, o: stressed_text(a.surfaces), romanize=romanized,
-                  descendant_langs=('en', 'ja', 'fr', 'de'), fallback_langs=('uk', 'be'), option_help=OPTION_HELP)
+                  descendant_langs=('en', 'ja', 'fr', 'de'), fallback_langs=('uk', 'be'), notes=NOTES)

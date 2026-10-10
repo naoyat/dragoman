@@ -12,6 +12,7 @@ import dragoman.latin.textutil as textutil
 import dragoman.latin.latin_char as char
 import dragoman.latin.latindic as latindic
 import dragoman.core.util as util
+from dragoman.core import options as option_defs
 from dragoman.latin import analyzer
 from dragoman.core import render
 from dragoman.latin import macronizer
@@ -208,24 +209,8 @@ def repl(options=None, show_prompt=False):
 class Options:
     def __init__(self, args):
         try:
-            opts, self.args = getopt.getopt(args,
-                                            "wqmast:DEh",
-                                            ["no-word-detail",
-                                             "no-translation",
-                                             "capital-to-macron",
-                                             "auto-macron",
-                                             "speech",
-                                             "tts=",
-                                             "accent=",
-                                             "no-wiktionary",
-                                             "descendants",
-                                             "etymology",
-                                             "html=",
-                                             "pdf=",
-                                             "marks",
-                                             "legend",
-                                             "provenance",
-                                             "help"])
+            short, long = option_defs.getopt_spec(option_defs.LATIN)   # 定義は core/options.py の LATIN
+            opts, self.args = getopt.gnu_getopt(args, short, long)
         except getopt.GetoptError:
             self.usage()
             sys.exit()
@@ -287,25 +272,9 @@ class Options:
             provenance.start()   # ノートの再現条件: 使ったデータを記録 (辞書を読み込む前に)
 
     def usage(self):
-        print("Usage: python %s [options] [FILENAME]" % sys.argv[0])
-        print("Options:")
-        print("  -w, --no-word-detail               Don't show word details.")
-        print("  -q, --no-translation               Don't show the translation (Japanese).")
-        print("  -m, --capital-to-macron            [REPL] read capitalized vowels as macrons.")
-        print("  -a, --auto-macron                  Guess macrons for input without them.")
-        print("  -s, --speech                       Speak latin.")
-        print("  -t, --tts=BACKEND                  Speak latin with BACKEND (mbrola [default], espeak, piper)")
-        print("      --accent=ACCENT                [mbrola] pitch (default) or stress")
-        print("      --no-wiktionary                Use only the hand-made dictionary.")
-        print("  -D, --descendants                  Show descendants (French, English, ...) of each word.")
-        print("  -E, --etymology                    Show etymology (ancestors, cognates) of each word.")
-        print("      --html=FILE                    Write a notebook (HTML): interlinear gloss, diagrams, translation.")
-        print("      --pdf=FILE                     Write the notebook as PDF (headless Google Chrome).")
-        print("      --marks                        Notebook: mark uncertain analyses (unknown, guessed, ambiguous ...).")
-        print("      --legend                       Notebook: print a legend of the marks (implies --marks).")
-        print("      --provenance                   Notebook: add the reproduction info (code version, data, options).")
-        print("  -h, --help                         Print this message and exit.")
-
+        print('ラテン語の解析と逐語訳 (ファイルが無ければ対話モード: 変化表・マクロンの推定)\n')
+        print('  ./dragoman.py la [オプション] [ファイル...]\n')
+        print('オプション:\n' + option_defs.help_text(option_defs.LATIN))
 
 def main(argv=None):
     options = Options(sys.argv[1:] if argv is None else argv)

@@ -6,32 +6,14 @@
 # 各言語は <言語>/command.py に Command を置き、言語ごとに違うところ (見出しの行・語の転写・解説・データの確認・
 # 音読の言語・固有のオプション) だけを書く。オプションの解析、テキストの読み込み、音読、表示はここで行う。
 #
-#   共通のオプション:
-#   -w, --no-word-detail   語ごとの辞書引きの結果を表示しない
-#   -D, --descendants      ほかの言語に入った語 (子孫語) も表示する
-#   -E, --etymology        語源も表示する
-#   -s, --speech           音読する
-#   -t, --tts=BACKEND      音読の方式 (mbrola / espeak / piper / say)
-#   -r, --romanize         語ごとの辞書引きの結果に、語の転写を添える
-#   --no-explain           初学者向けの解説 (動詞の型・語根など) を出さない
-#   --english-glosses      英語の訳語 (Wiktionary などの語義) を日本語に置き換えない
-#   --sentence-per-line    改行も文の区切りにする (歌詞・詩など、行末に句点の無い行。行末がカンマなら次の行に続ける)
-#   --html=FILE            解析結果をノート (HTML) に清書する (行間逐語訳・弧の図・入れ子の図・訳・語の詳細)
-#   --pdf=FILE             ノートを PDF に (Google Chrome のヘッドレス印刷)
-#   --marks                ノートに確かさの印 (辞書に無い・推測した語形・構造の外・候補が複数・格が決まらない …)
-#   --legend               ノートの冒頭に印の凡例 (--marks も)
-#   --provenance           ノートの末尾に再現条件 (コードの版・オプション・使ったデータ)
-#   -h, --help             説明を表示する
+#   オプションの定義 (名前・値・説明) は core/options.py (共通の COMMON と、言語ごとの Command(options=…))
 #
 import getopt
 import sys
 from dataclasses import dataclass, field
 
-from dragoman.core import ansi_color, descendants, etymology, provenance, render
+from dragoman.core import ansi_color, descendants, etymology, options as option_defs, provenance, render
 
-COMMON_SHORT = 'wDEst:rh'
-COMMON_LONG = ['no-word-detail', 'descendants', 'etymology', 'speech', 'tts=', 'romanize', 'no-explain',
-               'english-glosses', 'sentence-per-line', 'html=', 'pdf=', 'marks', 'legend', 'provenance', 'help']
 
 
 @dataclass
@@ -70,20 +52,22 @@ class Command:
     speech_lang: str = None         # core.speech の言語の符号
     speech_pron: object = None      # (options) → 発音の流儀 (ギリシア語の --pron)
     speech_setup: object = None     # (options, speech) → 音読の前の設定 (ヘブライ語の神の名の読み方)
-    short_options: str = ''         # 固有のオプション (getopt の書式)
-    long_options: tuple = ()
-    option_help: str = ''           # 固有のオプションの説明 (説明の表示に添える)
+    options: tuple = ()             # 固有のオプション (core.options.Option の列。説明の表示にも)
+    notes: str = ''                 # 説明の表示に添える文 (固有のオプションのほかの注意)
     handle_option: object = None    # (option, arg, options) → 処理したら True。'exit' で終了
     texts_hook: object = None       # (options) → 解析の前に行うこと (表の表示など)。True を返したら終わる
     render: object = None           # (analysis, options) → 解析結果の表示 (既定は core.render。古文は品詞分解と現代語訳)
 
 
 def help_text(command):
-    common = open(__file__, encoding='utf-8').read().split('共通のオプション:\n')[1].split('\nimport')[0]
-    common = '\n'.join(line[1:] for line in common.splitlines() if line.startswith('#   '))
-    out = '%s の解析と逐語訳\n\n%s\n\n共通のオプション:\n%s' % (command.name, command.usage.strip('\n'), common)
-    if command.option_help:
-        out += '\n\n%s のオプション:\n%s' % (command.name, command.option_help.strip('\n'))
+    out = '%s の解析と逐語訳\n\n%s\n\n共通のオプション:\n%s' % (command.name, command.usage.strip('\n'),
+                                                         option_defs.help_text(option_defs.COMMON))
+    if command.options or command.notes:
+        out += '\n\n%s のオプション:' % command.name
+        if command.options:
+            out += '\n' + option_defs.help_text(command.options)
+        if command.notes:
+            out += '\n' + command.notes.strip('\n')
     return out
 
 
@@ -106,8 +90,8 @@ def word_notes(command, options):
 
 
 def parse(command, argv):
-    opts, args = getopt.gnu_getopt(argv, COMMON_SHORT + command.short_options,
-                               COMMON_LONG + list(command.long_options))
+    short, long = option_defs.getopt_spec(option_defs.COMMON + tuple(command.options))
+    opts, args = getopt.gnu_getopt(argv, short, long)
     options = Options()
     for option, arg in opts:
         if command.handle_option:

@@ -24,10 +24,11 @@
 #   -e, --text=TEXT       引数の文を入力にする (何度でも。ファイル・標準入力の代わりに)
 #   -L, --languages       対応している言語の一覧を出す
 #
-# 共通のオプション (-w, -D, -E, -s, -t, -r, --no-explain, --english-glosses) は core/cli.py、
-# 言語ごとのオプションは ./dragoman.py LANG --help で。
+# オプションの定義 (共通・ラテン語・言語ごと) は core/options.py と各言語の command.py。
+# 説明は ./dragoman.py LANG --help で。
 # ラテン語は dragoman/latin/main.py (対話モード・変化表・マクロンの推定などを含む) に渡す
 #
+import functools
 import importlib
 import os
 import re
@@ -95,11 +96,21 @@ def language_list():
                      ['  auto 文字から推定する'])
 
 
-# 値を取るオプション (言語ごとのコマンドに渡すもの)。値を言語の符号・入力ファイルと取り違えないように
-# (-t say を言語 say と、--html note.html を入力と読まない)。新しいオプションは test/main_test.py が見張る
-VALUE_OPTIONS = {'-t', '--tts', '--html', '--pdf', '--accent', '--pron', '--binyan', '--divine-name',
-                 '--compound-labels', '--voice', '-v'}
-VALUE_SHORT = {o[1] for o in VALUE_OPTIONS if len(o) == 2}   # 値を取る短いオプションの字 (t, v)
+@functools.lru_cache(maxsize=1)
+def value_options():
+    """値を取るオプション (言語ごとのコマンドに渡すもの)。値を言語の符号・入力ファイルと取り違えないように
+    (-t say を言語 say と、--html note.html を入力と読まない)。定義 (core/options.py と各言語の Command.options) から"""
+    from dragoman.core import options
+    names = options.value_names(options.COMMON + options.LATIN)
+    for code in LANGUAGES:
+        if code != 'la':
+            names |= options.value_names(command_for(code).options)
+    return frozenset(names)
+
+
+def value_short():
+    """値を取る短いオプションの字 (t, v)"""
+    return {name[1] for name in value_options() if len(name) == 2}
 
 
 def _short_cluster(arg):
@@ -110,12 +121,12 @@ def _short_cluster(arg):
 def takes_next(arg):
     """この引数の次の引数がオプションの値か: -t / --html / まとまりの最後が値を取る字 (-wt)。
     値がくっついていれば (-tsay、-wtsay、--html=FILE) 次は値でない。getopt と同じ規則"""
-    if arg in VALUE_OPTIONS:
+    if arg in value_options():
         return True
     if not _short_cluster(arg):
         return False
     for k, c in enumerate(arg[1:], 1):
-        if c in VALUE_SHORT:
+        if c in value_short():
             return k == len(arg) - 1
     return False
 
@@ -126,7 +137,7 @@ def _split_e(arg):
     if not _short_cluster(arg) or arg.startswith('-e'):
         return None
     for k, c in enumerate(arg[1:], 1):
-        if c in VALUE_SHORT:
+        if c in value_short():
             return None
         if c == 'e':
             return arg[:k], arg[k + 1:]
