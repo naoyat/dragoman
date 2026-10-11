@@ -207,6 +207,24 @@ def rows(clause, langs=LANGS):
     return out
 
 
+def parse_langs(value):
+    """--compare の値 (la,grc,ja / all) → 言語の符号の列。知らない符号は ValueError"""
+    if value.strip() in ('all', ''):
+        return list(LANGS)
+    langs = [v.strip() for v in value.split(',') if v.strip()]
+    unknown = [lang for lang in langs if lang not in LANGS]
+    if unknown:
+        raise ValueError('--compare の知らない言語: %s (使える言語: %s、all で全部)' % (', '.join(unknown), ' '.join(LANGS)))
+    return langs
+
+
+def prepare(langs):
+    """比べる言語の生成に要るもの (ラテン語の辞書は、ほかの言語のコマンドでは読み込んでいない)"""
+    from dragoman.latin import latindic
+    if not latindic.LatinDic.dic:
+        latindic.load()
+
+
 def text_table(clauses, langs=LANGS):
     """端末に出す表 (要素ごとに、言語ごとの 形  [手段])"""
     lines = []

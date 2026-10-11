@@ -228,6 +228,7 @@ class Options:
         self.html = None
         self.pdf = None
         self.marks = self.legend = self.provenance = False
+        self.compare = None
         self.notebook = None
 
         for option, arg in opts:
@@ -264,6 +265,9 @@ class Options:
                 self.marks = self.legend = True
             elif option == '--provenance':
                 self.provenance = True
+            elif option == '--compare':
+                from dragoman.core.cli import compare_langs
+                self.compare = compare_langs(arg)
             elif option in ('-h', '--help'):
                 self.usage()
                 sys.exit()
@@ -285,7 +289,8 @@ def main(argv=None):
     latindic.load()
     if options.html or options.pdf:
         from dragoman.core.notebook import Notebook
-        options.notebook = Notebook('ラテン語 — dragoman', marks=options.marks, legend=options.legend)
+        options.notebook = Notebook('ラテン語 — dragoman', marks=options.marks, legend=options.legend,
+                                    compare=options.compare)
 
     if len(options.args) == 0:
         # repl mode

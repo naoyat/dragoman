@@ -417,8 +417,12 @@ def slot(label, objs):
 # ノート
 
 class Notebook:
-    def __init__(self, title='dragoman', marks=False, legend=False):
+    def __init__(self, title='dragoman', marks=False, legend=False, compare=None):
         self.title = title
+        self.compare = compare or []   # 要素ごとの比較の言語 (--compare)
+        if self.compare:
+            from dragoman.generate import compare as compare_module
+            compare_module.prepare(self.compare)
         self.marks = marks or legend   # 確かさの印 (--marks)
         self.legend = legend           # 印の凡例 (--legend)
         self.sentences = []
@@ -462,13 +466,29 @@ class Notebook:
             trees = ''.join(tree(c.predicate) for c in analysis.clauses) or \
                 ''.join(tree(n) for n in analysis.nodes)
         text = header or ' '.join(analysis.surfaces)
-        self.sentences.append({'text': plain(text), 'words': words, 'arcs': arcs_of(analysis) if rendered is None else [],
+        comparison = self._comparison(analysis) if self.compare else []
+        self.sentences.append({'text': plain(text), 'words': words, 'compare': comparison, 'arcs': arcs_of(analysis) if rendered is None else [],
                                'tree': trees, 'translations': translations, 'detail': show_word_detail,
                                'rendered': plain(rendered) if rendered else '',
                                'rtl': bool(RTL.search(' '.join(analysis.surfaces)))})
 
+    def _comparison(self, analysis):
+        """文の枠の節ごとの比較の行 [[(要素の名前, {言語: (形, 手段)})]]。枠にできない文は []"""
+        from dragoman.generate import frame, compare
+        try:
+            clauses = frame.frames(analysis)
+        except Exception:
+            return []
+        out = []
+        for clause in clauses:
+            rows = compare.rows(clause, self.compare)
+            # 述語の手段は言語ごとに決まっていて文によらないので、表には入れない (ノートの冒頭に1回)
+            rows[0] = (rows[0][0], {lang: (form, '') for lang, (form, _) in rows[0][1].items()})
+            out.append(rows)
+        return out
+
     def html(self):
-        body = []
+        body = [compare_note_html(self.compare)] if self.compare else []
         if self.legend:
             # 凡例 (と再現条件) を最初のページに。印刷では凡例の後で改ページし、再現条件はそのページの下部に
             front = legend_html() + (provenance_html(self.provenance) if self.provenance else '')
@@ -482,7 +502,7 @@ class Notebook:
         if self.provenance and not self.legend:
             body.append(provenance_html(self.provenance))
         parts = {'%TITLE%': html.escape(self.title), '%BODY%': '\n'.join(body), '%DATA%': data,
-                 '%CONTROLS%': controls_html(self.marks, bool(self.provenance))}
+                 '%CONTROLS%': controls_html(self.marks, bool(self.provenance), bool(self.compare))}
         # 置換はテンプレートに一度だけ (差し込んだ本文の中の %DATA% などはもう一度置き換えない)
         return PLACEHOLDER.sub(lambda m: parts[m.group(0)], TEMPLATE)
 
@@ -507,12 +527,13 @@ class Notebook:
 
 PLACEHOLDER = re.compile('%(TITLE|BODY|DATA|CONTROLS)%')
 PARTS = [('translation', '訳'), ('interlinear', '行間逐語訳'), ('marks', '確かさの印'), ('arcs', '図A 弧'),
-         ('tree', '図B 入れ子'), ('detail', '語の詳細'), ('provenance', '再現条件')]
+         ('tree', '図B 入れ子'), ('compare', '要素ごとの比較'), ('detail', '語の詳細'), ('provenance', '再現条件')]
 
 
-def controls_html(marks, provenance):
+def controls_html(marks, provenance, compare=False):
     """画面で表示する部分を選ぶチェックボックス (ノートに載せた部分だけ。印刷では隠れる)"""
-    shown = [(k, name) for k, name in PARTS if (k != 'marks' or marks) and (k != 'provenance' or provenance)]
+    shown = [(k, name) for k, name in PARTS if (k != 'marks' or marks) and (k != 'provenance' or provenance)
+             and (k != 'compare' or compare)]
     return '\n'.join('  <label><input type="checkbox" data-part="%s" checked> %s</label>' % (k, name) for k, name in shown)
 
 
@@ -577,6 +598,29 @@ def heading(text):
     return '<bdi class="text" dir="auto">%s</bdi>' % esc(text)
 
 
+def compare_html(clauses):
+    """要素ごとの比較の表: 要素が行、言語が列。セルは形と、その手段"""
+    from dragoman.generate import compare
+    tables = []
+    for rows in clauses:
+        langs = list(rows[0][1])
+        head = '<thead><tr><th></th>%s</tr></thead>' % ''.join('<th>%s</th>' % esc(compare.NAMES[l]) for l in langs)
+        body = ''.join('<tr><th class="el">%s</th>%s</tr>' % (esc(name), ''.join(
+            '<td><div class="f">%s</div>%s</td>' % (esc(cells[l][0] or '—'),
+                                                   '<div class="h">%s</div>' % esc(cells[l][1]) if cells[l][1] else '')
+            for l in langs)) for name, cells in rows)
+        tables.append('<table class="cmp">%s<tbody>%s</tbody></table>' % (head, body))   # 見出しはページごとに繰り返す
+    return '<div class="part compare"><div class="ttl">要素ごとの比較</div>%s</div>' % ''.join(tables)
+
+
+def compare_note_html(langs):
+    """比べる言語の、述語の表し方 (文によらないので冒頭に1回)"""
+    from dragoman.generate import compare
+    rows = ''.join('<tr><th>%s</th><td>%s</td></tr>' % (esc(compare.NAMES[l]), esc(compare.PREDICATE_HOW[l])) for l in langs)
+    return ('<section class="part compare-note"><div class="ttl">要素ごとの比較: 述語の表し方</div>'
+            '<table>%s</table></section>' % rows)
+
+
 def interlinear_columns(words):
     """行間逐語訳の列 (語ごとに 原文 / 転写 / 見出し語 / 文法 / 訳語 / 確かさの印)"""
     cols = []
@@ -610,6 +654,8 @@ def sentence_html(n, s):
                % (' dir="rtl"' if s['rtl'] else '', ''.join(cols)))
     out.append('<div class="part arcs"><div class="ttl">図A 弧</div><svg class="arcsvg"></svg></div>')
     out.append('<div class="part tree"><div class="ttl">図B 入れ子</div><div class="trees">%s</div></div>' % s['tree'])
+    if s.get('compare'):
+        out.append(compare_html(s['compare']))
     if s['detail']:
         rows = []
         for i, w in enumerate(s['words']):
@@ -694,6 +740,16 @@ body.no-marks .mk { display: none; } body.no-marks .sf { text-decoration: none; 
 .note { font-size: .8rem; } .note.explain { color: var(--gen); } .note.descendants { color: #00838f; }
 .note.etymology { color: var(--dat); }
 pre.rendered { white-space: pre-wrap; font-size: .85rem; }
+.cmp { border-collapse: collapse; font-size: .78rem; width: 100%; table-layout: fixed; margin-bottom: .4rem; }
+.cmp th, .cmp td { border: 1px solid var(--line); padding: .2rem .3rem; vertical-align: top; text-align: left;
+                   overflow-wrap: anywhere; }
+.cmp th { font-family: sans-serif; font-weight: normal; font-size: .68rem; color: var(--sub); background: var(--box); }
+.cmp th.el { width: 5.5em; } .cmp .h { font-size: .62rem; color: var(--sub); }   /* 本文の字体 (ギリシア文字のアクセント) */
+.part.compare { break-inside: auto; } .cmp tr { break-inside: avoid-page; } .cmp thead { display: table-header-group; }
+.compare-note { font-size: .8rem; border-bottom: 1px solid var(--line); padding-bottom: .8rem; }
+.compare-note th { font-family: sans-serif; font-weight: normal; font-size: .7rem; color: var(--sub); text-align: left;
+                   padding-right: 1em; }
+body.no-compare .compare, body.no-compare .compare-note { display: none; }
 .provenance { font-family: sans-serif; font-size: .7rem; color: var(--sub); margin-top: 1.5rem; }
 .provenance table { border-collapse: collapse; } .provenance th { text-align: left; font-weight: normal; padding-right: 1em; }
 .provenance td, .provenance th { vertical-align: top; padding: .05rem .4rem .05rem 0; }

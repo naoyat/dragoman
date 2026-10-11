@@ -123,6 +123,23 @@ class NotebookTestCase(unittest.TestCase):
         self.assertIn('class="part provenance"', front)
         self.assertEqual(page.count('class="part provenance"'), 1)
 
+    def test_compare_table(self):
+        # --compare: 選んだ言語の列で、要素ごとの比較の表。述語の表し方は冒頭に1回
+        nb = self.note('Rosam in hortō vīdit.', compare=['la', 'en', 'ja'])
+        rows = dict(nb.sentences[0]['compare'][0])
+        self.assertEqual(rows['前置詞句 (in + 奪格)']['ja'], ('庭で', '助詞 で'))
+        self.assertEqual(rows['主語 (書かれていない)']['en'], ('he', '代名詞を補う'))
+        self.assertEqual(rows['述語 (完了)']['la'][1], '')   # 表のセルには述語の手段を入れない
+        page = nb.html()
+        self.assertEqual(page.count('class="part compare-note"'), 1)
+        self.assertIn('<thead>', page)
+        self.assertIn('data-part="compare"', page)
+        self.assertNotIn('data-part="compare"', self.note('Rosam vīdit.').html())
+        from dragoman.generate import compare
+        self.assertEqual(compare.parse_langs('all'), list(compare.LANGS))
+        with self.assertRaises(ValueError):
+            compare.parse_langs('la,xx')
+
     def test_rtl_heading(self):
         self.assertIn('dir="rtl"', notebook.heading('בָּרָא (bārā)'))
 

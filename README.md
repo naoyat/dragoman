@@ -97,6 +97,7 @@ python3 tools/build_en_ja.py        # → ~/.local/share/dragoman-data/en-ja.sql
 | `--html=FILE` | 解析結果をノート（HTML）に清書する（下の「ノート」） |
 | `--pdf=FILE` | ノートを PDF にする（Google Chrome / Chromium のヘッドレス印刷） |
 | `--marks` / `--legend` / `--provenance` | ノートに確かさの印 / 印の凡例 / 再現条件を載せる |
+| `--compare=LANGS` | ノートに要素ごとの比較の表（言語の符号をカンマで: `la,grc,ja`。`all` で全部） |
 
 言語ごとの例文とその訳は `python3 tools/samples.py --lang=xx` で、解析の精度は `python3 tools/ud_eval.py --lang=xx` で
 見られます（評価用のツリーバンクは言語ごとの文書を参照）。
@@ -128,6 +129,10 @@ python3 tools/build_en_ja.py        # → ~/.local/share/dragoman-data/en-ja.sql
   再現条件はそのページの下部に
 * `--provenance` 再現条件を末尾に: コードの版（git のコミット）・オプション・ライブラリの版と、実際に使ったデータのファイル
   （更新日・大きさ）。同じ文の結果が変わったときに、実装の変更か辞書の更新かを切り分けられる
+
+* `--compare=LANGS` 要素ごとの比較: 文の枠の要素（述語・主語・目的語・前置詞句 …）を、選んだ言語がそれぞれどう表すかの表
+  （要素が行・言語が列。格・前置詞・語順・助詞、書かれていない主語を補うか）。述語の表し方は冒頭に1回。
+  端末では `python3 tools/generate.py --compare` でも
 
 HTML のチェックボックスは画面で一時的に隠すためのもので（ブラウザで印刷するときにも効く）、`--pdf` には効きません。
 PDF に載せるものはオプションで選びます。

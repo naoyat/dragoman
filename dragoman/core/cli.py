@@ -32,6 +32,7 @@ class Options:
     marks: bool = False             # ノートに確かさの印
     legend: bool = False            # ノートに印の凡例
     provenance: bool = False        # ノートに再現条件
+    compare: list = None            # ノートの要素ごとの比較の言語 (--compare=la,grc,ja)
     extra: dict = field(default_factory=dict)  # 言語固有のオプションの値
 
 
@@ -127,6 +128,8 @@ def parse(command, argv):
         elif option == '--provenance':
             options.provenance = True
             provenance.start()   # 使ったデータの記録を始める (辞書を読み込む前に)
+        elif option == '--compare':
+            options.compare = compare_langs(arg)
         elif option == '--english-glosses':
             from dragoman.core import en_ja
             en_ja.ENABLED = False
@@ -185,7 +188,8 @@ def run(command, argv=None, texts=None):
     notebook = None
     if options.html or options.pdf:
         from dragoman.core.notebook import Notebook
-        notebook = Notebook('%s — dragoman' % command.name, marks=options.marks, legend=options.legend)
+        notebook = Notebook('%s — dragoman' % command.name, marks=options.marks, legend=options.legend,
+                            compare=options.compare)
     for text in texts:
         for analysis in command.analyzer.analyze_text(text):
             line = command.header(analysis, options) if command.header else ' '.join(analysis.surfaces)
@@ -214,6 +218,15 @@ def run(command, argv=None, texts=None):
                 speech.pause_while_speaking()
     if notebook is not None:
         save_notebook(notebook, options, command.lang)
+
+
+def compare_langs(value):
+    """--compare の値を言語の符号の列に。知らない符号なら解析の前に止める"""
+    from dragoman.generate import compare
+    try:
+        return compare.parse_langs(value)
+    except ValueError as e:
+        sys.exit(str(e))
 
 
 def check_html_path(path):
