@@ -166,7 +166,8 @@ def run_other(text, source):
             mark = ''
             if lang == source:
                 first = out.split('\n')[0]
-                original = _source_words(analysis.text, source)
+                # 解析の表示の文は標識 (ng・ang) を落とすことがあるので、インドネシア語・タガログ語は入力の文と比べる
+                original = _source_words(text if source in ('id', 'tl') else analysis.text, source)
                 mark = '   ✓ 同じ語' if original == _source_words(first, source) else '   ✗'
             first, _, rest = out.partition('\n')
             print('  %s %s%s%s' % (label, first, mark, ('\n' + rest) if rest else ''))

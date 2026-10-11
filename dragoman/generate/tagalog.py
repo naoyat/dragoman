@@ -287,6 +287,11 @@ def _focus(clause):
     verb_root = root_of(to_tagalog(clause.verb, 'verb') or clause.verb.lemma)
     if clause.voice == 'passive':
         return 'object', verb_root, subjects[0] if subjects else None
+    if clause.verb.lang == 'tl' and clause.verb.desc.startswith('focus:'):
+        # 元がタガログ語なら元の焦点 (Kumakain ang bata ng tinapay: 行為者焦点のまま)
+        voice = clause.verb.desc[len('focus:'):]
+        return voice, verb_root, (subjects[0] if subjects else None) if voice == 'actor' else \
+            (objects[0] if objects else (subjects[0] if subjects else None))
     if verb_root in BARE:   # alam ko「私は知っている」: する人は ng、目的語があれば ang
         return 'object', verb_root, objects[0] if objects else None
     if objects:

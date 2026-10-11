@@ -416,8 +416,8 @@ def _verb(clause):
     root = to_indonesian(clause.verb, 'verb')
     if root is None:
         return '[%s]' % english.word(clause.verb)
-    if clause.verb.lang == 'id':
-        return root
+    if clause.verb.lang == 'id':   # 元がインドネシア語なら元の語形 (接辞の付いた melihat。語根の lihat でなく)
+        return (clause.verb.surface or root).lower()
     if clause.voice == 'passive':
         return passive(root)
     if clause.mood == 'imperative':

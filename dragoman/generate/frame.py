@@ -10,6 +10,7 @@
 # 格は「役割」に置き換える (主格 → subject、対格 → object、与格 → recipient …)。元の格も残す (元の言語に戻すときに使う)。
 # 語は見出し語 (lemma) と品詞・数・性で持つ。訳語 (日本語) は解析のものをそのまま。
 #
+import re
 from dataclasses import dataclass, field
 
 from dragoman.core.Word import Word
@@ -26,6 +27,12 @@ from dragoman.core.animacy import is_animate
 # 格 → 役割 (前置詞の無い格)
 # 元の言語ごとの閉じた語類をラテン語の形に (文の枠ではラテン語を閉じた語類の中立の形に使う)
 SOURCE_PRONOUNS = {
+    'id': {'itu': ('ille', ''), 'ini': ('hic', ''), 'saya': ('ego', 'sg'), 'aku': ('ego', 'sg'), 'kami': ('ego', 'pl'),
+           'kita': ('ego', 'pl'), 'kamu': ('tū', 'sg'), 'anda': ('tū', 'sg'), 'dia': ('is', 'sg'), 'ia': ('is', 'sg'),
+           'mereka': ('is', 'pl')},
+    'tl': {'ito': ('hic', ''), 'iyon': ('ille', ''), 'iyan': ('ille', ''), 'ako': ('ego', 'sg'), 'ko': ('ego', 'sg'),
+           'kami': ('ego', 'pl'), 'tayo': ('ego', 'pl'), 'ikaw': ('tū', 'sg'), 'ka': ('tū', 'sg'), 'mo': ('tū', 'sg'),
+           'kayo': ('tū', 'pl'), 'siya': ('is', 'sg'), 'niya': ('is', 'sg'), 'sila': ('is', 'pl'), 'nila': ('is', 'pl')},
     'ru': {'я': ('ego', 'sg'), 'ты': ('tū', 'sg'), 'он': ('is', 'sg'), 'она': ('is', 'sg'), 'оно': ('is', 'sg'),
            'мы': ('ego', 'pl'), 'вы': ('tū', 'pl'), 'они': ('is', 'pl'), 'этот': ('hic', ''), 'тот': ('ille', ''),
            'себя': ('sē', ''), 'свой': ('suus', ''), 'мой': ('meus', ''), 'твой': ('tuus', ''), 'наш': ('noster', ''),
@@ -59,6 +66,14 @@ SOURCE_PREPOSITIONS = {
            ('за', 'Ins'): ('post', 'Acc'), ('между', 'Ins'): ('inter', 'Acc'), ('около', 'Gen'): ('prope', 'Acc'),
            ('против', 'Gen'): ('contrā', 'Acc'), ('вокруг', 'Gen'): ('circum', 'Acc')},
 }
+# インドネシア語・タガログ語の前置詞 (格は解析器が属格に)
+for _code, _table in (('id', (('di', ('in', 'Abl')), ('ke', ('ad', 'Acc')), ('dari', ('ab', 'Abl')),
+                               ('dengan', ('cum', 'Abl')), ('kepada', ('ad', 'Acc')), ('untuk', ('prō', 'Abl')),
+                               ('tanpa', ('sine', 'Abl')), ('oleh', ('ab', 'Abl')))),
+                      ('tl', (('sa', ('in', 'Abl')), ('mula sa', ('ab', 'Abl')), ('para sa', ('prō', 'Abl'))))):
+    for _surface, _latin in _table:
+        SOURCE_PREPOSITIONS.setdefault(_code, {})[(_surface, 'Gen')] = _latin
+        SOURCE_PREPOSITIONS[_code][(_surface, None)] = _latin
 # ペルシア語・ヒンディー語 (後置詞)・アラビア語 (母音記号の有無の両方): 解析器の支配する格 (属格・斜格) と組で
 for _surface, _latin in (('در', ('in', 'Abl')), ('به', ('ad', 'Acc')), ('از', ('ab', 'Abl')), ('با', ('cum', 'Abl')),
                          ('بی', ('sine', 'Abl')), ('برای', ('prō', 'Abl')), ('زیر', ('sub', 'Abl')),
@@ -82,7 +97,9 @@ for _surface, _latin in (('فِي', ('in', 'Abl')), ('في', ('in', 'Abl')), ('�
 SOURCE_ROLES = {'ru': {'Ins': 'means', 'Loc': 'place'}, 'sa': {'Ins': 'means', 'Abl': 'source', 'Loc': 'place'}}
 VOICES = {'middle': 'active', 'middle-passive': 'active'}   # 中動態は能動に (Clause.middle に印。ギリシア語に戻すとき中動)
 TENSES = {'aorist': 'perfect'}   # ギリシア語・サンスクリットのアオリストは完了 (語りの過去) に
-SOURCE_TENSES = {'sa': {'imperfect': 'perfect'}}   # サンスクリットの laṅ は語りの過去 (ラテン語の完了に)
+SOURCE_TENSES = {'sa': {'imperfect': 'perfect'},   # サンスクリットの laṅ は語りの過去 (ラテン語の完了に)
+                 # タガログ語のアスペクト: 完了相 → 完了、進行相 → 現在、未然相 → 未来
+                 'tl': {'completive': 'perfect', 'progressive': 'present', 'contemplative': 'future'}}   # サンスクリットの laṅ は語りの過去 (ラテン語の完了に)
 # 形は完了で意味は現在の動詞 (οἶδα「知っている」、ᾔδει「知っていた」)
 PERFECT_PRESENTS = {'grc': {'οἶδα'}}
 # 間接疑問の疑問詞 → ラテン語の疑問詞 (代名詞 τίς は性で quis / quid)
@@ -225,6 +242,12 @@ def lex_of(word, item=None):
     lang = _lang if _lang not in ('', 'la') else ''
     if lang == 'sa':
         lemma = lemma.split(' = ')[0].split(' ')[0]   # 'pustaka = pur-tak tatpuruṣa' (複合語の分析の注記) → pustaka
+    focus = ''
+    if lang == 'tl':   # タガログ語の焦点 (解析の注記の「行為者焦点」…)。元の言語に戻すとき焦点を保つ
+        m = re.search(r'\((行為者|対象|移動物|場所)焦点', lemma)
+        focus = {'行為者': 'actor', '対象': 'object', '移動物': 'conveyance', '場所': 'locative'}[m.group(1)] if m else ''
+    if lang in ('id', 'tl'):
+        lemma = re.sub(r' \([^)]*\)$', '', lemma)   # 'lihat (meN-)'・'kita (対象焦点・完了)' (解析の注記) → 語根
     if lang == 'ar' and item.attrib('lex'):
         lemma = item.attrib('lex')   # 表示の形 (bint ⁧بِنْت⁩) でなく CAMeL の見出しの鍵 (بِنْت。生成器の見出しと同じ)
     pronoun = SOURCE_PRONOUNS.get(lang, {}).get(lemma.lower()) if item.pos in ('pronoun', 'adj', 'det') else None
@@ -235,7 +258,8 @@ def lex_of(word, item=None):
                    surface=word.surface if word is not None else item.surface)
     proper = item.attrib('name') is True or (lemma[:1].isupper() and item.pos in ('noun', 'unknown'))
     return Lex(lemma, item.pos, item.ja, proper=proper and item.pos in ('noun', 'unknown', 'name'), lang=lang,
-               degree=item.attrib('rank') or '', en=english, desc=item.attrib('desc') or '', verb=verb,
+               degree=item.attrib('rank') or '', en=english,
+               desc=('focus:' + focus) if focus else (item.attrib('desc') or ''), verb=verb,
                verb_ja=next((ja for ja in (hook(verb) for hook in VERB_GLOSS_HOOKS) if ja), '') if verb else '',
                surface=word.surface if word is not None else item.surface,
                ptense=item.attrib('tense') or '' if item.pos == 'participle' else '')
