@@ -11,6 +11,7 @@
 # 語は見出し語 (lemma) と品詞・数・性で持つ。訳語 (日本語) は解析のものをそのまま。
 #
 import re
+import unicodedata
 from dataclasses import dataclass, field
 
 from dragoman.core.Word import Word
@@ -66,6 +67,14 @@ SOURCE_PREPOSITIONS = {
            ('за', 'Ins'): ('post', 'Acc'), ('между', 'Ins'): ('inter', 'Acc'), ('около', 'Gen'): ('prope', 'Acc'),
            ('против', 'Gen'): ('contrā', 'Acc'), ('вокруг', 'Gen'): ('circum', 'Acc')},
 }
+# ヘブライ語の前置詞 (母音の違う形も。解析器は格を対格に)
+for _surfaces, _latin in ((('בְּ', 'בַּ', 'בָּ', 'בִּ', 'בְ', 'בַ', 'בָ'), ('in', 'Abl')),
+                          (('לְ', 'לַ', 'לָ', 'לִ', 'לֵ'), ('ad', 'Acc')), (('אֶל', 'אֶל־'), ('ad', 'Acc')),
+                          (('מִן', 'מִ', 'מֵ', 'מִן־'), ('ab', 'Abl')), (('עִם', 'עִם־'), ('cum', 'Abl')),
+                          (('עַל', 'עַל־'), ('super', 'Acc')), (('לִפְנֵי',), ('ante', 'Acc')), (('אַחֲרֵי',), ('post', 'Acc'))):
+    for _surface in _surfaces:
+        for _case in ('Acc', 'Gen', None):
+            SOURCE_PREPOSITIONS.setdefault('he', {})[(_surface, _case)] = _latin
 # インドネシア語・タガログ語の前置詞 (格は解析器が属格に)
 for _code, _table in (('id', (('di', ('in', 'Abl')), ('ke', ('ad', 'Acc')), ('dari', ('ab', 'Abl')),
                                ('dengan', ('cum', 'Abl')), ('kepada', ('ad', 'Acc')), ('untuk', ('prō', 'Abl')),
@@ -248,6 +257,11 @@ def lex_of(word, item=None):
         focus = {'行為者': 'actor', '対象': 'object', '移動物': 'conveyance', '場所': 'locative'}[m.group(1)] if m else ''
     if lang in ('id', 'tl'):
         lemma = re.sub(r' \([^)]*\)$', '', lemma)   # 'lihat (meN-)'・'kita (対象焦点・完了)' (解析の注記) → 語根
+    if lang == 'he' and item.attrib('lemma'):
+        # 表示の形 (melek ⁧מֶלֶךְ⁩) でなく Strong の番号 (4428。生成器の見出しと同じ)。動詞は態を desc に (stem:qal)
+        lemma = item.attrib('lemma')
+        if item.pos == 'verb' and item.attrib('stem'):
+            focus = 'stem:' + item.attrib('stem')
     if lang == 'ar' and item.attrib('lex'):
         lemma = item.attrib('lex')   # 表示の形 (bint ⁧بِنْت⁩) でなく CAMeL の見出しの鍵 (بِنْت。生成器の見出しと同じ)
     pronoun = SOURCE_PRONOUNS.get(lang, {}).get(lemma.lower()) if item.pos in ('pronoun', 'adj', 'det') else None
@@ -259,7 +273,8 @@ def lex_of(word, item=None):
     proper = item.attrib('name') is True or (lemma[:1].isupper() and item.pos in ('noun', 'unknown'))
     return Lex(lemma, item.pos, item.ja, proper=proper and item.pos in ('noun', 'unknown', 'name'), lang=lang,
                degree=item.attrib('rank') or '', en=english,
-               desc=('focus:' + focus) if focus else (item.attrib('desc') or ''), verb=verb,
+               desc=(focus if focus.startswith('stem:') else 'focus:' + focus) if focus else (item.attrib('desc') or ''),
+               verb=verb,
                verb_ja=next((ja for ja in (hook(verb) for hook in VERB_GLOSS_HOOKS) if ja), '') if verb else '',
                surface=word.surface if word is not None else item.surface,
                ptense=item.attrib('tense') or '' if item.pos == 'participle' else '')
@@ -273,6 +288,10 @@ def np_of(node, case=None):
         np = np_of(inner[0], node.dominated_case) if inner else NP(Lex('?', 'noun'))
         np.prep = prep
         np.case = node.dominated_case
+        if _lang == 'he':   # 冠詞の溶け込んだ前置詞 (לָעָם・בַּגָּן: 前置詞の母音が a・ā) なら定
+            plain = unicodedata.normalize('NFD', node.item.surface)
+            if plain[:1] in 'בלכ' and ('\u05b7' in plain or '\u05b8' in plain):
+                np.definite = True
         latin = SOURCE_PREPOSITIONS.get(_lang, {}).get((node.item.surface.lower(), node.dominated_case))
         if latin:   # в + 前置格 → in + 奪格 (元の前置詞と格も持つ: 同じ言語に戻すとき на столе を в столе にしない)
             np.prep = Lex(latin[0], 'preposition', node.item.ja, surface=node.item.surface.lower(), lang=_lang)
@@ -299,7 +318,7 @@ def np_of(node, case=None):
             cases=list(dict.fromkeys(t[0] for t in item._ or [])), surface=node.surface)
     if np.number == 'du':
         np.number, np.dual = 'pl', True
-    if _lang == 'grc':   # 冠詞のある言語なら、定かかどうか (冠詞の有無)。冠詞の無い言語 (ロシア語 …) は分からない (None)
+    if _lang in ('grc', 'he'):   # 冠詞のある言語なら、定かかどうか (冠詞の有無)。冠詞の無い言語 (ロシア語 …) は分からない
         np.definite = any(isinstance(m, Word) and m.items and m.items[0].pos == 'article' for m in node.modifiers)
     elif _lang == 'ar':   # アラビア語の冠詞は語に付く (الوَلَد)。属格のつながり (كِتابُ الوَلَدِ) の頭は後ろで定に
         np.definite = item.attrib('prc0') == 'Al_det' or node.surface.startswith('ال')
@@ -381,7 +400,10 @@ def clause_of(predicate, lang=None):
     if clause.voice in VOICES and _lang not in ('', 'la'):
         clause.middle = clause.voice
         clause.voice = VOICES[clause.voice]
-    if predicate.conjunction is not None and is_negation(predicate.conjunction, predicate.language):
+    if _lang == 'he' and isinstance(predicate.conjunction, Word) and \
+            unicodedata.normalize('NFC', predicate.conjunction.surface) in HEBREW_VAV:
+        _add_connective(clause, 'et')   # 物語の接続詞 (וַיֹּאמֶר の וַ)
+    elif predicate.conjunction is not None and is_negation(predicate.conjunction, predicate.language):
         clause.negated = True
     elif predicate.conjunction is not None and conn.is_connective(conn.normalize(predicate.conjunction.surface, _lang)):
         if conn.lookup(conn.normalize(predicate.conjunction.surface, _lang))[0] == 'adv' and predicate.conjunction.items:
@@ -463,6 +485,8 @@ def clause_of(predicate, lang=None):
     for adv in predicate.modifiers:
         if is_negation(adv, predicate.language):
             clause.negated = True
+        elif _lang == 'he' and isinstance(adv, Word) and unicodedata.normalize('NFC', adv.surface) in HEBREW_VAV:
+            _add_connective(clause, 'et')   # 物語の接続詞 (וַיֹּאמֶר の וַ)
         elif isinstance(adv, Word) and conn.lookup(conn.normalize(adv.surface, _lang)) and \
                 conn.lookup(conn.normalize(adv.surface, _lang))[0] != 'adv':
             _add_connective(clause, conn.normalize(adv.surface, _lang))
@@ -500,6 +524,20 @@ def _bare_direction(clause):
         np.case = 'Acc'
         np.bare_direction = True
         clause.args[k] = ('prep', np)
+
+
+HEBREW_VAV = {unicodedata.normalize('NFC', v) for v in ('וַ', 'וְ', 'וּ', 'וָ', 'וֶ', 'וִ')}
+
+
+def _hebrew_bare_object(clause):
+    """ヘブライ語の定まらない目的語は אֶת が付かず、主格と見分けがつかない (נָתַן לֶחֶם「パンを与えた」)。
+    主語が2つあれば、動詞の後ろのもの (2つめ) を目的語に"""
+    subjects = [k for k, (role, np) in enumerate(clause.args) if role == 'subject']
+    if len(subjects) < 2 or clause.role('object') or clause.copula:
+        return
+    k = subjects[-1]
+    clause.args[k][1].case = 'Acc'
+    clause.args[k] = ('object', clause.args[k][1])
 
 
 def _second_person_address(clause):
@@ -775,7 +813,9 @@ def frames(analysis):
     for c in analysis.clauses:
         clause = clause_of(c.predicate)
         for word in c.not_solved:   # 述語に結びつかなかった接続詞 (et postquam … の postquam)、副詞 (aegrē)
-            if isinstance(word, Word) and conn.is_connective(conn.normalize(word.surface, _lang)):
+            if _lang == 'he' and isinstance(word, Word) and unicodedata.normalize('NFC', word.surface) in HEBREW_VAV:
+                _add_connective(clause, 'et')   # 物語の接続詞 (וַיֹּאמֶר の וַ)
+            elif isinstance(word, Word) and conn.is_connective(conn.normalize(word.surface, _lang)):
                 _add_connective(clause, conn.normalize(word.surface, _lang))
             elif isinstance(word, Word) and word.items and any(item.pos == 'adv' for item in word.items):
                 clause.adverbs.append(lex_of(word, next(item for item in word.items if item.pos == 'adv')))
@@ -790,6 +830,8 @@ def frames(analysis):
         clauses.append(clause)
     _add_unknown_words(analysis, clauses)
     for clause in clauses:   # 辞書に無い語 (補った名詞句) にも
+        if _lang == 'he':
+            _hebrew_bare_object(clause)
         _second_person_address(clause)
         _mark_apposed(clause)
         _bare_direction(clause)

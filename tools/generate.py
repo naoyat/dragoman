@@ -166,8 +166,9 @@ def run_other(text, source):
             mark = ''
             if lang == source:
                 first = out.split('\n')[0]
-                # 解析の表示の文は標識 (ng・ang) を落とすことがあるので、インドネシア語・タガログ語は入力の文と比べる
-                original = _source_words(text if source in ('id', 'tl') else analysis.text, source)
+                # 解析の表示の文は標識 (ng・ang) を落としたり冠詞・前置詞を切り離したり (הַ מֶּלֶךְ) するので、
+                # インドネシア語・タガログ語・ヘブライ語は入力の文と比べる
+                original = _source_words(text if source in ('id', 'tl', 'he') else analysis.text, source)
                 mark = '   ✓ 同じ語' if original == _source_words(first, source) else '   ✗'
             first, _, rest = out.partition('\n')
             print('  %s %s%s%s' % (label, first, mark, ('\n' + rest) if rest else ''))
@@ -176,7 +177,7 @@ def run_other(text, source):
 
 def _source_words(text, lang):
     """元の言語の文の語 (比べる用。サンスクリットは SLP1 に、ロシア語は小文字・ё → е)"""
-    words = [w.strip('.,;:!?।"“”·;') for w in text.split() if not w.startswith('(')]   # (كان) は解析で補った語
+    words = [w.strip('.,;:!?।"“”·;׃׀') for w in text.split() if not w.startswith('(')]   # (كان) は解析で補った語
     words = [w.strip('()') for w in words if w]
     if lang == 'sa':
         from dragoman.sanskrit import script

@@ -239,6 +239,15 @@ def _source_dictionary_english(lex, pos):
             glosses = [g.replace('_', ' ').strip() for e in entries
                        for g in (e.get('gloss') or '').replace(';', ',').split(',')]
             return list(dict.fromkeys(g for g in glosses if g))[:6]
+        if lex.lang == 'he':   # ヘブライ語の辞書の語義 (動詞は態ごとの英語: qal の nātan → give)
+            from . import hebrew
+            entry = hebrew._lexicon().get(lex.lemma)
+            if not entry:
+                return []
+            stem = lex.desc[len('stem:'):] if lex.desc.startswith('stem:') else 'qal'
+            glosses = list(entry[4].get(stem) or []) + [g for g in entry[2] if g.isascii()]
+            glosses = [g.strip()[:1].lower() + g.strip()[1:] for g in glosses if g.strip()]   # Say → say
+            return list(dict.fromkeys(glosses))[:6]
         if lex.lang == 'fa':
             from . import persian
             rows = [r for (w, p), r in persian._rows().items() if w == lex.lemma and r[6] == 'en']

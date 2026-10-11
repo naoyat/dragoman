@@ -128,6 +128,9 @@ def _counts():
 def to_hebrew(lex, pos=None):
     """語 → (見出しの番号, 態の符号)。見つからなければ None"""
     pos = pos or {'participle': 'verb', 'name': 'noun'}.get(lex.pos, lex.pos)
+    if lex.lang == 'he' and lex.lemma in _lexicon():   # 元がヘブライ語なら元の見出しと態 (選び直さない)
+        stem = lex.desc[len('stem:'):] if lex.desc.startswith('stem:') else 'qal'
+        return lex.lemma, STEM_CODES.get(stem, 'q')
     sources = english.candidates(lex) or ([e for e in (lex.en or '').split(',') if e])
     for en in sources[:1]:
         found = PREFERRED.get((en.lower(), pos)) or PREFERRED.get((en.lower().split(' ')[-1], pos))
@@ -318,7 +321,7 @@ def noun_phrase(np, prep=None, definite=True):
         word = english.word(head)
         return ('[%s]' % word if word else ''), 'm', 's'
     number = 'p' if np.number == 'pl' else 's'
-    definite = definite and not np.genitives
+    definite = definite and not np.genitives and np.definite is not False   # 元の文で不定なら不定 (לֶחֶם)
     word, gender = noun_form(found[0], number, definite)
     if gender == 'b':
         gender = 'm'   # 両性 (גַּן)
@@ -349,6 +352,14 @@ def prepositional(np, passive=False):
     if passive and np.prep.lemma in ('ā', 'ab', 'abs'):
         return 'עַל־יְדֵי ' + noun_phrase(inner)[0]   # 受動の動作主
     prep, attached = PREPOSITIONS.get((np.prep.lemma, np.case), ('בְּ', True))
+    if np.prep.lang == 'he' and np.prep.surface:   # 元がヘブライ語なら元の前置詞 (לָעָם を אֶל־הָעָם にしない)
+        base = unicodedata.normalize('NFD', np.prep.surface)
+        first = base[:1]
+        if len([c for c in base if not unicodedata.combining(c)]) == 1 and first in 'בלכמ':
+            prep, attached = {'ב': ('בְּ', True), 'ל': ('לְ', True), 'כ': ('כְּ', True), 'מ': ('מִן־', False)}[first]
+        else:
+            surface = unicodedata.normalize('NFC', np.prep.surface)
+            prep, attached = (surface if surface.endswith('־') else surface + '־'), False
     if not noun_phrase(inner)[0].strip('[]? '):
         return ''   # 中身の分からない句 (辞書に無い語) は書かない
     suffixed = pronoun_with_preposition(prep, inner)
@@ -493,7 +504,8 @@ def realize(clause, gap=None):
         if np.head is not None and np.head.pos == 'pronoun' and (np.head.lemma, np.number) in PRONOUNS:
             out.append(OBJECT_PRONOUNS.get(PRONOUNS[(np.head.lemma, np.number)][1], 'אֹתוֹ'))
         else:
-            out.append('אֶת־' + noun_phrase(np)[0])   # 定まった目的語の印
+            # 定まった目的語の印 אֶת־ (元の文で不定の目的語には付けない: נָתַן לֶחֶם)
+            out.append(('אֶת־' if np.definite is not False else '') + noun_phrase(np)[0])
     for np in clause.role('recipient'):
         out.append(noun_phrase(np, 'לְ')[0])
     for inner in clause.infinitives:
