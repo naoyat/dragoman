@@ -268,7 +268,10 @@ def noun_phrase(np, case='n', definite=True, prc1='0'):
     if head.proper:   # Wiktionary の名前 (Iēsus → يَسُوع)。無ければ綴りのまま
         from .names import localized
         found = localized(head, 'ar')
-        return found[0] if found else head.lemma
+        if found:
+            return found[0]
+        from .name_script import to_script   # 名前の表に無い名前は綴りを写す (Iūlia → يوليا)
+        return to_script('ar', head.lemma) or head.lemma
     found = candidates(head, 'noun')
     if not found:
         return '[%s]' % english.word(head)

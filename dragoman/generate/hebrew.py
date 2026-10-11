@@ -307,6 +307,10 @@ def noun_phrase(np, prep=None, definite=True):
     if head.proper:   # Wiktionary の名前 (Iēsus → יֵשׁוּעַ)。無ければ綴りのまま
         from .names import localized
         found = localized(head, 'he')
+        if not found:   # 名前の表に無い名前は綴りを写す (Iūlia → יוליה)
+            from .name_script import to_script
+            written = to_script('he', head.lemma)
+            found = (written, 'f' if np.gender == 'f' else 'm') if written else None
         word, gender = found if found else (head.lemma, 'm')
         return ((prep + word) if prep else word), (gender or 'm'), 's'
     found = to_hebrew(head, 'noun')
@@ -345,7 +349,7 @@ def prepositional(np, passive=False):
     if passive and np.prep.lemma in ('ā', 'ab', 'abs'):
         return 'עַל־יְדֵי ' + noun_phrase(inner)[0]   # 受動の動作主
     prep, attached = PREPOSITIONS.get((np.prep.lemma, np.case), ('בְּ', True))
-    if not noun_phrase(inner)[0]:
+    if not noun_phrase(inner)[0].strip('[]? '):
         return ''   # 中身の分からない句 (辞書に無い語) は書かない
     suffixed = pronoun_with_preposition(prep, inner)
     if suffixed:
@@ -502,9 +506,13 @@ def realize(clause, gap=None):
         if role == 'prep':
             out.append(prepositional(np, clause.voice == 'passive'))
         elif role == 'means':
-            out.append(noun_phrase(np, 'לְ' if np.animate else 'בְּ')[0])
+            text = noun_phrase(np, 'לְ' if np.animate else 'בְּ')[0]
+            if text.strip('[]?לְבְּ '):   # 中身の分からない句は書かない
+                out.append(text)
         else:
-            out.append(noun_phrase(np, 'בְּ')[0])
+            text = noun_phrase(np, 'בְּ')[0]
+            if text.strip('[]?בְּ '):   # 中身の分からない句は書かない
+                out.append(text)
     return ' '.join(w for w in out if w)
 
 

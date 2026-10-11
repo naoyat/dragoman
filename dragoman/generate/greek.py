@@ -85,6 +85,10 @@ def to_greek(lex, pos=None):
         found = localized(lex, 'grc')
         if found:
             return Lex(found[0], pos, lex.ja, proper=True), found[1]
+        from .name_script import to_script   # 名前の表に無い名前は綴りを写す (Mārcus → Μαρκος)
+        written = to_script('grc', lex.lemma)
+        if written:
+            return Lex(written, pos, lex.ja, proper=True), ''
     if lex.lang == 'grc' or lex.proper:
         return Lex(lex.lemma, pos, lex.ja, proper=lex.proper), ''
     target = transfer.best(lex, 'grc', pos)
@@ -128,6 +132,11 @@ def decline(lex, case, number, gender):
                 if best is None or score < best[0]:
                     best = (score, surface)
     if best is None:
+        if lex.proper and lex.lemma.endswith(('ος', 'ον')) and number == 'sg':
+            # 綴りを写した名前 (Πομπειος) は第2変化で (Πομπειον・Πομπειου・Πομπειῳ・Πομπειε)
+            stem, neuter = lex.lemma[:-2], lex.lemma.endswith('ον')
+            return stem + {'Nom': 'ον' if neuter else 'ος', 'Acc': 'ον', 'Gen': 'ου', 'Dat': 'ῳ',
+                           'Voc': 'ον' if neuter else 'ε'}.get(case, 'ος')
         return lex.lemma if lex.proper else '*' + lex.lemma
     return best[1]
 
@@ -234,6 +243,8 @@ def prepositional(np, passive=False):
         prep, case = 'ὑπό', 'Gen'   # 受動の動作主
     import dataclasses
     inner = noun_phrase(dataclasses.replace(np, prep=None), case)
+    if not inner.strip('[]?* '):
+        return ''   # 中身の分からない句 (辞書に無い語) は書かない
     if prep == 'ἐκ' and inner[:1] in 'αεηιουωἀἐἠἰὀὑὠἁἑἡἱὁὑὡ':
         prep = 'ἐξ'
     return prep + ' ' + inner

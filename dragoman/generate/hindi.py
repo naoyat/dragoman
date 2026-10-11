@@ -240,7 +240,10 @@ def noun_phrase(np, oblique=False):
         from .names import localized
         found = localized(head, 'hi')
         name = english.word(head)
-        return [(found[0], name, found[0]) if found else (name, name, name)]
+        from .name_script import to_script   # 名前の表に無い名前は綴りを写す (転写の行は英語の名前)
+        urdu = localized(head, 'ur')
+        return [(found[0] if found else to_script('hi', head.lemma) or name, name,
+                 urdu[0] if urdu else to_script('ur', head.lemma) or name)]
     row = to_hindi(head, 'noun')
     if row is None:
         w = '[%s]' % english.word(head)
@@ -409,7 +412,9 @@ def realize(clause, gap=None):
         elif role == 'means':
             out += noun_phrase(np, True) + [('को', 'ko', 'کو') if np.animate else ('से', 'se', 'سے')]
         else:
-            out += noun_phrase(np, True) + [('में', 'meṃ', 'میں')]
+            place = noun_phrase(np, True)
+            if any(w[0].strip('[]?') for w in place):   # 中身の分からない句は書かない
+                out += place + [('में', 'meṃ', 'میں')]
     return out + words
 
 
@@ -419,7 +424,10 @@ def prepositional(np, passive=False):
     if passive and np.prep.lemma in ('ā', 'ab', 'abs'):
         return noun_phrase(inner, True) + [('के द्वारा', 'ke dvārā', 'کے ذریعے')]   # 受動の動作主
     post = POSTPOSITIONS.get((np.prep.lemma, np.case), ('में', 'meṃ', 'میں'))
-    return noun_phrase(inner, True) + [post]
+    words = noun_phrase(inner, True)
+    if not any(w[0].strip('[]?') for w in words):
+        return []   # 中身の分からない句 (辞書に無い語) は書かない
+    return words + [post]
 
 
 def relative(np, r):

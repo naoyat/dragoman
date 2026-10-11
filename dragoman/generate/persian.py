@@ -164,7 +164,8 @@ def _noun(np):
             row = _rows().get((found[0], 'name')) or _rows().get((found[0], 'noun'))
             return (found[0], row[2] if row and row[2] else script.rough_translit(found[0])), True
         name = english.word(head)
-        return (name, name), True
+        from .name_script import to_script   # 名前の表に無い名前は綴りを写す (転写の行は英語の名前)
+        return (to_script('fa', head.lemma) or name, name), True
     row = to_persian(head, 'adj' if head.pos in ('adj', 'participle') and not english.substantive(head) else 'noun')
     if row is None:
         return ('[%s]' % english.word(head), '[%s]' % english.word(head)), True
@@ -233,7 +234,10 @@ def prepositional(np, passive=False):
     if passive and np.prep.lemma in ('ā', 'ab', 'abs'):
         return [('توسط', 'tavassot-e')] + noun_phrase(inner)   # 受動の動作主
     prep = PREPOSITIONS.get((np.prep.lemma, np.case), ('در', 'dar'))
-    return [prep] + noun_phrase(inner)
+    words = noun_phrase(inner)
+    if not any(w[0].strip('[]?') for w in words):
+        return []   # 中身の分からない句 (辞書に無い語) は書かない
+    return [prep] + words
 
 
 # ----------------------------------------------------------------------
@@ -396,7 +400,9 @@ def realize(clause, gap=None):
         elif role == 'means':   # 与格と奪格の同形: 人なら受け手 به、ほかは手段 با
             out += [('به', 'be') if np.animate else ('با', 'bâ')] + noun_phrase(np)
         else:
-            out += [('در', 'dar')] + noun_phrase(np)
+            words = noun_phrase(np)
+            if any(w[0].strip('[]?') for w in words):   # 中身の分からない句は書かない
+                out += [('در', 'dar')] + words
     for inner in clause.infinitives:
         out += [('که', 'ke')] + realize(inner)
     for inner in clause.questions:
