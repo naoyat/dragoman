@@ -66,7 +66,7 @@ PREFERRED = {('girl', 'noun'): 'लड़की', ('boy', 'noun'): 'लड़क
              ('god', 'noun'): 'भगवान', ('father', 'noun'): 'पिता', ('mother', 'noun'): 'माँ', ('son', 'noun'): 'बेटा',
              ('daughter', 'noun'): 'बेटी', ('friend', 'noun'): 'दोस्त', ('letter', 'noun'): 'चिट्ठी', ('sailor', 'noun'): 'नाविक',
              ('farmer', 'noun'): 'किसान', ('soldier', 'noun'): 'सिपाही', ('citizen', 'noun'): 'नागरिक', ('enemy', 'noun'): 'दुश्मन',
-             ('world', 'noun'): 'दुनिया', ('sin', 'noun'): 'पाप',
+             ('world', 'noun'): 'दुनिया', ('sky', 'noun'): 'आसमान', ('heaven', 'noun'): 'स्वर्ग', ('sin', 'noun'): 'पाप',
              ('beautiful', 'adj'): 'सुंदर', ('good', 'adj'): 'अच्छा', ('bad', 'adj'): 'बुरा', ('great', 'adj'): 'बड़ा',
              ('big', 'adj'): 'बड़ा', ('large', 'adj'): 'बड़ा', ('small', 'adj'): 'छोटा', ('long', 'adj'): 'लंबा', ('wide', 'adj'): 'चौड़ा', ('broad', 'adj'): 'चौड़ा',
              ('spacious', 'adj'): 'चौड़ा',
@@ -75,7 +75,8 @@ PREFERRED = {('girl', 'noun'): 'लड़की', ('boy', 'noun'): 'लड़क
              ('write', 'verb'): 'लिखना', ('walk', 'verb'): 'चलना', ('flee', 'verb'): 'भागना', ('capture', 'verb'): 'पकड़ना',
              ('take', 'verb'): 'लेना', ('ask', 'verb'): 'पूछना', ('know', 'verb'): 'जानना', ('fear', 'verb'): 'डरना',
              ('call', 'verb'): 'बुलाना', ('hear', 'verb'): 'सुनना', ('sleep', 'verb'): 'सोना', ('die', 'verb'): 'मरना',
-             ('fight', 'verb'): 'लड़ना', ('love', 'verb'): 'प्यार करना', ('pity', 'verb'): 'दया करना'}
+             ('fight', 'verb'): 'लड़ना', ('leave', 'verb'): 'निकलना',
+             ('depart', 'verb'): 'निकलना', ('love', 'verb'): 'प्यार करना', ('pity', 'verb'): 'दया करना'}
 INTRANSITIVE = {'आना', 'जाना', 'चलना', 'भागना', 'डरना', 'सोना', 'मरना', 'लड़ना', 'गाना', 'होना', 'रहना'}
 
 
@@ -111,6 +112,9 @@ def _index():
 def to_hindi(lex, pos):
     pos = {'participle': 'verb', 'name': 'noun'}.get(pos, pos)
     sources = english.candidates(lex) or [e for e in (lex.en or '').split(',') if e]
+    if (lex.lang or 'la') == 'la':   # 手作りの辞書の日本語に和英で合う英語を先に (transfer と同じ)
+        from .transfer import _with_japanese
+        sources = _with_japanese(list(sources)[:6], [j.strip() for j in (lex.ja or '').split(',') if j.strip()])
     for en in sources[:1]:
         key = PREFERRED.get((en.lower(), pos)) or PREFERRED.get((en.lower().split(' ')[-1], pos))
         if key:
@@ -123,6 +127,9 @@ def to_hindi(lex, pos):
                 continue
             row = _rows()[(word, p)]
             score = 3 * max(0, i - 1) + j - math.log(1 + row[6]) - (2 if i == 0 else 0)
+            if j == 0 and i <= 1:   # コーパスでの出現数 (筆頭の語義が合うときだけ)
+                from .transfer import _count
+                score -= math.log(1 + _count('hi', word))
             if best is None or score < best[0]:
                 best = (score, row)
     return best[1] if best else None

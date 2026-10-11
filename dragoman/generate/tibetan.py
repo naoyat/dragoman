@@ -68,6 +68,9 @@ def _index():
 def to_tibetan(lex, pos):
     pos = {'participle': 'verb', 'name': 'noun'}.get(pos, pos)
     sources = english.candidates(lex) or [e for e in (lex.en or '').split(',') if e]
+    if (lex.lang or 'la') == 'la':   # 手作りの辞書の日本語に和英で合う英語を先に (transfer と同じ)
+        from .transfer import _with_japanese
+        sources = _with_japanese(list(sources)[:6], [j.strip() for j in (lex.ja or '').split(',') if j.strip()])
     for en in sources[:1]:
         found = PREFERRED.get((en.lower(), pos)) or PREFERRED.get((en.lower().split(' ')[-1], pos))
         if found:
@@ -130,8 +133,8 @@ def noun_phrase(np):
         return ''
     if head.pos == 'pronoun':
         return PRONOUNS.get((head.lemma, np.number), 'de')
-    if head.proper:
-        return english.word(head)
+    if head.proper:   # ラテン文字の名前は [ ] に入れてチベット文字に変換しない
+        return '[%s]' % english.word(head)
     word = to_tibetan(head, 'noun') or '[%s]' % english.word(head)
     before = [particle(noun_phrase(g), 'gen') for g in np.genitives]
     before += [particle(realize(r, gap=r.gap, final=False), 'gen') for r in np.relatives]

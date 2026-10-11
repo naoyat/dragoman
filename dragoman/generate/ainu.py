@@ -80,7 +80,11 @@ def to_ainu(lex, pos):
         if p in allowed or pos == 'adj':
             return word
     best = None
-    for i, en in enumerate(s.lower() for s in (english.candidates(lex) or [])[:5]):
+    sources = english.candidates(lex) or []
+    if (lex.lang or 'la') == 'la':   # 手作りの辞書の日本語に和英で合う英語を先に (transfer と同じ)
+        from .transfer import _with_japanese
+        sources = _with_japanese(list(sources)[:6], [j.strip() for j in (lex.ja or '').split(',') if j.strip()])
+    for i, en in enumerate(s.lower() for s in sources[:5]):
         for j, word, p in _by_english().get(en, []):
             if p in allowed and (best is None or (i, j) < best[0]):
                 best = ((i, j), word)

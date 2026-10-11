@@ -103,6 +103,9 @@ def to_persian(lex, pos):
     """語 → 辞書の項目 (見つからなければ None)"""
     pos = {'participle': 'verb', 'name': 'noun'}.get(pos, pos)
     sources = english.candidates(lex) or [e for e in (lex.en or '').split(',') if e]
+    if (lex.lang or 'la') == 'la':   # 手作りの辞書の日本語に和英で合う英語を先に (transfer と同じ)
+        from .transfer import _with_japanese
+        sources = _with_japanese(list(sources)[:6], [j.strip() for j in (lex.ja or '').split(',') if j.strip()])
     for en in sources[:1]:
         key = PREFERRED.get((en.lower(), pos)) or PREFERRED.get((en.lower().split(' ')[-1], pos))
         if key and (key, pos) in _rows():
@@ -115,6 +118,9 @@ def to_persian(lex, pos):
                 continue
             row = _rows()[(word, p)]
             score = 3 * max(0, i - 1) + j - math.log(1 + row[7]) - (2 if i == 0 else 0)
+            if j == 0 and i <= 1:   # コーパスでの出現数 (筆頭の語義が合うときだけ。transfer と同じ)
+                from .transfer import _count
+                score -= math.log(1 + _count('fa', word))
             if pos == 'verb' and not row[3]:
                 score += 5   # 語幹の分からない動詞は後回し
             if best is None or score < best[0]:
