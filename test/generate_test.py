@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dragoman.core import paths  # noqa: E402
 from dragoman.latin import latindic, analyzer  # noqa: E402
-from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, arabic, hebrew, persian, japanese, kobun  # noqa: E402
+from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, arabic, hebrew, persian, hindi, japanese, kobun  # noqa: E402
 from dragoman.generate.frame import Lex  # noqa: E402
 
 _saved = None
@@ -715,6 +715,30 @@ class PersianTestCase(unittest.TestCase):
         self.assertEqual(self.persian('Puella puerum videt quem magister laudat.'),
                          "doxtar pesari râ ke mo'allem mi-setâyad mi-binad.")   # را は関係節の前
         self.assertEqual(self.persian('Venī!'), 'biyâ.')
+
+
+@unittest.skipUnless(hindi.available(), 'ヒンディー語の辞書 (hi/wiktionary.sqlite) が無い')
+class HindiTestCase(unittest.TestCase):
+    """ラテン語 → 文の枠 → ヒンディー語・ウルドゥー語 (SOV、後置詞と斜格、ने、性の一致)"""
+
+    @classmethod
+    def setUpClass(cls):
+        latindic.load()
+
+    def hindi(self, text, urdu=False):
+        analysis, = analyzer.analyze_text(text)
+        clauses = frame.frames(analysis)
+        return (hindi.sentence_urdu(clauses) if urdu else hindi.sentence(clauses)).split('\n')
+
+    def test_sentences(self):
+        self.assertEqual(self.hindi('Puella cantat.')[0], 'लड़की गाती है।')
+        self.assertEqual(self.hindi('Puellae cantābant.')[1].strip(), 'laṛkiyāṃ gātī thīṃ.')
+        self.assertEqual(self.hindi('Rēgīna puellīs rosās dedit.')[1].strip(), 'rānī ne gulāb laṛkiyoṃ ko die.')   # ने
+        self.assertEqual(self.hindi('Puer ā magistrō laudātus est.')[1].strip(), 'laṛkā adhyāpak ke dvārā sarāhā gayā.')
+        self.assertEqual(self.hindi('Venī!')[1].strip(), 'āo.')   # 命令 -ओ
+
+    def test_urdu(self):
+        self.assertEqual(self.hindi('Puella cantat.', urdu=True)[0], 'لڑکی گاتی ہے۔')
 
 
 class KobunTestCase(unittest.TestCase):
