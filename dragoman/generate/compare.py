@@ -491,6 +491,12 @@ def rows(clause, langs=LANGS):
         supplied[lang], text = split_supplied(lang, text)   # 補った代名詞は主語の行へ (主語が書かれていれば外すだけ)
         predicates[lang] = (text, how)
     copular = clause.copula and bool(clause.role('complement'))
+    # 述語の語の語義の幅 (繋辞の文は補語の形容詞)
+    complement = (clause.role('complement') or [None])[0] if copular else None
+    if complement is not None and complement.head is not None and not complement.members:
+        predicates = _with_senses(predicates, complement.head, complement.head.pos)
+    elif not clause.copula:
+        predicates = _with_senses(predicates, clause.verb, 'verb')
     head = ' '.join(x for x in (tense, voice, '否定' if clause.negated else '') if x)
     out = [('述語 (%s)' % (head if not copular else '繋辞 + 補語、' + head), predicates)]
     if not clause.role('subject') and clause.mood not in ('infinitive', 'imperative') and not clause.copula:
@@ -506,7 +512,23 @@ def rows(clause, langs=LANGS):
         name = ROLE_NAMES.get(role, role) + (' (同格)' if role == 'address' and np.apposed else '')
         if role == 'prep' and np.prep is not None:
             name = '前置詞句 (%s + %s)' % (np.prep.lemma, CASE_NAMES.get(np.case, np.case))
-        out.append((name, {lang: np_form(lang, role, np, clause) for lang in langs}))
+        cells = {lang: np_form(lang, role, np, clause) for lang in langs}
+        if np.head is not None and not np.members and role != 'address':
+            cells = _with_senses(cells, np.head, 'noun' if np.head.pos not in ('adj', 'participle') else 'adj')
+        out.append((name, cells))
+    return out
+
+
+SENSES_SEPARATOR = '／'
+
+
+def _with_senses(cells, lex, pos):
+    """手段の欄に、選んだ語の辞書の語義の幅を添える (pirka「良い・きれいだ …」。訳語は一対一に対応しない)"""
+    from .senses import note
+    out = {}
+    for lang, (form, how) in cells.items():
+        extra = note(lang, lex, pos) if form and not form.startswith('(') else ''
+        out[lang] = (form, (how + SENSES_SEPARATOR + extra) if how and extra else (how or extra))
     return out
 
 

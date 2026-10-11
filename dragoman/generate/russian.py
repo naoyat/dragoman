@@ -619,8 +619,9 @@ def realize(clause, capitalize=True):
                 out.append(short)
                 continue
         from .frame import adjective_members
-        members = adjective_members(np)
-        if members:   # 形容詞の並列 (длинная и широкая): 主語に一致
+        members = adjective_members(np) or ([np] if np.head is not None and np.head.pos in ('adj', 'participle')
+                                            and not np.members and np.head.lang in ('', 'la') else None)
+        if members:   # 形容詞 (の並列: длинная и широкая) は主語に一致した形容詞 (名詞 bonum「善」の добро にしない)
             agreeing = _agreeing(members[0], subject)   # 並列そのものでなく要素を主語に (複数にしない)
             out.append((' %s ' % CONJUNCTIONS.get(np.conj, 'и')).join(
                 adjective(m.head, 'Nom', agreeing.number, GENDERS.get(agreeing.gender, 'masc'), False) for m in members))

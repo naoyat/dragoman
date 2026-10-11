@@ -883,9 +883,10 @@ class CompareTestCase(unittest.TestCase):
     def test_cases_and_agent(self):
         rows = self.rows('Puer ā magistrō laudātus est.', ('la', 'grc', 'ru', 'ja'))
         agent = rows['前置詞句 (ā + 奪格)']
-        self.assertEqual(agent['grc'][1], 'ὑπό + 属格')
-        self.assertEqual(agent['ru'][1], '造格 (動作主)')
-        self.assertEqual(rows['主語']['grc'][1], '主格 + 冠詞')
+        self.assertEqual(agent['grc'][1].split('／')[0], 'ὑπό + 属格')   # ／の後ろは語義の幅
+        self.assertEqual(agent['ru'][1].split('／')[0], '造格 (動作主)')
+        self.assertEqual(rows['主語']['grc'][1].split('／')[0], '主格 + 冠詞')
+        self.assertIn('語義: παῖς', rows['主語']['grc'][1])   # 選んだ語の辞書の語義の幅
 
     def test_address(self):
         # 呼びかけ (呼格) は文の頭に。2人称の動詞の名詞の「主語」(主格の形 Agnus Deī) も呼びかけ

@@ -485,7 +485,8 @@ class Notebook:
             rows = compare.rows(clause, self.compare)
             # 述語の手段は言語ごとに決まっていて文によらないので、表には入れない (ノートの冒頭に1回)
             # (繋辞の文の表し方は文によるので残す)
-            rows[0] = (rows[0][0], {lang: (form, '' if how == compare.PREDICATE_HOW[lang] else how)
+            # (語義の幅は残す: 述語の決まった説明だけ外す)
+            rows[0] = (rows[0][0], {lang: (form, _without_predicate_how(compare, lang, how))
                                     for lang, (form, how) in rows[0][1].items()})
             out.append(rows)
         return out
@@ -614,6 +615,16 @@ def compare_html(clauses):
             for l in langs)) for name, cells in rows)
         tables.append('<table class="cmp">%s<tbody>%s</tbody></table>' % (head, body))   # 見出しはページごとに繰り返す
     return '<div class="part compare"><div class="ttl">要素ごとの比較</div>%s</div>' % ''.join(tables)
+
+
+def _without_predicate_how(compare, lang, how):
+    """述語の手段の欄から、言語ごとに決まった説明 (冒頭に1回出す) を外す。語義の幅などは残す"""
+    general = compare.PREDICATE_HOW.get(lang, '')
+    if how == general:
+        return ''
+    if general and how.startswith(general + compare.SENSES_SEPARATOR):
+        return how[len(general + compare.SENSES_SEPARATOR):]
+    return how
 
 
 def compare_note_html(langs):
