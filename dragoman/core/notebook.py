@@ -97,7 +97,8 @@ def readings(word):
 # ----------------------------------------------------------------------
 # 確かさの印: 読み手が確かめたほうがよい所 (check: 橙) と、参考 (note: 灰)
 
-GUESS_SOURCES = {'morpheus': 'Morpheus の解析で推測した語形', 'rule': '規則で推測した語形', 'dialect': '方言の形から読み替えた'}
+GUESS_SOURCES = {'morpheus': 'Morpheus の解析で推測した語形', 'rule': '規則で推測した語形', 'dialect': '方言の形から読み替えた',
+                 'guess': '辞書に無い語を語尾から推測した語形'}
 CASE_LABELS = {'Nom': '主', 'Acc': '対', 'Gen': '属', 'Dat': '与', 'Abl': '奪', 'Loc': '処', 'Ins': '具'}
 
 

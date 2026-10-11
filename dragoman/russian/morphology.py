@@ -285,7 +285,8 @@ def _analyze(key):
                 if cng not in merged[sig]['_']:
                     merged[sig]['_'].append(cng)
         else:
-            item['source'] = 'pymorphy3'
+            # 辞書に無い語を語尾から推測した解析 (глокая куздра) は推測の印に
+            item['source'] = 'pymorphy3' if getattr(parse, 'is_known', True) else 'guess'
             merged[sig] = item
     for item in merged.values():
         if item['pos'] in ('adj', 'participle') and '_' in item:

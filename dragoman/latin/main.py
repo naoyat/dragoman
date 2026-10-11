@@ -43,6 +43,9 @@ def analyse_text(text, options):
         # マクロンの無い入力にマクロンを推定して付けてから解析する
         text = macronizer.macronize_text(text)
     for analysis in analyzer.analyze_text(text):
+        if options.gaps is not None:   # 穴の一覧だけ (本文は出さない)
+            options.gaps.add(analysis)
+            continue
         if options.notebook is not None:
             options.notebook.add(analysis, word_notes=latin_word_notes(options),
                                  show_word_detail=options.show_word_detail, show_translation=options.show_translation)
@@ -230,6 +233,7 @@ class Options:
         self.marks = self.legend = self.provenance = False
         self.compare = None
         self.notebook = None
+        self.gaps = None   # 穴の一覧 (--gaps)
 
         for option, arg in opts:
             if option in ('-w', '--no-word-detail'):
@@ -261,6 +265,9 @@ class Options:
                 self.pdf = arg
             elif option == '--marks':
                 self.marks = True
+            elif option == '--gaps':
+                from dragoman.core.gaps import Gaps
+                self.gaps = Gaps('la')
             elif option == '--legend':
                 self.marks = self.legend = True
             elif option == '--provenance':
@@ -310,6 +317,8 @@ def main(argv=None):
     if options.notebook is not None:
         from dragoman.core.cli import save_notebook
         save_notebook(options.notebook, options, 'la')
+    if options.gaps is not None:
+        print(options.gaps.report())
 
 if __name__ == '__main__':
     main()

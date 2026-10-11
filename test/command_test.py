@@ -70,6 +70,20 @@ class DragomanCommandTestCase(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn('歌う', ANSI_ESCAPE.sub('', result.stdout))
 
+    def test_gaps(self):
+        # --gaps: 穴の一覧だけ。本文 (辞書にある語・文の順) は出さない
+        result = subprocess.run([sys.executable, 'dragoman.py', 'la', '--gaps', '-e',
+                                 'Xyloqua magna est. Puella cantat et Blorbus ambulat.'],
+                                cwd=ROOT, capture_output=True, text=True)
+        out = ANSI_ESCAPE.sub('', result.stdout)
+        self.assertIn('辞書に無い (2 語):', out)
+        self.assertLess(out.index('Blorbus'), out.index('Xyloqua'))   # 文の順でなく並べ替え
+        for word in ('Puella', 'cantat', 'magna', 'ambulat'):
+            self.assertNotIn(word, out)
+        result = subprocess.run([sys.executable, 'dragoman.py', 'ru', '--gaps', '-e', 'Глокая куздра будланула бокра.'],
+                                cwd=ROOT, capture_output=True, text=True)
+        self.assertIn('推測した語形', result.stdout)   # pymorphy3 が辞書に無い語として推測した語形
+
     def test_positional_lang_and_text_option(self):
         # ./dragoman.py LANG -e TEXT (言語を最初の引数で、文を -e で)
         result = subprocess.run([sys.executable, 'dragoman.py', 'la', '-w', '-e', 'Rōma magna est.'], cwd=ROOT,

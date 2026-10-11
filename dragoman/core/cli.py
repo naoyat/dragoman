@@ -30,6 +30,7 @@ class Options:
     html: str = None                # ノートの HTML の書き出し先
     pdf: str = None                 # ノートの PDF の書き出し先
     marks: bool = False             # ノートに確かさの印
+    gaps: bool = False              # 解析の穴の一覧だけを出す (本文は出さない)
     legend: bool = False            # ノートに印の凡例
     provenance: bool = False        # ノートに再現条件
     compare: list = None            # ノートの要素ごとの比較の言語 (--compare=la,grc,ja)
@@ -123,6 +124,8 @@ def parse(command, argv):
             options.pdf = arg
         elif option == '--marks':
             options.marks = True
+        elif option == '--gaps':
+            options.gaps = True
         elif option == '--legend':
             options.marks = options.legend = True
         elif option == '--provenance':
@@ -190,6 +193,14 @@ def run(command, argv=None, texts=None):
         from dragoman.core.notebook import Notebook
         notebook = Notebook('%s — dragoman' % command.name, marks=options.marks, legend=options.legend,
                             compare=options.compare)
+    if options.gaps:   # 穴の一覧だけ (本文は出さない)
+        from dragoman.core.gaps import Gaps
+        gaps = Gaps(command.lang)
+        for text in texts:
+            for analysis in command.analyzer.analyze_text(text):
+                gaps.add(analysis)
+        print(gaps.report())
+        return
     for text in texts:
         for analysis in command.analyzer.analyze_text(text):
             line = command.header(analysis, options) if command.header else ' '.join(analysis.surfaces)

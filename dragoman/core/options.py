@@ -42,13 +42,15 @@ COMMON = (
     Option('provenance', help='ノートに再現条件 (コードの版・オプション・使ったデータ)'),
     Option('compare', value='LANGS', help='ノートに要素ごとの比較の表: 文の枠の要素を各言語がどう表すか\n'
                                           '(言語の符号をカンマで: la,grc,ja。all で全部: la grc sa ru en id tl ar he ja kobun)'),
+    Option('gaps', help='解析の穴の一覧だけを出す (辞書に無い語・推測した語形・構造の外の語・述語の見つからない文の数)。\n'
+                        '本文は出さない: 語は理由ごとに重複を除いて並べ替える (文中の順・前後の語は出さない)'),
     Option('help', 'h', help='説明を表示する'),
 )
 
 # ラテン語のコマンド (latin/main.py) が受け付ける共通のオプション (-r・--no-explain などはラテン語では使わない。
 # --sentence-per-line は入口 main.py が処理する) と、ラテン語だけのもの
 LATIN_COMMON = ('no-word-detail', 'descendants', 'etymology', 'speech', 'tts', 'html', 'pdf', 'marks', 'legend',
-                'provenance', 'compare', 'help')
+                'provenance', 'compare', 'gaps', 'help')
 LATIN = tuple(o for o in COMMON if o.long in LATIN_COMMON) + (
     Option('no-translation', 'q', help='訳 (日本語) を表示しない'),
     Option('capital-to-macron', 'm', help='[対話モード] 大文字の母音を長母音として読む (A → ā)'),
