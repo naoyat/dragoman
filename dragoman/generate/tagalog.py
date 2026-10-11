@@ -309,7 +309,11 @@ def realize(clause, gap=None):
     if clause.negated:
         out.append('hindi')
     if clause.copula:
-        return ' '.join(out + _copula(clause))
+        words = _copula(clause)
+        if clause.negated and words[0].startswith('nasa '):   # 所在の否定は wala sa (hindi nasa とは言わない)
+            out.remove('hindi')
+            words[0] = 'wala ' + words[0][2:]
+        return ' '.join(out + words)
     voice, root, topic = _focus(clause)
     if gap is not None:   # 関係節: 空所を ang にする焦点
         voice = {'subject': 'actor' if clause.voice != 'passive' else 'object', 'object': 'object'}.get(gap, voice)
@@ -391,6 +395,11 @@ def _copula(clause):
     """繋辞の文: 述語 (形容詞・名詞) が先、主語は ang (Maganda ang babae)"""
     complements = clause.role('complement') + clause.role('object')
     subject = (clause.role('subject') or [None])[0]
+    places = [np for role, np in clause.args if role == 'prep' and np.prep is not None]
+    if not complements and places and subject is not None:   # 所在: nasa + 場所 (Nasa hardin ang dalaga)
+        where = prepositional(places[0])
+        where = 'na' + where if where.startswith('sa ') else 'nasa ' + where
+        return [where, noun_phrase(subject, 'ang')]
     if not complements:
         return ['may'] + ([noun_phrase(subject, '')] if subject is not None else [])
     np = complements[0]

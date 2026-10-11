@@ -11,14 +11,14 @@
 #
 import dataclasses
 
-from . import latin, english, russian, sanskrit, greek, indonesian, tagalog, japanese, kobun
+from . import latin, english, russian, sanskrit, greek, indonesian, tagalog, arabic, hebrew, japanese, kobun
 
-LANGS = ('la', 'grc', 'sa', 'ru', 'en', 'id', 'tl', 'ja', 'kobun')
+LANGS = ('la', 'grc', 'sa', 'ru', 'en', 'id', 'tl', 'ar', 'he', 'ja', 'kobun')
 NAMES = {'la': 'ラテン語', 'grc': 'ギリシア語', 'sa': 'サンスクリット', 'ru': 'ロシア語', 'en': '英語', 'id': 'インドネシア語',
-         'tl': 'タガログ語',
+         'tl': 'タガログ語', 'ar': 'アラビア語', 'he': 'ヘブライ語',
          'ja': '日本語', 'kobun': '古文'}
 MODULES = {'la': latin, 'grc': greek, 'sa': sanskrit, 'ru': russian, 'en': english, 'id': indonesian, 'tl': tagalog,
-           'ja': japanese,
+           'ar': arabic, 'he': hebrew, 'ja': japanese,
            'kobun': kobun}
 ROLE_NAMES = {'subject': '主語', 'object': '目的語', 'recipient': '受け手', 'means': '手段', 'possessor': '所有者',
               'complement': '補語', 'place': '場所', 'source': '起点', 'prep': '前置詞句'}
@@ -30,7 +30,8 @@ LATIN_ROLE_CASES = {'subject': 'Nom', 'object': 'Acc', 'recipient': 'Dat', 'mean
 WORD_ORDER = {'subject': '動詞の前', 'object': '動詞の後ろ', 'complement': '繋辞の後ろ'}
 PRO_DROP = {'la': '書かない (動詞の語尾で分かる)', 'grc': '書かない (動詞の語尾で分かる)', 'sa': '書かない (動詞の語尾で分かる)',
             'ja': '書かない (文脈で分かる)', 'kobun': '書かない (文脈で分かる)', 'ru': '代名詞を補う', 'en': '代名詞を補う',
-            'id': '代名詞を補う', 'tl': '代名詞を補う'}
+            'id': '代名詞を補う', 'tl': '代名詞を補う', 'ar': '書かない (動詞の接辞で分かる)',
+            'he': '完了形・未完了形は書かない (動詞の接辞で分かる)。分詞なら代名詞を補う'}
 TENSES = {'present': '現在', 'imperfect': '未完了過去', 'perfect': '完了', 'past-perfect': '過去完了', 'future': '未来'}
 
 
@@ -48,12 +49,23 @@ def _display(lang, text):
         return ' '.join(w if w.startswith(('[', '*', '(')) else script.iast(w) for w in text.split(' '))
     if lang == 'grc':
         return greek._grave(text + ' x')[:-2]   # 句の後ろにも語が続くものとして (τὸ καλὸν ῥόδον)
+    if lang in ('ar', 'he') and text and not text.startswith('('):   # 右から左の文字には転写を添える
+        import unicodedata
+        text = unicodedata.normalize('NFC', text)
+        return '%s (%s)' % (text, MODULES[lang].transliterate(text).strip(' .'))
     return text
 
 
 # 受動の動作主 (ā + 奪格) の言語ごとの手段 (前置詞の表とは別の規則で作る)
 AGENT = {'la': 'ā + 奪格', 'grc': 'ὑπό + 属格', 'sa': '具格 (動作主)', 'ru': '造格 (動作主)', 'en': '前置詞 by',
-         'id': '前置詞 oleh', 'tl': 'ng (焦点でない行為者)', 'ja': '助詞 に', 'kobun': '助詞 に'}
+         'id': '前置詞 oleh', 'tl': 'ng (焦点でない行為者)', 'ar': 'مِنْ قِبَلِ + 属格', 'he': 'עַל־יְדֵי',
+         'ja': '助詞 に', 'kobun': '助詞 に'}
+AR_CASES = {'n': '主格', 'a': '対格', 'g': '属格'}
+
+
+def _ar_active(clause):
+    """アラビア語で受動の形が無く、能動に組み替える節か (مَدَحَ المُعَلِّمُ الوَلَدَ)"""
+    return clause.voice == 'passive' and not clause.copula and not _safe(arabic.passive_possible, clause) is True
 
 
 # ----------------------------------------------------------------------
@@ -69,7 +81,7 @@ def _np_form(lang, role, np, clause):
     m = MODULES[lang]
     passive = clause.voice == 'passive'
     if role == 'prep' and np.prep is not None:
-        return _prep_form(lang, np, passive)
+        return _prep_form(lang, np, passive, clause)
     if lang == 'la':
         case = LATIN_ROLE_CASES.get(role, 'Nom')
         return _safe(latin.noun_phrase, np, case), CASE_NAMES[case]
@@ -96,6 +108,25 @@ def _np_form(lang, role, np, clause):
         return text, WORD_ORDER.get(role, '')
     if lang == 'tl':
         return _tagalog_np(role, np, clause)
+    if lang == 'ar':
+        if role == 'subject' and _ar_active(clause):
+            return _safe(arabic.noun_phrase, np, 'a'), '対格 (受動の形が無いので能動に組み替えた目的語)'
+        if role == 'recipient' or (role == 'means' and np.animate):
+            return _safe(arabic.noun_phrase, np, 'g', True, 'li_prep'), 'لِـ + 属格'
+        if role == 'means':
+            return _safe(arabic.noun_phrase, np, 'g', True, 'bi_prep'), 'بِـ + 属格'
+        case = arabic.CASES.get(role)
+        if case is None:
+            return 'فِي ' + _safe(arabic.noun_phrase, np, 'g'), 'فِي + 属格'
+        return _safe(arabic.noun_phrase, np, case), AR_CASES[case] + (' (動詞の後ろ)' if role == 'subject' and not clause.copula else '')
+    if lang == 'he':
+        if role == 'object':
+            return 'אֶת־' + _safe(lambda x: hebrew.noun_phrase(x)[0], np), 'אֶת־ (定の目的語の印)'
+        if role == 'recipient' or (role == 'means' and np.animate):
+            return _safe(lambda x: hebrew.noun_phrase(x, 'לְ')[0], np), 'לְ (語に付く)'
+        if role != 'subject':
+            return _safe(lambda x: hebrew.noun_phrase(x, 'בְּ')[0], np), 'בְּ (語に付く)'
+        return _safe(lambda x: hebrew.noun_phrase(x)[0], np), '格の変化なし (完了形なら動詞の後ろ、分詞なら前)'
     if lang in ('ja', 'kobun'):
         text = _safe(m.noun_phrase, np)
         if role == 'subject':
@@ -129,7 +160,7 @@ def _tagalog_np(role, np, clause):
     return _safe(tagalog.noun_phrase, np, marker), how
 
 
-def _prep_form(lang, np, passive):
+def _prep_form(lang, np, passive, clause=None):
     key = (np.prep.lemma, np.case)
     if passive and np.prep.lemma in ('ā', 'ab', 'abs'):
         text, _ = _prep_form(lang, np, False) if lang in ('ja', 'kobun') else (None, None)
@@ -140,6 +171,9 @@ def _prep_form(lang, np, passive):
             text = _safe(english.noun_phrase, np, True, True)
         elif lang in ('ja', 'kobun'):
             text = _safe(m.noun_phrase, dataclasses.replace(np, prep=None)) + 'に'
+        elif lang == 'ar' and _ar_active(clause):
+            return (_safe(arabic.noun_phrase, dataclasses.replace(np, prep=None), 'n'),
+                    '主格 (受動の形が無いので能動に組み替えた主語)')
         else:
             text = _safe(m.prepositional, np, True)
         return text, AGENT[lang]
@@ -166,6 +200,12 @@ def _prep_form(lang, np, passive):
     if lang == 'tl':
         before, marker = tagalog.PREPOSITIONS.get(key, ('', 'sa'))
         return _safe(tagalog.prepositional, np, passive), ' + '.join(x for x in (before, marker) if x)
+    if lang == 'ar':
+        prep = arabic.PREPOSITIONS.get(key, 'فِي')
+        return _safe(arabic.prepositional, np, passive), '%s + 属格' % prep
+    if lang == 'he':
+        prep, attached = hebrew.PREPOSITIONS.get(key, ('בְּ', True))
+        return _safe(hebrew.prepositional, np, passive), prep + (' (語に付く)' if attached else '')
     if lang in ('ja', 'kobun'):
         m = MODULES[lang]
         particle = 'に' if passive and np.prep.lemma in ('ā', 'ab') else m.PREPOSITIONS.get(key, 'で')
@@ -180,30 +220,66 @@ PREDICATE_HOW = {
     'la': '語尾 (人称・数・時制・法・態)', 'grc': '語尾 (時制の語幹・加音)', 'sa': '語尾 (時制・人称・数)',
     'ru': '語尾 + 体 (完了体・不完了体)', 'en': '語形 + 助動詞', 'id': '語形は変えない (接辞は態、telah・akan で時)',
     'tl': '接辞で焦点 (行為者 -um-/mag-・対象 -in・移動物 i-)、重複と -in- でアスペクト',
+    'ar': '完了形・未完了形 (人称・性・数の接辞)、法 (直説法・要求法)、否定 لَمْ・لا・لَنْ',
+    'he': '完了形・未完了形 (人称・性・数の接辞)、現在は分詞 (性・数)、態は動詞の型 (binyan)',
     'ja': '活用 + 助動詞 (た・ない・れる)', 'kobun': '活用 + 助動詞 (けり・ず・む・る)'}
 
 
+# 繋辞の文 (Puella pulchra est.) の述語 = 繋辞 + 補語。言語ごとの表し方
+COPULA_HOW = {
+    'la': 'sum + 補語 (主語に性・数・格で一致)', 'grc': 'εἰμί (前接語) + 補語 (主語に一致)',
+    'sa': '繋辞を書かない (名詞文。補語は主語に一致)', 'ru': '現在は繋辞を書かない (過去は был。補語は主語に一致)',
+    'en': 'be + 補語', 'id': '繋辞を書かない (名詞なら adalah も)', 'tl': '述語が先 (繋辞を書かない)',
+    'ar': '繋辞を書かない (名詞文。過去は كانَ、否定は لَيْسَ。その後の補語は対格)',
+    'he': '繋辞を書かない (名詞文。過去は הָיָה)',
+    'ja': '形容詞はそのまま述語 (名詞なら である)', 'kobun': '形容詞はそのまま述語 (名詞なら なり)'}
+
+
 def predicate_form(lang, clause):
-    """述語だけの形: 名詞句を外した節を作る (主語を補う言語では代名詞も付く)"""
-    bare = dataclasses.replace(clause, args=[], adverbs=[], infinitives=[], questions=[], adjuncts=[],
-                               connectives=[], subordinator='')
+    """述語の形。語形 (一致・補語) を決めるため主語と補語は残して節を作り、主語の形を外す
+    (主語の無い節では、主語を補う言語の代名詞が付く。split_supplied で外す)"""
+    # 補語の無い繋辞 (存在・所在の文 Puella in hortō est.) は前置詞句なども残す (外すと there is … の文になる)
+    keep_all = clause.copula and not clause.role('complement')
+    kept = [(role, np) for role, np in clause.args if keep_all or role in ('subject', 'complement')]
+    reduced = dataclasses.replace(clause, args=kept, adverbs=[], infinitives=[], questions=[], adjuncts=[],
+                                  connectives=[], subordinator='')
+    if lang == 'ar' and _ar_active(clause):   # 能動に組み替えた主語 (元の動作主) を残して外す
+        clause = arabic.to_active(clause)
+        kept = [(role, np) for role, np in clause.args if role == 'subject']
+        reduced = dataclasses.replace(reduced, voice='active', args=kept, person=clause.person, number=clause.number)
     m = MODULES[lang]
     if lang == 'ja':
-        text = _safe(japanese.predicate, bare)
+        text = _safe(japanese.predicate, reduced)
     elif lang == 'kobun':
-        text = _safe(kobun.predicate, bare)
+        text = _safe(kobun.predicate, reduced)
     elif lang in ('en', 'la', 'ru', 'sa'):
-        text = _safe(m.realize, bare, False)
+        text = _safe(m.realize, reduced, False)
     elif lang == 'id':
-        text = _safe(indonesian.realize, bare)
-    elif lang == 'tl':   # 選んだ焦点は文ごとに変わるので形に添える (nakita (対象焦点))
+        text = _safe(indonesian.realize, reduced)
+    elif lang == 'tl' and not clause.copula:   # 選んだ焦点は文ごとに変わるので形に添える (nakita (対象焦点))
         voice, root, _ = tagalog._focus(clause)
-        text = _safe(tagalog.verb_form, clause, voice, root) or _safe(tagalog.realize, bare)
+        text = _safe(tagalog.verb_form, clause, voice, root) or _safe(tagalog.realize, reduced)
         text = ('hindi ' if clause.negated else '') + text + ' (%s)' % TL_FOCUS.get(voice, voice)
     else:
-        text = _safe(m.realize, bare)
+        text = _safe(m.realize, reduced)
     text = text.split('\n')[0].strip(' .।')
-    return _display(lang, text), PREDICATE_HOW[lang]
+    if lang not in ('ja', 'kobun') and not (lang == 'tl' and not clause.copula):
+        for role, np in kept:
+            if role != 'complement':
+                text = _without(text, _np_form(lang, role, np, clause)[0])
+    how = COPULA_HOW[lang] if clause.copula and clause.role('complement') else PREDICATE_HOW[lang]
+    return _display(lang, text), how
+
+
+def _without(text, part):
+    """文から名詞句の形を外す (文頭の大文字も)。見つからなければそのまま"""
+    if not part or part.startswith('('):
+        return text
+    for variant in (part, part[:1].upper() + part[1:]):
+        k = text.find(variant)
+        if k >= 0 and (k == 0 or text[k - 1] == ' ') and text[k + len(variant):k + len(variant) + 1] in ('', ' ', ','):
+            return ' '.join((text[:k] + text[k + len(variant):]).split())
+    return text
 
 
 def split_supplied(lang, text):
@@ -216,7 +292,8 @@ def split_supplied(lang, text):
 
 SUPPLIED = {'en': {'he', 'she', 'it', 'they', 'i', 'you', 'we'}, 'ru': {'он', 'она', 'оно', 'они', 'я', 'ты', 'мы', 'вы'},
             'tl': {'siya', 'sila', 'ako', 'ikaw', 'kami', 'kayo', 'niya', 'nila', 'ko', 'mo'},
-            'id': {'dia', 'mereka', 'saya', 'kamu', 'kami', 'kalian'}}
+            'id': {'dia', 'mereka', 'saya', 'kamu', 'kami', 'kalian'},
+            'he': {'הוּא', 'הִיא', 'הֵם', 'הֵן', 'אֲנִי', 'אֲנַחְנוּ', 'אַתָּה', 'אַתֶּם'}}
 
 
 # ----------------------------------------------------------------------
@@ -230,7 +307,9 @@ def rows(clause, langs=LANGS):
         text, how = predicate_form(lang, clause)
         supplied[lang], text = split_supplied(lang, text)   # 補った代名詞は主語の行へ (主語が書かれていれば外すだけ)
         predicates[lang] = (text, how)
-    out = [('述語 (%s)' % ' '.join(x for x in (tense, voice, '否定' if clause.negated else '') if x), predicates)]
+    copular = clause.copula and bool(clause.role('complement'))
+    head = ' '.join(x for x in (tense, voice, '否定' if clause.negated else '') if x)
+    out = [('述語 (%s)' % (head if not copular else '繋辞 + 補語、' + head), predicates)]
     if not clause.role('subject') and clause.mood not in ('infinitive', 'imperative') and not clause.copula:
         if 'tl' in langs:   # タガログ語の補う代名詞は焦点で形が決まる (対象焦点なら ng の形 niya)
             voice = _safe(lambda c: tagalog._focus(c)[0], clause)
@@ -239,6 +318,8 @@ def rows(clause, langs=LANGS):
             supplied['tl'] = forms[0] if voice == 'actor' else forms[1]
         out.append(('主語 (書かれていない)', {lang: (supplied[lang], PRO_DROP.get(lang, '')) for lang in langs}))
     for role, np in clause.args:
+        if copular and role == 'complement':   # 補語は述語の行に (繋辞と合わせて。語形は主語に一致)
+            continue
         name = ROLE_NAMES.get(role, role)
         if role == 'prep' and np.prep is not None:
             name = '前置詞句 (%s + %s)' % (np.prep.lemma, CASE_NAMES.get(np.case, np.case))
@@ -248,8 +329,9 @@ def rows(clause, langs=LANGS):
 
 def parse_langs(value):
     """--compare の値 (la,grc,ja / all) → 言語の符号の列。知らない符号は ValueError"""
-    if value.strip() in ('all', ''):
-        return list(LANGS)
+    if value.strip() in ('all', ''):   # データの要る言語 (アラビア語・ヘブライ語) は、あるものだけ
+        return [lang for lang in LANGS if not hasattr(MODULES[lang], 'available') or lang not in ('ar', 'he') or
+                MODULES[lang].available()]
     langs = [v.strip() for v in value.split(',') if v.strip()]
     unknown = [lang for lang in langs if lang not in LANGS]
     if unknown:

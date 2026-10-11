@@ -703,6 +703,34 @@ class CompareTestCase(unittest.TestCase):
         self.assertEqual(agent['ru'][1], '造格 (動作主)')
         self.assertEqual(rows['主語']['grc'][1], '主格 + 冠詞')
 
+    @unittest.skipUnless(russian.available(), 'ロシア語の表が無い')
+    def test_predicate_agrees_with_subject(self):
+        # 述語の形は主語を残して作る (一致)。表では主語の形を外す
+        rows = self.rows('Puella rosam vīdit.', ('ru', 'en', 'ja'))
+        self.assertEqual(rows['述語 (完了)']['ru'][0], 'увидела')
+        self.assertEqual(rows['述語 (完了)']['en'][0], 'saw')
+
+    def test_copula_predicate(self):
+        # 繋辞の文の述語は 繋辞 + 補語 (補語の形も主語に一致)。補語の行は述語の行にまとめる
+        rows = self.rows('Puella pulchra est.')
+        predicate = rows['述語 (繋辞 + 補語、現在)']
+        self.assertEqual(predicate['la'][0], 'pulchra est')
+        self.assertEqual(predicate['en'][0], 'is beautiful')
+        self.assertEqual(predicate['ja'][0], '美しい')
+        self.assertEqual(predicate['kobun'][0], '麗し')
+        self.assertNotIn('補語', rows)
+        rows = self.rows('Puella in hortō est.', ('en', 'tl'))   # 所在の文は前置詞句を残して作る
+        self.assertEqual(rows['述語 (現在)']['en'][0], 'is')
+
+    @unittest.skipUnless(arabic.available() and hebrew.available(), 'アラビア語かヘブライ語の辞書が無い')
+    def test_arabic_hebrew(self):
+        rows = self.rows('Puer ā magistrō laudātus est.', ('ar', 'he'))
+        self.assertEqual(rows['述語 (完了 受動)']['he'][0], 'הֻלַּל (hullal)')
+        self.assertTrue(rows['主語']['ar'][1].startswith('対格'))   # 受動の形が無いので能動に組み替え (通常の生成と同じ)
+        self.assertTrue(rows['前置詞句 (ā + 奪格)']['ar'][1].startswith('主格'))
+        rows = self.rows('Rosam in hortō vīdit.', ('ar', 'he'))
+        self.assertEqual(rows['前置詞句 (in + 奪格)']['he'], ('בַּגָּן (baggān)', 'בְּ (語に付く)'))
+
 
 if __name__ == '__main__':
     unittest.main()

@@ -287,6 +287,8 @@ def noun_phrase(np, prep=None, definite=True):
 def prepositional(np, passive=False):
     import dataclasses
     inner = dataclasses.replace(np, prep=None)
+    if passive and np.prep.lemma in ('ā', 'ab', 'abs'):
+        return 'עַל־יְדֵי ' + noun_phrase(inner)[0]   # 受動の動作主
     prep, attached = PREPOSITIONS.get((np.prep.lemma, np.case), ('בְּ', True))
     if attached:
         return noun_phrase(inner, prep)[0]
@@ -420,11 +422,7 @@ def realize(clause, gap=None):
         if role in ('subject', 'object', 'recipient', 'complement'):
             continue
         if role == 'prep':
-            if clause.voice == 'passive' and np.prep is not None and np.prep.lemma in ('ā', 'ab'):
-                import dataclasses
-                out.append('עַל־יְדֵי ' + noun_phrase(dataclasses.replace(np, prep=None))[0])   # 動作主
-            else:
-                out.append(prepositional(np))
+            out.append(prepositional(np, clause.voice == 'passive'))
         elif role == 'means':
             out.append(noun_phrase(np, 'לְ' if np.animate else 'בְּ')[0])
         else:

@@ -483,7 +483,9 @@ class Notebook:
         for clause in clauses:
             rows = compare.rows(clause, self.compare)
             # 述語の手段は言語ごとに決まっていて文によらないので、表には入れない (ノートの冒頭に1回)
-            rows[0] = (rows[0][0], {lang: (form, '') for lang, (form, _) in rows[0][1].items()})
+            # (繋辞の文の表し方は文によるので残す)
+            rows[0] = (rows[0][0], {lang: (form, '' if how == compare.PREDICATE_HOW[lang] else how)
+                                    for lang, (form, how) in rows[0][1].items()})
             out.append(rows)
         return out
 

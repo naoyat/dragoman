@@ -97,7 +97,7 @@ python3 tools/build_en_ja.py        # → ~/.local/share/dragoman-data/en-ja.sql
 | `--html=FILE` | 解析結果をノート（HTML）に清書する（下の「ノート」） |
 | `--pdf=FILE` | ノートを PDF にする（Google Chrome / Chromium のヘッドレス印刷） |
 | `--marks` / `--legend` / `--provenance` | ノートに確かさの印 / 印の凡例 / 再現条件を載せる |
-| `--compare=LANGS` | ノートに要素ごとの比較の表（言語の符号をカンマで: `la,grc,ja`。`all` で全部: la grc sa ru en id tl ja kobun） |
+| `--compare=LANGS` | ノートに要素ごとの比較の表（言語の符号をカンマで: `la,grc,ja`。`all` で全部: la grc sa ru en id tl ar he ja kobun） |
 
 言語ごとの例文とその訳は `python3 tools/samples.py --lang=xx` で、解析の精度は `python3 tools/ud_eval.py --lang=xx` で
 見られます（評価用のツリーバンクは言語ごとの文書を参照）。
