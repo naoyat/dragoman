@@ -252,6 +252,8 @@ def with_preposition(prep, word):
 def with_and(word):
     """接続詞 וְ を語に付ける。シェヴァで始まる語と ב ו מ פ の前は וּ (וּרְחָבָה・וּמֶלֶךְ)"""
     plain = unicodedata.normalize('NFD', word)
+    if not any('\u05d0' <= c <= '\u05ea' for c in plain):
+        return 'וְ ' + word   # ヘブライ文字でない語 (ラテン文字の名前) には付けない
     if len(plain) > 1 and (plain[0] in 'בומפ' or plain[1] == '\u05b0' or
                            (plain[1] in ('\u05bc', '\u05c1', '\u05c2') and len(plain) > 2 and plain[2] == '\u05b0')):
         return unicodedata.normalize('NFC', 'וּ' + word)
@@ -307,7 +309,8 @@ def noun_phrase(np, prep=None, definite=True):
         return ((prep + word) if prep else word), (gender or 'm'), 's'
     found = to_hebrew(head, 'noun')
     if found is None:
-        return '[%s]' % english.word(head), 'm', 's'
+        word = english.word(head)
+        return ('[%s]' % word if word else ''), 'm', 's'
     number = 'p' if np.number == 'pl' else 's'
     definite = definite and not np.genitives
     word, gender = noun_form(found[0], number, definite)
@@ -340,6 +343,8 @@ def prepositional(np, passive=False):
     if passive and np.prep.lemma in ('ā', 'ab', 'abs'):
         return 'עַל־יְדֵי ' + noun_phrase(inner)[0]   # 受動の動作主
     prep, attached = PREPOSITIONS.get((np.prep.lemma, np.case), ('בְּ', True))
+    if not noun_phrase(inner)[0]:
+        return ''   # 中身の分からない句 (辞書に無い語) は書かない
     suffixed = pronoun_with_preposition(prep, inner)
     if suffixed:
         return suffixed
@@ -388,9 +393,18 @@ def _from_template(root, stem, column):
     return binyan.generate(root.translate(str.maketrans('ךםןףץ', 'כמנפצ')), stem_name, column) or None
 
 
+def _unfinal(word):
+    """語末形の字を普通の形に (語尾を付ける前: נֹתֵן → נֹתֵנ)"""
+    letters = [k for k, c in enumerate(word) if not unicodedata.combining(c)]
+    if not letters or word[letters[-1]] not in 'ךםןףץ':
+        return word
+    k = letters[-1]
+    return word[:k] + 'כמנפצ'['ךםןףץ'.index(word[k])] + word[k + 1:]
+
+
 def _participle_from(masc, pgn):
     """男性単数の分詞 → 女性単数 (+ ָה。語末の ֶה は ָה に)・男性複数 (+ ִים)・女性複数 (+ וֹת)"""
-    base = masc[:-2] if masc.endswith('ֶה') or masc.endswith('ֵה') else masc
+    base = masc[:-2] if masc.endswith('ֶה') or masc.endswith('ֵה') else _unfinal(masc)
     if pgn == 'fsa':
         return unicodedata.normalize('NFC', base + 'ָה') if base != masc else unicodedata.normalize('NFC', masc + 'ָה')
     if pgn == 'mpa':

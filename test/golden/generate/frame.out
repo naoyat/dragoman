@@ -1,0 +1,192 @@
+Puella nautae rosam dat .
+  述語: dō [現在 3sg 直説法 能動]
+    主語 (Nom/Voc): puella sg f ← 属格 nauta sg m
+    目的語 (Acc): rosa sg f
+Agricola in agrō labōrat .
+  (述語が見つからない)
+Mārcus et Iūlia in vīllā habitant .
+  述語: habitō [現在 3pl 直説法 能動]
+    前置詞句 (in + Acc): ? sg
+    主語 (Nom): Mārcus sg et Iūlia sg
+Puerī puellaeque cantant .
+  述語: cantō [現在 3pl 直説法 能動]
+Et dominus et servus labōrant .
+  (述語が見つからない)
+Fīlia agricolae rosās pulchrās amat .
+  述語: amō [現在 3sg 直説法 能動]
+    主語 (Nom/Voc): fīlia sg f ← 属格 agricola sg m
+    目的語 (Acc): rosa pl f + pulcher
+Bonus et fortis vir pugnat .
+  (述語が見つからない)
+Haec puella illum puerum videt .
+  述語: videō [現在 3sg 直説法 能動]
+    主語 (Nom/Voc): puella sg f + hīc
+    目的語 (Acc): puer sg m + ille
+Rōma magna est .
+  述語: sum [現在 3sg 直説法 能動]
+    主語 (Nom/Voc): Rōma sg f
+    補語 (Nom/Voc/Acc): magnus sg f
+Mārcus est agricola .
+  述語: sum [現在 3sg 直説法 能動]
+    主語 (Nom/Voc): agricola sg m
+    辞書に無い語 (): Mārcus sg
+Puellae pulchrae erant .
+  述語: sum [未完了 3pl 直説法 能動]
+    主語 (Dat/Nom/Voc): puella pl f
+    補語 (Gen/Dat/Nom/Voc): pulcher pl f
+Via longa et lāta est .
+  述語: sum [現在 3sg 直説法 能動]
+    主語 (Nom/Voc): via sg f
+    補語 (Nom/Voc/Nom/Voc/Acc): longus sg f et lātus sg f
+Agricola laetus nōn erit .
+  述語: sum [未来 3sg 直説法 能動 否定]
+    主語 (Nom/Voc): agricola sg m
+    補語 (Nom): laetus sg m
+Via longa et lāta nōn erat .
+  述語: sum [未完了 3sg 直説法 能動 否定]
+    主語 (Nom/Voc): via sg f
+    補語 (Nom/Voc/Nom/Voc/Acc): longus sg f et lātus sg f
+Templum aureum est .
+  述語: sum [現在 3sg 直説法 能動]
+    主語 (Nom/Voc/Acc): templum sg n
+    辞書に無い語 (): aureum sg
+Magnus vir est .
+  述語: sum [現在 3sg 直説法 能動]
+    主語 (Nom/Voc): vir sg m + magnus
+Mihi est liber .
+  述語: sum [現在 3sg 直説法 能動]
+    受け手 (Dat): ego sg m
+    主語 (Nom/Voc): liber sg m
+Est in hortō rosa .
+  述語: sum [現在 3sg 直説法 能動]
+    前置詞句 (in + Abl): hortus sg m
+    主語 (Nom/Voc): rosa sg f
+Puer ā magistrō laudātur .
+  述語: laudō [現在 3sg 直説法 受動]
+    主語 (Nom/Voc): puer sg m
+    前置詞句 (ā + Abl): magister sg m
+Servī epistulās portāvērunt .
+  述語: portō [完了 3pl 直説法 能動]
+    目的語 (Acc): epistula pl f ← 属格 servus sg m
+Nautae mare nōn timent .
+  述語: timeō [現在 3pl 直説法 能動 否定]
+    目的語 (Nom/Voc/Acc): mare sg n ← 属格 nauta sg m
+Servus epistulam nōn portābat .
+  述語: portō [未完了 3sg 直説法 能動 否定]
+    主語 (Nom): servus sg m
+    目的語 (Acc): epistula sg f
+Puer ā magistrō nōn laudātus est .
+  述語: laudō [完了 3sg 直説法 受動 否定]
+    主語 (Nom/Voc): puer sg m
+    前置詞句 (ā + Abl): magister sg m
+Cum amīcīs ad oppidum ambulāmus .
+  述語: ambulō [現在 1pl 直説法 能動]
+    前置詞句 (cum + Abl): amīcus pl m
+    前置詞句 (ad + Acc): oppidum sg n
+Hīs rēbus cognitīs agricola ad vīllam vēnit .
+  述語: veniō [完了 3sg 直説法 能動]
+    受け手 (Dat/Abl): rēs pl f + hīc
+    主語 (Nom/Voc): agricola sg m
+    前置詞句 (ad + Acc): ? sg
+    辞書に無い語 (): cognitīs sg
+Puellā cantante puer dormit .
+  述語: dormiō [現在 3sg 直説法 能動]
+    手段・道具 (Abl): puella sg f
+    主語 (Nom/Voc): puer sg m
+    辞書に無い語 (): cantante sg
+Rēge mortuō populus flēvit .
+  述語: fleō [完了 3sg 直説法 能動]
+    手段・道具 (Abl): rēx sg m
+    主語 (Nom): populus sg m
+    辞書に無い語 (): mortuō sg
+Cum hīs rēbus cognitīs vēnit .
+  述語: veniō [完了 3sg 直説法 能動]
+    前置詞句 (cum + Abl): rēs pl f + hīc
+Mīlitēs locīs apertīs pugnābant .
+  (述語が見つからない)
+Puer animō suspēnsō exspectābat .
+  (述語が見つからない)
+Puella flōrēs carpēns cantat .
+  述語: cantō [現在 3sg 直説法 能動]
+    主語 (Nom/Voc): puella sg f
+    目的語 (Nom/Voc/Acc): flōs pl f
+    辞書に無い語 (): carpēns sg
+Haec locūtus discessit .
+  (述語が見つからない)
+Rēgīna , verbīs nūntiī commōta , lacrimāvit .
+  述語: lacrimō [完了 3sg 直説法 能動]
+    主語 (Nom/Voc): rēgīna sg f
+    受け手 (Dat/Abl): verbum pl n
+    辞書に無い語 (): nūntiī sg
+    分詞句: commōtus (commoveō、完了分詞・受動 Nom sg f)
+Mīlitēs hostem fugientem cēpērunt .
+  述語: capiō [完了 3pl 直説法 能動]
+    主語 (Nom/Voc/Acc): mīles pl m
+    目的語 (Acc): hostis sg m ← 分詞 (修飾): fugiēns (fugiō、現在分詞 Acc sg m)
+Puer mātrī flōrēs dans rīsit .
+  (述語が見つからない)
+Mārcus dīcit puerōs in hortō lūdere .
+  述語: dīcō [現在 3sg 直説法 能動]
+    主語 (Nom): Mārcus sg
+    不定詞句 (saying):
+      述語: lūdō [現在 3sg 不定法 能動]
+        前置詞句 (in + Abl): hortus sg m
+        主語 (Acc): puer pl m
+Videō puellam cantāre .
+  述語: videō [現在 1sg 直説法 能動]
+    不定詞句 (perception):
+      述語: cantō [現在 3sg 不定法 能動]
+        主語 (Acc): puella sg f
+Puella dīcit sē rosās amāre .
+  述語: dīcō [現在 3sg 直説法 能動]
+    主語 (Nom/Voc): puella sg f
+    不定詞句 (saying):
+      述語: amō [現在 3sg 不定法 能動]
+        主語 (Acc/Abl): sē sg c
+        目的語 (Acc): rosa pl f
+Putō Rōmam magnam esse .
+  述語: putō [現在 1sg 直説法 能動]
+    不定詞句 (saying):
+      述語: sum [現在 3sg 不定法 能動]
+        主語 (Acc): Rōma sg f
+        補語 (Acc): magnus sg f
+Dominus servum epistulam portāre iubet .
+  述語: portō [現在 3sg 不定法 能動]
+    主語 (Nom): dominus sg m
+    目的語 (Acc): servus sg m
+    目的語 (Acc): epistula sg f
+    辞書に無い語 (): iubet sg
+Puer librum legere potest .
+  述語: legō [現在 3sg 不定法 能動]
+    主語 (Nom/Voc): puer sg m
+    目的語 (Acc): liber sg m
+    辞書に無い語 (): potest sg
+Caesar hostēs veritus castra mōvit .
+  述語: moveō [完了 3sg 直説法 能動]
+    目的語 (Nom/Voc/Acc): hostis pl m
+    主語 (Nom): Caesar sg
+    辞書に無い語 (): veritus sg
+    辞書に無い語 (): castra sg
+Cicerō Pompēium laudat .
+  述語: laudō [現在 3sg 直説法 能動]
+    主語 (Nom): Cicerō sg
+    目的語 (Acc): Pompēium sg
+Julia et Juno in caelo sunt .
+  述語: sum [現在 3pl 直説法 能動]
+    前置詞句 (in + Acc): ? sg
+    主語 (Nom): Julia sg et Juno sg
+Uir uiam uidet .
+  述語: videō [現在 3sg 直説法 能動]
+    主語 (Nom/Voc): vir sg m
+    目的語 (Acc): via sg f
+Puella nautae rosam dat .
+  述語: dō [現在 3sg 直説法 能動]
+    主語 (Nom/Voc): puella sg f ← 属格 nauta sg m
+    目的語 (Acc): rosa sg f
+Hic servus dominum suum amat .
+  述語: amō [現在 3sg 直説法 能動]
+    主語 (Nom): servus sg m
+    目的語 (Acc): dominus sg m + suus
+    辞書に無い語 (): Hic sg
+Mīles hostem gladiō acūtō vulnerāvit .
+  (述語が見つからない)
