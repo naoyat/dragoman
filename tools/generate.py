@@ -174,8 +174,8 @@ def run_other(text, source):
 
 def _source_words(text, lang):
     """元の言語の文の語 (比べる用。サンスクリットは SLP1 に、ロシア語は小文字・ё → е)"""
-    words = [w.strip('.,;:!?।"“”()·;') for w in text.split()]
-    words = [w for w in words if w]
+    words = [w.strip('.,;:!?।"“”·;') for w in text.split() if not w.startswith('(')]   # (كان) は解析で補った語
+    words = [w.strip('()') for w in words if w]
     if lang == 'sa':
         from dragoman.sanskrit import script
         return Counter(re.sub('[sr]$', 'H', script.to_slp1(w)) for w in words)   # rāmas = rāmaḥ (語末の連声)

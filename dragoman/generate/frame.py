@@ -275,10 +275,10 @@ def np_of(node, case=None):
             cases=list(dict.fromkeys(t[0] for t in item._ or [])), surface=node.surface)
     if np.number == 'du':
         np.number, np.dual = 'pl', True
-    if _lang not in ('', 'la'):   # 冠詞のある言語 (ギリシア語) なら、定かかどうか (冠詞の有無)
+    if _lang == 'grc':   # 冠詞のある言語なら、定かかどうか (冠詞の有無)。冠詞の無い言語 (ロシア語 …) は分からない (None)
         np.definite = any(isinstance(m, Word) and m.items and m.items[0].pos == 'article' for m in node.modifiers)
-        if _lang == 'ar':   # アラビア語の冠詞は語に付く (الوَلَد)
-            np.definite = item.attrib('prc0') == 'Al_det' or node.surface.startswith('ال')
+    elif _lang == 'ar':   # アラビア語の冠詞は語に付く (الوَلَد)。属格のつながり (كِتابُ الوَلَدِ) の頭は後ろで定に
+        np.definite = item.attrib('prc0') == 'Al_det' or node.surface.startswith('ال')
     for mod in node.modifiers:
         if isinstance(mod, Word) and mod.items and mod.items[0].pos != 'article':
             np.modifiers.append(lex_of(mod))

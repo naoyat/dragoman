@@ -18,6 +18,7 @@
 #   - لَمْ + 未完了 (要求法) は過去の否定「〜しなかった」、لَنْ + 未完了 (接続法) は未来の否定「〜しないだろう」
 #
 import re
+import unicodedata
 
 from dragoman.core import analyzer as common
 from dragoman.core import language
@@ -103,10 +104,16 @@ NOMINAL_TRIGGERS = {'إن', 'أن', 'لأن', 'لكن', 'كأن', 'ليت', 'ل�
 NOMINAL = {'noun', 'noun_prop', 'noun_num', 'noun_quant', 'adj', 'adj_comp', 'adj_num', 'pron', 'pron_dem'}
 
 
-def _context_score(reading, prev, nxt):
-    """前後の語の読みから、この読みに掛ける点数"""
+def _context_score(reading, prev, nxt, bare_input=False, first=False):
+    """前後の語の読みから、この読みに掛ける点数。bare_input: 入力の語に母音記号が無い。first: 文 (節) の2語目"""
     pos = reading.pos
     score = 1.0
+    if bare_input and pos == 'verb' and reading.feature('vox') == 'p':
+        score *= 0.3   # 母音記号の無い文の動詞は能動を先に (يكتب: yaktubu「書く」。受動 yuktabu は書き手が記号で示す)
+    if first and prev is not None and nxt is not None and prev.pos in NOMINAL and prev.main.get('prc0') == 'Al_det' \
+            and nxt.pos in NOMINAL and nxt.main.get('prc0') == 'Al_det' and nxt.pos != 'adj':
+        # 定冠詞付きの名詞 - ? - 定冠詞付きの名詞: 主語 - 動詞 - 目的語 (المعلم مدح الولد) と読む
+        score *= 3 if pos == 'verb' else 0.5
     if prev is not None:
         prev_bare = script.bare(prev.main['diac']).replace('ٱ', 'ا')
         prev_pos = prev.pos
@@ -153,7 +160,9 @@ def choose_readings(surfaces):
                 continue
             prev = chosen[i - 1] if i > 0 else None
             nxt = chosen[i + 1] if i + 1 < len(chosen) else None
-            chosen[i] = max(cands, key=lambda r: r.score * _context_score(r, prev, nxt))
+            bare_input = not any(unicodedata.combining(c) for c in unicodedata.normalize('NFD', surfaces[i]))
+            first = i == 1 or (i >= 2 and surfaces[i - 2] in PUNCTUATION)
+            chosen[i] = max(cands, key=lambda r: r.score * _context_score(r, prev, nxt, bare_input, first))
     return chosen
 
 

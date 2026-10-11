@@ -190,8 +190,10 @@ def candidates(lex):
         found = list(dict.fromkeys(g for g in found if not DESCRIPTION.search(g)))
         if pos == 'noun':   # 複数形の訳語 (roses, blossoms) は単数形も (ラテン語などの辞書は単数で引く)
             found = [x for en in found for x in ([en, en[:-1]] if re.fullmatch(r'[a-z]+[^s]s', en) else [en])]
+        if not found:   # 英語の訳語の索引の無い言語: その言語の辞書の英語の語義 (كِتاب → book)
+            found = _source_dictionary_english(lex, pos)
         if not found and lex.ja and not lex.ja.isascii():
-            # 英語の訳語の索引の無い言語 (ペルシア語・ヒンディー語 …) の語: 日本語の訳語から和英 (JMdict) で
+            # それも無ければ日本語の訳語から和英 (JMdict) で (本 は「もと」と「ほん」が混ざるので最後の手段)
             for ja in re.split('[,、]', lex.ja)[:3]:   # 読点でつないだ訳語 (樹木、花) も1つずつ
                 found += [e for e in transfer._ja_english(ja.strip()) if e not in found]
             found = found[:6]
@@ -225,6 +227,30 @@ def candidates(lex):
         return []
     best = _matching(tuple(found), lex.ja, pos)
     return [best] + [en for en in found if en != best]
+
+
+def _source_dictionary_english(lex, pos):
+    """アラビア語・ペルシア語・ヒンディー語・ウルドゥー語の語の、その言語の辞書の英語の語義"""
+    try:
+        if lex.lang == 'ar':
+            from . import arabic
+            entries = [e for e in arabic._db().lemma_hash.get(lex.lemma, []) if e.get('pos') in (pos, 'noun', 'adj')
+                       or pos not in ('noun', 'adj')]
+            glosses = [g.replace('_', ' ').strip() for e in entries
+                       for g in (e.get('gloss') or '').replace(';', ',').split(',')]
+            return list(dict.fromkeys(g for g in glosses if g))[:6]
+        if lex.lang == 'fa':
+            from . import persian
+            rows = [r for (w, p), r in persian._rows().items() if w == lex.lemma and r[6] == 'en']
+        elif lex.lang in ('hi', 'ur'):
+            from . import hindi
+            rows = [r for (w, p), r in hindi._rows().items() if w == lex.lemma and r[5].isascii()]
+        else:
+            return []
+        rows.sort(key=lambda r: r[1] != pos)
+        return list(dict.fromkeys(g.strip() for r in rows for g in r[5].split(',') if g.strip()))[:6]
+    except Exception:
+        return []
 
 
 def _positive(lex):
@@ -512,7 +538,7 @@ def noun_phrase(np, objective=False, passive=False):
             elif head.pos in ('adj', 'participle', 'pronoun') and not np.modifiers:
                 noun = en + (' ones' if np.number == 'pl' else ' one')  # 形容詞の名詞的用法 (bonī「良い人たち」)
             determiner = 'the'
-            if np.definite is False:   # 元の文で不定 (冠詞なし: ῥόδον、رِسالَةً) なら a / an、複数は無し
+            if np.definite is False and not np.genitives:   # 元の文で不定 (ῥόδον、رِسالَةً) なら a / an、複数は無し
                 determiner = '' if np.number == 'pl' else 'a'
             adjectives = []
             for m in np.modifiers:
