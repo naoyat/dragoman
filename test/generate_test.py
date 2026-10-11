@@ -770,17 +770,19 @@ class TibetanTestCase(unittest.TestCase):
 
     def tibetan(self, text):
         clause, = clauses(text)
-        return tibetan.sentence([clause])
+        return tibetan.sentence([clause]).split('\n')[-1].strip()   # Wylie の行
 
     def test_particles(self):
         self.assertEqual(tibetan.particle('bu mo', 'erg'), 'bu mos')
         self.assertEqual(tibetan.particle('dge rgan', 'erg'), 'dge rgan gyis')
         self.assertEqual(tibetan.particle('mthong', 'fin'), 'mthong ngo')
         self.assertEqual(tibetan.particle('bstod', 'nom'), 'bstod pa')
+        if tibetan.tibetan_script('bu') is not None:   # pyewts があればチベット文字の行も
+            self.assertEqual(tibetan.tibetan_script("dge rgan gyis bstod pa'i bu"), 'དགེ་རྒན་གྱིས་བསྟོད་པའི་བུ')
 
     def test_sentences(self):
-        self.assertEqual(self.tibetan('Puella est rēgīna.'), 'bu mo rgyal mo yin no //')
-        self.assertEqual(self.tibetan('Puer ā magistrō laudātus est.'), 'dge rgan gyis bu bstod do //')   # 能動に
+        self.assertEqual(self.tibetan('Puella est rēgīna.'), 'bu mo rgyal mo yin no /')
+        self.assertEqual(self.tibetan('Puer ā magistrō laudātus est.'), 'dge rgan gyis bu bstod do /')   # 能動に
 
 
 class KobunTestCase(unittest.TestCase):

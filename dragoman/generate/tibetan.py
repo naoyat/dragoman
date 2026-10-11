@@ -218,8 +218,28 @@ def realize(clause, gap=None, final=True):
     return ' '.join(w for w in out if w)
 
 
+@functools.lru_cache(maxsize=1)
+def _converter():
+    """Wylie → チベット文字 (pyewts。無ければ None)"""
+    try:
+        import pyewts
+    except ImportError:
+        return None
+    return pyewts.pyewts()
+
+
+def tibetan_script(wylie):
+    """Wylie → チベット文字。[英語] (訳語の無い語) はそのまま。pyewts が無ければ None"""
+    converter = _converter()
+    if converter is None:
+        return None
+    import re
+    return ''.join(part if part.startswith('[') else converter.toUnicode(part)
+                   for part in re.split(r'(\[[^\]]*\])', wylie))
+
+
 def sentence(clauses):
-    """Wylie 綴り"""
+    """チベット文字 (と Wylie の行)。pyewts が無ければ Wylie だけ"""
     if not clauses:
         return ''
     from .frame import split_address
@@ -230,4 +250,6 @@ def sentence(clauses):
         words = [noun_phrase(np) for group in groups for np in group] + \
             [CONNECTIVES[key] for key in keys if key in CONNECTIVES] + [realize(rest)]
         parts.append(' '.join(words))
-    return ' / '.join(parts) + ' //'
+    wylie = ' / '.join(parts) + ' /'   # 節の区切りと文の終わりはシャド (།)
+    script = tibetan_script(wylie)
+    return '%s\n            %s' % (script, wylie) if script else wylie

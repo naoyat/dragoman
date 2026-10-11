@@ -16,7 +16,7 @@ dependencies = ["mecab-python3", "unidic-lite"]
 sanskrit = ["vidyut"]
 russian = ["pymorphy3", "pymorphy3-dicts-ru"]
 arabic = ["camel-tools"]
-tibetan = ["botok"]
+tibetan = ["botok", "pyewts"]
 ja-input = ["ginza", "ja-ginza"]
 piper = ["piper-tts"]
 
