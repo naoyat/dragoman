@@ -150,8 +150,10 @@ def agrees(japanese, english, pos='noun'):
     japanese_items = [_bare_japanese(j) for j in re.split('[,、]', japanese or '')]
     japanese_items = [j for j in japanese_items if j]
     english_items = [english_key(e) for e in (english or '').split(',') if e.strip()]
-    if not japanese_items or not english_items:
+    if not japanese_items:
         return False
+    if not english_items:
+        return True   # 英語の語義が無ければ確かめようがない (日本語の訳語を使う)
     translated = set()
     for e in english_items[:8]:
         translated.update(lookup(e, pos))
