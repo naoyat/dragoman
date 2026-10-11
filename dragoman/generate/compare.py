@@ -11,14 +11,15 @@
 #
 import dataclasses
 
-from . import latin, english, russian, sanskrit, greek, indonesian, tagalog, arabic, hebrew, japanese, kobun
+from . import latin, english, russian, sanskrit, greek, indonesian, tagalog, arabic, hebrew, persian, hindi, japanese, kobun
 
-LANGS = ('la', 'grc', 'sa', 'ru', 'en', 'id', 'tl', 'ar', 'he', 'ja', 'kobun')
+LANGS = ('la', 'grc', 'sa', 'ru', 'en', 'id', 'tl', 'ar', 'he', 'fa', 'hi', 'ur', 'ja', 'kobun')
 NAMES = {'la': 'ラテン語', 'grc': 'ギリシア語', 'sa': 'サンスクリット', 'ru': 'ロシア語', 'en': '英語', 'id': 'インドネシア語',
-         'tl': 'タガログ語', 'ar': 'アラビア語', 'he': 'ヘブライ語',
+         'tl': 'タガログ語', 'ar': 'アラビア語', 'he': 'ヘブライ語', 'fa': 'ペルシア語', 'hi': 'ヒンディー語',
+         'ur': 'ウルドゥー語',
          'ja': '日本語', 'kobun': '古文'}
 MODULES = {'la': latin, 'grc': greek, 'sa': sanskrit, 'ru': russian, 'en': english, 'id': indonesian, 'tl': tagalog,
-           'ar': arabic, 'he': hebrew, 'ja': japanese,
+           'ar': arabic, 'he': hebrew, 'fa': persian, 'hi': hindi, 'ur': hindi, 'ja': japanese,
            'kobun': kobun}
 ROLE_NAMES = {'subject': '主語', 'object': '目的語', 'recipient': '受け手', 'means': '手段', 'possessor': '所有者',
               'complement': '補語', 'place': '場所', 'source': '起点', 'prep': '前置詞句', 'address': '呼びかけ'}
@@ -31,7 +32,8 @@ WORD_ORDER = {'subject': '動詞の前', 'object': '動詞の後ろ', 'complemen
 PRO_DROP = {'la': '書かない (動詞の語尾で分かる)', 'grc': '書かない (動詞の語尾で分かる)', 'sa': '書かない (動詞の語尾で分かる)',
             'ja': '書かない (文脈で分かる)', 'kobun': '書かない (文脈で分かる)', 'ru': '代名詞を補う', 'en': '代名詞を補う',
             'id': '代名詞を補う', 'tl': '代名詞を補う', 'ar': '書かない (動詞の接辞で分かる)',
-            'he': '完了形・未完了形は書かない (動詞の接辞で分かる)。分詞なら代名詞を補う'}
+            'he': '完了形・未完了形は書かない (動詞の接辞で分かる)。分詞なら代名詞を補う',
+            'fa': '書かない (動詞の人称語尾で分かる)', 'hi': '書かない (文脈で分かる)', 'ur': '書かない (文脈で分かる)'}
 TENSES = {'present': '現在', 'imperfect': '未完了過去', 'perfect': '完了', 'past-perfect': '過去完了', 'future': '未来'}
 
 
@@ -59,6 +61,7 @@ def _display(lang, text):
 # 受動の動作主 (ā + 奪格) の言語ごとの手段 (前置詞の表とは別の規則で作る)
 AGENT = {'la': 'ā + 奪格', 'grc': 'ὑπό + 属格', 'sa': '具格 (動作主)', 'ru': '造格 (動作主)', 'en': '前置詞 by',
          'id': '前置詞 oleh', 'tl': 'ng (焦点でない行為者)', 'ar': 'مِنْ قِبَلِ + 属格', 'he': 'עַל־יְדֵי',
+         'fa': 'توسط (tavassot-e)', 'hi': 'के द्वारा (ke dvārā)', 'ur': 'کے ذریعے (ke zariye)',
          'ja': '助詞 に', 'kobun': '助詞 に'}
 AR_CASES = {'n': '主格', 'a': '対格', 'g': '属格'}
 
@@ -78,12 +81,73 @@ def np_form(lang, role, np, clause):
 
 
 # 呼びかけ (呼格の名詞句) の言語ごとの表し方。形は各言語の vocative で作る (文の頭に置き、カンマで区切る)
-ADDRESS_HOW = {'la': '呼格', 'grc': 'ὦ + 呼格 (冠詞なし)', 'sa': '呼格', 'ru': '主格 (呼格は無い)', 'en': '冠詞なし',
+ADDRESS_HOW = {'fa': 'ای + 名詞', 'hi': '名詞 (呼びかけの印なし)', 'ur': '名詞 (呼びかけの印なし)','la': '呼格', 'grc': 'ὦ + 呼格 (冠詞なし)', 'sa': '呼格', 'ru': '主格 (呼格は無い)', 'en': '冠詞なし',
                'id': 'そのまま', 'tl': '標識なし', 'ar': 'يا + 主格 (冠詞・タンウィーンなし)', 'he': '冠詞付き',
                'ja': '助詞 よ', 'kobun': '助詞 よ'}
 
 
+# 語を組 (文字, 転写[, ウルドゥー文字]) で作る言語: 表示の文字の列
+WORD_COLUMNS = {'fa': 0, 'hi': 0, 'ur': 2}
+FA_HOW = {'subject': '動詞の前 (格の印なし)', 'object': 'را (定の目的語の印)', 'recipient': '前置詞 به',
+          'address': 'ای + 名詞'}
+HI_HOW = {'address': '名詞 (呼びかけの印なし)'}
+
+
+def _words(lang, words):
+    """組の列 → 文字 (転写)"""
+    if not words:
+        return ''
+    column = WORD_COLUMNS[lang]
+    script = ' '.join(w[column] for w in words if w[column])
+    roman = ' '.join(w[1] for w in words if w[1]).replace(' -', '-')
+    return '%s (%s)' % (script, roman)
+
+
+def _tuple_np(lang, role, np, clause):
+    """ペルシア語・ヒンディー語・ウルドゥー語の名詞句の要素 (表示の形, 手段)"""
+    passive = clause.voice == 'passive'
+    if lang == 'fa':
+        if role == 'prep' and np.prep is not None:
+            words = persian.prepositional(np, passive)
+            return _words(lang, words), words[0][0] + ' (%s)' % words[0][1] if not (passive and np.prep.lemma in
+                                                                                     ('ā', 'ab', 'abs')) else AGENT['fa']
+        if role == 'object':
+            return _words(lang, persian._object(np)), FA_HOW['object']
+        if role == 'recipient' or (role == 'means' and np.animate):
+            return _words(lang, [('به', 'be')] + persian.noun_phrase(np)), FA_HOW['recipient']
+        if role == 'address':
+            return _words(lang, persian.vocative(np)), FA_HOW['address']
+        return _words(lang, persian.noun_phrase(np)), FA_HOW.get(role, '')
+    if role == 'prep' and np.prep is not None:
+        words = hindi.prepositional(np, passive)
+        last = words[-1]
+        how = AGENT[lang] if passive and np.prep.lemma in ('ā', 'ab', 'abs') else \
+            '斜格 + %s (%s)' % (last[2] if lang == 'ur' else last[0], last[1])
+        return _words(lang, words), how
+    if role == 'subject':
+        _, ergative = _safe(lambda c: hindi.verb_words(c, np, (c.role('object') or [None])[0]), clause) \
+            if not clause.copula else ([], False)
+        words = hindi.noun_phrase(np, oblique=ergative) + ([('ने', 'ne', 'نے')] if ergative else [])
+        return _words(lang, words), ('斜格 + %s (他動詞の完了相)' % _ur(lang, 'ने', 'نے')) if ergative else '直格'
+    if role == 'object':
+        if hindi._takes_ko(np):
+            return _words(lang, hindi.noun_phrase(np, True) + [('को', 'ko', 'کو')]), '斜格 + %s (人の目的語)' % _ur(lang, 'को', 'کو')
+        return _words(lang, hindi.noun_phrase(np)), '直格 (格の印なし)'
+    if role == 'recipient' or (role == 'means' and np.animate):
+        return _words(lang, hindi.noun_phrase(np, True) + [('को', 'ko', 'کو')]), '斜格 + %s' % _ur(lang, 'को', 'کو')
+    if role == 'address':
+        return _words(lang, hindi.noun_phrase(np)), HI_HOW['address']
+    return _words(lang, hindi.noun_phrase(np, True) + [('में', 'meṃ', 'میں')]), '斜格 + %s' % _ur(lang, 'में', 'میں')
+
+
+def _ur(lang, deva, urdu):
+    """説明の中の後置詞を表の言語の文字で"""
+    return urdu if lang == 'ur' else deva
+
+
 def _np_form(lang, role, np, clause):
+    if lang in WORD_COLUMNS:
+        return _tuple_np_safe(lang, role, np, clause)
     m = MODULES[lang]
     passive = clause.voice == 'passive'
     if role == 'address':
@@ -169,6 +233,13 @@ def _tagalog_np(role, np, clause):
     return _safe(tagalog.noun_phrase, np, marker), how
 
 
+def _tuple_np_safe(lang, role, np, clause):
+    try:
+        return _tuple_np(lang, role, np, clause)
+    except Exception as e:   # 作れない要素があっても表は作る
+        return '(作れない: %s)' % type(e).__name__, ''
+
+
 def _prep_form(lang, np, passive, clause=None):
     key = (np.prep.lemma, np.case)
     if passive and np.prep.lemma in ('ā', 'ab', 'abs'):
@@ -231,6 +302,9 @@ PREDICATE_HOW = {
     'tl': '接辞で焦点 (行為者 -um-/mag-・対象 -in・移動物 i-)、重複と -in- でアスペクト',
     'ar': '完了形・未完了形 (人称・性・数の接辞)、法 (直説法・要求法)、否定 لَمْ・لا・لَنْ',
     'he': '完了形・未完了形 (人称・性・数の接辞)、現在は分詞 (性・数)、態は動詞の型 (binyan)',
+    'fa': 'می + 現在語幹 + 人称語尾 / 過去語幹 + 人称語尾、否定 ن、未来 خواه、受動 + شدن',
+    'hi': '語幹 + 相 (習慣 ता・完了 आ) + 助動詞 है/था (性・数に一致)、否定 नहीं、受動 + जाना',
+    'ur': '語幹 + 相 (習慣 تا・完了 ا) + 助動詞 ہے/تھا (性・数に一致)、否定 نہیں、受動 + جانا',
     'ja': '活用 + 助動詞 (た・ない・れる)', 'kobun': '活用 + 助動詞 (けり・ず・む・る)'}
 
 
@@ -241,6 +315,8 @@ COPULA_HOW = {
     'en': 'be + 補語', 'id': '繋辞を書かない (名詞なら adalah も)', 'tl': '述語が先 (繋辞を書かない)',
     'ar': '繋辞を書かない (名詞文。過去は كانَ、否定は لَيْسَ。その後の補語は対格)',
     'he': '繋辞を書かない (名詞文。過去は הָיָה)',
+    'fa': '補語 + است (否定 نیست、過去 بود)', 'hi': '補語 + है (過去 था。性・数に一致)',
+    'ur': '補語 + ہے (過去 تھا。性・数に一致)',
     'ja': '形容詞はそのまま述語 (名詞なら である)', 'kobun': '形容詞はそのまま述語 (名詞なら なり)'}
 
 
@@ -256,6 +332,12 @@ def predicate_form(lang, clause):
         clause = arabic.to_active(clause)
         kept = [(role, np) for role, np in clause.args if role == 'subject']
         reduced = dataclasses.replace(reduced, voice='active', args=kept, person=clause.person, number=clause.number)
+    if lang in WORD_COLUMNS:
+        how = COPULA_HOW[lang] if clause.copula and clause.role('complement') else PREDICATE_HOW[lang]
+        try:
+            return _words(lang, _tuple_predicate(lang, clause, reduced)), how
+        except Exception as e:
+            return '(作れない: %s)' % type(e).__name__, how
     m = MODULES[lang]
     if lang == 'ja':
         text = _safe(japanese.predicate, reduced)
@@ -278,6 +360,23 @@ def predicate_form(lang, clause):
                 text = _without(text, _np_form(lang, role, np, clause)[0])
     how = COPULA_HOW[lang] if clause.copula and clause.role('complement') else PREDICATE_HOW[lang]
     return _display(lang, text), how
+
+
+def _tuple_predicate(lang, clause, reduced):
+    """ペルシア語・ヒンディー語・ウルドゥー語の述語の語の列 (繋辞の文は主語を除いた節の残り)"""
+    subject = (clause.role('subject') or [None])[0]
+    if clause.copula:
+        words = (persian.realize if lang == 'fa' else hindi.realize)(reduced)
+        if subject is not None:
+            head = persian.noun_phrase(subject) if lang == 'fa' else hindi.noun_phrase(subject)
+            if words[:len(head)] == head:
+                words = words[len(head):]
+        return words
+    if lang == 'fa':
+        person, number = persian._person(clause)
+        return persian.verb_words(clause, person, number)
+    words, _ = hindi.verb_words(clause, subject, (clause.role('object') or [None])[0])
+    return words
 
 
 def _without(text, part):
@@ -338,8 +437,8 @@ def rows(clause, langs=LANGS):
 
 def parse_langs(value):
     """--compare の値 (la,grc,ja / all) → 言語の符号の列。知らない符号は ValueError"""
-    if value.strip() in ('all', ''):   # データの要る言語 (アラビア語・ヘブライ語) は、あるものだけ
-        return [lang for lang in LANGS if not hasattr(MODULES[lang], 'available') or lang not in ('ar', 'he') or
+    if value.strip() in ('all', ''):   # データの要る言語 (アラビア語・ヘブライ語・ペルシア語・ヒンディー語・ウルドゥー語) は、あるものだけ
+        return [lang for lang in LANGS if not hasattr(MODULES[lang], 'available') or lang not in ('ar', 'he', 'fa', 'hi', 'ur') or
                 MODULES[lang].available()]
     langs = [v.strip() for v in value.split(',') if v.strip()]
     unknown = [lang for lang in langs if lang not in LANGS]
