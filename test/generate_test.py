@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dragoman.core import paths  # noqa: E402
 from dragoman.latin import latindic, analyzer  # noqa: E402
-from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, kobun  # noqa: E402
+from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, arabic, kobun  # noqa: E402
 from dragoman.generate.frame import Lex  # noqa: E402
 
 _saved = None
@@ -532,6 +532,40 @@ class TagalogTestCase(unittest.TestCase):
             ('kain', 'actor', 'progressive'), ('kain', 'object', 'completive'), ('bigay', 'conveyance', 'completive'),
             ('awit', 'actor', 'contemplative'), ('galak', 'actor', 'progressive'), ('matay', 'actor', 'completive'))]
         self.assertEqual(forms, ['kumakain', 'kinain', 'ibinigay', 'aawit', 'nagagalak', 'namatay'])
+
+
+@unittest.skipUnless(arabic.available(), 'CAMeL Tools の形態素の辞書 (ar/camel) が無い')
+class ArabicTestCase(unittest.TestCase):
+    """ラテン語 → 文の枠 → アラビア語 (CAMeL Tools の生成器)"""
+
+    @classmethod
+    def setUpClass(cls):
+        latindic.load()
+
+    def arabic(self, text):
+        analysis, = analyzer.analyze_text(text)
+        return arabic.sentence(frame.frames(analysis)).split('\n')[0]
+
+    def assertEqual(self, first, second, msg=None):   # 記号 (シャッダ・母音記号) の並びの違いは問わない
+        import unicodedata
+        super().assertEqual(unicodedata.normalize('NFC', first), unicodedata.normalize('NFC', second), msg)
+
+    def test_verbal_sentence(self):
+        # 動詞が先、女性の主語に一致、格 (主格・対格・属格)、定冠詞、形容詞の一致
+        self.assertEqual(self.arabic('Puella rosam pulchram in hortō videt.'), 'تَرَى البِنْتُ الوَرْدَ الجَمِيلَ فِي الحَدِيقَةِ.')
+        self.assertEqual(self.arabic('Rēgīna puellīs rosās dedit.'), 'أَعْطَت المَلِكَةُ الوَرْداتِ لِلبَناتِ.')
+
+    def test_passive_without_form(self):
+        self.assertEqual(self.arabic('Puer ā magistrō laudātus est.'), 'مَدَحَ المُعَلِّمُ الوَلَدَ.')   # 受動の形が無ければ能動に
+
+    def test_nominal_and_negation(self):
+        self.assertEqual(self.arabic('Puella est rēgīna.'), 'البِنْتُ مَلِكَةٌ.')
+        self.assertEqual(self.arabic('Nauta nōn est malus.'), 'لَيْسَ البَحّارُ سَيِّئاً.')   # لَيْسَ + 対格
+        self.assertEqual(self.arabic('Rosam nōn vīdit.'), 'لَمْ يَرَ الوَرْدَ.')   # لَمْ + 要求法
+
+    def test_relative(self):
+        self.assertEqual(self.arabic('Puella puerum videt quem magister laudat.'),
+                         'تَرَى البِنْتُ الوَلَدَ الَّذِي يَمْدَحه المُعَلِّمُ.')   # 目的語の空所は代名詞の接尾辞
 
 
 class KobunTestCase(unittest.TestCase):

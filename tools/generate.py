@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 #
 # 解析の結果 (格の枠) から文を作り直す試み: ラテン語 (・古典ギリシア語・ロシア語・サンスクリット・日本語) → 文の枠 →
-# ラテン語・英語・ロシア語・サンスクリット・古典ギリシア語・インドネシア語・タガログ語・日本語・古文
+# ラテン語・英語・ロシア語・サンスクリット・古典ギリシア語・インドネシア語・タガログ語・アラビア語・日本語・古文
 #
 #   python3 tools/generate.py "Puella rosam pulchram in hortō videt."
 #   python3 tools/generate.py samples/samples.txt
-#   python3 tools/generate.py --to=en,ru,sa "…"     作る言語 (既定: en,la と、語の置き換えの表があれば ru,sa,grc,id,tl,ja,kobun)
+#   python3 tools/generate.py --to=en,ru,sa "…"     作る言語 (既定: en,la と、語の置き換えの表があれば ru,sa,grc,id,tl,ar,ja,kobun)
 #   python3 tools/generate.py --from=grc "ἡ κόρη τὸ καλὸν ῥόδον βλέπει."   ロシア語 (ru)・サンスクリット (sa)・古典ギリシア語から
 #   python3 tools/generate.py --from=ja "少女が庭で美しい薔薇を見た。"   日本語の文から (MeCab と規則で文の枠に)
 #   python3 tools/generate.py --compare "Rosam in hortō vīdit."   要素ごとに各言語の手段を並べる (前置詞と格・語順・助詞、
@@ -24,7 +24,7 @@ from collections import Counter
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dragoman.latin import analyzer, latindic
-from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, japanese, kobun
+from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, arabic, japanese, kobun
 
 
 def _word_list(text):
@@ -101,7 +101,8 @@ def show_frame(clauses):
         print('  要素ごとの比較:')
         print(compare.text_table(clauses, [lang for lang in compare.LANGS if lang in COMPARE]))
 OTHERS = [('ru', 'ロシア語:', russian), ('sa', '梵語:    ', sanskrit), ('grc', 'ギリシア語:', greek),
-          ('id', 'インドネシア語:', indonesian), ('tl', 'タガログ語:', tagalog), ('ja', '日本語:  ', japanese),
+          ('id', 'インドネシア語:', indonesian), ('tl', 'タガログ語:', tagalog), ('ar', 'アラビア語:', arabic),
+          ('ja', '日本語:  ', japanese),
           ('kobun', '古文:    ', kobun)]
 
 
@@ -133,7 +134,8 @@ def run_other(text, source):
     analyzer_module = importlib.import_module('dragoman.%s.analyzer' % {'ru': 'russian', 'sa': 'sanskrit', 'grc': 'greek'}[source])
     modules = {'la': ('ラテン語:', latin), 'en': ('英語:    ', english), 'ru': ('ロシア語:', russian),
                'sa': ('梵語:    ', sanskrit), 'grc': ('ギリシア語:', greek), 'id': ('インドネシア語:', indonesian),
-               'tl': ('タガログ語:', tagalog), 'ja': ('日本語:  ', japanese), 'kobun': ('古文:    ', kobun)}
+               'tl': ('タガログ語:', tagalog), 'ar': ('アラビア語:', arabic), 'ja': ('日本語:  ', japanese),
+               'kobun': ('古文:    ', kobun)}
     for analysis in analyzer_module.analyze_text(text):
         print(analysis.text)
         clauses = frame.frames(analysis)
@@ -141,7 +143,7 @@ def run_other(text, source):
             print('  (述語が見つからない)\n')
             continue
         show_frame(clauses)
-        for lang in ['ja', 'kobun', 'la', 'en', 'ru', 'sa', 'grc', 'id', 'tl']:
+        for lang in ['ja', 'kobun', 'la', 'en', 'ru', 'sa', 'grc', 'id', 'tl', 'ar']:
             if lang not in TARGETS and lang != source:
                 continue
             label, module = modules[lang]
