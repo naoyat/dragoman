@@ -4,7 +4,7 @@
 # 古典ギリシア語のコマンドの設定 (core/cli.py)
 #
 from dragoman.core.cli import Command
-from dragoman.core.options import Option
+from dragoman.core import options
 from . import analyzer, dictionary
 from . import romanize as greek_romanize
 
@@ -12,7 +12,7 @@ USAGE = '''
   echo "ἐν ἀρχῇ ἦν ὁ λόγος." | python3 dragoman.py --lang=grc
   python3 dragoman.py --lang=grc -w -D -E FILE...
 '''
-OPTIONS = (Option('pron', value='PRON', help='音読の発音: attic (古典期アッティカ式。既定) / modern (現代ギリシア語式)'),)
+OPTIONS = options.LANGUAGE['grc']   # 定義は core/options.py に (解析器を読まずに集められるように)
 NOTES = '  -r (共通) は見出しの行と語ごとの表示に転写を添える (ἐν ἀρχῇ → en archêi)'
 
 

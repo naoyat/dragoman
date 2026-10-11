@@ -6,7 +6,7 @@
 #   ここに書いた定義から、getopt の書式 (getopt_spec)、値を取るオプションの一覧 (value_names。入口 main.py が値を
 #   言語の符号・入力ファイルと取り違えないように)、説明の文 (help_text) を作る。
 #   共通のオプションは COMMON、ラテン語のコマンド (latin/main.py) だけのものは LATIN、
-#   ほかの言語だけのものは <言語>/command.py の Command(options=...) に
+#   ほかの言語だけのものは LANGUAGE (<言語>/command.py の Command(options=...) がここから取る)
 #
 from dataclasses import dataclass
 
@@ -56,6 +56,30 @@ LATIN = tuple(o for o in COMMON if o.long in LATIN_COMMON) + (
     Option('accent', value='ACCENT', help='[mbrola] 音読のアクセント: pitch (既定) / stress'),
     Option('no-wiktionary', help='手作りの辞書だけを使う (Wiktionary 由来の補助辞書を引かない)'),
 )
+
+# 言語ごとのコマンド (<言語>/command.py) だけのもの。入口 main.py が解析器を読み込まずに集められるよう、ここに置く
+LANGUAGE = {
+    'he': (   # ヘブライ語
+        Option('divine-name', value='MODE', help='音読での神の名 יְהוָה の読み方: adonai (既定。ヒリクの形はエロヒム) /\n'
+                                                 'hashem「ハシェム」/ literal (字面のまま)'),
+        Option('binyan', value='ROOT', help='語根 (כתב / ktb / 語形でも) の態の型の表を出す\n'
+                                            '(聖書に現れた形と、規則から作った形 *)'),
+    ),
+    'sa': (   # サンスクリット
+        Option('compound-labels', value='STYLE',
+               help='複合語の種類の名前: sa (tatpuruṣa など。既定) / ja (依主釈など) / en (determinative など)'),
+        Option('voice', 'v', 'VOICE', '音読の MBROLA の音声 (in1 / in2)'),
+        Option('buddhist', help='仏典の語彙 (漢訳語: rūpa → 色、prajñā → 般若) を使う\n'
+                                '(既定は文章に bodhisattva, śāriputra, prajñāpāramitā などがあれば使う)'),
+        Option('no-buddhist', help='仏典の語彙を使わない'),
+    ),
+    'grc': (   # 古典ギリシア語
+        Option('pron', value='PRON', help='音読の発音: attic (古典期アッティカ式。既定) / modern (現代ギリシア語式)'),
+    ),
+    'bo': (   # 古典チベット語
+        Option('pron', value='PRON', help='発音: lhasa (ラサ方言。既定) / chant (読誦式: 語末の母音を変えず -l -n を読む)'),
+    ),
+}
 
 
 def getopt_spec(options):

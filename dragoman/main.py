@@ -99,12 +99,11 @@ def language_list():
 @functools.lru_cache(maxsize=1)
 def value_options():
     """値を取るオプション (言語ごとのコマンドに渡すもの)。値を言語の符号・入力ファイルと取り違えないように
-    (-t say を言語 say と、--html note.html を入力と読まない)。定義 (core/options.py と各言語の Command.options) から"""
+    (-t say を言語 say と、--html note.html を入力と読まない)。定義 (core/options.py の COMMON・LATIN・LANGUAGE) から"""
     from dragoman.core import options
     names = options.value_names(options.COMMON + options.LATIN)
-    for code in LANGUAGES:
-        if code != 'la':
-            names |= options.value_names(command_for(code).options)
+    for extra in options.LANGUAGE.values():   # 言語のコマンド (解析器) は読み込まない (任意の依存が無くても動くように)
+        names |= options.value_names(extra)
     return frozenset(names)
 
 

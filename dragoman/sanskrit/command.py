@@ -6,19 +6,14 @@
 import sys
 
 from dragoman.core.cli import Command
-from dragoman.core.options import Option
+from dragoman.core import options
 from . import analyzer, buddhist, compound, dictionary, morphology, script
 
 USAGE = '''
   echo "रामो वनं गच्छति ।" | python3 dragoman.py --lang=sa
   echo "rāmo vanaṃ gacchati" | python3 dragoman.py --lang=sa      (IAST でも)
 '''
-OPTIONS = (Option('compound-labels', value='STYLE',
-                  help='複合語の種類の名前: sa (tatpuruṣa など。既定) / ja (依主釈など) / en (determinative など)'),
-           Option('voice', 'v', 'VOICE', '音読の MBROLA の音声 (in1 / in2)'),
-           Option('buddhist', help='仏典の語彙 (漢訳語: rūpa → 色、prajñā → 般若) を使う\n'
-                                   '(既定は文章に bodhisattva, śāriputra, prajñāpāramitā などがあれば使う)'),
-           Option('no-buddhist', help='仏典の語彙を使わない'))
+OPTIONS = options.LANGUAGE['sa']   # 定義は core/options.py に (解析器を読まずに集められるように)
 
 
 def header(analysis, options):

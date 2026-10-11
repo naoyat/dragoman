@@ -6,17 +6,14 @@
 import sys
 
 from dragoman.core.cli import Command
-from dragoman.core.options import Option
+from dragoman.core import options
 from . import analyzer, dictionary, explain, script
 
 USAGE = '''
   echo "בְּרֵאשִׁית בָּרָא אֱלֹהִים אֵת הַשָּׁמַיִם וְאֵת הָאָרֶץ׃" | python3 dragoman.py --lang=he
   母音記号 (ニクード) 付きの本文を入れる (朗唱記号はあってもよい)。聖書アラム語の部分もそのまま読める
 '''
-OPTIONS = (Option('divine-name', value='MODE', help='音読での神の名 יְהוָה の読み方: adonai (既定。ヒリクの形はエロヒム) /\n'
-                                                    'hashem「ハシェム」/ literal (字面のまま)'),
-           Option('binyan', value='ROOT', help='語根 (כתב / ktb / 語形でも) の態の型の表を出す\n'
-                                               '(聖書に現れた形と、規則から作った形 *)'))
+OPTIONS = options.LANGUAGE['he']   # 定義は core/options.py に (解析器を読まずに集められるように)
 
 
 def original_text(analysis):

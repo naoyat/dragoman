@@ -61,6 +61,15 @@ class DragomanCommandTestCase(unittest.TestCase):
             self.assertNotEqual(result.returncode, 0)
             self.assertIn('grc', result.stderr)  # 対応している言語の一覧を出す
 
+    def test_without_optional_dependency(self):
+        # 任意の依存 (サンスクリットの Vidyut) が無くても、ほかの言語は動く (オプションの定義を集めるのに解析器を読まない)
+        code = ("import sys, runpy; sys.modules['vidyut'] = None; "
+                "sys.argv = ['dragoman.py', 'la', '-w', '-e', 'Puella cantat.']; "
+                "runpy.run_path('dragoman.py', run_name='__main__')")
+        result = subprocess.run([sys.executable, '-c', code], cwd=ROOT, capture_output=True, text=True)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn('歌う', ANSI_ESCAPE.sub('', result.stdout))
+
     def test_positional_lang_and_text_option(self):
         # ./dragoman.py LANG -e TEXT (言語を最初の引数で、文を -e で)
         result = subprocess.run([sys.executable, 'dragoman.py', 'la', '-w', '-e', 'Rōma magna est.'], cwd=ROOT,

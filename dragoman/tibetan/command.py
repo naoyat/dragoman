@@ -5,7 +5,7 @@
 #
 from dragoman.core import ansi_color
 from dragoman.core.cli import Command
-from dragoman.core.options import Option
+from dragoman.core import options
 from . import analyzer, dictionary, grammar, phonology, script, segment
 
 USAGE = '''
@@ -15,7 +15,7 @@ USAGE = '''
   音読 (-s) は MMS-TTS (中央チベット語の録音で学習したモデル。$DRAGOMAN_DATA/bo/mms-tts-bod) があればそれで、
   無ければ (-t espeak でも) espeak-ng の普通話の音声に音素で渡す。辞書は tools/build_tibetan_dic.py で作る (docs/tibetan.md)
 '''
-OPTIONS = (Option('pron', value='PRON', help='発音: lhasa (ラサ方言。既定) / chant (読誦式: 語末の母音を変えず -l -n を読む)'),)
+OPTIONS = options.LANGUAGE['bo']   # 定義は core/options.py に (解析器を読まずに集められるように)
 
 
 def pron(options):
