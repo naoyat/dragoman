@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dragoman.core import paths  # noqa: E402
 from dragoman.latin import latindic, analyzer  # noqa: E402
-from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, arabic, hebrew, kobun  # noqa: E402
+from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, arabic, hebrew, japanese, kobun  # noqa: E402
 from dragoman.generate.frame import Lex  # noqa: E402
 
 _saved = None
@@ -702,6 +702,20 @@ class CompareTestCase(unittest.TestCase):
         self.assertEqual(agent['grc'][1], 'ὑπό + 属格')
         self.assertEqual(agent['ru'][1], '造格 (動作主)')
         self.assertEqual(rows['主語']['grc'][1], '主格 + 冠詞')
+
+    def test_address(self):
+        # 呼びかけ (呼格) は文の頭に。2人称の動詞の名詞の「主語」(主格の形 Agnus Deī) も呼びかけ
+        rows = self.rows('Domine, venī!')
+        self.assertEqual(rows['呼びかけ']['la'], ('domine', '呼格'))
+        self.assertEqual(rows['呼びかけ']['ja'][1], '助詞 よ')
+        self.assertEqual(rows['呼びかけ']['en'][1], '冠詞なし')
+        self.assertFalse(rows['呼びかけ']['en'][0].startswith(('the ', 'O ')))
+        analysis, = analyzer.analyze_text('Fīlius rēgis, venī!')   # 主格の形 (呼格なら fīlī)
+        clause = frame.frames(analysis)[0]
+        self.assertEqual([r for r, _ in clause.args], ['address'])
+        self.assertEqual(english.sentence([clause]), 'Son of the king, come.')
+        self.assertEqual(japanese.sentence([clause]), '王の息子よ、来い。')
+        self.assertEqual(latin.sentence([clause]), 'Fīlius rēgis, venī.')
 
     @unittest.skipUnless(russian.available(), 'ロシア語の表が無い')
     def test_predicate_agrees_with_subject(self):

@@ -491,4 +491,11 @@ def _grave(text):
 def sentence(clauses):
     if not clauses:
         return ''
-    return ', '.join(_grave(wrap(realize(c), c)) for c in clauses) + '.'
+    from .frame import with_address
+    return ', '.join(_grave(wrap(with_address(c, realize, vocative), c)) for c in clauses) + '.'
+
+
+def vocative(np):
+    """呼びかけ: ὦ + 呼格、冠詞なし (ὦ δέσποτα)"""
+    import dataclasses
+    return 'ὦ ' + noun_phrase(dataclasses.replace(np, definite=False), 'Voc')

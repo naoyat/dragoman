@@ -482,12 +482,20 @@ SUBORDINATORS = {'ubi': ('已然', 'ば'), 'cum': ('已然', 'ば'), 'quod': ('�
                  'simul': ('連体', 'やいなや')}
 
 
+def vocative(np):
+    """呼びかけ: 名詞 + よ (主よ)"""
+    return noun_phrase(np) + 'よ'
+
+
 def sentence(clauses):
     if not clauses:
         return ''
+    from .frame import split_address
     out = ''
     for i, clause in enumerate(clauses):
         last = i == len(clauses) - 1
+        addresses, clause = split_address(clause)
+        out += ''.join(vocative(np) + '、' for np in addresses)   # 呼びかけは文の頭に (主よ、…)
         if clause.subordinator in SUBORDINATORS:
             name, suffix = SUBORDINATORS[clause.subordinator]
             if clause.subordinator in ('sī',) and clause.tense in ('perfect', 'imperfect'):

@@ -721,10 +721,18 @@ def realize(clause, capitalize=True):
     return text
 
 
+def vocative(np):
+    """呼びかけ: 冠詞なし (Lord, have mercy)"""
+    text = noun_phrase(np)
+    return text[4:] if text.startswith('the ') else text
+
+
 def sentence(clauses):
     """節の列 → 英語の文 (節は ; でつなぐ)"""
     if not clauses:
         return ''
     from . import connectives
-    text = connectives.join(clauses, [realize(c, capitalize=False) for c in clauses], 'en')
+    from .frame import with_address
+    text = connectives.join(clauses, [with_address(c, lambda x: realize(x, capitalize=False), vocative)
+                                      for c in clauses], 'en')
     return text[:1].upper() + text[1:] + '.'

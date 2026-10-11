@@ -426,6 +426,18 @@ def clause_of(predicate, lang=None):
     return clause
 
 
+def _second_person_address(clause):
+    """2人称の動詞 (命令法 miserēre、quī tollis) の名詞の「主語」は呼びかけ
+    (Domine Deus, Agnus Deī, … miserēre: 主格の形の呼びかけも。名詞は2人称の主語にならない)"""
+    if clause.person != 2:
+        return
+    for k, (role, np) in enumerate(clause.args):
+        if role == 'subject' and np.head is not None and np.head.pos == 'noun':
+            clause.args[k] = ('address', np)
+            if not np.cases or 'Voc' in np.cases:   # 格の分からない語 (辞書に無い Mārce) と呼格と同形の語は呼格に
+                np.case = 'Voc'
+
+
 def _agree_with_subject(clause, predicate):
     """名詞の主語なのに1・2人称で取った動詞 (ἔχαιρον: 1単 = 3複) は、同じ形の3人称の読みに"""
     subjects = clause.role('subject')
@@ -575,6 +587,25 @@ def periphrastic(clause):
     return dataclasses.replace(clause, verb=verb, copula=False, tense=tense, voice=voice, args=args, number=number)
 
 
+def split_address(clause):
+    """呼びかけ (呼格の名詞句。Domine, miserēre) を節から外す: (呼びかけの名詞句の列, 残りの節)"""
+    addresses = clause.role('address')
+    if not addresses:
+        return [], clause
+    import dataclasses
+    return addresses, dataclasses.replace(clause, args=[(r, np) for r, np in clause.args if r != 'address'])
+
+
+def with_address(clause, realize, vocative, sep=', '):
+    """呼びかけを文の頭に置いて節を作る (Domine, miserēre → Lord, have mercy)。realize は残りの節 → 文、
+    vocative は呼びかけの名詞句 → 形"""
+    addresses, rest = split_address(clause)
+    text = realize(rest)
+    if not addresses:
+        return text
+    return sep.join(vocative(np) for np in addresses) + sep + text
+
+
 # 否定を含む動詞 → (もとの動詞, 日本語の訳語)。英語・ロシア語・サンスクリットでは「否定 + もとの動詞」にする
 LEXICAL_NEGATIONS = {'nesciō': ('sciō', '知る'), 'nōlō': ('volō', '望む,欲しい'), 'nequeō': ('queō', 'できる')}
 
@@ -609,6 +640,8 @@ def frames(analysis):
         clause.after_main = bool(clauses) and clause.subordinator in conn.AFTER_MAIN and not clause.connectives
         clauses.append(clause)
     _add_unknown_words(analysis, clauses)
+    for clause in clauses:   # 辞書に無い語 (補った名詞句) にも
+        _second_person_address(clause)
     return clauses
 
 

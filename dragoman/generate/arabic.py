@@ -497,10 +497,17 @@ def transliterate(text):
     return ' '.join(script.translit(w) if script.is_arabic(w) else w for w in text.split(' '))
 
 
+def vocative(np):
+    """呼びかけ: يا + 冠詞もタンウィーンも無い主格 (يا رَبُّ)"""
+    return 'يا ' + noun_phrase(np, 'n', False).replace('ٌ', 'ُ')
+
+
 def sentence(clauses):
     """アラビア文字 (と転写の行)"""
     if not clauses:
         return ''
     import unicodedata
-    text = unicodedata.normalize('NFC', '، '.join(wrap(realize(c), c) for c in clauses) + '.')   # 記号の並びをそろえる
+    from .frame import with_address
+    text = unicodedata.normalize('NFC', '، '.join(wrap(with_address(c, realize, vocative, '، '), c)
+                                                 for c in clauses) + '.')   # 記号の並びをそろえる
     return '%s\n            %s' % (text, transliterate(text))

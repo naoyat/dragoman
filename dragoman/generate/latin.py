@@ -336,8 +336,20 @@ def sentence(clauses):
     if not clauses:
         return ''
     from . import connectives
-    text = connectives.join(clauses, [realize(c, capitalize=False) for c in clauses], 'la')
+    from .frame import with_address
+    text = connectives.join(clauses, [with_address(c, lambda x: realize(x, capitalize=False), vocative)
+                                      for c in clauses], 'la')
     return text[:1].upper() + text[1:] + '.'
+
+
+def vocative(np):
+    """呼びかけ: 呼格 (domine, Mārce)。主格の形の呼びかけ (Agnus Deī) はそのまま"""
+    return noun_phrase(np, 'Nom' if _nominative_address(np) else 'Voc')
+
+
+def _nominative_address(np):
+    """呼格の形になり得ない主格の呼びかけか (Agnus Deī。Deus は呼格と同形)"""
+    return np.case == 'Nom' and 'Voc' not in (np.cases or [])
 
 
 def _adverb(adv):

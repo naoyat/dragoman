@@ -255,12 +255,20 @@ def _te_form(text):
     return text + '、そして'
 
 
+def vocative(np):
+    """呼びかけ: 名詞 + よ (主よ)"""
+    return noun_phrase(np) + 'よ'
+
+
 def sentence(clauses):
     if not clauses:
         return ''
+    from .frame import split_address
     out = ''
     for i, clause in enumerate(clauses):
         last = i == len(clauses) - 1
+        addresses, clause = split_address(clause)
+        out += ''.join(vocative(np) + '、' for np in addresses)   # 呼びかけは文の頭に (主よ、…)
         text = clause_text(clause, final=True)
         if clause.subordinator:
             text = clause_text(clause, final=False) + SUBORDINATORS.get(clause.subordinator, '')

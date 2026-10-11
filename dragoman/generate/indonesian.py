@@ -486,7 +486,8 @@ def sentence(clauses):
         return ''
     texts = []
     for c in clauses:
-        text = wrap(realize(c), c)
+        from .frame import with_address
+        text = wrap(with_address(c, realize, noun_phrase), c)   # 呼びかけはそのまま (Tuan, …)
         texts.append(text)
     out = ', '.join(texts)
     return out[:1].upper() + out[1:] + '.'

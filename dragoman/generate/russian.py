@@ -658,9 +658,16 @@ def _agreeing(np, subject):
                                gender={'masc': 'm', 'femn': 'f', 'neut': 'n'}[g])
 
 
+def vocative(np):
+    """呼びかけ: 主格 (呼格は無い。Марк, иди)"""
+    return noun_phrase(np, 'Nom')
+
+
 def sentence(clauses):
     if not clauses:
         return ''
     from . import connectives
-    text = connectives.join(clauses, [realize(c, capitalize=False).rstrip(',') for c in clauses], 'ru')
+    from .frame import with_address
+    text = connectives.join(clauses, [with_address(c, lambda x: realize(x, capitalize=False).rstrip(','), vocative)
+                                      for c in clauses], 'ru')
     return text[:1].upper() + text[1:] + '.'

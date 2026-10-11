@@ -497,9 +497,15 @@ def transliterate(text):
     return ' '.join(script.translit(w) if re.search('[֐-׿]', w) else w for w in text.split(' '))
 
 
+def vocative(np):
+    """呼びかけ: 冠詞付き (הַמֶּלֶךְ「王よ」。固有名詞はそのまま)"""
+    return noun_phrase(np)[0]
+
+
 def sentence(clauses):
     """ヘブライ文字 (と転写の行)"""
     if not clauses:
         return ''
-    text = unicodedata.normalize('NFC', ', '.join(wrap(realize(c), c) for c in clauses)) + '.'
+    from .frame import with_address
+    text = unicodedata.normalize('NFC', ', '.join(wrap(with_address(c, realize, vocative), c) for c in clauses)) + '.'
     return '%s\n            %s' % (text, transliterate(text))

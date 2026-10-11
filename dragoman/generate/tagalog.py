@@ -442,8 +442,14 @@ def wrap(text, clause):
     return ' '.join(words + [text])
 
 
+def vocative(np):
+    """呼びかけ: 標識なし (Panginoon, …)"""
+    return noun_phrase(np, '')
+
+
 def sentence(clauses):
     if not clauses:
         return ''
-    out = ', '.join(wrap(realize(c), c) for c in clauses)
+    from .frame import with_address
+    out = ', '.join(wrap(with_address(c, realize, vocative), c) for c in clauses)
     return out[:1].upper() + out[1:] + '.'

@@ -21,7 +21,7 @@ MODULES = {'la': latin, 'grc': greek, 'sa': sanskrit, 'ru': russian, 'en': engli
            'ar': arabic, 'he': hebrew, 'ja': japanese,
            'kobun': kobun}
 ROLE_NAMES = {'subject': '主語', 'object': '目的語', 'recipient': '受け手', 'means': '手段', 'possessor': '所有者',
-              'complement': '補語', 'place': '場所', 'source': '起点', 'prep': '前置詞句'}
+              'complement': '補語', 'place': '場所', 'source': '起点', 'prep': '前置詞句', 'address': '呼びかけ'}
 CASE_NAMES = {'Nom': '主格', 'Acc': '対格', 'Gen': '属格', 'Dat': '与格', 'Abl': '奪格', 'Loc': '処格', 'Ins': '具格',
               'Voc': '呼格'}
 RU_CASES = {'Nom': '主格', 'Acc': '対格', 'Gen': '生格', 'Dat': '与格', 'Ins': '造格', 'Loc': '前置格'}
@@ -77,9 +77,18 @@ def np_form(lang, role, np, clause):
     return _display(lang, text), how
 
 
+# 呼びかけ (呼格の名詞句) の言語ごとの表し方。形は各言語の vocative で作る (文の頭に置き、カンマで区切る)
+ADDRESS_HOW = {'la': '呼格', 'grc': 'ὦ + 呼格 (冠詞なし)', 'sa': '呼格', 'ru': '主格 (呼格は無い)', 'en': '冠詞なし',
+               'id': 'そのまま', 'tl': '標識なし', 'ar': 'يا + 主格 (冠詞・タンウィーンなし)', 'he': '冠詞付き',
+               'ja': '助詞 よ', 'kobun': '助詞 よ'}
+
+
 def _np_form(lang, role, np, clause):
     m = MODULES[lang]
     passive = clause.voice == 'passive'
+    if role == 'address':
+        how = '主格 (主格の形の呼びかけ)' if lang == 'la' and latin._nominative_address(np) else ADDRESS_HOW[lang]
+        return _safe(m.noun_phrase if lang == 'id' else m.vocative, np), how
     if role == 'prep' and np.prep is not None:
         return _prep_form(lang, np, passive, clause)
     if lang == 'la':

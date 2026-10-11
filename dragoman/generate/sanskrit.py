@@ -619,13 +619,19 @@ def realize(clause, capitalize=True):
     return ' '.join(w for w in out if w)
 
 
+def vocative(np):
+    """呼びかけ: 呼格 (svAmin。文の頭に)"""
+    return noun_phrase(np, 'Voc')
+
+
 def sentence(clauses):
     """IAST (デーヴァナーガリー)"""
     if not clauses:
         return ''
     import re
     from . import connectives
-    slp1 = connectives.join(clauses, [realize(c) for c in clauses], 'sa')
+    from .frame import with_address
+    slp1 = connectives.join(clauses, [with_address(c, realize, vocative, ' ') for c in clauses], 'sa')
     slp1 = re.sub(r'\[[^\]]*\]', lambda m: m.group(0).replace(' ', '_'), slp1)   # [wait for] を1語に
     words = [w.replace('_', ' ') for w in slp1.split(' ')]
     iast = ' '.join(w if w.startswith(('[', '*')) else script.iast(w) for w in words)
