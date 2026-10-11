@@ -118,6 +118,7 @@ class NP:
     definite: object = None  # 定か (冠詞のある言語から: True / False。ラテン語・日本語からは None = 分からない)
     prep: Lex = None         # 前置詞句なら前置詞
     interrogative: bool = False   # 間接疑問の疑問代名詞 (quid fierī vellet の quid)
+    apposed: bool = False    # 呼びかけで、前の呼びかけにカンマ無しで続く同格 (Iēsū Christe の Christe)
     surface: str = ''
 
 
@@ -588,22 +589,48 @@ def periphrastic(clause):
 
 
 def split_address(clause):
-    """呼びかけ (呼格の名詞句。Domine, miserēre) を節から外す: (呼びかけの名詞句の列, 残りの節)"""
+    """呼びかけ (呼格の名詞句。Domine, miserēre) を節から外す: (呼びかけのまとまりの列, 残りの節)。
+    まとまりは同格で続く名詞句の列 (Iēsū Christe → [[Iēsus, Christus]])"""
     addresses = clause.role('address')
     if not addresses:
         return [], clause
     import dataclasses
-    return addresses, dataclasses.replace(clause, args=[(r, np) for r, np in clause.args if r != 'address'])
+    groups = []
+    for np in addresses:
+        if np.apposed and groups:
+            groups[-1].append(np)
+        else:
+            groups.append([np])
+    return groups, dataclasses.replace(clause, args=[(r, np) for r, np in clause.args if r != 'address'])
 
 
-def with_address(clause, realize, vocative, sep=', '):
+def with_address(clause, realize, vocative, sep=', ', particle=''):
     """呼びかけを文の頭に置いて節を作る (Domine, miserēre → Lord, have mercy)。realize は残りの節 → 文、
-    vocative は呼びかけの名詞句 → 形"""
-    addresses, rest = split_address(clause)
+    vocative は呼びかけの名詞句 → 形 (同格のまとまりは空白でつなぐ: Iēsū Christe)。
+    particle は呼びかけの語 (ὦ・يا)。同格のまとまりでは最初の名詞句にだけ付ける"""
+    groups, rest = split_address(clause)
     text = realize(rest)
-    if not addresses:
+    if not groups:
         return text
-    return sep.join(vocative(np) for np in addresses) + sep + text
+
+    def group_text(group):
+        forms = [vocative(np) for np in group]
+        return ' '.join(f if k == 0 or not particle or not f.startswith(particle) else f[len(particle):]
+                        for k, f in enumerate(forms))
+    return sep.join(group_text(group) for group in groups) + sep + text
+
+
+def _mark_apposed(clause):
+    """呼びかけの名詞句が、前の呼びかけのすぐ後ろ (間にカンマが無い) にあれば同格として続ける"""
+    previous = None
+    for role, np in clause.args:
+        if role != 'address':
+            previous = None
+            continue
+        start = _first_index(np)
+        if previous is not None and start is not None and start == previous + 1:
+            np.apposed = True
+        previous = None if start is None else start + len((np.surface or '').split()) - 1
 
 
 # 否定を含む動詞 → (もとの動詞, 日本語の訳語)。英語・ロシア語・サンスクリットでは「否定 + もとの動詞」にする
@@ -642,6 +669,7 @@ def frames(analysis):
     _add_unknown_words(analysis, clauses)
     for clause in clauses:   # 辞書に無い語 (補った名詞句) にも
         _second_person_address(clause)
+        _mark_apposed(clause)
     return clauses
 
 

@@ -483,8 +483,11 @@ SUBORDINATORS = {'ubi': ('已然', 'ば'), 'cum': ('已然', 'ば'), 'quod': ('�
 
 
 def vocative(np):
-    """呼びかけ: 名詞 + よ (主よ)"""
-    return noun_phrase(np) + 'よ'
+    """呼びかけ: 名詞 + よ (主よ)。同格のまとまり (名詞句の列) の固有名詞は・でつなぐ (イエス・キリストよ)"""
+    group = np if isinstance(np, list) else [np]
+    if all(x.head is not None and x.head.proper for x in group):
+        return '・'.join(noun_phrase(x) for x in group) + 'よ'
+    return '、'.join(noun_phrase(x) + 'よ' for x in group)   # 普通名詞の同格は1つずつ (主よ、独り子よ)
 
 
 def sentence(clauses):
@@ -494,8 +497,8 @@ def sentence(clauses):
     out = ''
     for i, clause in enumerate(clauses):
         last = i == len(clauses) - 1
-        addresses, clause = split_address(clause)
-        out += ''.join(vocative(np) + '、' for np in addresses)   # 呼びかけは文の頭に (主よ、…)
+        groups, clause = split_address(clause)
+        out += ''.join(vocative(group) + '、' for group in groups)   # 呼びかけは文の頭に (主よ、…)
         if clause.subordinator in SUBORDINATORS:
             name, suffix = SUBORDINATORS[clause.subordinator]
             if clause.subordinator in ('sī',) and clause.tense in ('perfect', 'imperfect'):

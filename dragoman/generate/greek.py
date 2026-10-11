@@ -492,7 +492,7 @@ def sentence(clauses):
     if not clauses:
         return ''
     from .frame import with_address
-    return ', '.join(_grave(wrap(with_address(c, realize, vocative), c)) for c in clauses) + '.'
+    return ', '.join(_grave(wrap(with_address(c, realize, vocative, particle='ὦ '), c)) for c in clauses) + '.'
 
 
 def vocative(np):

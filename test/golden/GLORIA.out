@@ -82,6 +82,7 @@ Laudāmus tē , benedīcimus tē , adōrāmus tē , glōrificāmus tē , grāti�
 // ADJ#16 (magnam) -> NOUN#17 (glōriam)
 // ADJ#18 (tuam) -> NOUN#17 (glōriam)
 // ADJ#24 (caelestis) -> NOUN#23 (Rēx)
+// APPOSITION #21 (Deus) with Domine in Voc
 
 5 VERBS FOUND: Laudāmus, benedīcimus, adōrāmus, glōrificāmus, agimus
 
@@ -121,12 +122,12 @@ Laudāmus tē , benedīcimus tē , adōrāmus tē , glōrificāmus tē , grāti�
           tuam
     Voc:
       Domine
-    Nom:
       Deus
+    Nom:
       Rēx
         caelestis
 
-  →  神={天の}王,指導者が / あなたに / {{大きな & あなたの}栄光}〜の近くで,〜のゆえに / 主,主人よ / 感謝を / する,駆る
+  →  {天の}王,指導者が / あなたに / {{大きな & あなたの}栄光}〜の近くで,〜のゆえに / 主,主人=神よ / 感謝を / する,駆る
 
 
 Deus Pater omnipotēns .
@@ -180,6 +181,9 @@ Domine fīlī ūnigenite , Iēsū Christe , Domine Deus , Agnus Deī , Fīlius P
   --- 
 
 // ADJ#2 (ūnigenite) -> NOUN#1 (fīlī)
+// APPOSITION #1 (fīlī) with Domine in Voc
+// APPOSITION #4 (Iēsū) with Christe in Voc
+// APPOSITION #8 (Deus) with Domine in Voc
 // GEN#19 (mundī) -> TARGET#18 (peccāta)
 // GEN#14 (Patris) -> TARGET#13 (Fīlius)
 // GEN#11 (Deī) -> TARGET#10 (Agnus)
@@ -194,12 +198,11 @@ Domine fīlī ūnigenite , Iēsū Christe , Domine Deus , Agnus Deī , Fīlius P
       Domine
       fīlī
         ūnigenite
+      Iēsū
       Christe
       Domine
-    Acc:
-      Iēsū
-    Nom:
       Deus
+    Nom:
       Agnus
         Deī
       Fīlius
@@ -210,7 +213,7 @@ Domine fīlī ūnigenite , Iēsū Christe , Domine Deus , Agnus Deī , Fīlius P
               peccāta
                 mundī
 
-  →  神={神の}小羊={{世界,宇宙の}罪を 取り去る}{父の}息子が / 私に / 主,主人={一人っ子の}息子=キリスト=主,主人よ / イエスを / 憐れむ
+  →  {神の}小羊={{世界,宇宙の}罪を 取り去る}{父の}息子が / 私に / 主,主人={一人っ子の}息子=イエス=キリスト=主,主人=神よ / 憐れむ
 
 
 quī tollis peccāta mundī , suscipe dēprecātiōnem nostram , quī sedēs ad dextram Patris , miserēre nōbīs .
@@ -299,6 +302,7 @@ Quoniam tū sōlus sanctus , tū sōlus Dominus , tū sōlus Altissimus , Iēsū
 
 // ADJ#3 (sanctus) -> NOUN#7 (Dominus)
 // ADJ#11 (Altissimus) -> NOUN#7 (Dominus)
+// APPOSITION #13 (Iēsū) with Christe in Voc
 
 NO VERB FOUND.
 

@@ -33,7 +33,7 @@ PREFERRED = {('girl', 'noun'): '5291', ('boy', 'noun'): '5288', ('child', 'noun'
              ('woman', 'noun'): '802', ('king', 'noun'): '4428', ('queen', 'noun'): '4436', ('book', 'noun'): '5612a',
              ('garden', 'noun'): '1588', ('rose', 'noun'): '2261', ('city', 'noun'): '5892a', ('house', 'noun'): '1004b',
              ('sea', 'noun'): '3220', ('ship', 'noun'): '591', ('people', 'noun'): '5971a', ('citizen', 'noun'): '5971a',
-             ('teacher', 'noun'): '4176', ('sailor', 'noun'): '4419', ('god', 'noun'): '430', ('son', 'noun'): '1121',
+             ('teacher', 'noun'): '4176', ('sailor', 'noun'): '4419', ('god', 'noun'): '430', ('son', 'noun'): '1121a',
              ('daughter', 'noun'): '1323', ('father', 'noun'): '1', ('mother', 'noun'): '517', ('servant', 'noun'): '5650',
              ('slave', 'noun'): '5650', ('master', 'noun'): '113', ('lord', 'noun'): '113', ('word', 'noun'): '1697',
              ('road', 'noun'): '1870', ('way', 'noun'): '1870', ('land', 'noun'): '776', ('water', 'noun'): '4325',
@@ -193,7 +193,9 @@ def _noun_form(aug, number, definite, kind):
         word, gender, _ = best['bare']
         return (article(word) if definite else word), gender
     entry = _lexicon().get(aug)
-    word = entry[0] if entry else aug
+    if entry is None:
+        return '[%s]' % aug, 'm'   # 表の番号の誤り (語形を作らない)
+    word = entry[0]
     return (article(word) if definite else word), 'm'
 
 

@@ -329,7 +329,7 @@ def rows(clause, langs=LANGS):
     for role, np in clause.args:
         if copular and role == 'complement':   # 補語は述語の行に (繋辞と合わせて。語形は主語に一致)
             continue
-        name = ROLE_NAMES.get(role, role)
+        name = ROLE_NAMES.get(role, role) + (' (同格)' if role == 'address' and np.apposed else '')
         if role == 'prep' and np.prep is not None:
             name = '前置詞句 (%s + %s)' % (np.prep.lemma, CASE_NAMES.get(np.case, np.case))
         out.append((name, {lang: np_form(lang, role, np, clause) for lang in langs}))

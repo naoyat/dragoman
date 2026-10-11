@@ -668,6 +668,11 @@ class KobunTestCase(unittest.TestCase):
         self.assertEqual(self.kobun('Urbe captā, cīvēs fūgērunt.'), '都の捕へられて、民どもは逃げけり。')
 
 
+def compare_rows(clause, langs=('la', 'ja')):
+    from dragoman.generate import compare
+    return compare.rows(clause, langs)
+
+
 class CompareTestCase(unittest.TestCase):
     """文の枠の要素ごとに、各言語の形と手段を並べる"""
 
@@ -716,6 +721,18 @@ class CompareTestCase(unittest.TestCase):
         self.assertEqual(english.sentence([clause]), 'Son of the king, come.')
         self.assertEqual(japanese.sentence([clause]), '王の息子よ、来い。')
         self.assertEqual(latin.sentence([clause]), 'Fīlius rēgis, venī.')
+
+    def test_vocative_apposition(self):
+        # 属格と同形の Iēsū を、呼格だけの Christe と同格の呼格に (属格として掛けない)
+        analysis, = analyzer.analyze_text('Iēsū Christe, venī!')
+        clause = frame.frames(analysis)[0]
+        self.assertEqual([(r, np.case, np.apposed) for r, np in clause.args],
+                         [('address', 'Voc', False), ('address', 'Voc', True)])
+        self.assertEqual(japanese.sentence([clause]), 'イエス・キリストよ、来い。')
+        self.assertEqual(latin.sentence([clause]), 'Iēsū Christe, venī.')
+        self.assertIn('呼びかけ (同格)', dict(compare_rows(clause)))
+        analysis, = analyzer.analyze_text('Servum dominī vīdit.')   # 格の合わない属格はそのまま
+        self.assertEqual(frame.frames(analysis)[0].role('object')[0].genitives[0].head.lemma, 'dominus')
 
     @unittest.skipUnless(russian.available(), 'ロシア語の表が無い')
     def test_predicate_agrees_with_subject(self):

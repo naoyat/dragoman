@@ -508,6 +508,6 @@ def sentence(clauses):
         return ''
     import unicodedata
     from .frame import with_address
-    text = unicodedata.normalize('NFC', '، '.join(wrap(with_address(c, realize, vocative, '، '), c)
+    text = unicodedata.normalize('NFC', '، '.join(wrap(with_address(c, realize, vocative, '، ', 'يا '), c)
                                                  for c in clauses) + '.')   # 記号の並びをそろえる
     return '%s\n            %s' % (text, transliterate(text))

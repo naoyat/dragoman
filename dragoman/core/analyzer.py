@@ -881,6 +881,7 @@ def _after_genitive_preposition(words, ix):
 
 def detect_genitive_correspondances(words, trace):
     M = len(words)
+    _detect_appositions(words, trace)
     targets = {}
     gen = []
     blocks = {}
@@ -975,6 +976,35 @@ def detect_genitive_correspondances(words, trace):
                 words[gen_ix].restrict_cases(('Nom','Voc','Acc','Dat','Abl','Loc'))
 
     return (words, [ix for ix in gen if ix not in non_gen])
+
+
+def _detect_appositions(words, trace):
+    """隣り合う名詞の同格: 格の決まった名詞に合わせて、同形の格の多い隣の語の格を決める
+    (Iēsū Christe: 呼格だけの Christe に合わせて Iēsū も呼格。属格としては掛けない)"""
+    for i in range(len(words) - 1):
+        for word, target, ix in ((words[i], words[i + 1], i), (words[i + 1], words[i], i + 1)):
+            case = _apposition_case(word, target)
+            if case:
+                trace.append("// APPOSITION #%d (%s) with %s in %s" % (ix, word.surface_utf8(), target.surface_utf8(),
+                                                                       case))
+                word.restrict_cases((case,))
+
+
+def _apposition_case(word, target):
+    """格の決まらない語 word が、隣の名詞 target と同格になる格 (無ければ None)。
+    target の格が1つに決まり (Christe: 呼格だけ)、word にも同じ格・数の読みがあるとき。
+    呼格なら普通名詞でも (呼びかけは属格を取りにくい)、ほかの格は固有名詞どうし (Iēsū Christum) だけ"""
+    if not isinstance(word, Word) or not isinstance(target, Word) or not word.items or not target.items:
+        return None
+    target_cases = {(c[0], c[1]) for item in target.items if item.pos == 'noun' and item._ for c in item._}
+    if len({case for case, _ in target_cases}) != 1:
+        return None
+    case, number = next(iter(target_cases))
+    word_cases = {c[0] for item in word.items if item._ for c in item._}
+    if case == 'Gen' or len(word_cases) < 2 or not any((c[0], c[1]) == (case, number) for item in word.items if item._ for c in item._):
+        return None
+    proper = all((item.attrib('base') or '')[:1].isupper() for item in (word.items[0], target.items[0]))
+    return case if case == 'Voc' or proper else None
 
 
 def _group_by_verbs(words, verbs_ix, trace):
