@@ -74,7 +74,11 @@ LATIN_PREPS = {('in', 'Abl'): 'in', ('in', 'Acc'): 'into', ('ab', 'Abl'): 'from'
                ('circum', 'Acc'): 'around', ('prope', 'Acc'): 'near', ('propter', 'Acc'): 'because of',
                ('contrā', 'Acc'): 'against', ('super', 'Acc'): 'over', ('ob', 'Acc'): 'because of'}
 # 前置詞の無い格の役割 → 英語の前置詞
-ROLE_PREPS = {'recipient': 'to', 'means': 'with', 'place': 'in', 'address': 'O'}
+ROLE_PREPS = {'recipient': 'to', 'means': 'with', 'place': 'in'}
+# 与格を取る動詞の英語 (与格は目的語に。frame.DATIVE_OBJECT_VERBS)
+DATIVE_VERBS = {'misereor': 'have mercy on', 'parcō': 'spare', 'ignōscō': 'forgive', 'noceō': 'harm',
+                'invideō': 'envy', 'crēdō': 'believe', 'pāreō': 'obey', 'serviō': 'serve', 'faveō': 'favor',
+                'persuādeō': 'persuade'}
 
 
 def _flat(text):
@@ -649,13 +653,16 @@ def question_phrase(inner):
 
 
 def realize(clause, capitalize=True):
-    from .frame import periphrastic, lexical_negation
+    from .frame import periphrastic, lexical_negation, dative_as_object
     clause = lexical_negation(periphrastic(clause))   # prōgressus est → 完了の能動 (advanced / продвинулся)
     """Clause → 英語の文"""
+    clause = dative_as_object(clause, 'en')   # miserēre nōbīs → have mercy on us
     subjects = clause.role('subject')
     subject = subjects[0] if subjects else None
     person, number = _subject_features(subject, clause)
     verb = word(clause.verb) if not clause.copula else 'be'
+    if not clause.copula and clause.verb.lemma in DATIVE_VERBS:
+        verb = DATIVE_VERBS[clause.verb.lemma]
     if clause.infinitives:
         verb = re.sub(' to$', '', verb)   # be able to + to read → be able to read
     out = []

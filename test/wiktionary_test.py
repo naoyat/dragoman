@@ -216,6 +216,13 @@ class LookupTestCase(unittest.TestCase):
     def tearDownClass(cls):
         latindic.LatinDic.use_wiktionary = cls.saved
 
+    def test_deponent_beside_hand_dictionary(self):
+        # 手作りの辞書は misereō (miserēre: 受動の命令法) だけ。同じ形の形式受動態 misereor の能動の読みを先に
+        items = latindic.lookup_hand_deponent('miserēre')
+        self.assertEqual((items[0]['pres1sg'], items[0]['voice'], items[0]['ja']), ('misereor', 'active', '憐れむ'))
+        self.assertTrue(any(i['pres1sg'] == 'misereō' for i in items))   # 元の読みも残す
+        self.assertFalse(any(i.get('pres1sg', '').endswith('or') for i in latindic.lookup_hand_deponent('amāre')))
+
     def test_exact(self):
         items = wiktionary.lookup('arva')
         self.assertTrue(any(i['base'] == 'arvum' for i in items))

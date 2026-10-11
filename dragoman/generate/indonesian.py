@@ -382,7 +382,7 @@ def realize(clause, verb_override=None, finite=False, aspect=True):
             out.append('ada')   # 存在 (est「ある」)
     else:
         if clause.negated:
-            out.append('tidak')
+            out.append('jangan' if clause.mood == 'imperative' else 'tidak')   # 禁止は jangan (Jangan takut)
         for adv in clause.adverbs:
             out.append(word(adv, 'adv'))
         out.append(verb_override or _verb(clause))

@@ -557,8 +557,9 @@ def question_phrase(inner):
 
 
 def realize(clause, capitalize=True):
-    from .frame import periphrastic, lexical_negation
+    from .frame import periphrastic, lexical_negation, dative_as_object
     clause = lexical_negation(periphrastic(clause))   # prōgressus est → 完了の能動 (advanced / продвинулся)
+    clause = dative_as_object(clause, 'ru')   # miserēre nōbīs → помилуй нас (対格)
     subjects = clause.role('subject')
     subject = subjects[0] if subjects else None
     gender, person, number = _subject_agreement(subject, clause)

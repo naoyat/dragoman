@@ -160,6 +160,8 @@ def predicate(clause, final=True):
 
 def clause_text(clause, final=True, attributive=False):
     """節 → 日本語 (述語まで)"""
+    from .frame import dative_as_object, prohibition
+    clause = dative_as_object(prohibition(clause), 'ja')   # miserēre nōbīs → 私たちを憐れめ、Nōlī timēre → 恐れるな
     parts = [_participial(p) for p in clause.adjuncts if p.kind == 'absolute']   # 独立奪格は節の頭 (王が死んで、…)
     subjects = clause.role('subject')
     topic = final and not attributive and not clause.subordinator

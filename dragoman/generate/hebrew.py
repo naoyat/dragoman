@@ -137,7 +137,7 @@ def to_hebrew(lex, pos=None):
         hits = [(rank, -_counts().get(aug, 0), aug, stem) for aug, p, rank, stem in _gloss_index().get(key, [])
                 if p == pos]
         if hits:
-            _, _, aug, stem = min(hits)
+            _, _, aug, stem = min(hits, key=lambda h: (h[0], h[1], h[2], h[3] or ''))   # 態の符号の無いものも
             return aug, stem or 'q'
     return None
 
@@ -212,6 +212,34 @@ def article(word):
     return unicodedata.normalize('NFC', 'הַ' + first + DAGESH + rest)
 
 
+# 前置詞 + 代名詞の接尾辞 (לָנוּ「私たちに」・בּוֹ)。人称性数は PRONOUNS の符号 (1cp・3ms …)
+SUFFIXED_PREPOSITIONS = {
+    'לְ': {'1cs': 'לִי', '1cp': 'לָנוּ', '2ms': 'לְךָ', '2mp': 'לָכֶם', '3ms': 'לוֹ', '3fs': 'לָהּ', '3mp': 'לָהֶם'},
+    'בְּ': {'1cs': 'בִּי', '1cp': 'בָּנוּ', '2ms': 'בְּךָ', '2mp': 'בָּכֶם', '3ms': 'בּוֹ', '3fs': 'בָּהּ', '3mp': 'בָּהֶם'},
+    'כְּ': {'1cs': 'כָּמוֹנִי', '1cp': 'כָּמוֹנוּ', '2ms': 'כָּמוֹךָ', '2mp': 'כְּמוֹכֶם', '3ms': 'כָּמוֹהוּ',
+           '3fs': 'כָּמוֹהָ', '3mp': 'כְּמוֹהֶם'},
+    'מִן־': {'1cs': 'מִמֶּנִּי', '1cp': 'מִמֶּנּוּ', '2ms': 'מִמְּךָ', '2mp': 'מִכֶּם', '3ms': 'מִמֶּנּוּ', '3fs': 'מִמֶּנָּה',
+           '3mp': 'מֵהֶם'},
+    'עִם־': {'1cs': 'עִמִּי', '1cp': 'עִמָּנוּ', '2ms': 'עִמְּךָ', '2mp': 'עִמָּכֶם', '3ms': 'עִמּוֹ', '3fs': 'עִמָּהּ',
+           '3mp': 'עִמָּם'},
+    'עַל־': {'1cs': 'עָלַי', '1cp': 'עָלֵינוּ', '2ms': 'עָלֶיךָ', '2mp': 'עֲלֵיכֶם', '3ms': 'עָלָיו', '3fs': 'עָלֶיהָ',
+            '3mp': 'עֲלֵיהֶם'},
+    'אֶל־': {'1cs': 'אֵלַי', '1cp': 'אֵלֵינוּ', '2ms': 'אֵלֶיךָ', '2mp': 'אֲלֵיכֶם', '3ms': 'אֵלָיו', '3fs': 'אֵלֶיהָ',
+            '3mp': 'אֲלֵיהֶם'},
+}
+
+
+def pronoun_with_preposition(prep, np):
+    """前置詞 + 代名詞 → 接尾辞の形 (לָנוּ)。代名詞でないか表に無ければ None"""
+    head = np.head
+    if head is None or head.pos != 'pronoun' or (head.lemma, np.number) not in PRONOUNS or np.members:
+        return None
+    key = PRONOUNS[(head.lemma, np.number)][1]
+    if key == '3ms' and np.gender == 'f':
+        key = '3fs'
+    return SUFFIXED_PREPOSITIONS.get(prep, {}).get(key)
+
+
 def with_preposition(prep, word):
     """前に付く前置詞 (בְּ・לְ・כְּ): 冠詞があれば縮める (בְּ + הַגַּן → בַּגַּן)"""
     if word.startswith(('הַ', 'הָ', 'הֶ')):
@@ -254,7 +282,8 @@ def noun_phrase(np, prep=None, definite=True):
     if head is None:
         return '', 'm', 's'
     if head.pos == 'pronoun' and (head.lemma, np.number) in PRONOUNS:
-        return PRONOUNS[(head.lemma, np.number)][0], 'm', 'p' if np.number == 'pl' else 's'
+        attached = pronoun_with_preposition(prep, np) if prep else None   # לָנוּ (לְ + אֲנַחְנוּ でなく)
+        return attached or PRONOUNS[(head.lemma, np.number)][0], 'm', 'p' if np.number == 'pl' else 's'
     if head.proper:
         return ((prep + head.lemma) if prep else head.lemma), 'm', 's'
     found = to_hebrew(head, 'noun')
@@ -292,6 +321,9 @@ def prepositional(np, passive=False):
     if passive and np.prep.lemma in ('ā', 'ab', 'abs'):
         return 'עַל־יְדֵי ' + noun_phrase(inner)[0]   # 受動の動作主
     prep, attached = PREPOSITIONS.get((np.prep.lemma, np.case), ('בְּ', True))
+    suffixed = pronoun_with_preposition(prep, inner)
+    if suffixed:
+        return suffixed
     if attached:
         return noun_phrase(inner, prep)[0]
     return prep + ('' if prep.endswith('־') else ' ') + noun_phrase(inner)[0]
@@ -303,6 +335,7 @@ def prepositional(np, passive=False):
 def _verb_forms(root, stem, vtype, pgn):
     rows = _db().execute('SELECT form, count, bare FROM verbs WHERE root = ? AND stem = ? AND type = ? AND pgn = ? '
                          "AND lang = 'H'", (root, stem, vtype, pgn)).fetchall()
+    rows = [r for r in rows if _pointed(r[0])]   # 母音記号の無い形 (ケティーブ הלכתי) は使わない
     return sorted(rows, key=lambda r: (-r[2], -r[1]))
 
 
@@ -322,8 +355,10 @@ def verb_form(aug, stem, vtype, pgn):
         masc = masc[0][0] if masc else _from_template(root, stem, 'participle')
         if masc:
             return _participle_from(masc, pgn)
-    if (pgn == '3ms' and vtype in ('p', 'i')) or (pgn == 'msa' and vtype == 'r'):
-        return _from_template(root, stem, {'p': 'qatal', 'i': 'yiqtol', 'r': 'participle'}[vtype])
+    if vtype == 'v' and pgn == '2mp':   # 命令の男性複数: 単数 + וּ は作らず、聖書の形が無ければ単数の形
+        return verb_form(aug, stem, 'v', '2ms')
+    if (pgn == '3ms' and vtype in ('p', 'i')) or (pgn == 'msa' and vtype == 'r') or (pgn == '2ms' and vtype == 'v'):
+        return _from_template(root, stem, {'p': 'qatal', 'i': 'yiqtol', 'r': 'participle', 'v': 'imperative'}[vtype])
     return None
 
 
@@ -366,6 +401,12 @@ def verb_words(clause, subject):
     if clause.voice == 'passive':
         stem = PASSIVE_STEMS.get(stem, 'N')
     pgn = _pgn(clause, subject)
+    if clause.mood == 'imperative':   # 命令形 (שְׁמֹר)。禁止は אַל + 未完了形 (אַל תִּירָא)
+        pgn = '2m' + ('p' if clause.number == 'pl' else 's')
+        if clause.negated:
+            form = verb_form(aug, stem, 'i', pgn) or verb_form(aug, stem, 'v', pgn)
+            return ['אַל', form or _lexicon()[aug][0]], False
+        return [verb_form(aug, stem, 'v', pgn) or _lexicon()[aug][0]], False
     participle = clause.tense in ('present', 'imperfect')
     if participle:
         g = pgn[1] if pgn[1] in 'mf' else 'm'
@@ -386,8 +427,8 @@ def verb_words(clause, subject):
 
 def realize(clause, gap=None):
     """節 → ヘブライ語。gap は関係節の空所の役割 (その名詞句は書かない)"""
-    from .frame import lexical_negation, periphrastic
-    clause = lexical_negation(periphrastic(clause))
+    from .frame import lexical_negation, periphrastic, dative_as_object
+    clause = dative_as_object(lexical_negation(periphrastic(clause)), 'he')
     out = []
     for p in clause.adjuncts:
         if p.kind == 'absolute' and p.subject is not None:
@@ -396,7 +437,7 @@ def realize(clause, gap=None):
         return ' '.join(out + _nominal(clause, gap))
     subject = (clause.role('subject') or [None])[0]
     verb, participle = verb_words(clause, subject)
-    if clause.negated:
+    if clause.negated and clause.mood != 'imperative':
         verb = ['לֹא'] + verb
     subject_text = noun_phrase(subject)[0] if subject is not None and gap != 'subject' and not (
         subject.head is not None and subject.head.pos == 'pronoun' and not participle) else ''

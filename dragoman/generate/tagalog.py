@@ -360,10 +360,17 @@ def realize(clause, gap=None):
     for adv in clause.adverbs:
         out.append(word(adv, 'adv'))
     out = [w for w in out if w]
+    imperative = clause.mood == 'imperative'
+    if imperative:   # 命令の2人称単数は ka (Dumating ka)
+        out = ['ka' if w == 'ikaw' else w for w in out]
     if clause.negated:   # 代名詞は節の最初の語 (hindi) の後ろに: Hindi ko alam、Hindi siya umaawit
-        pronoun = next((k for k in range(head + 2, len(out)) if out[k] in ENCLITICS), None)
+        if imperative:
+            out[head] = 'huwag'   # 禁止 (Huwag kang matakot)
+        pronoun = next((k for k in range(head + 2, len(out)) if out[k] in ENCLITICS | {'ka'}), None)
         if pronoun is not None:
             out.insert(head + 1, out.pop(pronoun))
+            if imperative:   # huwag の後ろの代名詞に繋ぎ -ng (kang・kayong・mong・ninyong)
+                out[head + 1] += 'ng'
     return ' '.join(out)
 
 

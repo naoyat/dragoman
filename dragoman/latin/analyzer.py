@@ -23,7 +23,7 @@ from . import textutil
 def lookup_all(surfaces_uc):
     def lookup(surface, use_wiktionary=True):
         # 手作りの辞書 (そのまま → 小文字化 → -que を外す) → Wiktionary (同じ順) の順に引く
-        sources = [latindic.lookup_abbreviation, latindic.lookup_hand]   # 個人名の略 (C.) を先に
+        sources = [latindic.lookup_abbreviation, latindic.lookup_hand_deponent]   # 個人名の略 (C.) を先に
         if use_wiktionary:
             sources.append(latindic.lookup_wiktionary)
         for source in sources:

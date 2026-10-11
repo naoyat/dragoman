@@ -249,6 +249,9 @@ def predicate(clause, name='終止'):
     verb = classical_verb(modern)
     if verb is None:
         return modern
+    if clause.mood == 'imperative' and clause.voice != 'passive' and name == '終止':
+        # 命令形 (憐れめ・来よ)。禁止は な + 連用形 + そ (な来そ)
+        return 'な' + verb.form('連用') + 'そ' if clause.negated else verb.form('命令')
     return chain(verb, clause, name)
 
 
@@ -368,6 +371,8 @@ def clause_text(clause, name='終止', attributive=False, topic=None):
     """節 → 古文 (述語の name 形まで)"""
     from .frame import lexical_negation, periphrastic
     clause = lexical_negation(periphrastic(clause))   # nesciō → 知らず
+    from .frame import dative_as_object
+    clause = dative_as_object(clause, 'kobun')
     parts = [_participial(p) for p in clause.adjuncts if p.kind == 'absolute']
     subjects = clause.role('subject')
     if topic is None:

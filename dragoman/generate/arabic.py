@@ -29,6 +29,43 @@ PRONOUNS = {('ego', 'sg'): ('أَنا', '1', 'm', 's', '1s_dobj'), ('ego', 'pl')
             ('tū', 'sg'): ('أَنْتَ', '2', 'm', 's', '2ms_dobj'), ('tū', 'pl'): ('أَنْتُمْ', '2', 'm', 'p', '2mp_dobj'),
             ('is', 'sg'): ('هُوَ', '3', 'm', 's', '3ms_dobj'), ('is', 'pl'): ('هُمْ', '3', 'm', 'p', '3mp_dobj'),
             ('sē', 'sg'): ('نَفْسَهُ', '3', 'm', 's', '3ms_dobj'), ('sē', 'pl'): ('أَنْفُسَهُمْ', '3', 'm', 'p', '3mp_dobj')}
+# 前置詞 + 代名詞の接尾辞 (لَنا「私たちに」・بِهِ・عَلَيْنا)。人称・性・数の印は PRONOUNS の接尾辞の印から (1p・3ms …)
+SUFFIXES = {'1s': 'ي', '1p': 'نا', '2ms': 'كَ', '2mp': 'كُمْ', '3ms': 'هُ', '3fs': 'ها', '3mp': 'هُمْ'}
+SUFFIXED_PREPOSITIONS = {
+    'li_prep': ('لِي', 'لَنا', 'لَكَ', 'لَكُمْ', 'لَهُ', 'لَها', 'لَهُمْ'),
+    'bi_prep': ('بِي', 'بِنا', 'بِكَ', 'بِكُمْ', 'بِهِ', 'بِها', 'بِهِمْ'),
+    'فِي': ('فِيَّ', 'فِينا', 'فِيكَ', 'فِيكُمْ', 'فِيهِ', 'فِيها', 'فِيهِمْ'),
+    'إِلَى': ('إِلَيَّ', 'إِلَيْنا', 'إِلَيْكَ', 'إِلَيْكُمْ', 'إِلَيْهِ', 'إِلَيْها', 'إِلَيْهِمْ'),
+    'عَلَى': ('عَلَيَّ', 'عَلَيْنا', 'عَلَيْكَ', 'عَلَيْكُمْ', 'عَلَيْهِ', 'عَلَيْها', 'عَلَيْهِمْ'),
+    'مِنْ': ('مِنِّي', 'مِنّا', 'مِنْكَ', 'مِنْكُمْ', 'مِنْهُ', 'مِنْها', 'مِنْهُمْ'),
+    'عَنْ': ('عَنِّي', 'عَنّا', 'عَنْكَ', 'عَنْكُمْ', 'عَنْهُ', 'عَنْها', 'عَنْهُمْ'),
+}
+SUFFIX_KEYS = ('1s', '1p', '2ms', '2mp', '3ms', '3fs', '3mp')
+
+
+def _pronoun_key(np):
+    """代名詞の名詞句 → 接尾辞の印 (1p・3fs …)。代名詞でなければ None"""
+    head = np.head
+    if head is None or head.pos != 'pronoun' or (head.lemma, np.number) not in PRONOUNS or np.members:
+        return None
+    key = PRONOUNS[(head.lemma, np.number)][4].split('_')[0]
+    return '3fs' if key == '3ms' and np.gender == 'f' else key
+
+
+def with_pronoun(prep, np):
+    """前置詞 (li_prep・bi_prep・فِي …) + 代名詞の接尾辞 (لَنا)。代名詞でなければ None"""
+    key = _pronoun_key(np)
+    if key is None:
+        return None
+    if prep in SUFFIXED_PREPOSITIONS:
+        return SUFFIXED_PREPOSITIONS[prep][SUFFIX_KEYS.index(key)]
+    if ' ' in prep:   # مِنْ أَجْلِ → مِنْ أَجْلِنا
+        head, last = prep.rsplit(' ', 1)
+        return head + ' ' + with_pronoun(last, np)
+    stem = prep[:-1] if prep.endswith(('َ', 'ِ')) else prep   # بَعْدَ → بَعْدَنا、بَعْدِي
+    return stem + ('ِي' if key == '1s' else prep[len(stem):] + SUFFIXES[key])
+
+
 DEMONSTRATIVES = {('hic', 'm', 's'): 'هٰذا', ('hic', 'f', 's'): 'هٰذِهِ', ('hic', 'm', 'p'): 'هٰؤُلاءِ',
                   ('ille', 'm', 's'): 'ذٰلِكَ', ('ille', 'f', 's'): 'تِلْكَ', ('ille', 'm', 'p'): 'أُولٰئِكَ'}
 RELATIVES = {('m', 's'): 'الَّذِي', ('f', 's'): 'الَّتِي', ('m', 'p'): 'الَّذِينَ', ('f', 'p'): 'اللَّواتِي'}
@@ -207,6 +244,8 @@ def noun_phrase(np, case='n', definite=True, prc1='0'):
     if head is None:
         return ''
     if head.pos == 'pronoun' and (head.lemma, np.number) in PRONOUNS:
+        if prc1 != '0':   # 前置詞の付いた代名詞は接尾辞に (لَنا)
+            return with_pronoun(prc1, np)
         return PRONOUNS[(head.lemma, np.number)][0]
     if head.proper:
         return head.lemma
@@ -263,9 +302,9 @@ def prepositional(np, passive=False):
     import dataclasses
     inner = dataclasses.replace(np, prep=None)
     if passive and np.prep.lemma in ('ā', 'ab'):
-        return 'مِنْ قِبَلِ ' + noun_phrase(inner, 'g')   # 受動の動作主
+        return with_pronoun('مِنْ قِبَلِ', inner) or 'مِنْ قِبَلِ ' + noun_phrase(inner, 'g')   # 受動の動作主
     prep = PREPOSITIONS.get((np.prep.lemma, np.case), 'فِي')
-    return prep + ' ' + noun_phrase(inner, 'g')
+    return with_pronoun(prep, inner) or prep + ' ' + noun_phrase(inner, 'g')
 
 
 # ----------------------------------------------------------------------
@@ -302,6 +341,9 @@ def verb_form(clause, enc0='0', per=None, gen=None, num=None):
         word, _, _ = generate_any(found, feats, pick)
         return word or found[0][0]
     tense = clause.tense
+    if clause.mood == 'imperative':   # 命令形は要求法の2人称から (辞書の生成器は命令形を作らない)。禁止は لا + 要求法
+        jussive = form(dict(base, asp='i', per='2'), 'short')
+        return ['لا', jussive] if clause.negated else [imperative(jussive)]
     if clause.negated:
         if tense in ('perfect', 'past-perfect', 'imperfect'):
             return ['لَمْ', form(dict(base, asp='i'), 'short')]   # 要求法 (短い形)
@@ -315,9 +357,27 @@ def verb_form(clause, enc0='0', per=None, gen=None, num=None):
     if tense == 'imperfect':
         kana = generate('كان', {'pos': 'verb', 'asp': 'p', 'per': per, 'gen': gen, 'num': num, 'vox': 'a'}) or 'كانَ'
         return [kana, form(dict(base, asp='i'), 'long')]
-    if clause.mood == 'imperative':
-        return [form(dict(base, asp='c', per='2'))]
     return [form(dict(base, asp='i'), 'long')]
+
+
+FATHA, DAMMA, KASRA, SUKUN = '\u064e', '\u064f', '\u0650', '\u0652'
+
+
+def imperative(jussive):
+    """要求法の2人称 → 命令形: 接頭辞 تَـ / تُـ を外し、子音の連続で始まれば語頭に母音を
+    (تَكْتُبْ → اُكْتُبْ、تَرْحَمْ → اِرْحَمْ、第4型 تُكْرِمْ → أَكْرِمْ、تُعَلِّمْ → عَلِّمْ、تَقُلْ → قُلْ)"""
+    import unicodedata
+    word = unicodedata.normalize('NFD', jussive)
+    if not word.startswith('ت') or len(word) < 3 or word[1] not in (FATHA, DAMMA):
+        return jussive
+    prefix_vowel, rest = word[1], word[2:]
+    if len(rest) > 1 and rest[1] == SUKUN:
+        if prefix_vowel == DAMMA:
+            rest = 'أَ' + rest   # 第4型 (أَفْعَلَ)
+        else:
+            stem_vowel = next((c for c in rest[2:] if c in (FATHA, DAMMA, KASRA)), KASRA)
+            rest = ('اُ' if stem_vowel == DAMMA else 'اِ') + rest
+    return unicodedata.normalize('NFC', rest)
 
 
 def passive_possible(clause):

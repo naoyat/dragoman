@@ -290,7 +290,7 @@ def realize(clause, capitalize=False):
     if clause.negated:
         if verb in ('ἐστί', 'ἐστίν', 'εἰσί', 'εἰσίν'):
             verb = {'ἐστί': 'ἔστι', 'ἐστίν': 'ἔστιν'}.get(verb, verb)   # οὐκ ἔστι
-        out.append(_negation(verb))
+        out.append('μή' if clause.mood == 'imperative' else _negation(verb))   # 禁止は μή (μὴ φοβοῦ)
     out.append(verb)
     for inner in clause.questions:   # 間接疑問は動詞の後ろ (οὐκ οἶδα τίς ἦλθεν)
         out.append(_question(inner))

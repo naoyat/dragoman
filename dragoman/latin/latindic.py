@@ -106,7 +106,29 @@ def lookup_abbreviation(word):
 
 def lookup(word):
     """手作りの辞書を優先し、無ければ Wiktionary 由来の補助辞書を引く。個人名の略 (C.) は表から"""
-    return lookup_abbreviation(word) or lookup_hand(word) or lookup_wiktionary(word)
+    return lookup_abbreviation(word) or lookup_hand_deponent(word) or lookup_wiktionary(word)
+
+
+def lookup_hand_deponent(word):
+    """手作りの辞書を引き、同じ形の形式受動態動詞の読みを Wiktionary から足す (_with_deponent)"""
+    hand = lookup_hand(word)
+    return _with_deponent(word, hand) if hand else hand
+
+
+def _with_deponent(word, hand):
+    """手作りの辞書の受動の読み (miserēre: misereō の受動の命令法) と同じ形の、同じ語根の形式受動態動詞
+    (misereor「憐れむ」の能動の命令法) が Wiktionary にあれば、その読みを先に加える (訳語は手作りの辞書の語)。
+    手作りの辞書の活用は形式受動態を作らない"""
+    passive = {item.get('pres1sg'): item for item in hand if item.get('pos') == 'verb' and item.get('voice') == 'passive'}
+    if not passive:
+        return hand
+    deponents = {lemma[:-1] + 'or': item for lemma, item in passive.items() if lemma and lemma.endswith('ō')}
+    found = [item for item in (lookup_wiktionary(word) or []) if item.get('pos') == 'verb' and
+             item.get('voice') == 'active' and item.get('pres1sg') in deponents]
+    if not found:
+        return hand
+    added = [dict(item, ja=deponents[item['pres1sg']]['ja'], gloss_lang='ja') for item in found]
+    return added + hand
 
 
 def dump():

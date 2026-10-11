@@ -633,12 +633,48 @@ def _mark_apposed(clause):
         previous = None if start is None else start + len((np.surface or '').split()) - 1
 
 
+# ラテン語で与格を取るが、ほかの言語では目的語で表す動詞 (miserēre nōbīs「私たちを憐れめ」have mercy on us)。
+# 言語ごとに: 日本語・古文は を、英語は前置詞なし (訳語は english.DATIVE_VERBS)、ロシア語は対格、ヘブライ語は אֶת־
+DATIVE_OBJECT_VERBS = {
+    'ja': {'misereor', 'parcō', 'ignōscō', 'noceō', 'invideō'},
+    'en': {'misereor', 'parcō', 'ignōscō', 'noceō', 'invideō', 'crēdō', 'pāreō', 'serviō', 'faveō', 'persuādeō'},
+    'ru': {'misereor', 'parcō', 'ignōscō'},
+    'he': {'misereor'},   # רִחַם + 目的語
+}
+DATIVE_OBJECT_VERBS['kobun'] = DATIVE_OBJECT_VERBS['ja']
+
+
+def dative_as_object(clause, lang):
+    """与格を取る動詞の受け手を、言語 lang の目的語に (DATIVE_OBJECT_VERBS)。当てはまらなければ元の節"""
+    if clause.verb is None or clause.verb.lemma not in DATIVE_OBJECT_VERBS.get(lang, ()) or \
+            not clause.role('recipient') or clause.role('object'):
+        return clause
+    import dataclasses
+    return dataclasses.replace(clause, args=[('object' if r == 'recipient' else r, np) for r, np in clause.args])
+
+
 # 否定を含む動詞 → (もとの動詞, 日本語の訳語)。英語・ロシア語・サンスクリットでは「否定 + もとの動詞」にする
 LEXICAL_NEGATIONS = {'nesciō': ('sciō', '知る'), 'nōlō': ('volō', '望む,欲しい'), 'nequeō': ('queō', 'できる')}
 
 
+def prohibition(clause):
+    """禁止 nōlī + 不定詞 (Nōlī timēre「恐れるな」) → 否定の命令法の節 (Do not fear)。当てはまらなければ元の節"""
+    if clause.verb is None or clause.verb.lemma != 'nōlō' or clause.mood != 'imperative' or \
+            len(clause.infinitives) != 1:
+        return clause
+    import dataclasses
+    inner = clause.infinitives[0]
+    return dataclasses.replace(inner, mood='imperative', negated=not inner.negated, tense='present',
+                               person=clause.person, number=clause.number, infinitive_kind='',
+                               args=[(r, np) for r, np in clause.args if r != 'subject'] + inner.args,
+                               adverbs=clause.adverbs + inner.adverbs, connectives=clause.connectives,
+                               subordinator=clause.subordinator, adjuncts=clause.adjuncts + inner.adjuncts)
+
+
 def lexical_negation(clause):
-    """nesciō「知らない」→ 否定 + sciō (英語 not know、ロシア語 не знает、サンスクリット na jAnAti)"""
+    """nesciō「知らない」→ 否定 + sciō (英語 not know、ロシア語 не знает、サンスクリット na jAnAti)。
+    禁止の nōlī + 不定詞は否定の命令法に (prohibition)"""
+    clause = prohibition(clause)
     if clause.verb.lemma not in LEXICAL_NEGATIONS:
         return clause
     import dataclasses

@@ -610,7 +610,7 @@ def realize(clause, capitalize=True):
             out.append(noun_phrase(np, 'Nom'))
     out += [adverb(adv) for adv in clause.adverbs]
     if clause.negated:
-        out.append('na')
+        out.append('mA' if clause.mood == 'imperative' else 'na')   # 禁止は mā
     verb = verb_word(clause, person, number)
     if verb is None and clause.copula and not clause.role('complement') and len(clause.args) > 1:
         verb = tinanta(dhatu('as', '2'), 'present', 'indicative', 'active', person, number)   # 存在: asti

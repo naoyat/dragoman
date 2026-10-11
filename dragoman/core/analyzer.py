@@ -1646,12 +1646,39 @@ def _attach_to_predicate(words, group, verb_ix):
                         else:
                             if not case:
                                 case = x[0]
+                if case == 'Nom' and first_item.pos == 'noun' and _second_person(pred) and \
+                        _set_off_by_commas(words, ix, word):
+                    case = 'Voc'   # 2人称の動詞のカンマで区切られた主格の名詞は呼びかけ (…, Agnus Deī, … miserēre)
                 pred.add_nominal(case, word)
             else:
                 not_solved.append(word)
     if pred.is_sum:
         _promote_complement(pred)
     return not_solved
+
+
+def _second_person(pred):
+    """述語が2人称 (命令法 venī、quī tollis)。名詞は2人称の主語にならない。
+    ラテン語だけ (ギリシア語は冠詞付きの主格の主語と紛れる)"""
+    item = getattr(pred, 'first_item', None)
+    verb = getattr(pred, 'verb', None)
+    if verb is not None and any(i.pos != 'verb' for i in (getattr(verb, 'items', None) or [])):
+        return False   # 名詞とも読める語 (imperātor「将軍」を命令法と取った場合) は確かでないので除く
+    if item is not None and item.attrib('mood') == 'imperative' and item.attrib('tense') == 'future':
+        return False   # 未来の命令法 (-tō・-tor) は稀で、名詞 (imperātor) の取り違えが多い
+    return language.current().name == 'la' and item is not None and item.attrib('person') == 2
+
+
+def _set_off_by_commas(words, ix, word):
+    """語 (と掛かる属格) が文頭かカンマの後ろにあり、後ろにカンマが続く (挿入された呼びかけの形)"""
+    before = words[ix - 1] if ix > 0 else None
+    if before is not None and getattr(before, 'surface', None) != ',':
+        return False
+    k = ix + 1
+    attached = getattr(word, 'genitives', []) or []
+    while k < len(words) and any(words[k] is g for g in attached):
+        k += 1
+    return k < len(words) and getattr(words[k], 'surface', None) == ','
 
 
 @dataclass

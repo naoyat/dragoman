@@ -606,6 +606,58 @@ class HebrewTestCase(unittest.TestCase):
                          'הַנַּעֲרָה רֹאָה אֶת־הַנַּעַר אֲשֶׁר הַמּוֹרֶה מְהַלֵּל.')   # 分詞が型 (ピエル) から
 
 
+class ImperativeTestCase(unittest.TestCase):
+    """命令法・禁止 (nōlī + 不定詞)・与格を取る動詞 (miserēre nōbīs)"""
+
+    @classmethod
+    def setUpClass(cls):
+        latindic.load()
+
+    @staticmethod
+    def prohibition():
+        timeo = frame.Clause(verb=frame.Lex('timeō', 'verb', '恐れる'), mood='infinitive')
+        return frame.Clause(verb=frame.Lex('nōlō', 'verb', '望まない'), mood='imperative', person=2,
+                            infinitives=[timeo])
+
+    def test_imperative(self):
+        clause, = clauses('Venī!')
+        self.assertEqual(japanese.sentence([clause]), '来い。')
+        self.assertEqual(kobun.sentence([clause]), '来よ。')   # 古文の命令形
+        self.assertEqual(tagalog.sentence([clause]), 'Dumating ka.')   # 命令の2人称単数は ka
+
+    def test_prohibition(self):
+        clause = frame.prohibition(self.prohibition())   # Nōlī timēre → 否定の命令法の timeō
+        self.assertEqual((clause.verb.lemma, clause.mood, clause.negated), ('timeō', 'imperative', True))
+        self.assertEqual(japanese.sentence([self.prohibition()]), '恐れるな。')
+        self.assertEqual(kobun.sentence([self.prohibition()]), 'な恐れそ。')   # な + 連用形 + そ
+
+    def test_dative_as_object(self):
+        us = frame.NP(frame.Lex('ego', 'pronoun', '私'), case='Dat', number='pl')
+        clause = frame.Clause(verb=frame.Lex('misereor', 'verb', '憐れむ'), mood='imperative', person=2,
+                              args=[('recipient', us)])
+        self.assertEqual(japanese.sentence([clause]), '私たちを憐れめ。')
+        self.assertEqual(english.sentence([clause]), 'Have mercy on us.')
+        self.assertEqual(latin.sentence([clause]).split(' ')[0], 'Nōbīs')   # ラテン語は与格のまま
+
+    @unittest.skipUnless(arabic.available(), 'CAMeL Tools の形態素の辞書が無い')
+    def test_arabic(self):
+        self.assertEqual(arabic.imperative('تَكْتُبْ'), 'اُكْتُبْ')
+        self.assertEqual(arabic.imperative('تَرْحَمْ'), 'اِرْحَمْ')
+        self.assertEqual(arabic.imperative('تُكْرِمْ'), 'أَكْرِمْ')   # 第4型
+        self.assertEqual(arabic.imperative('تُعَلِّمْ'), 'عَلِّمْ')
+        us = frame.NP(frame.Lex('ego', 'pronoun', '私'), number='pl')
+        self.assertEqual(arabic.with_pronoun('li_prep', us), 'لَنا')
+        self.assertEqual(arabic.with_pronoun('بَعْدَ', us), 'بَعْدَنا')
+
+    @unittest.skipUnless(hebrew.available(), 'ヘブライ語の辞書が無い')
+    def test_hebrew(self):
+        clause, = clauses('Venī!')
+        self.assertEqual(hebrew.sentence([clause]).split('\n')[0], 'בֹּא.')
+        him = frame.NP(frame.Lex('is', 'pronoun', '彼'))
+        self.assertEqual(hebrew.pronoun_with_preposition('עִם־', him), 'עִמּוֹ')
+        self.assertEqual(hebrew.noun_phrase(frame.NP(frame.Lex('ego', 'pronoun', '私')), 'לְ')[0], 'לִי')
+
+
 class KobunTestCase(unittest.TestCase):
     """ラテン語 → 文の枠 → 古文"""
 
