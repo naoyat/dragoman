@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dragoman.core import paths  # noqa: E402
 from dragoman.latin import latindic, analyzer  # noqa: E402
-from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, arabic, kobun  # noqa: E402
+from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, arabic, hebrew, kobun  # noqa: E402
 from dragoman.generate.frame import Lex  # noqa: E402
 
 _saved = None
@@ -566,6 +566,44 @@ class ArabicTestCase(unittest.TestCase):
     def test_relative(self):
         self.assertEqual(self.arabic('Puella puerum videt quem magister laudat.'),
                          'تَرَى البِنْتُ الوَلَدَ الَّذِي يَمْدَحه المُعَلِّمُ.')   # 目的語の空所は代名詞の接尾辞
+
+
+@unittest.skipUnless(hebrew.available(), 'ヘブライ語の辞書 (he/hebrew.sqlite) が無い')
+class HebrewTestCase(unittest.TestCase):
+    """ラテン語 → 文の枠 → 聖書ヘブライ語 (OSHB の語形)"""
+
+    @classmethod
+    def setUpClass(cls):
+        latindic.load()
+
+    def hebrew(self, text):
+        analysis, = analyzer.analyze_text(text)
+        return hebrew.sentence(frame.frames(analysis)).split('\n')[0]
+
+    def assertEqual(self, first, second, msg=None):   # 点 (母音記号・ダゲシュ) の並びの違いは問わない
+        import unicodedata
+        super().assertEqual(unicodedata.normalize('NFC', first), unicodedata.normalize('NFC', second), msg)
+
+    def test_participle_and_perfect(self):
+        # 現在は分詞 (主語が先)、過去は完了形 (動詞が先)、אֶת־、冠詞と前置詞の縮約 (בַּגָּן)、形容詞の一致
+        self.assertEqual(self.hebrew('Puella rosam pulchram in hortō videt.'), 'הַנַּעֲרָה רֹאָה אֶת־הַחֲבַצֶּלֶת הַיָּפֶה בַּגָּן.')
+        self.assertEqual(self.hebrew('Rēgīna puellīs rosās dedit.'), 'נָתְנָה הַמַּלְכָּה אֶת־הַחֲבַצֶּלֶת לַנְּעָרוֹת.')
+
+    def test_agreement(self):
+        self.assertEqual(self.hebrew('Puella cantat.'), 'הַנַּעֲרָה שָׁרָה.')   # 女性単数の分詞を男性単数から
+        self.assertEqual(self.hebrew('Puellae cantant.'), 'הַנְּעָרוֹת שָׁרוֹת.')
+        self.assertEqual(self.hebrew('Urbe captā, cīvēs fūgērunt.'),   # עִיר は形は男性でも女性
+                         'אַחֲרֵי אֲשֶׁר נִלְקָחָה הָעִיר, בָּרָחוּ הָעַמִּים.')
+
+    def test_passive_nominal_negation(self):
+        self.assertEqual(self.hebrew('Puer ā magistrō laudātus est.'), 'הֻלַּל הַנַּעַר עַל־יְדֵי הַמּוֹרֶה.')   # プアル
+        self.assertEqual(self.hebrew('Puella est rēgīna.'), 'הַנַּעֲרָה מַלְכָּה.')
+        self.assertEqual(self.hebrew('Nauta nōn est malus.'), 'הַמַּלָּח לֹא רָע.')
+        self.assertEqual(self.hebrew('Rosam nōn vīdit.'), 'לֹא רָאָה אֶת־הַחֲבַצֶּלֶת.')
+
+    def test_relative(self):
+        self.assertEqual(self.hebrew('Puella puerum videt quem magister laudat.'),
+                         'הַנַּעֲרָה רֹאָה אֶת־הַנַּעַר אֲשֶׁר הַמּוֹרֶה מְהַלֵּל.')   # 分詞が型 (ピエル) から
 
 
 class KobunTestCase(unittest.TestCase):
