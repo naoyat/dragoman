@@ -187,6 +187,10 @@ def _source_words(text, lang):
         words = [{'ἐστί': 'ἐστι', 'ἐστίν': 'ἐστιν', 'εἰσί': 'εἰσι', 'εἰσίν': 'εἰσιν'}.get(w, w) for w in words]   # 前接語
         return Counter(unicodedata.normalize('NFC', re.sub('(?<=[ει])([\u0300-\u036f]*)ν$', r'\1',
                                                            unicodedata.normalize('NFD', w))) for w in words)
+    if lang in ('ar', 'he', 'fa', 'ur'):   # 母音記号・格語尾の有無は問わない (البنت = البِنْتُ)。句読点 ، も除く
+        words = [''.join(c for c in unicodedata.normalize('NFD', w) if not unicodedata.combining(c)).strip('،۔')
+                 for w in words]
+        return Counter(w for w in words if w)
     return Counter(w.lower().replace('ё', 'е') for w in words)
 
 

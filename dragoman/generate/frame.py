@@ -225,6 +225,8 @@ def lex_of(word, item=None):
     lang = _lang if _lang not in ('', 'la') else ''
     if lang == 'sa':
         lemma = lemma.split(' = ')[0].split(' ')[0]   # 'pustaka = pur-tak tatpuruṣa' (複合語の分析の注記) → pustaka
+    if lang == 'ar' and item.attrib('lex'):
+        lemma = item.attrib('lex')   # 表示の形 (bint ⁧بِنْت⁩) でなく CAMeL の見出しの鍵 (بِنْت。生成器の見出しと同じ)
     pronoun = SOURCE_PRONOUNS.get(lang, {}).get(lemma.lower()) if item.pos in ('pronoun', 'adj', 'det') else None
     if pronoun:   # 閉じた語類はラテン語の形に (я → ego、tad → is)
         personal = lemma.lower() in ('я', 'ты', 'он', 'она', 'оно', 'мы', 'вы', 'они', 'asmad', 'yuṣmad')
@@ -275,6 +277,8 @@ def np_of(node, case=None):
         np.number, np.dual = 'pl', True
     if _lang not in ('', 'la'):   # 冠詞のある言語 (ギリシア語) なら、定かかどうか (冠詞の有無)
         np.definite = any(isinstance(m, Word) and m.items and m.items[0].pos == 'article' for m in node.modifiers)
+        if _lang == 'ar':   # アラビア語の冠詞は語に付く (الوَلَد)
+            np.definite = item.attrib('prc0') == 'Al_det' or node.surface.startswith('ال')
     for mod in node.modifiers:
         if isinstance(mod, Word) and mod.items and mod.items[0].pos != 'article':
             np.modifiers.append(lex_of(mod))

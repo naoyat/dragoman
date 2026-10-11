@@ -188,6 +188,8 @@ def candidates(lex):
         # 辞書の英語の訳語の並びのまま。ただし一番の日本語の訳語に合う英語があれば先頭に (pustaka「本」→ book)
         # (二番目以降の日本語の訳語では並べ替えない: видеть「見える,会う」を meet にしないように)
         found = list(dict.fromkeys(g for g in found if not DESCRIPTION.search(g)))
+        if pos == 'noun':   # 複数形の訳語 (roses, blossoms) は単数形も (ラテン語などの辞書は単数で引く)
+            found = [x for en in found for x in ([en, en[:-1]] if re.fullmatch(r'[a-z]+[^s]s', en) else [en])]
         if not found and lex.ja and not lex.ja.isascii():
             # 英語の訳語の索引の無い言語 (ペルシア語・ヒンディー語 …) の語: 日本語の訳語から和英 (JMdict) で
             for ja in re.split('[,、]', lex.ja)[:3]:   # 読点でつないだ訳語 (樹木、花) も1つずつ
@@ -510,6 +512,8 @@ def noun_phrase(np, objective=False, passive=False):
             elif head.pos in ('adj', 'participle', 'pronoun') and not np.modifiers:
                 noun = en + (' ones' if np.number == 'pl' else ' one')  # 形容詞の名詞的用法 (bonī「良い人たち」)
             determiner = 'the'
+            if np.definite is False:   # 元の文で不定 (冠詞なし: ῥόδον、رِسالَةً) なら a / an、複数は無し
+                determiner = '' if np.number == 'pl' else 'a'
             adjectives = []
             for m in np.modifiers:
                 if getattr(m, 'pos', '') == 'pronoun' and getattr(m, 'desc', '') == '指示代名詞':
@@ -521,7 +525,9 @@ def noun_phrase(np, objective=False, passive=False):
                 else:
                     adjectives.append(modifier(m))
             text = ' '.join(adjectives + [noun])
-            if not head.proper and not (head.lemma in SUBSTANTIVES and not np.modifiers):
+            if not head.proper and not (head.lemma in SUBSTANTIVES and not np.modifiers) and determiner:
+                if determiner == 'a' and text[:1].lower() in 'aeiou':
+                    determiner = 'an'
                 text = determiner + ' ' + text
         for gen in np.genitives:
             text += ' of ' + noun_phrase(gen, True)

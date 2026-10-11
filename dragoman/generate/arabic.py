@@ -161,6 +161,8 @@ def _index():
 def np_gender(np, found=None):
     """名詞句の性: 語末が ة なら女性、人を表す語は元の文の性 (puella 女性)、ほかは辞書の項目の性"""
     found = found if found is not None else (to_arabic(np.head, 'noun') if np.head is not None else None)
+    if np.head is not None and np.head.lang == 'ar' and np.gender in ('m', 'f'):
+        return np.gender   # 元がアラビア語なら元の語の性 (الوَرْدَة「1本のバラ」は女性。集合の وَرْد にしない)
     if found and found[0].endswith('ة'):
         return 'f'
     if is_human(np) and np.gender in ('m', 'f'):
@@ -271,7 +273,7 @@ def noun_phrase(np, case='n', definite=True, prc1='0'):
     if not found:
         return '[%s]' % english.word(head)
     num = 'p' if np.number == 'pl' else 's'
-    definite = definite and not np.genitives
+    definite = definite and not np.genitives and np.definite is not False   # 元の文で不定 (冠詞なし) なら不定
     feats = {'pos': 'noun', 'num': num, 'cas': case, 'stt': 'd' if definite else ('c' if np.genitives else 'i')}
     if definite:
         feats['prc0'] = 'Al_det'
