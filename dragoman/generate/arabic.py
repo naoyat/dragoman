@@ -200,7 +200,10 @@ def candidates(lex, pos=None):
     """語 → [(CAMeL の見出し, 品詞)] (よさそうな順。生成できない見出しがあるので、作れるまで順に試す)"""
     pos = pos or {'participle': 'verb', 'name': 'noun'}.get(lex.pos, lex.pos)
     sources = english.candidates(lex) or ([e for e in (lex.en or '').split(',') if e])
-    return list(_candidates(lex.lemma, lex.lang, pos, tuple(sources)))
+    found = list(_candidates(lex.lemma, lex.lang, pos, tuple(sources)))
+    if lex.lang == 'ar' and lex.lemma in _db().lemma_hash:   # 元がアラビア語なら元の見出しを先に (選び直さない)
+        found = [(lex.lemma, pos)] + [f for f in found if f[0] != lex.lemma]
+    return found
 
 
 def _bare(text):

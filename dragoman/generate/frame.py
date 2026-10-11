@@ -59,6 +59,25 @@ SOURCE_PREPOSITIONS = {
            ('за', 'Ins'): ('post', 'Acc'), ('между', 'Ins'): ('inter', 'Acc'), ('около', 'Gen'): ('prope', 'Acc'),
            ('против', 'Gen'): ('contrā', 'Acc'), ('вокруг', 'Gen'): ('circum', 'Acc')},
 }
+# ペルシア語・ヒンディー語 (後置詞)・アラビア語 (母音記号の有無の両方): 解析器の支配する格 (属格・斜格) と組で
+for _surface, _latin in (('در', ('in', 'Abl')), ('به', ('ad', 'Acc')), ('از', ('ab', 'Abl')), ('با', ('cum', 'Abl')),
+                         ('بی', ('sine', 'Abl')), ('برای', ('prō', 'Abl')), ('زیر', ('sub', 'Abl')),
+                         ('پیش', ('ante', 'Acc')), ('پس', ('post', 'Acc'))):
+    SOURCE_PREPOSITIONS.setdefault('fa', {})[(_surface, 'Gen')] = _latin
+    SOURCE_PREPOSITIONS['fa'][(_surface, None)] = _latin
+for _surface, _latin in (('में', ('in', 'Abl')), ('को', ('ad', 'Acc')), ('से', ('ab', 'Abl')), ('पर', ('in', 'Abl')),
+                         ('तक', ('ad', 'Acc')), ('میں', ('in', 'Abl')), ('کو', ('ad', 'Acc')), ('سے', ('ab', 'Abl')),
+                         ('پر', ('in', 'Abl')), ('تک', ('ad', 'Acc'))):
+    for _code in ('hi', 'ur'):
+        SOURCE_PREPOSITIONS.setdefault(_code, {})[(_surface, 'Obl')] = _latin
+        SOURCE_PREPOSITIONS[_code][(_surface, None)] = _latin
+for _surface, _latin in (('فِي', ('in', 'Abl')), ('في', ('in', 'Abl')), ('إِلَى', ('ad', 'Acc')), ('إلى', ('ad', 'Acc')),
+                         ('مِنْ', ('ex', 'Abl')), ('من', ('ex', 'Abl')), ('مَعَ', ('cum', 'Abl')), ('مع', ('cum', 'Abl')),
+                         ('عَلَى', ('in', 'Abl')), ('على', ('in', 'Abl')), ('عَنْ', ('dē', 'Abl')), ('عن', ('dē', 'Abl')),
+                         ('بَعْدَ', ('post', 'Acc')), ('بعد', ('post', 'Acc')), ('قَبْلَ', ('ante', 'Acc')),
+                         ('قبل', ('ante', 'Acc')), ('تَحْتَ', ('sub', 'Abl')), ('تحت', ('sub', 'Abl'))):
+    SOURCE_PREPOSITIONS.setdefault('ar', {})[(_surface, 'Gen')] = _latin
+    SOURCE_PREPOSITIONS['ar'][(_surface, None)] = _latin
 # 前置詞の無い格の役割 (ラテン語に無い格): 具格は手段、サンスクリットの奪格は起点、処格は場所
 SOURCE_ROLES = {'ru': {'Ins': 'means', 'Loc': 'place'}, 'sa': {'Ins': 'means', 'Abl': 'source', 'Loc': 'place'}}
 VOICES = {'middle': 'active', 'middle-passive': 'active'}   # 中動態は能動に (Clause.middle に印。ギリシア語に戻すとき中動)

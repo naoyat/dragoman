@@ -182,7 +182,7 @@ PDF に載せるものはオプションで選びます。
 ```
 python3 tools/generate.py "Puella rosam pulchram in hortō videt."            # ラテン語 → 文の枠 → 英・羅・露・梵・希・尼・比・亜・希伯来・日・古文
 python3 tools/generate.py --to=grc,ja latin/texts/fabulae_faciles/perseus.txt
-python3 tools/generate.py --from=grc "ἡ κόρη τὸ καλὸν ῥόδον ἐν τῷ κήπῳ βλέπει."   # --from=ru / sa / grc / ja
+python3 tools/generate.py --from=grc "ἡ κόρη τὸ καλὸν ῥόδον ἐν τῷ κήπῳ βλέπει."   # --from=ru / sa / grc / fa / hi / ur / ar / he / id / tl / ja
 python3 tools/generate.py --from=ja "少女が庭で美しい薔薇を見た。"
 ```
 

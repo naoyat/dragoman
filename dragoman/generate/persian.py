@@ -102,6 +102,10 @@ def _index():
 def to_persian(lex, pos):
     """語 → 辞書の項目 (見つからなければ None)"""
     pos = {'participle': 'verb', 'name': 'noun'}.get(pos, pos)
+    if lex.lang == 'fa':   # 元がペルシア語なら元の語 (選び直さない)
+        row = _rows().get((lex.lemma, pos)) or next((r for (w, p), r in _rows().items() if w == lex.lemma), None)
+        if row:
+            return row
     sources = english.candidates(lex) or [e for e in (lex.en or '').split(',') if e]
     if (lex.lang or 'la') == 'la':   # 手作りの辞書の日本語に和英で合う英語を先に (transfer と同じ)
         from .transfer import _with_japanese

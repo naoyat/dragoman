@@ -7,7 +7,9 @@
 #   python3 tools/generate.py "Puella rosam pulchram in hortō videt."
 #   python3 tools/generate.py samples/samples.txt
 #   python3 tools/generate.py --to=en,ru,sa "…"     作る言語 (既定: en,la と、語の置き換えの表があれば ru,sa,grc,id,tl,ar,he,fa,hi,ur,ain,bo,ja,kobun)
-#   python3 tools/generate.py --from=grc "ἡ κόρη τὸ καλὸν ῥόδον βλέπει."   ロシア語 (ru)・サンスクリット (sa)・古典ギリシア語から
+#   python3 tools/generate.py --from=grc "ἡ κόρη τὸ καλὸν ῥόδον βλέπει."   ロシア語 (ru)・サンスクリット (sa)・古典ギリシア語・
+#                                         ペルシア語 (fa)・ヒンディー語 (hi)・ウルドゥー語 (ur)・アラビア語 (ar)・ヘブライ語 (he)・
+#                                         インドネシア語 (id)・タガログ語 (tl) から
 #   python3 tools/generate.py --from=ja "少女が庭で美しい薔薇を見た。"   日本語の文から (MeCab と規則で文の枠に)
 #   python3 tools/generate.py --compare "Rosam in hortō vīdit."   要素ごとに各言語の手段を並べる (前置詞と格・語順・助詞、
 #                                                                 書かれていない主語を補うか …)
@@ -130,10 +132,16 @@ def run_japanese(text):
         print()
 
 
+# --from の言語 → 解析器のパッケージ
+SOURCE_ANALYZERS = {'ru': 'russian', 'sa': 'sanskrit', 'grc': 'greek', 'ar': 'arabic', 'he': 'hebrew', 'fa': 'persian',
+                    'hi': 'hindi', 'ur': 'urdu', 'id': 'indonesian', 'tl': 'tagalog'}
+# (チベット語・アイヌ語の解析器は節の構造 (述語と格の枠) を作らないので、文の枠に写せない)
+
+
 def run_other(text, source):
     """ロシア語・サンスクリット・古典ギリシア語の文 → 文の枠 → 各言語。元の言語に戻した文と元の文を比べる"""
     import importlib
-    analyzer_module = importlib.import_module('dragoman.%s.analyzer' % {'ru': 'russian', 'sa': 'sanskrit', 'grc': 'greek'}[source])
+    analyzer_module = importlib.import_module('dragoman.%s.analyzer' % SOURCE_ANALYZERS[source])
     modules = {'la': ('ラテン語:', latin), 'en': ('英語:    ', english), 'ru': ('ロシア語:', russian),
                'sa': ('梵語:    ', sanskrit), 'grc': ('ギリシア語:', greek), 'id': ('インドネシア語:', indonesian),
                'tl': ('タガログ語:', tagalog), 'ar': ('アラビア語:', arabic), 'he': ('ヘブライ語:', hebrew), 'fa': ('ペルシア語:', persian), 'hi': ('ヒンディー語:', hindi),
@@ -198,7 +206,7 @@ def main():
     if COMPARE:   # 比べる言語: 作る言語と元の言語
         COMPARE[:] = list(dict.fromkeys(TARGETS + [source] + (['la'] if source != 'la' else [])))
     global run
-    if source in ('ru', 'sa', 'grc'):
+    if source in SOURCE_ANALYZERS:
         def run(text, source=source):
             run_other(text, source)
     if source == 'ja':

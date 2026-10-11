@@ -188,6 +188,11 @@ def candidates(lex):
         # 辞書の英語の訳語の並びのまま。ただし一番の日本語の訳語に合う英語があれば先頭に (pustaka「本」→ book)
         # (二番目以降の日本語の訳語では並べ替えない: видеть「見える,会う」を meet にしないように)
         found = list(dict.fromkeys(g for g in found if not DESCRIPTION.search(g)))
+        if not found and lex.ja and not lex.ja.isascii():
+            # 英語の訳語の索引の無い言語 (ペルシア語・ヒンディー語 …) の語: 日本語の訳語から和英 (JMdict) で
+            for ja in re.split('[,、]', lex.ja)[:3]:   # 読点でつないだ訳語 (樹木、花) も1つずつ
+                found += [e for e in transfer._ja_english(ja.strip()) if e not in found]
+            found = found[:6]
         if lex.lemma in transfer.FIRST_GLOSSES.get(lex.lang, {}):
             return found   # 先に使う訳語の決まっている語 (βασιλεύς: 日本語の訳語「長」より king)
         first = (lex.ja or '').split(',')[0].strip()
