@@ -84,6 +84,16 @@ class DragomanCommandTestCase(unittest.TestCase):
                                 cwd=ROOT, capture_output=True, text=True)
         self.assertIn('推測した語形', result.stdout)   # pymorphy3 が辞書に無い語として推測した語形
 
+    def test_generate_gaps(self):
+        # tools/generate.py --gaps: 言語ごとの訳語の見つからない語だけ。生成文・元の文は出さない
+        result = subprocess.run([sys.executable, os.path.join('tools', 'generate.py'), '--to=ain', '--gaps',
+                                 'Nauta rosam videt.'], cwd=ROOT, capture_output=True, text=True)
+        out = result.stdout
+        self.assertIn('アイヌ語 訳語の見つからない語', out)
+        self.assertIn('  rose', out)
+        self.assertNotIn('Nauta', out)
+        self.assertNotIn('inkar', out)   # 生成文 (訳せた語) は出さない
+
     def test_positional_lang_and_text_option(self):
         # ./dragoman.py LANG -e TEXT (言語を最初の引数で、文を -e で)
         result = subprocess.run([sys.executable, 'dragoman.py', 'la', '-w', '-e', 'Rōma magna est.'], cwd=ROOT,

@@ -184,6 +184,7 @@ python3 tools/generate.py "Puella rosam pulchram in hortō videt."            # 
 python3 tools/generate.py --to=grc,ja latin/texts/fabulae_faciles/perseus.txt
 python3 tools/generate.py --from=grc "ἡ κόρη τὸ καλὸν ῥόδον ἐν τῷ κήπῳ βλέπει."   # --from=ru / sa / grc / fa / hi / ur / ar / he / id / tl / ja
 python3 tools/generate.py --from=ja "少女が庭で美しい薔薇を見た。"
+python3 tools/generate.py --gaps FILE   # 言語ごとに訳語の見つからない語の一覧だけ (生成文・元の文は出さない)
 ```
 
 元の言語に戻した文が元の文と同じ語になれば ✓ を付けます。Fabulae Faciles（Ritchie、Project Gutenberg）でラテン語に戻る文は、

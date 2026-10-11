@@ -235,5 +235,6 @@ def sentence(clauses):
             words.append(',')
     text = ' '.join(words).replace(' ,', ',')
     text = text[:1].upper() + text[1:] + '.'
-    kana = ' '.join(w if w.startswith('[') else script.kana(w) for w in text.split(' '))   # [英語] は仮名にしない
+    kana = ' '.join(w if w.startswith('[') else script.kana(w)
+                    for w in re.findall(r'\[+[^\]]*\]+\S*|\S+', text))   # [英語] (空白を含んでも) は仮名にしない
     return '%s\n            %s' % (text, kana)

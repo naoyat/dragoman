@@ -11,6 +11,7 @@
 #                                         ペルシア語 (fa)・ヒンディー語 (hi)・ウルドゥー語 (ur)・アラビア語 (ar)・ヘブライ語 (he)・
 #                                         インドネシア語 (id)・タガログ語 (tl) から
 #   python3 tools/generate.py --from=ja "少女が庭で美しい薔薇を見た。"   日本語の文から (MeCab と規則で文の枠に)
+#   python3 tools/generate.py --gaps samples/samples.txt   訳語の見つからない語の一覧だけ (生成文は出さない)
 #   python3 tools/generate.py --compare "Rosam in hortō vīdit."   要素ごとに各言語の手段を並べる (前置詞と格・語順・助詞、
 #                                                                 書かれていない主語を補うか …)
 #
@@ -197,7 +198,7 @@ def _source_words(text, lang):
 def main():
     import getopt
     latindic.load()
-    opts, args = getopt.gnu_getopt(sys.argv[1:], '', ['to=', 'from=', 'compare'])
+    opts, args = getopt.gnu_getopt(sys.argv[1:], '', ['to=', 'from=', 'compare', 'gaps'])
     TARGETS[:] = ['en', 'la'] + [lang for lang, _, module in OTHERS if module.available()]
     source = 'la'
     for opt, value in opts:
@@ -207,6 +208,8 @@ def main():
             source = value
         elif opt == '--compare':
             COMPARE.append(True)
+        elif opt == '--gaps':
+            GAPS.append(True)
     if COMPARE:   # 比べる言語: 作る言語と元の言語
         COMPARE[:] = list(dict.fromkeys(TARGETS + [source] + (['la'] if source != 'la' else [])))
     global run
@@ -220,14 +223,57 @@ def main():
     if not args:
         print(__doc__ if __doc__ else 'usage: generate.py TEXT|FILE')
         return
+    texts = []
     for arg in args:
         if os.path.exists(arg):
             with open(arg, encoding='utf-8') as f:
-                for line in f:   # 1行1文。# で始まる行 (見出し・注記) は飛ばす
-                    if line.strip() and not line.startswith('#'):
-                        run(line)
+                texts += [line for line in f if line.strip() and not line.startswith('#')]   # 1行1文。# の行は飛ばす
         else:
-            run(arg)
+            texts.append(arg)
+    if GAPS:
+        print(gaps_report(texts))
+        return
+    for text in texts:
+        run(text)
+
+
+GAPS = []   # --gaps: 生成文は出さず、言語ごとに訳語の見つからない語 ([英語] のまま残った語) の一覧だけ
+LANGUAGE_LINE = re.compile(r'^  (\S[^:：]*?):\s')
+UNTRANSLATED = re.compile(r'\[\[?([^\[\]]+?)\]?\]')
+
+
+def gaps_report(texts):
+    '''言語ごとの訳語の見つからない語 (重複を除き並べ替え。生成文・元の文・文中の位置は出さない) と作れなかった文の数'''
+    import io
+    import contextlib
+    words, failed, sentences = {}, Counter(), 0
+    for text in texts:
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            run(text)
+        current = None
+        for line in buffer.getvalue().splitlines():
+            if line and not line.startswith(' '):
+                sentences += 1
+                continue
+            m = LANGUAGE_LINE.match(line)
+            if not m or m.group(1) == '述語':
+                continue   # 文の枠の行と、転写・仮名の行 (同じ語を2度数えない)
+            current = m.group(1)
+            if '(作れない' in line:
+                failed[current] += 1
+            for word in UNTRANSLATED.findall(line):
+                words.setdefault(current, Counter())[word.strip()] += 1
+    lines = ['# generate.py --gaps: %d 文。生成文・元の文は含まない (語は言語ごとに重複を除き並べ替え)' % sentences]
+    for lang in sorted(set(words) | set(failed)):
+        counter = words.get(lang, Counter())
+        lines.append('%s 訳語の見つからない語 %d%s' % (lang, len(counter),
+                                                 '、作れなかった文 %d' % failed[lang] if failed[lang] else ''))
+        for word in sorted(counter, key=str.lower):
+            lines.append('  %s%s' % (word, '  ×%d' % counter[word] if counter[word] > 1 else ''))
+    if len(lines) == 1:
+        lines.append('穴は見つからなかった')
+    return '\n'.join(lines)
 
 
 if __name__ == '__main__':
