@@ -913,6 +913,14 @@ class CompareTestCase(unittest.TestCase):
         analysis, = analyzer.analyze_text('Servum dominī vīdit.')   # 格の合わない属格はそのまま
         self.assertEqual(frame.frames(analysis)[0].role('object')[0].genitives[0].head.lemma, 'dominus')
 
+    @unittest.skipUnless(ainu.available() and tibetan.available(), 'アイヌ語かチベット語の辞書が無い')
+    def test_ainu_tibetan(self):
+        rows = self.rows('Puella bona est.', ('ain', 'bo'))
+        self.assertEqual(rows['述語 (繋辞 + 補語、現在)']['ain'][0], 'pirka')   # 状態の動詞がそのまま述語
+        self.assertTrue(rows['述語 (繋辞 + 補語、現在)']['bo'][0].endswith('(bzang po yin no)'))
+        rows = self.rows('Puer ā magistrō laudātus est.', ('ain', 'bo'))
+        self.assertTrue(rows['前置詞句 (ā + 奪格)']['bo'][0].endswith('(dge rgan gyis)'))   # 能動に組み替えた主語は能格
+
     @unittest.skipUnless(russian.available(), 'ロシア語の表が無い')
     def test_predicate_agrees_with_subject(self):
         # 述語の形は主語を残して作る (一致)。表では主語の形を外す
