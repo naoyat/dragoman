@@ -51,7 +51,7 @@ PREFERRED = {('only-begotten', 'adj'): '3173', ('girl', 'noun'): '5291', ('boy',
              ('hear', 'verb'): ('8085', 'q'), ('ask', 'verb'): ('7592', 'q'), ('send', 'verb'): ('7971', 'q'),
              ('eat', 'verb'): ('398', 'q'), ('keep', 'verb'): ('8104', 'q'), ('dwell', 'verb'): ('3427', 'q'),
              ('live', 'verb'): ('3427', 'q'), ('inhabit', 'verb'): ('3427', 'q'), ('sleep', 'verb'): ('3462', 'q'),
-             ('fight', 'verb'): ('3898', 'n'), ('make', 'verb'): ('6213a', 'q'), ('do', 'verb'): ('6213a', 'q')}
+             ('fight', 'verb'): ('3898a', 'N'), ('make', 'verb'): ('6213a', 'q'), ('do', 'verb'): ('6213a', 'q')}
 PRONOUNS = {('ego', 'sg'): ('אֲנִי', '1cs'), ('ego', 'pl'): ('אֲנַחְנוּ', '1cp'), ('tū', 'sg'): ('אַתָּה', '2ms'),
             ('tū', 'pl'): ('אַתֶּם', '2mp'), ('is', 'sg'): ('הוּא', '3ms'), ('is', 'pl'): ('הֵם', '3mp')}
 OBJECT_PRONOUNS = {'1cs': 'אֹתִי', '1cp': 'אֹתָנוּ', '2ms': 'אֹתְךָ', '2mp': 'אֶתְכֶם', '3ms': 'אֹתוֹ', '3fs': 'אֹתָהּ',
@@ -140,6 +140,8 @@ def to_hebrew(lex, pos=None):
                 if p == pos]
         if hits:
             _, _, aug, stem = min(hits, key=lambda h: (h[0], h[1], h[2], h[3] or ''))   # 態の符号の無いものも
+            if aug not in _lexicon() and aug + 'a' in _lexicon():
+                aug += 'a'   # 見出しが分かれている番号 (3898 → 3898a / 3898b)
             return aug, stem or 'q'
     return None
 

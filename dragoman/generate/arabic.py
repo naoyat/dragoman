@@ -324,7 +324,10 @@ def prepositional(np, passive=False):
     if passive and np.prep.lemma in ('ā', 'ab'):
         return with_pronoun('مِنْ قِبَلِ', inner) or 'مِنْ قِبَلِ ' + noun_phrase(inner, 'g')   # 受動の動作主
     prep = PREPOSITIONS.get((np.prep.lemma, np.case), 'فِي')
-    return with_pronoun(prep, inner) or prep + ' ' + noun_phrase(inner, 'g')
+    inner_text = with_pronoun(prep, inner) or noun_phrase(inner, 'g')
+    if not inner_text or not inner_text.strip('[]?'):
+        return ''   # 中身の分からない句 (辞書に無い語) は書かない
+    return inner_text if inner_text.startswith(prep[:2]) and with_pronoun(prep, inner) else prep + ' ' + inner_text
 
 
 # ----------------------------------------------------------------------
@@ -333,13 +336,17 @@ def prepositional(np, passive=False):
 def _agreement(clause):
     """動詞の人称・性・数 (主語が名詞なら3人称で性だけ合わせる。人でない複数は女性単数)"""
     subjects = clause.role('subject')
+    if subjects and subjects[0].members:   # 並列の主語: 動詞が前なら最初の要素に一致 (単数。غَنَّى الوَلَدُ وَالبِنْتُ)
+        first = subjects[0].members[0]
+        if first.head is not None and first.head.pos != 'pronoun':
+            return '3', np_gender(first) if not first.head.proper else ('f' if first.gender == 'f' else 'm'), 's', True
     if subjects and subjects[0].head is not None and subjects[0].head.pos != 'pronoun':
         np = subjects[0]
         gender = np_gender(np) if not np.head.proper else ('f' if np.gender == 'f' else 'm')
         if np.number == 'pl' and not is_human(np):
             gender = 'f'
         return '3', gender, 's', True   # 主語が動詞の後ろ: 単数
-    if subjects and (subjects[0].head.lemma, subjects[0].number) in PRONOUNS:
+    if subjects and subjects[0].head is not None and (subjects[0].head.lemma, subjects[0].number) in PRONOUNS:
         _, per, gen, num, _ = PRONOUNS[(subjects[0].head.lemma, subjects[0].number)]
         return per, ('f' if subjects[0].gender == 'f' and per != '1' else gen), num, False
     return str(clause.person), 'f' if False else 'm', 'p' if clause.number == 'pl' else 's', False
@@ -469,7 +476,9 @@ def realize(clause, gap=None, antecedent=None):
         elif role == 'means':   # 与格と奪格の同形: 人なら受け手 لِـ、ほかは手段 بِـ
             out.append(noun_phrase(np, 'g', prc1='li_prep' if np.animate else 'bi_prep'))
         else:
-            out.append('فِي ' + noun_phrase(np, 'g'))
+            text = noun_phrase(np, 'g')
+            if text.strip('[]?'):   # 中身の分からない句は書かない
+                out.append('فِي ' + text)
     for adv in clause.adverbs:
         found = to_arabic(adv, 'adv')
         out.append(found[0] if found else '[%s]' % english.word(adv))
@@ -497,7 +506,7 @@ def _nominal(clause, gap=None):
         out.append(('لَمْ ' + (generate('كان', {'pos': 'verb', 'asp': 'i', 'mod': 'j', 'per': per, 'gen': gen,
                                                 'num': num, 'vox': 'a'}) or 'يَكُنْ')) if clause.negated and past else aux)
     if subject is not None and gap != 'subject':
-        out.append(noun_phrase(subject, 'n') if subject.head.pos != 'pronoun' else
+        out.append(noun_phrase(subject, 'n') if subject.head is None or subject.head.pos != 'pronoun' else
                    PRONOUNS.get((subject.head.lemma, subject.number), ('هُوَ',))[0])
     if not complements:
         return out + ['مَوْجُود']

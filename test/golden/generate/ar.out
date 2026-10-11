@@ -2,7 +2,8 @@
             tuʿṭī bintu al-baḥḥāri al-warda.
 Agricola in agrō labōrat .
 Mārcus et Iūlia in vīllā habitant .
-  アラビア語: (作れない: AttributeError: 'NoneType' object has no attribute 'lemma')
+  アラビア語: يَقْطُن مَرْقُس وَIūlia.
+            yaqṭun marqus waIūlia.
 Puerī puellaeque cantant .
   アラビア語: يُغَنُّونَ.
             yuġannūna.
@@ -63,26 +64,26 @@ Cum amīcīs ad oppidum ambulāmus .
   アラビア語: نَمْشِي مَعَ الأَصْدِقاءِ إِلَى [town].
             namšī maʿa al-ʾaṣdiqāʾi ilā [town].
 Hīs rēbus cognitīs agricola ad vīllam vēnit .
-  アラビア語: جاءَ الفَلّاحُ لِلحاجاتِ الواحِدَةِ إِلَى [[]] فِي [[]].
-            ǧāʾa al-fallāḥu lilḥāǧāti al-wāḥidati ilā [[]] fī [[]].
+  アラビア語: جاءَ الفَلّاحُ لِلحاجاتِ الواحِدَةِ.
+            ǧāʾa al-fallāḥu lilḥāǧāti al-wāḥidati.
 Puellā cantante puer dormit .
-  アラビア語: يَنام الوَلَدُ لِلبِنْتِ فِي [[]].
-            yanām al-waladu lilbinti fī [[]].
+  アラビア語: يَنام الوَلَدُ لِلبِنْتِ.
+            yanām al-waladu lilbinti.
 Rēge mortuō populus flēvit .
-  アラビア語: بَكَى الحَشْدُ لِلمَلِكِ فِي [[]].
-            bakā al-ḥašdu lilmaliki fī [[]].
+  アラビア語: بَكَى الحَشْدُ لِلمَلِكِ.
+            bakā al-ḥašdu lilmaliki.
 Cum hīs rēbus cognitīs vēnit .
   アラビア語: جاءَ مَعَ الحاجاتِ الواحِدَةِ.
             ǧāʾa maʿa al-ḥāǧāti al-wāḥidati.
 Mīlitēs locīs apertīs pugnābant .
 Puer animō suspēnsō exspectābat .
 Puella flōrēs carpēns cantat .
-  アラビア語: تُغَنِّي البِنْتُ الزَهَراتِ فِي [[]].
-            tuġannī al-bintu az-zaharāti fī [[]].
+  アラビア語: تُغَنِّي البِنْتُ الزَهَراتِ.
+            tuġannī al-bintu az-zaharāti.
 Haec locūtus discessit .
 Rēgīna , verbīs nūntiī commōta , lacrimāvit .
-  アラビア語: بَكَت المَلِكَةُ لِلكَلِماتِ فِي [[]].
-            bakat al-malikatu lilkalimāti fī [[]].
+  アラビア語: بَكَت المَلِكَةُ لِلكَلِماتِ.
+            bakat al-malikatu lilkalimāti.
 Mīlitēs hostem fugientem cēpērunt .
   アラビア語: أَخَذَ الجُنُودُ العَدُوَّ.
             aḫaḏa al-ǧunūdu al-ʿaduwwa.
@@ -100,19 +101,20 @@ Putō Rōmam magnam esse .
   アラビア語: أَحْكُم أَنَّ رُومَا كَبِيرَةٌ.
             aḥkum anna rūmā kabīratun.
 Dominus servum epistulam portāre iubet .
-  アラビア語: يُهْدِي الرَبُّ العَبْدَ الرِسالَةَ فِي [[]].
-            yuhdī ar-rabbu al-ʿabda ar-risālata fī [[]].
+  アラビア語: يُهْدِي الرَبُّ العَبْدَ الرِسالَةَ.
+            yuhdī ar-rabbu al-ʿabda ar-risālata.
 Puer librum legere potest .
-  アラビア語: يَقْرَأ الوَلَدُ الكِتابَ فِي [[]].
-            yaqraʾ al-waladu al-kitāba fī [[]].
+  アラビア語: يَقْرَأ الوَلَدُ الكِتابَ.
+            yaqraʾ al-waladu al-kitāba.
 Caesar hostēs veritus castra mōvit .
-  アラビア語: اِنْتَقَلَ قَيْصَر العُداةَ فِي [[]] فِي [[]].
-            intaqala qayṣar al-ʿudāta fī [[]] fī [[]].
+  アラビア語: اِنْتَقَلَ قَيْصَر العُداةَ.
+            intaqala qayṣar al-ʿudāta.
 Cicerō Pompēium laudat .
   アラビア語: يَمْدَح Cicerō Pompēium.
             yamdaḥ Cicerō Pompēium.
 Julia et Juno in caelo sunt .
-  アラビア語: (作れない: AttributeError: 'NoneType' object has no attribute 'lemma')
+  アラビア語: Julia وَJuno مَوْجُود.
+            Julia waJuno mawǧūd.
 Uir uiam uidet .
   アラビア語: يَرَى الرَجُلُ الطَرِيقَ.
             yarā ar-raǧulu aṭ-ṭarīqa.
