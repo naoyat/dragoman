@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dragoman.core import paths  # noqa: E402
 from dragoman.latin import latindic, analyzer  # noqa: E402
-from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, kobun  # noqa: E402
+from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, kobun  # noqa: E402
 from dragoman.generate.frame import Lex  # noqa: E402
 
 _saved = None
@@ -495,6 +495,43 @@ class IndonesianTestCase(unittest.TestCase):
         self.assertEqual(indonesian.passive('memiliki'), 'dimiliki')
         self.assertEqual(indonesian.intransitive('nyanyi'), 'bernyanyi')
         self.assertEqual(indonesian.active('beri'), 'memberi')   # ber- で始まるが語根
+
+
+@unittest.skipUnless(tagalog.available(), 'tl/wiktionary.sqlite か tl/en-index.tsv が無い')
+class TagalogTestCase(unittest.TestCase):
+    """ラテン語 → 文の枠 → タガログ語"""
+
+    @classmethod
+    def setUpClass(cls):
+        latindic.load()
+
+    def tagalog(self, text):
+        analysis, = analyzer.analyze_text(text)
+        return tagalog.sentence(frame.frames(analysis))
+
+    def test_focus(self):
+        # 目的語があれば対象焦点 (目的語が ang、行為者が ng)、物が移る動詞は移動物焦点、受動は主語を ang に
+        self.assertEqual(self.tagalog('Puella rosam pulchram in hortō videt.'),
+                         'Nakikita ng dalaga ang magandang rosas sa hardin.')
+        self.assertEqual(self.tagalog('Rēgīna puellīs rosās dedit.'), 'Ibinigay ng reyna ang mga rosas sa mga dalaga.')
+        self.assertEqual(self.tagalog('Puer ā magistrō laudātus est.'), 'Pinuri ng guro ang batang lalaki.')
+
+    def test_relative_and_question(self):
+        self.assertEqual(self.tagalog('Puella puerum videt quem magister laudat.'),
+                         'Nakikita ng dalaga ang batang lalaking pinupuri ng guro.')
+        self.assertEqual(self.tagalog('Magister rogāvit quis cantāret.'), 'Nagtanong ang guro kung sino ang umaawit.')
+
+    def test_copula_negation_absolute(self):
+        self.assertEqual(self.tagalog('Nauta nōn est malus.'), 'Hindi masama ang mandaragat.')
+        self.assertEqual(self.tagalog('Puella est rēgīna.'), 'Reyna ang dalaga.')
+        self.assertEqual(self.tagalog('Rosam nōn vīdit.'), 'Hindi niya nakita ang rosas.')   # 代名詞は hindi の後ろ
+        self.assertEqual(self.tagalog('Urbe captā, cīvēs fūgērunt.'), 'Nang nakuha ang lungsod, tumakas ang mga mamamayan.')
+
+    def test_aspect_forms(self):
+        forms = [tagalog.conjugate(tagalog.lemma_for(r, v), r, a) for r, v, a in (
+            ('kain', 'actor', 'progressive'), ('kain', 'object', 'completive'), ('bigay', 'conveyance', 'completive'),
+            ('awit', 'actor', 'contemplative'), ('galak', 'actor', 'progressive'), ('matay', 'actor', 'completive'))]
+        self.assertEqual(forms, ['kumakain', 'kinain', 'ibinigay', 'aawit', 'nagagalak', 'namatay'])
 
 
 class KobunTestCase(unittest.TestCase):

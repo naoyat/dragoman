@@ -41,7 +41,7 @@ COMMON = (
     Option('legend', help='ノートの冒頭に印の凡例と見本 (--marks も)'),
     Option('provenance', help='ノートに再現条件 (コードの版・オプション・使ったデータ)'),
     Option('compare', value='LANGS', help='ノートに要素ごとの比較の表: 文の枠の要素を各言語がどう表すか\n'
-                                          '(言語の符号をカンマで: la,grc,ja。all で全部: la grc sa ru en id ja kobun)'),
+                                          '(言語の符号をカンマで: la,grc,ja。all で全部: la grc sa ru en id tl ja kobun)'),
     Option('help', 'h', help='説明を表示する'),
 )
 

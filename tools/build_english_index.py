@@ -8,6 +8,7 @@
 #   python3 tools/build_english_index.py --lang=sa
 #   python3 tools/build_english_index.py --lang=grc
 #   python3 tools/build_english_index.py --lang=id
+#   python3 tools/build_english_index.py --lang=tl
 #
 # 各行: 見出し語、品詞、英語の訳語 (語義の頭の語句を先に。読点区切り、多くて12)、性 (名詞)、語根の類 (サンスクリットの動詞)、
 #       語義の数 (よく使う語ほど多い)
@@ -15,7 +16,8 @@
 #   サンスクリット: 見出し語は SLP1 (kanyA)。動詞は現在3人称単数の見出し (ददाति: class 3, root दा) から語根 (dA) と類 (3) を
 #
 # 入力: $DRAGOMAN_DATA/ru/kaikki-Russian.jsonl.gz、$DRAGOMAN_DATA/sa/kaikki-Sanskrit.jsonl.gz、
-#       $DRAGOMAN_DATA/grc/kaikki-AncientGreek.jsonl.gz、$DRAGOMAN_DATA/id/kaikki.org-dictionary-Indonesian.jsonl (CC BY-SA)
+#       $DRAGOMAN_DATA/grc/kaikki-AncientGreek.jsonl.gz、$DRAGOMAN_DATA/id/kaikki.org-dictionary-Indonesian.jsonl、
+#       $DRAGOMAN_DATA/tl/kaikki.org-dictionary-Tagalog.jsonl (CC BY-SA)
 # 出力: $DRAGOMAN_DATA/<lang>/en-index.tsv (Wiktionary 由来 (CC BY-SA))
 #
 import os
@@ -33,7 +35,7 @@ from dragoman.core.wiktionary_import import english_glosses
 POS = {'noun': 'noun', 'adj': 'adj', 'verb': 'verb', 'adv': 'adv', 'pron': 'pronoun', 'det': 'pronoun',
        'prep': 'preposition', 'conj': 'conj', 'num': 'num'}
 FILES = {'ru': 'kaikki-Russian.jsonl.gz', 'sa': 'kaikki-Sanskrit.jsonl.gz', 'grc': 'kaikki-AncientGreek.jsonl.gz',
-         'id': 'kaikki.org-dictionary-Indonesian.jsonl'}
+         'id': 'kaikki.org-dictionary-Indonesian.jsonl', 'tl': 'kaikki.org-dictionary-Tagalog.jsonl'}
 GENDER = re.compile(r'\b(m|f|n)\b(?: inan| anim)?')
 SA_VERB = re.compile(r'class (\d+).*root (\S+?)\)')
 
@@ -66,8 +68,8 @@ def entries(lang):
                 continue
             head = ' '.join(h.get('expansion', '') for h in entry.get('head_templates', []))
             gender, gana = '', ''
-            if lang == 'id':
-                lemma = entry['word']   # インドネシア語: 見出しのまま (語根の動詞 baca、派生形 berjalan)
+            if lang in ('id', 'tl'):
+                lemma = entry['word']   # インドネシア語・タガログ語: 見出しのまま (berjalan、kumain「食べる」・kainin「食べられる」)
             elif lang == 'grc':
                 lemma = entry['word']   # 古典ギリシア語: 見出しは多調のまま (κόρη)
                 if pos in ('noun', 'adj'):

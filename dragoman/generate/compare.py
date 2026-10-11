@@ -11,12 +11,14 @@
 #
 import dataclasses
 
-from . import latin, english, russian, sanskrit, greek, indonesian, japanese, kobun
+from . import latin, english, russian, sanskrit, greek, indonesian, tagalog, japanese, kobun
 
-LANGS = ('la', 'grc', 'sa', 'ru', 'en', 'id', 'ja', 'kobun')
+LANGS = ('la', 'grc', 'sa', 'ru', 'en', 'id', 'tl', 'ja', 'kobun')
 NAMES = {'la': 'ラテン語', 'grc': 'ギリシア語', 'sa': 'サンスクリット', 'ru': 'ロシア語', 'en': '英語', 'id': 'インドネシア語',
+         'tl': 'タガログ語',
          'ja': '日本語', 'kobun': '古文'}
-MODULES = {'la': latin, 'grc': greek, 'sa': sanskrit, 'ru': russian, 'en': english, 'id': indonesian, 'ja': japanese,
+MODULES = {'la': latin, 'grc': greek, 'sa': sanskrit, 'ru': russian, 'en': english, 'id': indonesian, 'tl': tagalog,
+           'ja': japanese,
            'kobun': kobun}
 ROLE_NAMES = {'subject': '主語', 'object': '目的語', 'recipient': '受け手', 'means': '手段', 'possessor': '所有者',
               'complement': '補語', 'place': '場所', 'source': '起点', 'prep': '前置詞句'}
@@ -28,7 +30,7 @@ LATIN_ROLE_CASES = {'subject': 'Nom', 'object': 'Acc', 'recipient': 'Dat', 'mean
 WORD_ORDER = {'subject': '動詞の前', 'object': '動詞の後ろ', 'complement': '繋辞の後ろ'}
 PRO_DROP = {'la': '書かない (動詞の語尾で分かる)', 'grc': '書かない (動詞の語尾で分かる)', 'sa': '書かない (動詞の語尾で分かる)',
             'ja': '書かない (文脈で分かる)', 'kobun': '書かない (文脈で分かる)', 'ru': '代名詞を補う', 'en': '代名詞を補う',
-            'id': '代名詞を補う'}
+            'id': '代名詞を補う', 'tl': '代名詞を補う'}
 TENSES = {'present': '現在', 'imperfect': '未完了過去', 'perfect': '完了', 'past-perfect': '過去完了', 'future': '未来'}
 
 
@@ -51,7 +53,7 @@ def _display(lang, text):
 
 # 受動の動作主 (ā + 奪格) の言語ごとの手段 (前置詞の表とは別の規則で作る)
 AGENT = {'la': 'ā + 奪格', 'grc': 'ὑπό + 属格', 'sa': '具格 (動作主)', 'ru': '造格 (動作主)', 'en': '前置詞 by',
-         'id': '前置詞 oleh', 'ja': '助詞 に', 'kobun': '助詞 に'}
+         'id': '前置詞 oleh', 'tl': 'ng (焦点でない行為者)', 'ja': '助詞 に', 'kobun': '助詞 に'}
 
 
 # ----------------------------------------------------------------------
@@ -92,6 +94,8 @@ def _np_form(lang, role, np, clause):
         if prep:
             return prep + ' ' + text, '前置詞 %s' % prep
         return text, WORD_ORDER.get(role, '')
+    if lang == 'tl':
+        return _tagalog_np(role, np, clause)
     if lang in ('ja', 'kobun'):
         text = _safe(m.noun_phrase, np)
         if role == 'subject':
@@ -102,6 +106,27 @@ def _np_form(lang, role, np, clause):
                 particle = 'に'
         return text + particle, ('助詞 %s' % particle) if particle else ''
     return '', ''
+
+
+TL_FOCUS = {'actor': '行為者焦点', 'object': '対象焦点', 'conveyance': '移動物焦点', 'locative': '場所焦点'}
+
+
+def _tagalog_np(role, np, clause):
+    """タガログ語: 焦点の名詞句が ang、焦点でない行為者・目的語が ng、受け手・場所が sa"""
+    try:
+        voice, _, topic = tagalog._focus(clause)
+    except Exception:
+        voice, topic = 'actor', None
+    if role in ('subject', 'object'):
+        if np is topic:
+            marker, how = 'ang', 'ang (焦点)'
+        else:
+            marker, how = 'ng', 'ng (焦点でない%s)' % ('行為者' if role == 'subject' else '目的語')
+    elif role == 'means' and not np.animate:
+        marker, how = 'ng', 'ng'
+    else:
+        marker, how = 'sa', 'sa'
+    return _safe(tagalog.noun_phrase, np, marker), how
 
 
 def _prep_form(lang, np, passive):
@@ -138,6 +163,9 @@ def _prep_form(lang, np, passive):
     if lang == 'id':
         text = _safe(indonesian.prepositional, np, passive)
         return text, '前置詞 %s' % text.rsplit(' ', 1)[0].split(' ')[0]
+    if lang == 'tl':
+        before, marker = tagalog.PREPOSITIONS.get(key, ('', 'sa'))
+        return _safe(tagalog.prepositional, np, passive), ' + '.join(x for x in (before, marker) if x)
     if lang in ('ja', 'kobun'):
         m = MODULES[lang]
         particle = 'に' if passive and np.prep.lemma in ('ā', 'ab') else m.PREPOSITIONS.get(key, 'で')
@@ -151,6 +179,7 @@ def _prep_form(lang, np, passive):
 PREDICATE_HOW = {
     'la': '語尾 (人称・数・時制・法・態)', 'grc': '語尾 (時制の語幹・加音)', 'sa': '語尾 (時制・人称・数)',
     'ru': '語尾 + 体 (完了体・不完了体)', 'en': '語形 + 助動詞', 'id': '語形は変えない (接辞は態、telah・akan で時)',
+    'tl': '接辞で焦点 (行為者 -um-/mag-・対象 -in・移動物 i-)、重複と -in- でアスペクト',
     'ja': '活用 + 助動詞 (た・ない・れる)', 'kobun': '活用 + 助動詞 (けり・ず・む・る)'}
 
 
@@ -167,6 +196,10 @@ def predicate_form(lang, clause):
         text = _safe(m.realize, bare, False)
     elif lang == 'id':
         text = _safe(indonesian.realize, bare)
+    elif lang == 'tl':   # 選んだ焦点は文ごとに変わるので形に添える (nakita (対象焦点))
+        voice, root, _ = tagalog._focus(clause)
+        text = _safe(tagalog.verb_form, clause, voice, root) or _safe(tagalog.realize, bare)
+        text = ('hindi ' if clause.negated else '') + text + ' (%s)' % TL_FOCUS.get(voice, voice)
     else:
         text = _safe(m.realize, bare)
     text = text.split('\n')[0].strip(' .।')
@@ -182,6 +215,7 @@ def split_supplied(lang, text):
 
 
 SUPPLIED = {'en': {'he', 'she', 'it', 'they', 'i', 'you', 'we'}, 'ru': {'он', 'она', 'оно', 'они', 'я', 'ты', 'мы', 'вы'},
+            'tl': {'siya', 'sila', 'ako', 'ikaw', 'kami', 'kayo', 'niya', 'nila', 'ko', 'mo'},
             'id': {'dia', 'mereka', 'saya', 'kamu', 'kami', 'kalian'}}
 
 
@@ -198,6 +232,11 @@ def rows(clause, langs=LANGS):
         predicates[lang] = (text, how)
     out = [('述語 (%s)' % ' '.join(x for x in (tense, voice, '否定' if clause.negated else '') if x), predicates)]
     if not clause.role('subject') and clause.mood not in ('infinitive', 'imperative') and not clause.copula:
+        if 'tl' in langs:   # タガログ語の補う代名詞は焦点で形が決まる (対象焦点なら ng の形 niya)
+            voice = _safe(lambda c: tagalog._focus(c)[0], clause)
+            key = ({1: 'ego', 2: 'tū'}.get(clause.person, 'is'), clause.number)
+            forms = tagalog.PRONOUNS.get(key, ('siya', 'niya', 'kaniya'))
+            supplied['tl'] = forms[0] if voice == 'actor' else forms[1]
         out.append(('主語 (書かれていない)', {lang: (supplied[lang], PRO_DROP.get(lang, '')) for lang in langs}))
     for role, np in clause.args:
         name = ROLE_NAMES.get(role, role)
