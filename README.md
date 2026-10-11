@@ -167,6 +167,7 @@ PDF に載せるものはオプションで選びます。
 | インドネシア語 | — | 語根と派生形 (meN-・di-・ber-。辞書の対応か鼻音の交替の規則)、yang の関係節、重複の複数、時は telah・akan |
 | タガログ語 | — | 焦点 (目的語があれば対象焦点、物が移る動詞は移動物焦点) と ang / ng / sa、アスペクト (重複と -in-)、繋ぎ、関係節 |
 | アラビア語 (MSA) | — | CAMeL Tools の生成器で格・数・性・定冠詞を指定。動詞 - 主語 - 目的語、لَمْ + 要求法、名詞文と لَيْسَ、関係節 الَّذِي と代名詞の接尾辞 |
+| ペルシア語 | 解析器 | 辞書の現在語幹・過去語幹から。主語 - 目的語 + را - 動詞 (SOV)、می・ن、خواه + 過去語幹、命令 ب、受動 + شدن、エザーフェ、関係節 ی که |
 | 聖書ヘブライ語 | — | OSHB に現れた語形 (無ければ binyan の型から)。動詞 - 主語 (分詞なら主語が先)、אֶת־、冠詞と前置詞の縮約、現在は分詞、אֲשֶׁר の関係節 |
 | 英語 | — | 規則と語形の表 |
 | 日本語 | MeCab + UniDic と規則（長い文は GiNZA の係り受け） | 動詞の活用 (core/japanese.py)、連体修飾節、〜か・〜とき |
@@ -277,7 +278,7 @@ dragoman/                パッケージ
   ainu/                    アイヌ語 (古いローマ字表記の正規化、人称の接辞の分解、後置詞・助詞から語順のままの日本語訳)
   kobun/                   古文 (中古和文UniDic による品詞分解、助動詞の連なりからの現代語への組み立て直し、係り結び)
   generate/                文の生成 (frame.py 文の枠、transfer.py 英語を仲立ちにした語の置き換え、
-                           latin.py greek.py russian.py sanskrit.py english.py indonesian.py tagalog.py arabic.py hebrew.py
+                           latin.py greek.py russian.py sanskrit.py english.py indonesian.py tagalog.py arabic.py hebrew.py persian.py
                            japanese.py kobun.py
                            文の枠 → 各言語、
                            from_japanese.py ja_lexicon.py 日本語の文 → 文の枠、connectives.py 節のつなぎ、

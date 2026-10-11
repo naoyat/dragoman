@@ -4,7 +4,7 @@
 # 固有名詞の表 (英語の名前 → 各言語の名前) を Wiktionary (kaikki.org の抽出データ) の固有名詞 (pos: name) の項目から作る
 # (文の生成 dragoman/generate で、Iēsus → Jesus → Иисус・Ἰησοῦς・يَسُوع のように固有名詞を置き換えるのに使う)
 #
-#   python3 tools/build_name_index.py --lang=ru      (ru / grc / sa / id / tl / ar / he。--lang=all で全部)
+#   python3 tools/build_name_index.py --lang=ru      (ru / grc / sa / id / tl / ar / he / fa / hi / ur。--lang=all で全部)
 #
 # 各行: 名前 (アラビア語・ヘブライ語は見出しの行の母音記号付きの形、サンスクリットは SLP1)、英語の名前 (読点区切り)、
 #       性 (m / f。分からなければ空)、語義の数
@@ -27,7 +27,8 @@ from dragoman.core import paths
 
 FILES = {'ru': 'kaikki-Russian.jsonl.gz', 'sa': 'kaikki-Sanskrit.jsonl.gz', 'grc': 'kaikki-AncientGreek.jsonl.gz',
          'id': 'kaikki.org-dictionary-Indonesian.jsonl', 'tl': 'kaikki.org-dictionary-Tagalog.jsonl',
-         'ar': 'kaikki-Arabic.jsonl.gz', 'he': 'kaikki-Hebrew.jsonl.gz'}
+         'ar': 'kaikki-Arabic.jsonl.gz', 'he': 'kaikki-Hebrew.jsonl.gz', 'fa': 'kaikki-Persian.jsonl.gz',
+         'hi': 'kaikki-Hindi.jsonl.gz', 'ur': 'kaikki-Urdu.jsonl.gz'}
 NAME = re.compile(r"[A-Z][\w'’-]*(?: (?:of |the |de )?[A-Z][\w'’-]*){0,3}")
 EQUIVALENT = re.compile(r'equivalent to English ([A-Z][\w-]+)')
 GIVEN = re.compile(r'(?:given name|surname|patronymic)\b[^,]*,\s*([A-Z][\w-]+)')

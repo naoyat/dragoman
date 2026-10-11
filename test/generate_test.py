@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dragoman.core import paths  # noqa: E402
 from dragoman.latin import latindic, analyzer  # noqa: E402
-from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, arabic, hebrew, japanese, kobun  # noqa: E402
+from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, arabic, hebrew, persian, japanese, kobun  # noqa: E402
 from dragoman.generate.frame import Lex  # noqa: E402
 
 _saved = None
@@ -690,6 +690,31 @@ class LeftoverTestCase(unittest.TestCase):
         self.assertEqual(hebrew.with_and('הַמַּלְכָּה'), 'וְהַמַּלְכָּה')
         from dragoman.hebrew import script
         self.assertEqual(script.translit('וּרְחָבָה'), 'ûrəḥāvâ')
+
+
+@unittest.skipUnless(persian.available(), 'ペルシア語の辞書 (fa/wiktionary.sqlite) が無い')
+class PersianTestCase(unittest.TestCase):
+    """ラテン語 → 文の枠 → ペルシア語 (SOV、را、エザーフェ、می・ن、受動 شدن)"""
+
+    @classmethod
+    def setUpClass(cls):
+        latindic.load()
+
+    def persian(self, text):
+        analysis, = analyzer.analyze_text(text)
+        return persian.sentence(frame.frames(analysis)).split('\n')[1].strip()   # 転写の行
+
+    def test_sentences(self):
+        self.assertEqual(self.persian('Puella rosam pulchram in hortō videt.'), 'doxtar gol-e zibâ râ dar bâġ mi-binad.')
+        self.assertEqual(self.persian('Rēgīna puellīs rosās dedit.'), 'malake gol-hâ râ be doxtar-hâ dâd.')
+        self.assertEqual(self.persian('Puer ā magistrō laudātus est.'), "pesar tavassot-e mo'allem setude šod.")
+        self.assertEqual(self.persian('Nauta nōn est malus.'), 'malavân bad nist.')
+        self.assertEqual(self.persian('Rosam nōn vīdit.'), 'gol râ nadid.')
+
+    def test_relative_and_imperative(self):
+        self.assertEqual(self.persian('Puella puerum videt quem magister laudat.'),
+                         "doxtar pesari râ ke mo'allem mi-setâyad mi-binad.")   # را は関係節の前
+        self.assertEqual(self.persian('Venī!'), 'biyâ.')
 
 
 class KobunTestCase(unittest.TestCase):
