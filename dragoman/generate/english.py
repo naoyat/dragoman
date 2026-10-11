@@ -22,6 +22,7 @@ from .frame import Lex
 # 不規則動詞: 原形 → (過去形, 過去分詞)
 IRREGULAR = {
     'be': ('was', 'been'), 'have': ('had', 'had'), 'do': ('did', 'done'), 'go': ('went', 'gone'),
+    'bear': ('bore', 'borne'), 'lift': ('lifted', 'lifted'), 'forgive': ('forgave', 'forgiven'),
     'come': ('came', 'come'), 'see': ('saw', 'seen'), 'give': ('gave', 'given'), 'take': ('took', 'taken'),
     'make': ('made', 'made'), 'say': ('said', 'said'), 'tell': ('told', 'told'), 'get': ('got', 'got'),
     'know': ('knew', 'known'), 'think': ('thought', 'thought'), 'find': ('found', 'found'),
@@ -255,16 +256,24 @@ DEGREE = re.compile(r'^.*\b(?:comparative|superlative) degree of \S+: ', re.I)
 SYNONYM = re.compile(r'^(?:synonym|alternative form|alternative spelling) of (\S+)$')
 # 訳語でない説明 (synonym of canō, alternative form of epistola, masculine praenomen)
 DESCRIPTION = re.compile(r'\b(synonym|alternative form|alternative spelling|form) of\b|praenomen|cognomen|nomen\b|'
+                         r'\bterm of address\b|'
                          r'^of or pertaining to\b|degree of\b', re.I)
 
 
 @functools.lru_cache(maxsize=20000)
 def _matching(candidates, ja, pos):
     wanted = [j.strip() for j in (ja or '').split(',') if j.strip()]
-    for j in wanted:   # 日本語の訳語の順 (よく使う訳語が先) に、それに合う英語を探す
+    for k, j in enumerate(wanted):   # 日本語の訳語の順 (よく使う訳語が先) に、それに合う英語を探す
         for en in candidates:
             if j in en_ja.lookup(en, pos):
                 return en
+        if k == 0:   # 一番の訳語が英和の表で合わなければ和英 (JMdict) の語義の順に: 取り去る → remove
+            backs = en_ja.english_for(j)
+            if en_ja.english_key(candidates[0]) in backs:
+                return candidates[0]   # 筆頭の訳語が日本語にも合う (magnus: great は「大きい」の訳語にもある)
+            agreed = en_ja.agreed_order(candidates, j)   # 元の並びと和英の順位の和で
+            if agreed:
+                return agreed[0]
     return candidates[0]
 
 
@@ -277,7 +286,11 @@ def word(lex):
     if lex.lemma in NUMERALS:
         return NUMERALS[lex.lemma]
     if lex.proper:
-        return _flat(lex.lemma)   # 固有名詞は綴りのまま (Wiktionary の説明 Roman cognomen … は使わない)
+        # 固有名詞は Wiktionary の英語の名前 (Iēsus → Jesus、Rōma → Rome)。名前でない説明 (Roman statesman and
+        # orator、Roman cognomen …) しか無ければ綴りのまま (Cicero)
+        from .names import is_name
+        found = candidates(lex)
+        return found[0] if found and is_name(found[0]) else _flat(lex.lemma)
     en = gloss(lex)
     if en is None and lex.en:
         en = lex.en.split(',')[0]   # 辞書の英語の訳語 (Wiktionary 由来の分詞: singing, dead)

@@ -447,7 +447,7 @@ class GreekTestCase(unittest.TestCase):
                          'ἡ κόρη τὸν παῖδα ὃν ὁ διδάσκαλος ἐπαινεῖ ὁρᾷ.')
 
     def test_genitive_absolute(self):
-        self.assertEqual(self.greek('Urbe captā, cīvēs fūgērunt.'), 'τῆς πόλεως ληφθείσης οἱ πολῖται ἀπέδρασαν.')
+        self.assertEqual(self.greek('Urbe captā, cīvēs fūgērunt.'), 'τῆς πόλεως ληφθείσης οἱ πολῖται ἔφυγον.')
 
     def test_indirect_question(self):
         self.assertEqual(self.greek('Magister rogāvit quis cantāret.'), 'ὁ διδάσκαλος ἠρώτησε τίς ᾖδε.')
@@ -487,7 +487,7 @@ class IndonesianTestCase(unittest.TestCase):
 
     def test_question_and_absolute(self):
         self.assertEqual(self.indonesian('Magister rogāvit quis cantāret.'), 'Guru telah bertanya siapa yang bernyanyi.')
-        self.assertEqual(self.indonesian('Urbe captā, cīvēs fūgērunt.'), 'Setelah kota diambil, warga-warga telah berlari.')
+        self.assertEqual(self.indonesian('Urbe captā, cīvēs fūgērunt.'), 'Setelah kota direbut, warga-warga telah berlari.')
 
     def test_affixes(self):
         self.assertEqual([indonesian.men(r) for r in ('tulis', 'pakai', 'kirim', 'sapu', 'baca', 'dengar', 'ambil', 'cat')],
@@ -525,7 +525,7 @@ class TagalogTestCase(unittest.TestCase):
         self.assertEqual(self.tagalog('Nauta nōn est malus.'), 'Hindi masama ang mandaragat.')
         self.assertEqual(self.tagalog('Puella est rēgīna.'), 'Reyna ang dalaga.')
         self.assertEqual(self.tagalog('Rosam nōn vīdit.'), 'Hindi niya nakita ang rosas.')   # 代名詞は hindi の後ろ
-        self.assertEqual(self.tagalog('Urbe captā, cīvēs fūgērunt.'), 'Nang nakuha ang lungsod, tumakas ang mga mamamayan.')
+        self.assertEqual(self.tagalog('Urbe captā, cīvēs fūgērunt.'), 'Nang sinakop ang lungsod, tumakas ang mga mamamayan.')
 
     def test_aspect_forms(self):
         forms = [tagalog.conjugate(tagalog.lemma_for(r, v), r, a) for r, v, a in (
@@ -593,7 +593,7 @@ class HebrewTestCase(unittest.TestCase):
         self.assertEqual(self.hebrew('Puella cantat.'), 'הַנַּעֲרָה שָׁרָה.')   # 女性単数の分詞を男性単数から
         self.assertEqual(self.hebrew('Puellae cantant.'), 'הַנְּעָרוֹת שָׁרוֹת.')
         self.assertEqual(self.hebrew('Urbe captā, cīvēs fūgērunt.'),   # עִיר は形は男性でも女性
-                         'אַחֲרֵי אֲשֶׁר נִלְקָחָה הָעִיר, בָּרָחוּ הָעַמִּים.')
+                         'אַחֲרֵי אֲשֶׁר נִלְכְּדָה הָעִיר, בָּרָחוּ הָעַמִּים.')
 
     def test_passive_nominal_negation(self):
         self.assertEqual(self.hebrew('Puer ā magistrō laudātus est.'), 'הֻלַּל הַנַּעַר עַל־יְדֵי הַמּוֹרֶה.')   # プアル

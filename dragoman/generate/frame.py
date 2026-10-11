@@ -614,7 +614,7 @@ def with_address(clause, realize, vocative, sep=', ', particle=''):
         return text
 
     def group_text(group):
-        forms = [vocative(np) for np in group]
+        forms = [vocative(np).rstrip(',') for np in group]   # 関係節で終わる呼びかけの読点 (сын, который …,)
         return ' '.join(f if k == 0 or not particle or not f.startswith(particle) else f[len(particle):]
                         for k, f in enumerate(forms))
     return sep.join(group_text(group) for group in groups) + sep + text
@@ -634,12 +634,14 @@ def _mark_apposed(clause):
 
 
 # ラテン語で与格を取るが、ほかの言語では目的語で表す動詞 (miserēre nōbīs「私たちを憐れめ」have mercy on us)。
-# 言語ごとに: 日本語・古文は を、英語は前置詞なし (訳語は english.DATIVE_VERBS)、ロシア語は対格、ヘブライ語は אֶת־
+# 言語ごとに: 日本語・古文は を、英語は前置詞なし (訳語は english.DATIVE_VERBS)、ロシア語・ギリシア語は対格、ヘブライ語は אֶת־、アラビア語は代名詞の接尾辞
 DATIVE_OBJECT_VERBS = {
     'ja': {'misereor', 'parcō', 'ignōscō', 'noceō', 'invideō'},
     'en': {'misereor', 'parcō', 'ignōscō', 'noceō', 'invideō', 'crēdō', 'pāreō', 'serviō', 'faveō', 'persuādeō'},
     'ru': {'misereor', 'parcō', 'ignōscō'},
     'he': {'misereor'},   # רִחַם + 目的語
+    'ar': {'misereor'},   # رَحِمَ + 目的語 (اِرْحَمْنا)
+    'grc': {'misereor'},   # ἐλεέω + 対格 (ἐλέησον ἡμᾶς)
 }
 DATIVE_OBJECT_VERBS['kobun'] = DATIVE_OBJECT_VERBS['ja']
 

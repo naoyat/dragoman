@@ -191,7 +191,14 @@ python3 tools/build_latin_english.py               # la-en.tsv (ラテン語 →
 python3 tools/build_english_index.py --lang=ru     # ru/en-index.tsv (英語 → ロシア語。sa・grc・id・tl も)
 python3 tools/build_sanskrit_apte.py               # sa/en-index-apte.tsv (Apte の英梵辞典。任意)
 python3 tools/build_ja_transitivity.py             # ja-transitivity.tsv (日本語の動詞の自他。日本語の入口で)
+python3 tools/build_ja_en.py                       # ja-en.tsv (和英。JMdict から。手作りの辞書の日本語に合う英語を先に)
+python3 tools/build_name_index.py --lang=all       # <lang>/names.tsv (固有名詞: Jesus → Иисус・Ἰησοῦς・يَسُوع …)
+python3 tools/build_lemma_counts.py --lang=all     # <lang>/lemma-counts.tsv (UD の見出し語の出現数。よく使う語を先に)
 ```
+
+訳語は、元の語の英語の訳語 (Wiktionary) を仲立ちに選びます。手作りの辞書の一番の日本語の訳語と和英で合う英語を先にし
+(tollō「取り去る」→ remove。lift up より)、候補の語の筆頭の語義・コーパスでの出現数 (εἰρήνη を ἡσυχία より) で並べます。
+固有名詞は Wiktionary の英語の名前を経て各言語の名前に (Iēsus → Jesus → Иисус)。
 
 日本語の入口の長い文には GiNZA（`pip install ginza ja-ginza`）を使います（無ければ MeCab と規則だけで）。
 

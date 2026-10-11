@@ -111,7 +111,11 @@ def noun_lemma(lex):
             return pronoun, 'm'
         target = transfer.best(lex, 'ru', 'adj') or transfer.best(lex, 'ru', 'pronoun')   # ūnus, tōtus …
         return (target.lemma, '') if target else ('[%s]' % english.word(lex), '')
-    if lex.proper:
+    if lex.proper:   # 表の名前 → Wiktionary の名前 (Iēsus → Иисус) → 綴りを写す (Mārcus → Марк)
+        from .names import localized
+        found = None if english._flat(lex.lemma) in NAMES else localized(lex, 'ru')
+        if found:
+            return found[0], found[1]
         lemma = NAMES.get(english._flat(lex.lemma)) or name(lex.lemma)
         return lemma, ''
     lex = english.substantive(lex) or lex   # 名詞として辞書にある形 (tālāria)

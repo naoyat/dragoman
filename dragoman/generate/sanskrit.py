@@ -167,8 +167,10 @@ def noun_stem(lex, gender=''):
             return stem, gender or 'm'
     if lex.proper and lex.lang == 'sa':
         return transfer.source_key('sa', lex.lemma), gender or 'm'   # サンスクリットの名前はそのまま (rāma)
-    if lex.proper:
-        return name(lex.lemma)
+    if lex.proper:   # Wiktionary の名前 (Rōma → romakapattana)。無ければ綴りを写す
+        from .names import localized
+        found = localized(lex, 'sa')
+        return (found[0], found[1] or gender or 'm') if found else name(lex.lemma)
     lex = english.substantive(lex) or lex   # 名詞として辞書にある形 (tālāria)
     target = transfer.best(lex, 'sa', 'noun' if lex.pos not in ('adj', 'participle') else 'adj')
     if target is None:

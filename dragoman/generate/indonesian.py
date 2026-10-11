@@ -212,8 +212,10 @@ def to_indonesian(lex, pos=None):
         return WORDS[lex.lemma]
     if lex.lemma in NUMERALS and lex.lang in ('', 'la'):
         return NUMERALS[lex.lemma]
-    if lex.proper:
-        return lex.lemma
+    if lex.proper:   # Wiktionary の名前 (Iēsus → Yesus)。無ければ綴りのまま
+        from .names import localized
+        found = localized(lex, 'id') if lex.lang != 'id' else None
+        return found[0] if found else lex.lemma
     if lex.lang == 'id':
         return lex.lemma
     target = transfer.best(lex, 'id', pos)

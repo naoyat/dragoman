@@ -93,7 +93,10 @@ PREFERRED = {('girl', 'noun'): ('بِنْت', 'noun'), ('boy', 'noun'): ('وَل
              ('large', 'adj'): ('كَبِير', 'adj'), ('small', 'adj'): ('صَغِير', 'adj'), ('long', 'adj'): ('طَوِيل', 'adj'),
              ('new', 'adj'): ('جَدِيد', 'adj'), ('old', 'adj'): ('قَدِيم', 'adj'), ('wise', 'adj'): ('حَكِيم', 'adj'),
              ('brave', 'adj'): ('شُجاع', 'adj'), ('happy', 'adj'): ('سَعِيد', 'adj'),
-             ('see', 'verb'): ('راوَنْد', 'verb'), ('praise', 'verb'): ('مَدَح', 'verb'), ('give', 'verb'): ('أَعْطَى', 'verb'),
+             ('pity', 'verb'): ('رَحِم', 'verb'), ('feel pity', 'verb'): ('رَحِم', 'verb'),
+             ('remove', 'verb'): ('رَفَع', 'verb'), ('take away', 'verb'): ('رَفَع', 'verb'),
+             ('see', 'verb'): ('راوَنْد', 'verb'),   # 辞書の見出しの鍵がこの形 (生成すると رَأَى)
+             ('praise', 'verb'): ('مَدَح', 'verb'), ('give', 'verb'): ('أَعْطَى', 'verb'),
              ('write', 'verb'): ('كَتَب', 'verb'), ('read', 'verb'): ('قَرَأ', 'verb'), ('sing', 'verb'): ('غَنَّى', 'verb'),
              ('love', 'verb'): ('أَحَبّ', 'verb'), ('walk', 'verb'): ('مَشَى', 'verb'), ('come', 'verb'): ('جاء', 'verb'),
              ('go', 'verb'): ('ذَهَب', 'verb'), ('say', 'verb'): ('قال', 'verb'), ('ask', 'verb'): ('سَأَل', 'verb'),
@@ -247,8 +250,10 @@ def noun_phrase(np, case='n', definite=True, prc1='0'):
         if prc1 != '0':   # 前置詞の付いた代名詞は接尾辞に (لَنا)
             return with_pronoun(prc1, np)
         return PRONOUNS[(head.lemma, np.number)][0]
-    if head.proper:
-        return head.lemma
+    if head.proper:   # Wiktionary の名前 (Iēsus → يَسُوع)。無ければ綴りのまま
+        from .names import localized
+        found = localized(head, 'ar')
+        return found[0] if found else head.lemma
     found = candidates(head, 'noun')
     if not found:
         return '[%s]' % english.word(head)
@@ -405,8 +410,8 @@ def to_active(clause):
 
 def realize(clause, gap=None, antecedent=None):
     """節 → アラビア語の語の列。gap は関係節の空所の役割 (目的語なら動詞に代名詞の接尾辞)"""
-    from .frame import lexical_negation, periphrastic
-    clause = lexical_negation(periphrastic(clause))
+    from .frame import lexical_negation, periphrastic, dative_as_object
+    clause = dative_as_object(lexical_negation(periphrastic(clause)), 'ar')
     if clause.voice == 'passive' and not clause.copula and gap is None and not passive_possible(clause):
         clause = to_active(clause)   # 受動の形が無い動詞 (مَدَح): مَدَحَ المُعَلِّمُ الوَلَدَ
     out = []

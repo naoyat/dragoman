@@ -44,6 +44,8 @@ PREFERRED = {('girl', 'noun'): '5291', ('boy', 'noun'): '5288', ('child', 'noun'
              ('sing', 'verb'): ('7891', 'q'), ('write', 'verb'): ('3789', 'q'), ('say', 'verb'): ('559', 'q'),
              ('go', 'verb'): ('1980', 'q'), ('walk', 'verb'): ('1980', 'q'), ('come', 'verb'): ('935', 'q'),
              ('love', 'verb'): ('157', 'q'), ('rejoice', 'verb'): ('8055', 'q'), ('weep', 'verb'): ('1058', 'q'),
+             ('pity', 'verb'): ('7355', 'p'), ('feel pity', 'verb'): ('7355', 'p'), ('remove', 'verb'): ('5375', 'q'),
+             ('take away', 'verb'): ('5375', 'q'),
              ('flee', 'verb'): ('1272', 'q'), ('capture', 'verb'): ('3920', 'q'), ('take', 'verb'): ('3947', 'q'),
              ('die', 'verb'): ('4191', 'q'), ('kill', 'verb'): ('2026', 'q'), ('know', 'verb'): ('3045', 'q'),
              ('hear', 'verb'): ('8085', 'q'), ('ask', 'verb'): ('7592', 'q'), ('send', 'verb'): ('7971', 'q'),
@@ -284,8 +286,11 @@ def noun_phrase(np, prep=None, definite=True):
     if head.pos == 'pronoun' and (head.lemma, np.number) in PRONOUNS:
         attached = pronoun_with_preposition(prep, np) if prep else None   # לָנוּ (לְ + אֲנַחְנוּ でなく)
         return attached or PRONOUNS[(head.lemma, np.number)][0], 'm', 'p' if np.number == 'pl' else 's'
-    if head.proper:
-        return ((prep + head.lemma) if prep else head.lemma), 'm', 's'
+    if head.proper:   # Wiktionary の名前 (Iēsus → יֵשׁוּעַ)。無ければ綴りのまま
+        from .names import localized
+        found = localized(head, 'he')
+        word, gender = found if found else (head.lemma, 'm')
+        return ((prep + word) if prep else word), (gender or 'm'), 's'
     found = to_hebrew(head, 'noun')
     if found is None:
         return '[%s]' % english.word(head), 'm', 's'

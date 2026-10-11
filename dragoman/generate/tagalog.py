@@ -81,14 +81,16 @@ PREFERRED = {('girl', 'noun'): 'dalaga', ('boy', 'noun'): 'batang lalaki', ('chi
              ('kill', 'verb'): 'patay', ('live', 'verb'): 'tira', ('dwell', 'verb'): 'tira', ('inhabit', 'verb'): 'tira',
              ('lead', 'verb'): 'dala', ('hear', 'verb'): 'dinig', ('call', 'verb'): 'tawag', ('make', 'verb'): 'gawa',
              ('do', 'verb'): 'gawa', ('build', 'verb'): 'tayo', ('rejoice', 'verb'): 'galak', ('know', 'verb'): 'alam',
-             ('capture', 'verb'): 'sakop', ('die', 'verb'): 'matay', ('seize', 'verb'): 'agaw', ('want', 'verb'): 'nais', ('wish', 'verb'): 'nais'}
+             ('capture', 'verb'): 'sakop', ('die', 'verb'): 'matay', ('seize', 'verb'): 'agaw', ('want', 'verb'): 'nais', ('wish', 'verb'): 'nais',
+             ('thing', 'noun'): 'bagay', ('object', 'noun'): 'bagay', ('pity', 'verb'): 'awa', ('feel pity', 'verb'): 'awa', ('remove', 'verb'): 'alis',
+             ('take away', 'verb'): 'alis'}
 # 語根と焦点 → 見出し (辞書の見出しの作り方が規則から外れるもの)
 IRREGULAR = {('kita', 'object'): 'makita', ('kita', 'actor'): 'makakita', ('dinig', 'object'): 'marinig',
              ('dinig', 'actor'): 'makarinig', ('alam', 'object'): 'malaman', ('mahal', 'object'): 'mahalin',
              ('mahal', 'actor'): 'magmahal', ('dating', 'actor'): 'dumating', ('tira', 'actor'): 'tumira',
              ('galak', 'actor'): 'magalak', ('nais', 'actor'): 'nais', ('punta', 'actor'): 'pumunta',
              ('takas', 'actor'): 'tumakas', ('tulog', 'actor'): 'matulog', ('iyak', 'actor'): 'umiyak',
-             ('tawa', 'actor'): 'tumawa', ('matay', 'actor'): 'mamatay'}
+             ('tawa', 'actor'): 'tumawa', ('matay', 'actor'): 'mamatay', ('awa', 'actor'): 'maawa'}
 PREFERRED_ROOTS = {root for (_, pos), root in PREFERRED.items() if pos == 'verb'}
 BARE = {'nais', 'gusto', 'alam'}   # 活用しない (nais「〜したい」、alam「知っている」)。する人は ng の形 (alam ko)
 ENCLITICS = {f for forms in PRONOUNS.values() for f in forms[:2] if ' ' not in f}   # 文の最初の語の後ろに来る代名詞
@@ -187,6 +189,10 @@ def conjugate(lemma, root, aspect):
 
 def to_tagalog(lex, pos=None):
     pos = pos or {'participle': 'verb', 'name': 'noun'}.get(lex.pos, lex.pos)
+    if lex.proper and lex.lang != 'tl':   # Wiktionary の名前 (Iēsus → Hesus)。無ければ綴りのまま
+        from .names import localized
+        found = localized(lex, 'tl')
+        return found[0] if found else lex.lemma
     if lex.proper or lex.lang == 'tl':
         return lex.lemma
     for en in english.candidates(lex)[:1] or ([lex.en.split(',')[0]] if lex.en else []):

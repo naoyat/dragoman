@@ -95,3 +95,41 @@ def translate(glosses, pos, limit=1):
         if len(out) >= limit:
             break
     return ','.join(out) if out else None
+
+
+PARTICLE_TAIL = re.compile(r' (?:with|for|on|to|at|of|about|from)$')
+JA_EN_PATH = paths.data('ja-en.tsv')
+
+
+@functools.lru_cache(maxsize=1)
+def _ja_en():
+    """日本語 → 英語の表 (tools/build_ja_en.py が JMdict から作る)。無ければ空"""
+    table = {}
+    try:
+        with open(JA_EN_PATH, encoding='utf-8') as f:
+            for line in f:
+                word, _, english = line.rstrip('\n').partition('\t')
+                table[word] = english
+    except OSError:
+        pass
+    return table
+
+
+def agreed_order(sources, japanese):
+    """英語の訳語の列のうち和英 (JMdict) にもあるものを、両方の順位の和の小さい順に
+    (捕える: Wiktionary の captivate (8番目) より、和英の2番目で Wiktionary にもある capture)"""
+    backs = english_for(japanese)
+    ranked = [(k + backs.index(english_key(en)), k, en) for k, en in enumerate(sources) if english_key(en) in backs]
+    return [en for _, _, en in sorted(ranked)]
+
+
+def english_key(english):
+    """英語の訳語の比べる形 (小文字、末尾の前置詞を除く: commiserate with → commiserate)"""
+    return PARTICLE_TAIL.sub('', key(english))
+
+
+@functools.lru_cache(maxsize=20000)
+def english_for(japanese):
+    """日本語の訳語 → 英語の訳語の比べる形の列 (語義の順: 少年 → boy, juvenile, child)。JMdict の表から"""
+    return tuple(dict.fromkeys(english_key(e) for e in _ja_en().get(japanese.strip(), '').split(',') if e))
+

@@ -12,6 +12,7 @@
 #
 import functools
 import os
+import re
 import unicodedata
 
 from dragoman.core import paths
@@ -79,6 +80,11 @@ def to_greek(lex, pos=None):
     pos = pos or {'participle': 'verb', 'name': 'noun'}.get(lex.pos, lex.pos)
     if lex.pos == 'pronoun' and lex.lemma in PRONOUNS:
         return Lex(PRONOUNS[lex.lemma], 'pronoun'), ''
+    if lex.proper and lex.lang != 'grc':   # Wiktionary の名前 (Iēsus → Ἰησοῦς)。無ければ綴りのまま
+        from .names import localized
+        found = localized(lex, 'grc')
+        if found:
+            return Lex(found[0], pos, lex.ja, proper=True), found[1]
     if lex.lang == 'grc' or lex.proper:
         return Lex(lex.lemma, pos, lex.ja, proper=lex.proper), ''
     target = transfer.best(lex, 'grc', pos)
@@ -113,6 +119,8 @@ def decline(lex, case, number, gender):
     """名詞・形容詞・代名詞の語形 (縮約形を先に)。作れなければ見出しに *"""
     best = None
     for surface, item in _forms(lex.lemma, lex.pos):
+        if re.search('[A-Za-z]', surface):
+            continue   # 転写の行が語形として入っているもの (θεός の属格 theoîo)
         for tag in item.get('_') or []:
             c, n, g = (list(tag) + [None, None, None])[:3]
             if c == case and n == number:
@@ -124,12 +132,23 @@ def decline(lex, case, number, gender):
     return best[1]
 
 
+# 中動態 (アオリスト・未来は受動の形) で使う動詞: φοβέω「恐れさせる」→ φοβοῦμαι「恐れる」、ἐφοβήθη
+MIDDLE_VERBS = {'φοβέω'}
+
+
+def _middle(lemma, tense, voice):
+    if lemma in MIDDLE_VERBS and voice == 'active':
+        return 'passive' if tense in ('aorist', 'future') else 'middle-passive'
+    return voice
+
+
 # 形は完了で意味は現在の動詞: 枠の現在 → 完了の形、未完了過去 → 過去完了の形 (οἶδα、ᾔδει)
 PERFECT_PRESENTS = {'οἶδα': {'present': 'perfect', 'imperfect': 'past-perfect'}}
 
 
 def conjugate(lex, person, number, tense, mood, voice):
     tense = PERFECT_PRESENTS.get(lex.lemma, {}).get(tense) or TENSES.get(tense, tense)
+    voice = _middle(lex.lemma, tense, voice)
     candidates = []
     for surface, item in _forms(lex.lemma, 'verb'):
         if item.get('person') == person and item.get('number') == number and item.get('tense') == tense and \
@@ -145,6 +164,7 @@ def conjugate(lex, person, number, tense, mood, voice):
 
 def infinitive(lex, tense, voice):
     tense = {'perfect': 'aorist'}.get(tense, 'present')
+    voice = _middle(lex.lemma, tense, voice)
     for surface, item in _forms(lex.lemma, 'verb'):
         if item.get('mood') == 'infinitive' and item.get('tense') == tense and \
                 (item.get('voice') or 'active') in (voice, 'middle-passive' if voice == 'passive' else voice):
@@ -248,8 +268,8 @@ def _negation(next_word):
 
 
 def realize(clause, capitalize=False):
-    from .frame import lexical_negation
-    clause = lexical_negation(clause)   # nesciō → οὐ + γιγνώσκω
+    from .frame import lexical_negation, dative_as_object
+    clause = dative_as_object(lexical_negation(clause), 'grc')   # nesciō → οὐ + γιγνώσκω、miserēre nōbīs → ἐλέησον ἡμᾶς
     subjects = clause.role('subject')
     subject = subjects[0] if subjects else None
     person, number = clause.person, clause.number

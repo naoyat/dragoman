@@ -168,7 +168,9 @@ def japanese(lang, target):
 # 基本の語は、教科書でよく使う語を先に (英語の訳語の表と語義の数だけでは、девушка / kanyakA のような語が先に来る)。
 # (英語, 品詞) → (見出し語, 性または語根の類)
 PREFERRED = {
-    'ru': {('girl', 'noun'): ('девочка', 'f'), ('book', 'noun'): ('книга', 'f'), ('king', 'noun'): ('царь', 'm'),
+    'ru': {('world', 'noun'): ('мир', 'm'), ('human', 'noun'): ('человек', 'm'), ('human being', 'noun'): ('человек', 'm'), ('pity', 'verb'): ('жалеть', ''), ('feel pity', 'verb'): ('жалеть', ''),
+           ('have mercy on', 'verb'): ('помиловать', ''),
+           ('girl', 'noun'): ('девочка', 'f'), ('book', 'noun'): ('книга', 'f'), ('king', 'noun'): ('царь', 'm'),
            ('farmer', 'noun'): ('крестьянин', 'm'), ('sailor', 'noun'): ('моряк', 'm'),
            ('slave', 'noun'): ('раб', 'm'), ('lord', 'noun'): ('господин', 'm'), ('master', 'noun'): ('господин', 'm'),
            ('teacher', 'noun'): ('учитель', 'm'), ('letter', 'noun'): ('письмо', 'n'),
@@ -290,7 +292,12 @@ PREFERRED = {
            ('insanity', 'noun'): ('kegilaan', ''), ('madness', 'noun'): ('kegilaan', ''),
            ('frighten', 'verb'): ('takuti', ''), ('terrify', 'verb'): ('takuti', ''), ('cease', 'verb'): ('berhenti', ''),
            ('stop', 'verb'): ('berhenti', ''), ('transfix', 'verb'): ('tusuk', ''), ('pierce', 'verb'): ('tusuk', '')},
-    'grc': {('girl', 'noun'): ('κόρη', 'f'), ('boy', 'noun'): ('παῖς', 'm'), ('child', 'noun'): ('παῖς', 'm'),
+    # φοβέω は中動態で「恐れる」(greek.MIDDLE_VERBS)
+    'grc': {('fear', 'verb'): ('φοβέω', ''), ('capture', 'verb'): ('λαμβάνω', ''), ('human', 'noun'): ('ἄνθρωπος', 'm'), ('human being', 'noun'): ('ἄνθρωπος', 'm'), ('world', 'noun'): ('κόσμος', 'm'), ('sin', 'noun'): ('ἁμαρτία', 'f'), ('glory', 'noun'): ('δόξα', 'f'),
+            ('peace', 'noun'): ('εἰρήνη', 'f'), ('sky', 'noun'): ('οὐρανός', 'm'), ('heaven', 'noun'): ('οὐρανός', 'm'),
+            ('pity', 'verb'): ('ἐλεέω', ''), ('feel pity', 'verb'): ('ἐλεέω', ''), ('have mercy on', 'verb'): ('ἐλεέω', ''),
+            ('remove', 'verb'): ('ἀφαιρέω', ''), ('take away', 'verb'): ('ἀφαιρέω', ''),   # αἴρω は語形の表に無い
+            ('girl', 'noun'): ('κόρη', 'f'), ('boy', 'noun'): ('παῖς', 'm'), ('child', 'noun'): ('παῖς', 'm'),
             ('king', 'noun'): ('βασιλεύς', 'm'), ('queen', 'noun'): ('βασίλεια', 'f'), ('book', 'noun'): ('βιβλίον', 'n'),
             ('teacher', 'noun'): ('διδάσκαλος', 'm'), ('master', 'noun'): ('δεσπότης', 'm'),
             ('lord', 'noun'): ('δεσπότης', 'm'), ('slave', 'noun'): ('δοῦλος', 'm'), ('sailor', 'noun'): ('ναύτης', 'm'),
@@ -366,12 +373,16 @@ def candidates(lex, lang, pos=None):
             gender, gana = (extra, '') if pos != 'verb' else ('', extra)
             return [(-100, Target(lemma, pos, (en,), gender, gana))]
     wanted = [j.strip() for j in (lex.ja or '').split(',') if j.strip()]
+    if (lex.lang or 'la') == 'la':   # 日本語の訳語が手作りの辞書のもの (ほかの言語の語の日本語は英語から作ったもの)
+        sources = _with_japanese(sources[:6], wanted)
     scored, matched = {}, {}
-    for i, en in _variants(sources[:6]):
+    for i, en in _variants(sources[:8]):
         for j, target in _index(lang).get(en.lower(), []):
             if target.pos != pos or j > 5:
                 continue
-            score = 3 * i + j - math.log(1 + target.senses)
+            # 出現数は、元の語の筆頭の英語が語の筆頭の語義のときだけ (よく出る хороший を great で、πόλις を villa の
+            # 4番目の city で取らない)
+            score = 3 * i + j - math.log(1 + target.senses) - (_frequency(lang, target) if i == 0 and j == 0 else 0)
             if lang == 'la' and _in_hand_dictionary(target.lemma):
                 score -= 3   # 手作りの辞書にある (よく使う) ラテン語の語 (hortus を gardīnum より)
             ja = japanese(lang, target)
@@ -379,17 +390,74 @@ def candidates(lex, lang, pos=None):
                 score -= 3     # 日本語の一番の訳語が合う
             elif any(w in ja for w in wanted):
                 score -= 2
-            matched.setdefault((target.lemma, target.pos), set()).add(int(i))
+            if i < 3:   # 上位の英語の訳語だけ数える (pater の5番目 priest で батюшка・pari を良くしない)
+                matched.setdefault((target.lemma, target.pos), set()).add(int(i))
             if target not in scored or score < scored[target]:
                 scored[target] = score
     # 元の語の英語の訳語の複数に合う語を良くする (arca: chest, box → 「胸」の uras より、chest と box の両方にある「箱」)
     best_by_lemma = {}
     for target, score in scored.items():
-        score -= 2 * (len(matched[(target.lemma, target.pos)]) - 1)
+        score -= MULTIPLE_MATCH_WEIGHT * max(0, len(matched.get((target.lemma, target.pos), ())) - 1)
         key = (target.lemma, target.pos)
         if key not in best_by_lemma or score < best_by_lemma[key][0]:
             best_by_lemma[key] = (score, target)
     return sorted(best_by_lemma.values(), key=lambda st: st[0])
+
+
+# コーパスでの出現数 (tools/build_lemma_counts.py が UD から作る) の重み: よく使う語を先に (εἰρήνη を ἡσυχία より)
+# 見出し語の形がコーパスと索引で揃うところだけ (サンスクリットの UD の動詞は語根の形が違うので名詞・形容詞だけ。
+# タガログ語はコーパスが小さいので軽く)
+FREQUENCY_WEIGHT = {'grc': 1.0, 'ru': 1.0, 'id': 1.0, 'sa': 1.0, 'tl': 0.5}
+# 元の語の上位の英語の訳語の複数に合う語の重み (arca: chest, box →「箱」)。大きいと語義の多い語 (ἡσυχία: peace, rest) が勝つ
+MULTIPLE_MATCH_WEIGHT = 1.0
+
+
+@functools.lru_cache(maxsize=None)
+def _counts(lang):
+    table = {}
+    try:
+        with open(paths.data(lang, 'lemma-counts.tsv'), encoding='utf-8') as f:
+            for line in f:
+                lemma, _, n = line.rstrip('\n').partition('\t')
+                table[lemma] = int(n)
+    except OSError:
+        pass
+    return table
+
+
+def _count(lang, lemma):
+    return _counts(lang).get(lemma, 0)
+
+
+def _frequency(lang, target):
+    """コーパスでの出現数の点 (多いほど良い: 小さくする分)"""
+    if lang == 'sa' and target.pos == 'verb':
+        return 0
+    return FREQUENCY_WEIGHT.get(lang, 0) * math.log(1 + _count(lang, target.lemma))
+
+
+def _with_japanese(sources, wanted):
+    """英語の訳語の並びを、元の語の一番の日本語の訳語 (手作りの辞書: tollō「取り去る」・homō「人間」) に合わせる:
+    和英 (JMdict) にもある英語を先に (remove・human・person)、残りはそのまま、和英だけにある英語 (human being) を最後に"""
+    if not wanted or (wanted[0].isascii()):
+        return list(sources)
+    back = en_ja.english_for(wanted[0])
+    if not back:
+        return list(sources)
+    # 和英にもある英語は、まず英語の訳語の並びの頭 (english.candidates が日本語に合わせて選んだもの) を、残りは和英の順に
+    if sources and en_ja.english_key(sources[0]) in back:
+        confirmed = []   # 筆頭の訳語が日本語にも合う (habitō: reside は「住む」の訳語) なら並べ替えない
+    else:   # 和英にもある訳語を、元の並びと和英の順位の和の順に先へ (lātus: broad, wide, spacious → wide, spacious)
+        confirmed = en_ja.agreed_order(sources, wanted[0])
+    from_japanese = [en for en in _ja_english(wanted[0]) if en_ja.english_key(en) not in
+                     {en_ja.english_key(s) for s in sources}][:3]
+    rest = [en for en in sources if en not in confirmed]
+    return confirmed + rest + from_japanese
+
+
+def _ja_english(japanese):
+    """日本語の訳語 → 和英 (JMdict) の英語の訳語 (語義の順)"""
+    return [e for e in en_ja._ja_en().get(japanese, '').split(',') if e]
 
 
 def by_english(words, lang, pos):
