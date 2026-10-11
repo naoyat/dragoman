@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dragoman.core import paths  # noqa: E402
 from dragoman.latin import latindic, analyzer  # noqa: E402
-from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, arabic, hebrew, persian, hindi, japanese, kobun  # noqa: E402
+from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, arabic, hebrew, persian, hindi, ainu, japanese, kobun  # noqa: E402
 from dragoman.generate.frame import Lex  # noqa: E402
 
 _saved = None
@@ -739,6 +739,25 @@ class HindiTestCase(unittest.TestCase):
 
     def test_urdu(self):
         self.assertEqual(self.hindi('Puella cantat.', urdu=True)[0], 'لڑکی گاتی ہے۔')
+
+
+@unittest.skipUnless(ainu.available(), 'アイヌ語の辞書が無い')
+class AinuTestCase(unittest.TestCase):
+    """ラテン語 → 文の枠 → アイヌ語 (SOV、状態の動詞、somo、後置詞)"""
+
+    @classmethod
+    def setUpClass(cls):
+        latindic.load()
+
+    def ainu(self, text):
+        clause, = clauses(text)
+        return ainu.sentence([clause]).split('\n')[0]
+
+    def test_sentences(self):
+        self.assertEqual(self.ainu('Puella cantat.'), 'Matkaci sinotcaki.')
+        self.assertEqual(self.ainu('Puella bona est.'), 'Matkaci pirka.')   # 形容詞は状態の動詞で述語
+        self.assertTrue(self.ainu('Puer domum rediit.').startswith('Hekaci cise un '))   # 方向 un
+        self.assertIn(' somo ', self.ainu('Nauta nōn est malus.'))
 
 
 class KobunTestCase(unittest.TestCase):

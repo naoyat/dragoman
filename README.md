@@ -169,6 +169,7 @@ PDF に載せるものはオプションで選びます。
 | アラビア語 (MSA) | — | CAMeL Tools の生成器で格・数・性・定冠詞を指定。動詞 - 主語 - 目的語、لَمْ + 要求法、名詞文と لَيْسَ、関係節 الَّذِي と代名詞の接尾辞 |
 | ペルシア語 | 解析器 | 辞書の現在語幹・過去語幹から。主語 - 目的語 + را - 動詞 (SOV)、می・ن、خواه + 過去語幹、命令 ب、受動 + شدن、エザーフェ、関係節 ی که |
 | ヒンディー語・ウルドゥー語 | 解析器 | 同じ文法で文字だけ違う (辞書のウルドゥー文字の綴り + 規則の語尾)。SOV、後置詞と斜格、他動詞の完了相の ने と目的語への一致、習慣相 + है/था、未来 -एगा、命令 -ओ・禁止 मत、受動 + जाना、関係節 जो/जिसे |
+| アイヌ語 | 解析器 | 解析側の手作りの語彙表 (日本語の訳語) と Wiktionary。SOV、人称の接辞 ku=・e=・ci=・en=、状態の動詞 (pirka)、否定 somo・禁止 iteki、繋辞 ne、後置詞 ta・un・orowa、受動 a=、ラテン文字とカタカナ |
 | 聖書ヘブライ語 | — | OSHB に現れた語形 (無ければ binyan の型から)。動詞 - 主語 (分詞なら主語が先)、אֶת־、冠詞と前置詞の縮約、現在は分詞、אֲשֶׁר の関係節 |
 | 英語 | — | 規則と語形の表 |
 | 日本語 | MeCab + UniDic と規則（長い文は GiNZA の係り受け） | 動詞の活用 (core/japanese.py)、連体修飾節、〜か・〜とき |
@@ -280,7 +281,7 @@ dragoman/                パッケージ
   kobun/                   古文 (中古和文UniDic による品詞分解、助動詞の連なりからの現代語への組み立て直し、係り結び)
   generate/                文の生成 (frame.py 文の枠、transfer.py 英語を仲立ちにした語の置き換え、
                            latin.py greek.py russian.py sanskrit.py english.py indonesian.py tagalog.py arabic.py hebrew.py persian.py
-                           hindi.py urdu.py
+                           hindi.py urdu.py ainu.py
                            japanese.py kobun.py
                            文の枠 → 各言語、
                            from_japanese.py ja_lexicon.py 日本語の文 → 文の枠、connectives.py 節のつなぎ、
