@@ -526,6 +526,8 @@ def noun_phrase(np, objective=False, passive=False):
             text += ' ' + relative_clause(r, np)
     if np.prep is not None:
         prep = LATIN_PREPS.get((np.prep.lemma, np.case)) or gloss(np.prep) or '[%s]' % np.prep.ja
+        if np.bare_direction:
+            prep = 'to'   # Rōmam vēnit → came to Rome (into でなく)
         if passive and np.prep.lemma in ('ā', 'ab', 'abs'):
             prep = 'by'   # 受動の動作主 (ā duce laudantur「指揮官によって褒められる」)
         text = prep + ' ' + text

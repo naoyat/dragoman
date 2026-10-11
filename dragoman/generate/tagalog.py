@@ -82,7 +82,7 @@ PREFERRED = {('girl', 'noun'): 'dalaga', ('boy', 'noun'): 'batang lalaki', ('chi
              ('lead', 'verb'): 'dala', ('hear', 'verb'): 'dinig', ('call', 'verb'): 'tawag', ('make', 'verb'): 'gawa',
              ('do', 'verb'): 'gawa', ('build', 'verb'): 'tayo', ('rejoice', 'verb'): 'galak', ('know', 'verb'): 'alam',
              ('capture', 'verb'): 'sakop', ('die', 'verb'): 'matay', ('seize', 'verb'): 'agaw', ('want', 'verb'): 'nais', ('wish', 'verb'): 'nais',
-             ('thing', 'noun'): 'bagay', ('object', 'noun'): 'bagay', ('pity', 'verb'): 'awa', ('feel pity', 'verb'): 'awa', ('remove', 'verb'): 'alis',
+             ('only-begotten', 'adj'): 'bugtong', ('thing', 'noun'): 'bagay', ('object', 'noun'): 'bagay', ('pity', 'verb'): 'awa', ('feel pity', 'verb'): 'awa', ('remove', 'verb'): 'alis',
              ('take away', 'verb'): 'alis'}
 # 語根と焦点 → 見出し (辞書の見出しの作り方が規則から外れるもの)
 IRREGULAR = {('kita', 'object'): 'makita', ('kita', 'actor'): 'makakita', ('dinig', 'object'): 'marinig',
@@ -272,6 +272,8 @@ def prepositional(np, passive=False):
     if passive and np.prep.lemma in ('ā', 'ab'):
         return noun_phrase(dataclasses.replace(np, prep=None), 'ng')   # 受動の動作主は ng
     before, marker = PREPOSITIONS.get((np.prep.lemma, np.case), ('', 'sa'))
+    if np.bare_direction and np.head is not None and np.head.proper:   # 町の名前は人の標識 kay でなく sa (sa Roma)
+        return (before + ' sa ' + noun_phrase(dataclasses.replace(np, prep=None), '')).strip()
     inner = noun_phrase(dataclasses.replace(np, prep=None), marker)
     return (before + ' ' + inner).strip()
 
@@ -416,8 +418,12 @@ def _copula(clause):
     if not complements:
         return ['may'] + ([noun_phrase(subject, '')] if subject is not None else [])
     np = complements[0]
-    predicate = _adjective(np.head) if np.head is not None and np.head.pos in ('adj', 'participle') and not np.members \
-        else noun_phrase(np, '')
+    from .frame import adjective_members
+    if adjective_members(np):   # 形容詞の並列 (Mahaba at malapad ang daan)
+        predicate = ' at '.join(_adjective(m.head) for m in adjective_members(np))
+    else:
+        predicate = _adjective(np.head) if np.head is not None and np.head.pos in ('adj', 'participle') and \
+            not np.members else noun_phrase(np, '')
     rest = [noun_phrase(subject, 'ang')] if subject is not None else \
         [PRONOUNS[({1: 'ego', 2: 'tū'}.get(clause.person, 'is'), clause.number)][0]]
     return [predicate] + rest

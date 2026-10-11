@@ -168,7 +168,7 @@ def japanese(lang, target):
 # 基本の語は、教科書でよく使う語を先に (英語の訳語の表と語義の数だけでは、девушка / kanyakA のような語が先に来る)。
 # (英語, 品詞) → (見出し語, 性または語根の類)
 PREFERRED = {
-    'ru': {('world', 'noun'): ('мир', 'm'), ('human', 'noun'): ('человек', 'm'), ('human being', 'noun'): ('человек', 'm'), ('pity', 'verb'): ('жалеть', ''), ('feel pity', 'verb'): ('жалеть', ''),
+    'ru': {('world', 'noun'): ('мир', 'm'), ('only-begotten', 'adj'): ('единородный', ''), ('human', 'noun'): ('человек', 'm'), ('human being', 'noun'): ('человек', 'm'), ('pity', 'verb'): ('жалеть', ''), ('feel pity', 'verb'): ('жалеть', ''),
            ('have mercy on', 'verb'): ('помиловать', ''),
            ('girl', 'noun'): ('девочка', 'f'), ('book', 'noun'): ('книга', 'f'), ('king', 'noun'): ('царь', 'm'),
            ('farmer', 'noun'): ('крестьянин', 'm'), ('sailor', 'noun'): ('моряк', 'm'),
@@ -212,7 +212,7 @@ PREFERRED = {
            ('write', 'verb'): ('scrībō', ''), ('live', 'verb'): ('vīvō', ''), ('city', 'noun'): ('urbs', 'f'),
            ('house', 'noun'): ('domus', 'f'), ('water', 'noun'): ('aqua', 'f'), ('man', 'noun'): ('vir', 'm'),
            ('woman', 'noun'): ('fēmina', 'f'), ('mother', 'noun'): ('māter', 'f'), ('father', 'noun'): ('pater', 'm')},
-    'sa': {('girl', 'noun'): ('bAlikA', 'f'), ('boy', 'noun'): ('bAlaka', 'm'), ('king', 'noun'): ('nfpa', 'm'),
+    'sa': {('only-begotten', 'adj'): ('ekaja', ''), ('girl', 'noun'): ('bAlikA', 'f'), ('boy', 'noun'): ('bAlaka', 'm'), ('king', 'noun'): ('nfpa', 'm'),
            ('book', 'noun'): ('pustaka', 'n'), ('farmer', 'noun'): ('kfzaka', 'm'), ('slave', 'noun'): ('dAsa', 'm'),
            ('lord', 'noun'): ('svAmin', 'm'), ('master', 'noun'): ('svAmin', 'm'),
            ('teacher', 'noun'): ('aDyApaka', 'm'), ('friend', 'noun'): ('mitra', 'm'),
@@ -249,7 +249,8 @@ PREFERRED = {
            ('carefully', 'adv'): ('yatnena', ''), ('centaur', 'noun'): ('kinnara', 'm'),
            ('boat', 'noun'): ('nOkA', 'f'), ('ship', 'noun'): ('nO', 'f'), ('cattle', 'noun'): ('go', 'm'),
            ('fruit', 'noun'): ('Pala', 'n'), ('priestess', 'noun'): ('tApasI', 'f'), ('victim', 'noun'): ('paSu', 'm')},
-    'id': {('girl', 'noun'): ('gadis', ''), ('boy', 'noun'): ('anak laki-laki', ''), ('child', 'noun'): ('anak', ''),
+    'id': {('only-begotten', 'adj'): ('tunggal', ''), ('leave', 'verb'): ('pergi', ''), ('depart', 'verb'): ('pergi', ''),
+           ('desire', 'verb'): ('ingin', ''), ('girl', 'noun'): ('gadis', ''), ('boy', 'noun'): ('anak laki-laki', ''), ('child', 'noun'): ('anak', ''),
            ('son', 'noun'): ('putra', ''), ('daughter', 'noun'): ('putri', ''), ('teacher', 'noun'): ('guru', ''),
            ('master', 'noun'): ('tuan', ''), ('lord', 'noun'): ('tuan', ''), ('book', 'noun'): ('buku', ''),
            ('rose', 'noun'): ('mawar', ''), ('garden', 'noun'): ('taman', ''), ('king', 'noun'): ('raja', ''),
@@ -293,7 +294,7 @@ PREFERRED = {
            ('frighten', 'verb'): ('takuti', ''), ('terrify', 'verb'): ('takuti', ''), ('cease', 'verb'): ('berhenti', ''),
            ('stop', 'verb'): ('berhenti', ''), ('transfix', 'verb'): ('tusuk', ''), ('pierce', 'verb'): ('tusuk', '')},
     # φοβέω は中動態で「恐れる」(greek.MIDDLE_VERBS)
-    'grc': {('fear', 'verb'): ('φοβέω', ''), ('capture', 'verb'): ('λαμβάνω', ''), ('human', 'noun'): ('ἄνθρωπος', 'm'), ('human being', 'noun'): ('ἄνθρωπος', 'm'), ('world', 'noun'): ('κόσμος', 'm'), ('sin', 'noun'): ('ἁμαρτία', 'f'), ('glory', 'noun'): ('δόξα', 'f'),
+    'grc': {('fear', 'verb'): ('φοβέω', ''), ('read', 'verb'): ('ἀναγιγνώσκω', ''), ('only-begotten', 'adj'): ('μονογενής', ''), ('capture', 'verb'): ('λαμβάνω', ''), ('human', 'noun'): ('ἄνθρωπος', 'm'), ('human being', 'noun'): ('ἄνθρωπος', 'm'), ('world', 'noun'): ('κόσμος', 'm'), ('sin', 'noun'): ('ἁμαρτία', 'f'), ('glory', 'noun'): ('δόξα', 'f'),
             ('peace', 'noun'): ('εἰρήνη', 'f'), ('sky', 'noun'): ('οὐρανός', 'm'), ('heaven', 'noun'): ('οὐρανός', 'm'),
             ('pity', 'verb'): ('ἐλεέω', ''), ('feel pity', 'verb'): ('ἐλεέω', ''), ('have mercy on', 'verb'): ('ἐλεέω', ''),
             ('remove', 'verb'): ('ἀφαιρέω', ''), ('take away', 'verb'): ('ἀφαιρέω', ''),   # αἴρω は語形の表に無い

@@ -255,7 +255,7 @@ def noun_phrase(np, case=None):
         for r in np.relatives:
             words.append(relative_clause(r, np))
         text = ' '.join(words)
-    if np.prep is not None:
+    if np.prep is not None and not np.bare_direction:   # Rōmam vēnit (前置詞なしの方向) は書かない
         text = np.prep.lemma + ' ' + text
     return text
 

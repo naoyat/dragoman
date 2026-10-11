@@ -618,6 +618,13 @@ def realize(clause, capitalize=True):
             if short:
                 out.append(short)
                 continue
+        from .frame import adjective_members
+        members = adjective_members(np)
+        if members:   # 形容詞の並列 (длинная и широкая): 主語に一致
+            agreeing = _agreeing(members[0], subject)   # 並列そのものでなく要素を主語に (複数にしない)
+            out.append((' %s ' % CONJUNCTIONS.get(np.conj, 'и')).join(
+                adjective(m.head, 'Nom', agreeing.number, GENDERS.get(agreeing.gender, 'masc'), False) for m in members))
+            continue
         out.append(noun_phrase(_agreeing(np, subject), 'Nom'))
     verb = verb_lemma(clause.verb) if not clause.copula else None
     for role in ('recipient', 'object'):

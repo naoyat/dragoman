@@ -146,6 +146,13 @@ def predicate(clause, final=True):
                 return 'あった' if not clause.negated else 'なかった'
             return 'ある' if not clause.negated else 'ない'
         np = complements[0]
+        from .frame import adjective_members
+        members = adjective_members(np)
+        if members:   # 形容詞の並列: 長くて広い (最後以外は連用の形)
+            from dragoman.core.japanese import copula_conjunctive
+            heads = [gloss(m.head).split(',')[0] for m in members]
+            return ''.join(copula_conjunctive(h, True, clause.negated) for h in heads[:-1]) + \
+                copula_predicate(heads[-1], True, tense, clause.negated, also=True).split(',')[0]   # 長くも広くもない
         adjective = not np.members and np.head is not None and np.head.pos in ('adj', 'participle')
         text = gloss(np.head) if adjective else noun_phrase(np)
         return copula_predicate(text, adjective, tense, clause.negated).split(',')[0]

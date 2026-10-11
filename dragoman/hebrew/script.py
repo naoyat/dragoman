@@ -87,6 +87,10 @@ def translit(word):
         return cons + vowel
     for i, (c, marks) in enumerate(clusters):
         nxt = clusters[i + 1] if i + 1 < n else None
+        if i == 0 and c == 'ו' and DAGESH in marks and not (marks - {DAGESH}):
+            out.append('û')   # 語頭の接続詞 וּ (וּרְחָבָה → ûrəḥāvâ)。次のシェヴァは有声
+            prev_sheva = True
+            continue
         # 母音の読みの文字: וּ (ū), וֹ (ō), ִי (ī), ֵי (ê), ָה 語末 (â)
         if c == 'ו' and DAGESH in marks and not (marks - {DAGESH}) and out and out[-1][-1] not in 'aāeēiouəăĕŏ' \
                 and i > 0:

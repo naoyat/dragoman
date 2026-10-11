@@ -1678,7 +1678,7 @@ def _set_off_by_commas(words, ix, word):
     attached = getattr(word, 'genitives', []) or []
     while k < len(words) and any(words[k] is g for g in attached):
         k += 1
-    return k < len(words) and getattr(words[k], 'surface', None) == ','
+    return k >= len(words) or getattr(words[k], 'surface', None) in (',', '.', '!', '?', ';', ':')   # 文末でも
 
 
 @dataclass

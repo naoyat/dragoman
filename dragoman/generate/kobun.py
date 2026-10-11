@@ -230,6 +230,11 @@ def predicate(clause, name='終止'):
             animate = any(np.animate for np in clause.role('subject'))
             return chain(Verb('を' if animate else 'あ', 'ラ変'), clause, name)
         np = complements[0]
+        from .frame import adjective_members
+        members = adjective_members(np)
+        if members and not clause.negated:   # 形容詞の並列: 長く広し (最後以外は連用形)
+            words = [WORDS.get(gloss(m.head), gloss(m.head)) for m in members]
+            return ''.join(adjective(w, '連用') for w in words[:-1]) + _adjective_predicate(words[-1], clause, name)
         is_adj = not np.members and np.head is not None and np.head.pos in ('adj', 'participle')
         if is_adj:
             word = WORDS.get(gloss(np.head), gloss(np.head))

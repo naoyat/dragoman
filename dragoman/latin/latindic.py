@@ -112,7 +112,18 @@ def lookup(word):
 def lookup_hand_deponent(word):
     """手作りの辞書を引き、同じ形の形式受動態動詞の読みを Wiktionary から足す (_with_deponent)"""
     hand = lookup_hand(word)
-    return _with_deponent(word, hand) if hand else hand
+    return _with_deponent(word, _without_vocative_participle(hand)) if hand else hand
+
+
+def _without_vocative_participle(items):
+    """動詞の読み (vocāte: 命令法 2複) と同じ形の、呼格だけの分詞の読み (vocātus の呼格) は外す
+    (分詞の呼格はまれで、残すと動詞が見つからない)"""
+    if not any(item.get('pos') == 'verb' and item.get('mood') for item in items):
+        return items
+    def vocative_only(item):
+        cases = item.get('_') or []
+        return item.get('pos') == 'participle' and cases and all(c[0] == 'Voc' for c in cases)
+    return [item for item in items if not vocative_only(item)] or items
 
 
 def _with_deponent(word, hand):

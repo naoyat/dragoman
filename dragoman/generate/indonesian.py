@@ -376,7 +376,10 @@ def realize(clause, verb_override=None, finite=False, aspect=True):
         elif noun:
             out.append('adalah')
         for np in complements:
-            if np.head is not None and np.head.pos in ('adj', 'participle') and not np.members:
+            from .frame import adjective_members
+            if adjective_members(np):   # 形容詞の並列 (panjang dan lebar)
+                out.append(' dan '.join(_adjective(m.head) for m in adjective_members(np)))
+            elif np.head is not None and np.head.pos in ('adj', 'participle') and not np.members:
                 out.append(_adjective(np.head))
             else:
                 out.append(noun_phrase(np))

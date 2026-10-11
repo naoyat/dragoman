@@ -658,6 +658,40 @@ class ImperativeTestCase(unittest.TestCase):
         self.assertEqual(hebrew.noun_phrase(frame.NP(frame.Lex('ego', 'pronoun', '私')), 'לְ')[0], 'לִי')
 
 
+class LeftoverTestCase(unittest.TestCase):
+    """前置詞なしの方向の対格・形容詞の並列の補語・ギリシア語の命令のアスペクト"""
+
+    @classmethod
+    def setUpClass(cls):
+        latindic.load()
+
+    def test_bare_direction(self):
+        clause, = clauses('Puer domum rediit.')   # domum「家へ」(目的語でなく方向)
+        role, np = next((r, np) for r, np in clause.args if np.head.lemma == 'domus')
+        self.assertEqual((role, np.prep.lemma, np.bare_direction), ('prep', 'in', True))
+        self.assertEqual(latin.sentence([clause]), 'Puer domum rediit.')   # ラテン語には前置詞を書かない
+        self.assertIn('to the house', english.sentence([clause]))
+
+    def test_adjective_complements(self):
+        clause, = clauses('Via longa et lāta est.')
+        self.assertEqual(japanese.sentence([clause]), '道は長くて広い。')
+        self.assertEqual(kobun.sentence([clause]), '道は長く広し。')
+        clause, = clauses('Via longa et lāta nōn erat.')
+        self.assertEqual(japanese.sentence([clause]), '道は長くも広くもなかった。')
+
+    @unittest.skipUnless(greek.available(), 'ギリシア語の表が無い')
+    def test_greek_imperative_aspect(self):
+        clause, = clauses('Venī!')
+        self.assertEqual(greek.sentence([clause]), 'ἐλθέ.')   # 肯定の命令はアオリスト
+
+    @unittest.skipUnless(hebrew.available(), 'ヘブライ語の辞書が無い')
+    def test_hebrew_conjunction(self):
+        self.assertEqual(hebrew.with_and('רְחָבָה'), 'וּרְחָבָה')   # シェヴァの前は וּ
+        self.assertEqual(hebrew.with_and('הַמַּלְכָּה'), 'וְהַמַּלְכָּה')
+        from dragoman.hebrew import script
+        self.assertEqual(script.translit('וּרְחָבָה'), 'ûrəḥāvâ')
+
+
 class KobunTestCase(unittest.TestCase):
     """ラテン語 → 文の枠 → 古文"""
 

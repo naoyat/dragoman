@@ -18,7 +18,7 @@ import unicodedata
 from dragoman.core import paths
 from . import transfer, english
 from .reverse import Reverse
-from .frame import Lex, NP
+from .frame import Lex, NP, adjective_members
 
 DB_PATH = paths.data('grc', 'wiktionary.sqlite')
 
@@ -157,8 +157,8 @@ def conjugate(lex, person, number, tense, mood, voice):
             score = 0 if v == voice else 1 if voice in v or v in voice else 2 if voice == 'active' else 9   # 形式所相
             if score < 9:
                 candidates.append((score, _hiatus(surface), len(candidates), surface))
-    if not candidates and tense == 'aorist':
-        return conjugate(lex, person, number, 'imperfect', mood, voice)   # アオリストの形が辞書に無い動詞
+    if not candidates and tense == 'aorist':   # アオリストの形が辞書に無い動詞 (命令法なら現在)
+        return conjugate(lex, person, number, 'present' if mood == 'imperative' else 'imperfect', mood, voice)
     return min(candidates)[-1] if candidates else '*' + lex.lemma
 
 
@@ -301,6 +301,10 @@ def realize(clause, capitalize=False):
             g = _greek_gender(subject) if subject is not None else 'm'
             n = ('pl' if subject.members else subject.number) if subject is not None else number
             out.append(_adjective(np.head, subject_case, n, g))   # 主語のギリシア語の名詞の性・数 (τὰ ῥόδα καλά ἐστι)
+        elif adjective_members(np):   # 形容詞の並列 (μακρὰ καὶ εὐρεῖα)
+            g = _greek_gender(subject) if subject is not None else 'm'
+            n = ('pl' if subject.members else subject.number) if subject is not None else number
+            out.append(' καὶ '.join(_adjective(m.head, subject_case, n, g) for m in adjective_members(np)))
         else:
             out.append(noun_phrase(np, subject_case))
     for adv in clause.adverbs:
@@ -371,7 +375,10 @@ def _verb(clause, person, number):
         mood = clause.source_mood if clause.source_mood and clause.verb.lang == 'grc' else 'indicative'
     elif mood == 'subjunctive':
         mood = 'indicative'
-    return conjugate(verb, person, number, clause.tense, mood, _voice(clause))
+    tense = clause.tense
+    if mood == 'imperative' and not clause.negated and tense == 'present':
+        tense = 'perfect'   # 肯定の命令は (一回の行為として) アオリスト: ἐλέησον。禁止は現在のまま (μὴ φοβοῦ)
+    return conjugate(verb, person, number, tense, mood, _voice(clause))
 
 
 def _absolute(p):

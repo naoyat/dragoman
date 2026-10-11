@@ -119,6 +119,7 @@ class NP:
     prep: Lex = None         # 前置詞句なら前置詞
     interrogative: bool = False   # 間接疑問の疑問代名詞 (quid fierī vellet の quid)
     apposed: bool = False    # 呼びかけで、前の呼びかけにカンマ無しで続く同格 (Iēsū Christe の Christe)
+    bare_direction: bool = False   # 前置詞なしの方向の対格 (Rōmam「ローマへ」・domum)。prep に in (+ 対格) を補ってある
     surface: str = ''
 
 
@@ -427,6 +428,33 @@ def clause_of(predicate, lang=None):
     return clause
 
 
+# 移動の動詞: 町の名前・domum・rūs の対格は前置詞なしで方向 (Rōmam vēnit「ローマへ来た」)
+MOTION_VERBS = {'veniō', 'eō', 'redeō', 'perveniō', 'adveniō', 'conveniō', 'contendō', 'properō', 'festīnō', 'nāvigō',
+                'fugiō', 'migrō', 'proficīscor', 'revertor', 'currō', 'pergō', 'iter faciō', 'redūcō', 'mittō',
+                'dūcō', 'remittō', 'trānseō', 'abeō', 'veho', 'vehō'}
+DIRECTION_NOUNS = {'domus', 'rūs'}
+
+
+def _bare_direction(clause):
+    """移動の動詞の、固有名詞 (町の名前) か domum・rūs の対格を、方向の前置詞句 (ad + 対格) に読み替える。
+    ラテン語に戻すときは前置詞を書かない (bare_direction)"""
+    if clause.verb is None or clause.verb.lemma not in MOTION_VERBS or (clause.lang if hasattr(clause, 'lang') else '') \
+            not in ('', 'la'):
+        return
+    transitive = clause.verb.lemma in ('mittō', 'dūcō', 'remittō', 'redūcō', 'vehō', 'veho')
+    objects = [np for role, np in clause.args if role == 'object']
+    for k, (role, np) in enumerate(clause.args):
+        if role != 'object' or np.head is None or np.members or np.case not in ('Acc', 'Nom/Acc', ''):
+            continue
+        place = np.head.lemma in DIRECTION_NOUNS or (np.head.proper and (np.head.lang or 'la') == 'la')
+        if not place or (transitive and len(objects) < 2) or (np.head.proper and np.animate):
+            continue
+        np.prep = Lex('in', 'preposition', '〜の中へ', lang='la')   # 町の中へ (в Рим・εἰς Ῥώμην・إِلَى)
+        np.case = 'Acc'
+        np.bare_direction = True
+        clause.args[k] = ('prep', np)
+
+
 def _second_person_address(clause):
     """2人称の動詞 (命令法 miserēre、quī tollis) の名詞の「主語」は呼びかけ
     (Domine Deus, Agnus Deī, … miserēre: 主格の形の呼びかけも。名詞は2人称の主語にならない)"""
@@ -588,6 +616,15 @@ def periphrastic(clause):
     return dataclasses.replace(clause, verb=verb, copula=False, tense=tense, voice=voice, args=args, number=number)
 
 
+def adjective_members(np):
+    """補語の形容詞の並列 (longa et lāta) の要素の列。形容詞の並列でなければ None
+    (各言語で、ひとつの形容詞の補語と同じく主語に一致させて並べる。名詞として訳さない: longa「長音符」)"""
+    if np is None or not np.members or not all(m.head is not None and m.head.pos in ('adj', 'participle') and
+                                               not m.members for m in np.members):
+        return None
+    return np.members
+
+
 def split_address(clause):
     """呼びかけ (呼格の名詞句。Domine, miserēre) を節から外す: (呼びかけのまとまりの列, 残りの節)。
     まとまりは同格で続く名詞句の列 (Iēsū Christe → [[Iēsus, Christus]])"""
@@ -708,6 +745,7 @@ def frames(analysis):
     for clause in clauses:   # 辞書に無い語 (補った名詞句) にも
         _second_person_address(clause)
         _mark_apposed(clause)
+        _bare_direction(clause)
     return clauses
 
 

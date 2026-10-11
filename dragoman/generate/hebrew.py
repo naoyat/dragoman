@@ -29,7 +29,7 @@ GUTTURALS = set('אהחער')
 STEM_CODES = {'qal': 'q', 'niphal': 'N', 'piel': 'p', 'pual': 'P', 'hiphil': 'h', 'hophal': 'H', 'hithpael': 't'}
 PASSIVE_STEMS = {'q': 'N', 'p': 'P', 'h': 'H'}
 # 教科書の基本語: 英語 → (辞書の見出しの番号 (Strong の番号), 動詞なら態)
-PREFERRED = {('girl', 'noun'): '5291', ('boy', 'noun'): '5288', ('child', 'noun'): '3206', ('man', 'noun'): '376',
+PREFERRED = {('only-begotten', 'adj'): '3173', ('girl', 'noun'): '5291', ('boy', 'noun'): '5288', ('child', 'noun'): '3206', ('man', 'noun'): '376',
              ('woman', 'noun'): '802', ('king', 'noun'): '4428', ('queen', 'noun'): '4436', ('book', 'noun'): '5612a',
              ('garden', 'noun'): '1588', ('rose', 'noun'): '2261', ('city', 'noun'): '5892a', ('house', 'noun'): '1004b',
              ('sea', 'noun'): '3220', ('ship', 'noun'): '591', ('people', 'noun'): '5971a', ('citizen', 'noun'): '5971a',
@@ -161,7 +161,7 @@ def _morph_parts(morph):
 
 # 形の上では男性 (語末に ה も ת も無い) でも、文法の上では女性の名詞 (形容詞・動詞が女性形で一致する)。
 # 形態の注記 (Ncmsa) は形を見ているので、ここで直す
-FEMININE = {'5892a', '5892b', '776', '5315', '2719', '5869', '3027', '7272', '6106'}
+FEMININE = {'1870', '5892a', '5892b', '776', '5315', '2719', '5869', '3027', '7272', '6106'}
 
 
 def noun_form(aug, number='s', definite=False, kind='N'):
@@ -249,6 +249,20 @@ def with_preposition(prep, word):
     return prep + word
 
 
+def with_and(word):
+    """接続詞 וְ を語に付ける。シェヴァで始まる語と ב ו מ פ の前は וּ (וּרְחָבָה・וּמֶלֶךְ)"""
+    plain = unicodedata.normalize('NFD', word)
+    if len(plain) > 1 and (plain[0] in 'בומפ' or plain[1] == '\u05b0' or
+                           (plain[1] in ('\u05bc', '\u05c1', '\u05c2') and len(plain) > 2 and plain[2] == '\u05b0')):
+        return unicodedata.normalize('NFC', 'וּ' + word)
+    return 'וְ' + word
+
+
+def and_join(parts):
+    """A וְB וְC"""
+    return ' '.join(parts[:1] + [with_and(p) for p in parts[1:]])
+
+
 def adjective(lex, gender, number, definite):
     found = to_hebrew(lex, 'adj')
     if found is None:
@@ -278,7 +292,7 @@ def noun_phrase(np, prep=None, definite=True):
     """名詞句 (前に付く前置詞があれば付けて)。(語の列の文字列, 性, 数)"""
     if np.members:
         parts = [noun_phrase(m, None, definite)[0] for m in np.members]
-        text = ' וְ'.join(parts)
+        text = and_join(parts)
         return (with_preposition(prep, text) if prep else text), 'm', 'p'
     head = np.head
     if head is None:
@@ -306,7 +320,7 @@ def noun_phrase(np, prep=None, definite=True):
         words.append(noun_phrase(g)[0])
     for m in np.modifiers:
         if isinstance(m, NP):
-            words.append(' וְ'.join(adjective(x.head, gender, number, definite) for x in m.members))
+            words.append(and_join([adjective(x.head, gender, number, definite) for x in m.members]))
         elif m.pos == 'pronoun' and m.lemma in ('hic', 'ille'):
             words.append(DEMONSTRATIVES.get((m.lemma, gender, number)) or DEMONSTRATIVES[(m.lemma, 'm', 's')])
         else:
@@ -491,7 +505,10 @@ def _nominal(clause, gap=None):
     if not complements:
         return out
     np = complements[0]
-    if np.head is not None and np.head.pos in ('adj', 'participle') and not np.members:
+    from .frame import adjective_members
+    if adjective_members(np):   # 形容詞の並列 (אֲרֻכָּה וּרְחָבָה): 主語に一致
+        out.append(and_join([adjective(m.head, gender, number, False) for m in adjective_members(np)]))
+    elif np.head is not None and np.head.pos in ('adj', 'participle') and not np.members:
         out.append(adjective(np.head, gender, number, False))
     else:
         out.append(noun_phrase(np, definite=False)[0])

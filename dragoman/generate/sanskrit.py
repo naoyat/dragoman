@@ -298,6 +298,8 @@ def adjective(lex, linga, case, number):
         stem = stem + ('tara' if degree == '+' else 'tama')   # -tara / -tama (kaWina → kaWinatama)
     if linga == 'f' and stem.endswith('a') and not pronoun and (stem not in FEMININE_I or degree):
         stem = stem[:-1] + 'A'
+    elif linga == 'f' and stem.endswith('u') and not pronoun:
+        stem = stem[:-1] + 'vI'   # u 語幹の形容詞の女性形は -vī (sādhu → sādhvī、uru → urvī)
     return subanta(stem, linga, case, number)
 
 

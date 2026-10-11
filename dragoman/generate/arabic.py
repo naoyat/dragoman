@@ -79,7 +79,7 @@ CONNECTIVES = {'et': ('وَ', True), 'que': ('وَ', True), 'atque': ('وَ', Tr
 QUESTION_WORDS = {'cūr': 'لِماذا', 'quārē': 'لِماذا', 'quōmodo': 'كَيْفَ', 'ubi': 'أَيْنَ', 'quō': 'إِلَى أَيْنَ',
                   'unde': 'مِنْ أَيْنَ', 'quandō': 'مَتَى', 'num': 'هَلْ', 'utrum': 'هَلْ', 'quantus': 'كَمْ', 'quot': 'كَمْ'}
 # 教科書の基本語 (英語 → CAMeL の見出し, 品詞)
-PREFERRED = {('girl', 'noun'): ('بِنْت', 'noun'), ('boy', 'noun'): ('وَلَد', 'noun'), ('child', 'noun'): ('وَلَد', 'noun'),
+PREFERRED = {('only-begotten', 'adj'): ('وَحِيد', 'adj'), ('girl', 'noun'): ('بِنْت', 'noun'), ('boy', 'noun'): ('وَلَد', 'noun'), ('child', 'noun'): ('وَلَد', 'noun'),
              ('teacher', 'noun'): ('مُعَلِّم', 'noun'), ('book', 'noun'): ('كِتاب', 'noun'), ('rose', 'noun'): ('وَرْد', 'noun'),
              ('garden', 'noun'): ('حَدِيقَة', 'noun'), ('king', 'noun'): ('مَلِك', 'noun'), ('queen', 'noun'): ('مَلِكَة', 'noun'),
              ('city', 'noun'): ('مَدِينَة', 'noun'), ('citizen', 'noun'): ('مُواطِن', 'noun'), ('man', 'noun'): ('رَجُل', 'noun'),
@@ -203,6 +203,12 @@ def candidates(lex, pos=None):
     return list(_candidates(lex.lemma, lex.lang, pos, tuple(sources)))
 
 
+def _bare(text):
+    """母音記号を除いた綴り"""
+    import unicodedata
+    return ''.join(c for c in unicodedata.normalize('NFD', text) if not unicodedata.combining(c))
+
+
 def generate(lex, feats, pick=0):
     """語形 (pick: 候補の何番目。要求法は短い形を選ぶので -1)"""
     try:
@@ -212,6 +218,10 @@ def generate(lex, feats, pick=0):
     if not out:
         return None
     forms = list(dict.fromkeys(o['diac'] for o in out))
+    if feats.get('pos') in ('noun', 'adj') and feats.get('num') == 's' and len(forms) > 1:
+        # 単数として返る複数の形 (طَرِيق → الطُرُقُ) より、見出しの綴りを含む形を先に (الطَرِيقُ)
+        stem = _bare(lex)
+        forms.sort(key=lambda f: stem not in _bare(f))
     if pick == 'short':
         return min(forms, key=len)   # 要求法 (لَمْ يَرَ)
     if pick == 'long':
@@ -487,7 +497,10 @@ def _nominal(clause, gap=None):
     if not complements:
         return out + ['مَوْجُود']
     np = complements[0]
-    if np.head is not None and np.head.pos in ('adj', 'participle') and not np.members:
+    from .frame import adjective_members
+    if adjective_members(np):   # 形容詞の並列 (طَوِيلٌ وَعَرِيضٌ): 主語に一致
+        out.append(' وَ'.join(adjective(m.head, case, gen, num, False) for m in adjective_members(np)))
+    elif np.head is not None and np.head.pos in ('adj', 'participle') and not np.members:
         out.append(adjective(np.head, case, gen, num, False))
     else:
         out.append(noun_phrase(np, case, definite=False))
