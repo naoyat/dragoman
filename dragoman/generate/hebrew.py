@@ -29,7 +29,7 @@ GUTTURALS = set('אהחער')
 STEM_CODES = {'qal': 'q', 'niphal': 'N', 'piel': 'p', 'pual': 'P', 'hiphil': 'h', 'hophal': 'H', 'hithpael': 't'}
 PASSIVE_STEMS = {'q': 'N', 'p': 'P', 'h': 'H'}
 # 教科書の基本語: 英語 → (辞書の見出しの番号 (Strong の番号), 動詞なら態)
-PREFERRED = {('only-begotten', 'adj'): '3173', ('girl', 'noun'): '5291', ('boy', 'noun'): '5288', ('child', 'noun'): '3206', ('man', 'noun'): '376',
+PREFERRED = {('friend', 'noun'): '7453', ('male friend', 'noun'): '7453', ('only-begotten', 'adj'): '3173', ('girl', 'noun'): '5291', ('boy', 'noun'): '5288', ('child', 'noun'): '3206', ('man', 'noun'): '376',
              ('woman', 'noun'): '802', ('king', 'noun'): '4428', ('queen', 'noun'): '4436', ('book', 'noun'): '5612a',
              ('garden', 'noun'): '1588', ('rose', 'noun'): '2261', ('city', 'noun'): '5892a', ('house', 'noun'): '1004b',
              ('sea', 'noun'): '3220', ('ship', 'noun'): '591', ('people', 'noun'): '5971a', ('citizen', 'noun'): '5971a',

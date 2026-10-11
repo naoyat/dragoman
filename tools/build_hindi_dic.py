@@ -26,6 +26,7 @@ import time
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dragoman.hindi import dictionary, script
+from dragoman.core import en_ja
 from dragoman.core.wiktionary_import import (english_glosses, japanese_gloss, descendants_summary, etymology_summary,
                                    japanese_translation_pairs)
 
@@ -112,6 +113,8 @@ def main():
             if gloss:
                 short = [g for g in gloss.split(',') if len(g) <= 12 and ':w:' not in g and '→' not in g]
                 gloss = ','.join(short) if short else None
+            if gloss and not en_ja.agrees(gloss, english_glosses(entry), pos):
+                gloss = None   # 英語の語義と合わない日本語の訳語 (गुलाब「樹木、花」) は使わない
             if not gloss and (word, pos) in translations and (word, pos) not in used:
                 gloss = ','.join(j for _, j in translations[(word, pos)][:4])
                 used.add((word, pos))

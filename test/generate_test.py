@@ -948,7 +948,8 @@ class CompareTestCase(unittest.TestCase):
         self.assertTrue(rows['主語']['ar'][1].startswith('対格'))   # 受動の形が無いので能動に組み替え (通常の生成と同じ)
         self.assertTrue(rows['前置詞句 (ā + 奪格)']['ar'][1].startswith('主格'))
         rows = self.rows('Rosam in hortō vīdit.', ('ar', 'he'))
-        self.assertEqual(rows['前置詞句 (in + 奪格)']['he'], ('בַּגָּן (baggān)', 'בְּ (語に付く)'))
+        self.assertEqual(rows['前置詞句 (in + 奪格)']['he'][0], 'בַּגָּן (baggān)')
+        self.assertEqual(rows['前置詞句 (in + 奪格)']['he'][1].split('／')[0], 'בְּ (語に付く)')   # ／の後ろは語義の幅
 
 
 if __name__ == '__main__':

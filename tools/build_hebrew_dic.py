@@ -31,6 +31,7 @@ import xml.etree.ElementTree as ET
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dragoman.hebrew import dictionary, script
+from dragoman.core import en_ja
 from dragoman.core.wiktionary_import import japanese_gloss, descendants_summary, etymology_summary
 
 OSIS = '{http://www.bibletechnologies.net/2003/OSIS/namespace}'
@@ -222,8 +223,11 @@ def main():
         defs += [d for d in strong.get(number, []) if d not in defs][:3]
         gloss, gloss_lang = ','.join(defs[:4]) or entry['word'], 'en'
         kinds = WIKTIONARY_POS.get(entry['pos'][:2], WIKTIONARY_POS.get(entry['pos'][:1], ()))
+        en_pos = {'N': 'noun', 'V': 'verb', 'A': 'adj'}.get(entry['pos'][:1], 'noun')
         for pos, j in ja.get(script.consonants(entry['word']), []):
-            if not kinds or pos in kinds:
+            # 母音記号を除いた綴りで引くので、同じ綴りの別の語 (現代語 גֵּן「遺伝子」と聖書の גַּן「庭」) の訳語がある。
+            # 英語の語義と合う日本語の訳語だけ使う (合わなければ英語のまま)
+            if (not kinds or pos in kinds) and en_ja.agrees(j, ','.join(defs), en_pos):
                 gloss, gloss_lang = j, 'ja'
                 n_ja += 1
                 break

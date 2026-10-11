@@ -133,3 +133,33 @@ def english_for(japanese):
     """日本語の訳語 → 英語の訳語の比べる形の列 (語義の順: 少年 → boy, juvenile, child)。JMdict の表から"""
     return tuple(dict.fromkeys(english_key(e) for e in _ja_en().get(japanese.strip(), '').split(',') if e))
 
+
+JAPANESE_LEADING = re.compile(r'^[-－～〜]?(?:を|が|に|の|と|で|から|へ)?')
+JAPANESE_NOTE = re.compile(r'[(（\[［\^].*$')
+
+
+def _bare_japanese(text):
+    """照合用の日本語の訳語: 前の助詞 (～を与える → 与える)・括弧の注記 (六(6) → 六、肩^([要出典]) → 肩) を除く"""
+    return JAPANESE_NOTE.sub('', JAPANESE_LEADING.sub('', text.strip())).strip()
+
+
+def agrees(japanese, english, pos='noun'):
+    """日本語の訳語 (カンマ・読点区切り) が英語の語義 (カンマ区切り) と合うか: 英和で英語の語義の訳語に日本語があるか、
+    和英 (JMdict) で日本語の訳語の英語に英語の語義があるか。別の語の訳語の取り違え (母音記号を除いた綴りが同じ
+    現代ヘブライ語の גֵּן「遺伝子」を、聖書の גַּן「庭」に付ける) を見分けるのに使う"""
+    japanese_items = [_bare_japanese(j) for j in re.split('[,、]', japanese or '')]
+    japanese_items = [j for j in japanese_items if j]
+    english_items = [english_key(e) for e in (english or '').split(',') if e.strip()]
+    if not japanese_items or not english_items:
+        return False
+    translated = set()
+    for e in english_items[:8]:
+        translated.update(lookup(e, pos))
+        if e.startswith(('a ', 'an ', 'the ', 'to ')):
+            translated.update(lookup(e.split(' ', 1)[1], pos))
+    translated = {_bare_japanese(t) for t in translated}
+    if any(j in translated for j in japanese_items):
+        return True
+    back = {b for j in japanese_items for b in english_for(j)}
+    return any(e in back or e.split(' ')[-1] in back for e in english_items)
+
