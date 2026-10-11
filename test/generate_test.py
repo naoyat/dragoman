@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dragoman.core import paths  # noqa: E402
 from dragoman.latin import latindic, analyzer  # noqa: E402
-from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, arabic, hebrew, persian, hindi, ainu, japanese, kobun  # noqa: E402
+from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, arabic, hebrew, persian, hindi, ainu, tibetan, japanese, kobun  # noqa: E402
 from dragoman.generate.frame import Lex  # noqa: E402
 
 _saved = None
@@ -758,6 +758,29 @@ class AinuTestCase(unittest.TestCase):
         self.assertEqual(self.ainu('Puella bona est.'), 'Matkaci pirka.')   # 形容詞は状態の動詞で述語
         self.assertTrue(self.ainu('Puer domum rediit.').startswith('Hekaci cise un '))   # 方向 un
         self.assertIn(' somo ', self.ainu('Nauta nōn est malus.'))
+
+
+@unittest.skipUnless(tibetan.available(), 'チベット語の辞書 (bo/tibetan.sqlite) が無い')
+class TibetanTestCase(unittest.TestCase):
+    """ラテン語 → 文の枠 → 古典チベット語 (Wylie。能格・終止の助詞の形、時制の語幹、名詞化の関係節)"""
+
+    @classmethod
+    def setUpClass(cls):
+        latindic.load()
+
+    def tibetan(self, text):
+        clause, = clauses(text)
+        return tibetan.sentence([clause])
+
+    def test_particles(self):
+        self.assertEqual(tibetan.particle('bu mo', 'erg'), 'bu mos')
+        self.assertEqual(tibetan.particle('dge rgan', 'erg'), 'dge rgan gyis')
+        self.assertEqual(tibetan.particle('mthong', 'fin'), 'mthong ngo')
+        self.assertEqual(tibetan.particle('bstod', 'nom'), 'bstod pa')
+
+    def test_sentences(self):
+        self.assertEqual(self.tibetan('Puella est rēgīna.'), 'bu mo rgyal mo yin no //')
+        self.assertEqual(self.tibetan('Puer ā magistrō laudātus est.'), 'dge rgan gyis bu bstod do //')   # 能動に
 
 
 class KobunTestCase(unittest.TestCase):
