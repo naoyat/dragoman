@@ -402,8 +402,12 @@ def evaluate(files, sources, limit=0, show_errors=0, macronize=True, lang='la'):
         # 5. 主語・目的語。UD はコピュラ構文 (Gallia est dīvīsa) で est ではなく dīvīsa を中心にし、
         #    est を cop として従えるので、中心語に cop があればその語を述語として探す
         preds = {}
+        gap_words = {}   # 関係節の述語 → {格: 関係代名詞} (関係代名詞は節の格の枠から外してあり、空所の格を持つ)
+        for relative in analysis.relatives:
+            if isinstance(relative.gap, str):
+                gap_words[id(relative.predicate)] = {relative.gap: {id(relative.pronoun)}}
         for pred in [c.predicate for c in analysis.clauses] + list(analysis.absolutes) + list(analysis.participles) + \
-                [inf.predicate for inf in analysis.infinitives]:
+                [inf.predicate for inf in analysis.infinitives] + [r.predicate for r in analysis.relatives]:
             gold_verb = gold_of.get(id(pred.verb))  # 独立奪格・分詞句は分詞を述語として扱う
             if gold_verb is not None:
                 preds[gold_verb.id] = pred
@@ -442,6 +446,8 @@ def evaluate(files, sources, limit=0, show_errors=0, macronize=True, lang='la'):
                 continue
             slots = {case: {id(w) for node in objs for w in words_in(node)}
                      for case, objs in pred.case_slot.items() if isinstance(case, str)}
+            for case, ids in gap_words.get(id(pred), {}).items():   # 関係節の空所 (UD では関係代名詞が節の主語・目的語)
+                slots.setdefault(case, set()).update(ids)
             expected = ('Nom', 'Nom/Acc') if kind == 'nsubj' else ('Acc', 'Nom/Acc')
             if any(id(word) in slots.get(case, ()) for case in expected):
                 stats[kind + '_found'] += 1

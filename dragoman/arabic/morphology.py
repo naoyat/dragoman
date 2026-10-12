@@ -456,7 +456,11 @@ def stem_item(a, reading, surface):
                     demonstrative=True, _=_cngs(reading) or [(c, NUMBERS.get(a.get('num'), 'sg'), g)
                                                              for c in ('Nom', 'Acc', 'Gen') for g in ('m', 'f')])
     if pos == 'pron_rel':
-        return dict(item, pos='conj', ja=RELATIVE, gloss_lang='ja', relative=True)
+        # 関係代名詞 (الَّذِي・الَّتِي・الَّذِينَ): 先行詞の性・数で、節の中の空所の格を持つ代名詞として
+        # (コアの関係節の仕組み core/Relative.py で先行詞に付け、節の主語・目的語の空所にする。UD でも関係節の主語)
+        return dict(item, pos='pronoun', desc='関係代名詞', ja=RELATIVE, gloss_lang='ja', relative=True,
+                    _=[('Nom', n, g) for _, n, g in _cngs(reading)] or
+                    [('Nom', n, g) for n in ('sg', 'pl') for g in ('m', 'f')])   # 節の中の格は形に出ないので主語の空所として
     if pos == 'noun' and _adjective(lex, ja):
         pos = 'adj'  # CAMeL Tools では名詞の形容詞 (جَمِيل「美しい」)
     if pos in ('noun', 'noun_prop', 'noun_num', 'noun_quant', 'pron', 'pron_interrog', 'pron_exclam'):
