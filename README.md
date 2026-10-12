@@ -3,7 +3,8 @@
 古典語・現代語の文を辞書引き・構文解析して、日本語の逐語訳を付けるプログラムです（日本語の古文は現代語に組み立て直します）。語ごとの辞書引きと文法の解説、
 並列・係り先・前置詞句・格の枠・関係節・間接疑問の解析、日本語の動詞の活用を含む逐語訳、音読ができます。
 解析の結果はノート（HTML / PDF。行間逐語訳と構造の図）に清書できます。また、解析から言語に依らない「文の枠」を取り出し、
-そこから別の言語の文を作り直す試み（ラテン語・古典ギリシア語・ロシア語・サンスクリット・日本語の間。英語・インドネシア語・タガログ語・アラビア語・聖書ヘブライ語・古文へも）もあります（下の「文の生成」）。
+そこから別の言語の文を作り直す試み（対応している16言語と英語・日本語の間。チベット語・アイヌ語・古文・英語は出口だけ）もあります
+（下の「文の生成」）。
 もとはラテン語の読解のための「latin」で、解析の骨組みを言語に依存しない形（`core/`）にして、ほかの言語へ広げています。
 
 ```
@@ -28,20 +29,21 @@ $ echo "लड़के ने किताब पढ़ी।" | python3 dragom
 | 言語 | `--lang` | 語形の解析・辞書 | 評価 (Universal Dependencies の主語・目的語の再現率) | 音読 | 詳しく |
 |---|---|---|---|---|---|
 | ラテン語 | `la` | 手作りの辞書 + Wiktionary、品詞タガー、マクロンの推定 | PROIEL (カエサル): 主語 47%・目的語 56% | MBROLA / espeak-ng / Piper | [docs/latin.md](docs/latin.md) |
-| 古典ギリシア語 | `grc` | Wiktionary、Morpheus | 新約聖書: 主語 61%・目的語 46% | MBROLA (古典式 / 現代式) | [docs/greek.md](docs/greek.md) |
-| サンスクリット | `sa` | Vidyut (連声・複合語)、Wiktionary | Vedic: 主語 41%・目的語 51% | MBROLA (in1 / in2) | [docs/sanskrit.md](docs/sanskrit.md) |
-| ロシア語 | `ru` | pymorphy3、Wiktionary (訳語・強勢) | SynTagRus: 主語 67%・目的語 46% | say (Milena) | [docs/russian.md](docs/russian.md) |
+| 古典ギリシア語 | `grc` | Wiktionary、Morpheus | 新約聖書: 主語 62%・目的語 50% | MBROLA (古典式 / 現代式) | [docs/greek.md](docs/greek.md) |
+| サンスクリット | `sa` | Vidyut (連声・複合語)、Wiktionary | Vedic: 主語 41%・目的語 54% | MBROLA (in1 / in2) | [docs/sanskrit.md](docs/sanskrit.md) |
+| ロシア語 | `ru` | pymorphy3、Wiktionary (訳語・強勢) | SynTagRus: 主語 68%・目的語 46% | say (Milena) | [docs/russian.md](docs/russian.md) |
 | 聖書ヘブライ語・アラム語 | `he` | OSHB、HebrewLexicon (Strong・BDB) | (OSHB の解析の選択 97%) | say (Carmit) | [docs/hebrew.md](docs/hebrew.md) |
-| アラビア語 (MSA) | `ar` | CAMeL Tools、Wiktionary | PADT: 主語 54%・目的語 53% | say (Majed) | [docs/arabic.md](docs/arabic.md) |
+| アラビア語 (MSA) | `ar` | CAMeL Tools、Wiktionary | PADT: 主語 66%・目的語 54% | say (Majed) | [docs/arabic.md](docs/arabic.md) |
 | ペルシア語 | `fa` | 自前の規則 + Wiktionary | PerDT: 主語 55%・目的語 43% | espeak-ng | [docs/persian.md](docs/persian.md) |
-| ヒンディー語 | `hi` | Wiktionary の変化表 | HDTB: 主語 53%・目的語 30% | say (Lekha) | [docs/hindi.md](docs/hindi.md) |
-| ウルドゥー語 | `ur` | ヒンディー語の語形に引き当てる | UDTB: 主語 39%・目的語 32% | espeak-ng | [docs/urdu.md](docs/urdu.md) |
+| ヒンディー語 | `hi` | Wiktionary の変化表 | HDTB: 主語 53%・目的語 31% | say (Lekha) | [docs/hindi.md](docs/hindi.md) |
+| ウルドゥー語 | `ur` | ヒンディー語の語形に引き当てる | UDTB: 主語 40%・目的語 32% | espeak-ng | [docs/urdu.md](docs/urdu.md) |
 | 古典チベット語 | `bo` | botok で語に分ける、Hill & Garrett の品詞辞書・Wiktionary・蔵英辞書。語順のまま日本語に | Hill & Garrett のコーパス: 語の区切り 87%・格助詞 87% | MMS-TTS / espeak-ng (ラサ方言の音素・声調) | [docs/tibetan.md](docs/tibetan.md) |
 | インドネシア語・マレー語 | `id` / `ms` | 接辞の解析 (meN- の鼻音の交替など) + Wiktionary | UD Indonesian: 主語 59%・目的語 65% | say (Damayanti / Amira) | [docs/indonesian.md](docs/indonesian.md) |
 | タガログ語 | `tl` | 焦点の接辞とアスペクトの解析 + Wiktionary。焦点の名詞を主題「は」に | UD Tagalog: 主語 52%・目的語 35% | espeak-ng (インドネシア語の音声で代用) | [docs/tagalog.md](docs/tagalog.md) |
 | アイヌ語 | `ain` | 人称の接辞の分解 + 手作りの語彙表・Wiktionary。語順のまま日本語に | — | — | [docs/ainu.md](docs/ainu.md) |
 | 古文（平安の和文） | `kobun` | MeCab + 中古和文UniDic。品詞分解して現代語に組み立て直す | — | say (Kyoko) | [docs/kobun.md](docs/kobun.md) |
 
+評価は関係節の中の主語・目的語も数えます（UD では関係代名詞が関係節の主語・目的語。2026-10-12 から）。
 ラテン語以外は作りかけです。日本語の訳語の無い語は、英語の語義（Wiktionary・CAMeL Tools）を英語 → 日本語の表で
 置き換えます（下の「訳語」）。それでも訳せない語は英語のまま出ます。
 
@@ -164,23 +166,27 @@ PDF に載せるものはオプションで選びます。
 | 古典ギリシア語 | 解析器 | Wiktionary の語形を逆に引く。冠詞、アオリスト、属格独立、前接語のアクセント、後置のつなぎ（δέ・γάρ） |
 | ロシア語 | 解析器 | pymorphy3。完了体の未来、存在・所有の文（у меня есть） |
 | サンスクリット | 解析器 | Vidyut。分詞・動形容詞、処格独立、iti の直接話法、双数 |
-| インドネシア語 | — | 語根と派生形 (meN-・di-・ber-。辞書の対応か鼻音の交替の規則)、yang の関係節、重複の複数、時は telah・akan |
-| タガログ語 | — | 焦点 (目的語があれば対象焦点、物が移る動詞は移動物焦点) と ang / ng / sa、アスペクト (重複と -in-)、繋ぎ、関係節 |
-| アラビア語 (MSA) | — | CAMeL Tools の生成器で格・数・性・定冠詞を指定。動詞 - 主語 - 目的語、لَمْ + 要求法、名詞文と لَيْسَ、関係節 الَّذِي と代名詞の接尾辞 |
+| インドネシア語 | 解析器 | 語根と派生形 (meN-・di-・ber-。辞書の対応か鼻音の交替の規則)、yang の関係節、重複の複数、時は telah・akan |
+| タガログ語 | 解析器 | 焦点 (目的語があれば対象焦点、物が移る動詞は移動物焦点) と ang / ng / sa、アスペクト (重複と -in-)、繋ぎ、関係節 |
+| アラビア語 (MSA) | 解析器 | CAMeL Tools の生成器で格・数・性・定冠詞を指定。動詞 - 主語 - 目的語、لَمْ + 要求法、名詞文と لَيْسَ、関係節 الَّذِي と代名詞の接尾辞 |
 | ペルシア語 | 解析器 | 辞書の現在語幹・過去語幹から。主語 - 目的語 + را - 動詞 (SOV)、می・ن、خواه + 過去語幹、命令 ب、受動 + شدن、エザーフェ、関係節 ی که |
 | ヒンディー語・ウルドゥー語 | 解析器 | 同じ文法で文字だけ違う (辞書のウルドゥー文字の綴り + 規則の語尾)。SOV、後置詞と斜格、他動詞の完了相の ने と目的語への一致、習慣相 + है/था、未来 -एगा、命令 -ओ・禁止 मत、受動 + जाना、関係節 जो/जिसे |
 | アイヌ語 | 解析器 | 解析側の手作りの語彙表 (日本語の訳語) と Wiktionary。SOV、人称の接辞 ku=・e=・ci=・en=、状態の動詞 (pirka)、否定 somo・禁止 iteki、繋辞 ne、後置詞 ta・un・orowa、受動 a=、ラテン文字とカタカナ |
 | 古典チベット語 | 解析器 | 辞書の英語の訳語と時制の語幹の表から。チベット文字 (pyewts で Wylie から) と Wylie の2行。SOV、能格 kyis/gyis/gis/-s・属格・終止の助詞 (ngo/do/no …) の形、否定 mi/ma、繋辞 yin/yod、関係節は名詞化 + 属格、受動は能動に |
-| 聖書ヘブライ語 | — | OSHB に現れた語形 (無ければ binyan の型から)。動詞 - 主語 (分詞なら主語が先)、אֶת־、冠詞と前置詞の縮約、現在は分詞、אֲשֶׁר の関係節 |
+| 聖書ヘブライ語 | 解析器 | OSHB に現れた語形 (無ければ binyan の型から)。動詞 - 主語 (分詞なら主語が先)、אֶת־、冠詞と前置詞の縮約、現在は分詞、אֲשֶׁר の関係節 |
 | 英語 | — | 規則と語形の表 |
 | 日本語 | MeCab + UniDic と規則（長い文は GiNZA の係り受け） | 動詞の活用 (core/japanese.py)、連体修飾節、〜か・〜とき |
 | 古文 | — | 現代語の訳語を古語の活用 (四段・上二段・下二段・変格) に直す、けり・ず・む・る/らる・なり、已然形 + ば、係り結びの間接疑問 |
 
 閉じた語類（代名詞・前置詞・つなぎの語・時制）はラテン語の形を中立の形に使い、名詞・動詞などの語は元の言語のまま持って、
-作るときに英語の訳語を仲立ちに置き換えます（`transfer.py`。元と同じ言語に戻すときは置き換えない）。
+作るときに英語の訳語を仲立ちに置き換えます（`transfer.py`。元と同じ言語に戻すときは置き換えず、元の語形・定・不定・性・
+タガログ語の焦点を保つ）。名前の表に無い固有名詞は綴りを各言語の文字に写します（`name_script.py`。慣用の綴りとは限らない）。
+
+`--compare`（ノートと `tools/generate.py`）の比較の表は、要素ごとに各言語の形と手段を並べ、選んだ語の辞書の語義の幅も
+添えます（pirka「良い・適当な・気持ちのいい」、me tog「花・天然痘」。訳語は一対一に対応しない）。
 
 ```
-python3 tools/generate.py "Puella rosam pulchram in hortō videt."            # ラテン語 → 文の枠 → 英・羅・露・梵・希・尼・比・亜・希伯来・日・古文
+python3 tools/generate.py "Puella rosam pulchram in hortō videt."            # ラテン語 → 文の枠 → 全部の出口の言語
 python3 tools/generate.py --to=grc,ja latin/texts/fabulae_faciles/perseus.txt
 python3 tools/generate.py --from=grc "ἡ κόρη τὸ καλὸν ῥόδον ἐν τῷ κήπῳ βλέπει."   # --from=ru / sa / grc / fa / hi / ur / ar / he / id / tl / ja
 python3 tools/generate.py --from=ja "少女が庭で美しい薔薇を見た。"
@@ -230,6 +236,8 @@ python3 -m unittest discover -s test -p '*_test.py'
   タガーを使わずに解析）。意図して解析結果を変えたときは `UPDATE_GOLDEN=1 python3 test/golden_test.py`
   で更新し、差分を確認してからコミットします。
 * `test/corpus_test.py` は、全テキストを解析から表示まで例外なく通せるかを確かめます。
+* `test/generate_golden_test.py` は、`samples/samples.txt` を全言語で生成した結果を言語ごとの正解ファイル
+  （`test/golden/generate/`）と比べる回帰テストです。更新は `UPDATE_GOLDEN=1 python3 test/generate_golden_test.py`。
 
 ## 構成
 
