@@ -46,7 +46,7 @@ FUNCTION_WORDS = {
     'मगर': ('conj', 'magar', 'しかし'), 'परंतु': ('conj', 'parantu', 'しかし'), 'कि': ('conj', 'ki', '〜ということ'),
     'क्योंकि': ('conj', 'kyõki', 'なぜなら'), 'अगर': ('conj', 'agar', 'もし'), 'यदि': ('conj', 'yadi', 'もし'),
     'तो': ('conj', 'to', 'それなら,〜は'), 'जब': ('conj', 'jab', '〜するとき'), 'तब': ('adv', 'tab', 'そのとき'),
-    'जो': ('conj', 'jo', '〜するところの'), 'तथा': ('conj', 'tathā', 'そして,〜と'), 'एवं': ('conj', 'evam', 'そして,〜と'),
+    'तथा': ('conj', 'tathā', 'そして,〜と'), 'एवं': ('conj', 'evam', 'そして,〜と'),
     'नहीं': ('adv', 'nahī̃', '〜ない'), 'न': ('adv', 'na', '〜ない'), 'मत': ('adv', 'mat', '〜するな'),
     'भी': ('adv', 'bhī', '〜も'), 'ही': ('adv', 'hī', '〜こそ,〜だけ'), 'तो': ('adv', 'to', '〜は'),
     'बहुत': ('adv', 'bahut', 'とても'), 'आज': ('adv', 'āj', '今日'), 'कल': ('adv', 'kal', '昨日,明日'),
@@ -56,6 +56,11 @@ FUNCTION_WORDS = {
     'फिर': ('adv', 'phir', 'また,それから'), 'सिर्फ़': ('adv', 'sirf', '〜だけ'), 'केवल': ('adv', 'keval', '〜だけ'),
 }
 NEGATIONS = {'नहीं', 'न', 'मत'}
+# 関係代名詞: 形 → (転写, 数, 節の中の格)。जो は主語・目的語のどちらにもなる (UD では関係節の主語・目的語)。
+# 先行詞に付けるのはコアの関係節の仕組み (core/Relative.py)
+RELATIVES = {'जो': ('jo', ('sg', 'pl'), ('Nom', 'Acc')), 'जिसने': ('jisne', ('sg',), ('Nom',)),
+             'जिन्होंने': ('jinhõne', ('pl',), ('Nom',)), 'जिसे': ('jise', ('sg',), ('Acc', 'Dat')),
+             'जिन्हें': ('jinhẽ', ('pl',), ('Acc', 'Dat')), 'जिस': ('jis', ('sg',), ('Obl',)), 'जिन': ('jin', ('pl',), ('Obl',))}
 # 代名詞: 形 → (見出し語, 転写, 人称, 数, 格の種類)。格の種類: direct / oblique / ergative (ने 込み) / dative (को 込み)
 PRONOUNS = {
     'मैं': ('मैं', 'ma͠i', 1, 'sg', 'direct'), 'मुझ': ('मैं', 'mujh', 1, 'sg', 'oblique'),
@@ -266,6 +271,11 @@ def analyses(token):
         roman, ja = POSTPOSITIONS[word]
         out.append({'surface': word, 'pos': 'postposition', 'base': roman, 'ja': ja, 'gloss_lang': 'ja',
                     'roman': roman, 'compact': True, 'postposition': word})
+    if word in RELATIVES:
+        roman, numbers, cases = RELATIVES[word]
+        out.append({'surface': word, 'pos': 'pronoun', 'desc': '関係代名詞', 'lemma': 'जो', 'base': roman, 'roman': roman,
+                    'ja': '〜するところの', 'gloss_lang': 'ja', 'compact': True, 'relative': True,
+                    '_': [(c, n, g) for c in cases for n in numbers for g in ('m', 'f')]})
     if word in FUNCTION_WORDS:
         pos, roman, ja = FUNCTION_WORDS[word]
         out.append({'surface': word, 'pos': pos, 'base': roman, 'ja': ja, 'gloss_lang': 'ja', 'roman': roman,
