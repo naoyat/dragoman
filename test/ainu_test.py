@@ -36,6 +36,16 @@ class AinuTestCase(unittest.TestCase):
                       ja('ainukotan enkashike chikush kor shichorpokun inkarash ko.'))  # 後置詞、kor、ko
         self.assertIn('という歌を私が歌いながら', ja('arian rekpo chiki kane petesoro sapash aine.'))  # rekpo ki → 歌う
 
+    def test_katakana_input(self):
+        self.assertEqual(script.from_kana('マッカチ ピㇼカ。'), 'matkaci pirka.')
+        self.assertEqual(script.from_kana('アイヌ'), 'aynu')                     # 母音の後ろのイ → y
+        self.assertEqual(script.from_kana('カムイ'), 'kamuy')
+        self.assertEqual(script.from_kana('チカㇷ゚'), 'cikap')                    # 小書きの ㇷ゚ → p
+        self.assertEqual(script.from_kana('トゥレㇱ'), 'tures')
+        self.assertEqual(next(analyzer.analyze_text('マッカチ ピㇼカ。')).japanese, '少女が良い。')
+        from dragoman.main import detect
+        self.assertEqual(detect('マッカチ ピㇼカ。'), 'ain')                     # 小書きの仮名 (ㇼ) でアイヌ語と推定
+
 
 if __name__ == '__main__':
     unittest.main()

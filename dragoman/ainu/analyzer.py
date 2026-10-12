@@ -285,5 +285,7 @@ def analyze_sentence(words):
 
 def analyze_text(text):
     _context.clear()   # 文章ごとに、語りの主語を覚え直す
+    if script.has_kana(text):
+        text = script.from_kana(text)   # カタカナの入力はローマ字に直して読む (マッカチ ピㇼカ → matkaci pirka)
     for words in sentences(text):
         yield analyze_sentence(words)

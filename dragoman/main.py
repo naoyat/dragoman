@@ -67,6 +67,8 @@ def detect(text):
     best = max(counts, key=counts.get)
     if counts[best] == 0:
         return None
+    if best == 'kobun' and re.search('[\u31f0-\u31ff]', text):
+        return 'ain'   # アイヌ語のカタカナの小書きの文字 (ㇰ・ㇼ・ㇷ゚ …。音節末の子音) があればアイヌ語
     if best == 'arabic-script':
         if re.search('[\u0679\u0688\u0691\u06ba\u06d2\u06d3\u06be]', text):
             return 'ur'  # ٹ ڈ ڑ ں ے ۓ ھ

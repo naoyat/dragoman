@@ -75,6 +75,14 @@ class TibetanTestCase(unittest.TestCase):
         self.assertEqual(self.ja('ཁོས་སྟ་རེས་ཤིང་བཅད་དོ།'), '彼が斧で木を切った。')    # 能格 (人) と具格 (道具)
         self.assertEqual(self.ja('སངས་རྒྱས་ཀྱིས་ཆོས་བསྟན་ཏོ།'), '仏陀が法を説いた。')
 
+    def test_wylie_input(self):
+        try:
+            import pyewts  # noqa: F401
+        except ImportError:
+            self.skipTest('no pyewts')
+        self.assertEqual(self.ja('bu mos me tog mthong ngo /'), '娘が花を見る。')       # Wylie で書いた入力
+        self.assertEqual(self.ja('rgyal pos blon po la gser byin no/'), '王が大臣に金を与えた。')
+
     def test_copula_existential_negation(self):
         self.assertEqual(self.ja('ཁོ་སློབ་མ་ཡིན།'), '彼は弟子である。')
         self.assertEqual(self.ja('ང་ལ་དངུལ་མེད།'), '私にはお金がない。')

@@ -765,7 +765,20 @@ def analyze_sentence(text):
     return TibetanAnalysis(text, words, phrases, ja, notes)
 
 
+def from_wylie(text):
+    """Wylie (EWTS) の入力 → チベット文字 (pyewts。無ければそのまま)。チベット文字を含む文はそのまま"""
+    if re.search('[\u0f00-\u0fff]', text) or not re.search('[A-Za-z]', text):
+        return text
+    try:
+        import pyewts
+    except ImportError:
+        return text
+    converter = pyewts.pyewts()
+    return '\n'.join(converter.toUnicode(line) for line in text.splitlines())
+
+
 def analyze_text(text):
+    text = from_wylie(text)   # Wylie で書いた入力も読む (bu mos me tog mthong ngo /)
     segment.reset()
     for s in sentences(text):
         yield analyze_sentence(s)
