@@ -204,19 +204,5 @@ def japanese_verb_stem(ja):
 
 
 def attach(verb, suffix):
-    """日本語の動詞に補助の形を付ける: 読む + ている → 読んでいる、読む + たい → 読みたい"""
-    from dragoman.kobun.modernize import Modern
-    if not suffix:
-        return verb
-    try:
-        if suffix.startswith('て'):
-            return Modern.te(verb) + suffix[1:]
-        if suffix in ('たい', 'たがる'):
-            return Modern.masu_stem(verb) + suffix
-        if suffix == 'なければならない':
-            return Modern.neg_stem(verb) + suffix
-        if suffix == 'ようになる':
-            return verb + suffix
-    except Exception:
-        pass
-    return verb + suffix
+    from dragoman.core.japanese import attach_auxiliary
+    return attach_auxiliary(verb, suffix)

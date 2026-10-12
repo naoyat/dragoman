@@ -544,3 +544,25 @@ def copula_conjunctive(gloss, adjective=True, negated=False):
     if negated:
         return stem + {'i': 'くも', 'te': 'も', 'da': 'でも', 'nda': 'でも'}[kind]
     return stem + {'i': 'くて', 'te': 'いて', 'da': 'で', 'nda': 'で'}[kind]
+
+
+def attach_auxiliary(verb, suffix):
+    """日本語の動詞に補助の形を付ける: 読む + ている → 読んでいる、読む + たい → 読みたい、読む + なければならない
+    → 読まなければならない (韓国語の補助用言・ドイツ語の話法の助動詞の訳)"""
+    from dragoman.kobun.modernize import Modern
+    if not suffix:
+        return verb
+    try:
+        if suffix.startswith('て'):
+            return Modern.te(verb) + suffix[1:]
+        if suffix in ('たい', 'たがる'):
+            return Modern.masu_stem(verb) + suffix
+        if suffix == 'なければならない':
+            return Modern.neg_stem(verb) + suffix
+        if suffix in ('ようになる', 'ことができる', 'べきだ'):
+            return verb + suffix
+        if suffix == 'させる':
+            return Modern.neg_stem(verb) + ('せる' if Modern.neg_stem(verb)[-1:] in 'かがさたなばまらわ' else 'させる')
+    except Exception:
+        pass
+    return verb + suffix

@@ -40,6 +40,7 @@ $ echo "लड़के ने किताब पढ़ी।" | python3 dragom
 | 古典チベット語 | `bo` | botok で語に分ける、Hill & Garrett の品詞辞書・Wiktionary・蔵英辞書。語順のまま日本語に | Hill & Garrett のコーパス: 語の区切り 87%・格助詞 87% | MMS-TTS / espeak-ng (ラサ方言の音素・声調) | [docs/tibetan.md](docs/tibetan.md) |
 | インドネシア語・マレー語 | `id` / `ms` | 接辞の解析 (meN- の鼻音の交替など) + Wiktionary | UD Indonesian: 主語 59%・目的語 65% | say (Damayanti / Amira) | [docs/indonesian.md](docs/indonesian.md) |
 | タガログ語 | `tl` | 焦点の接辞とアスペクトの解析 + Wiktionary。焦点の名詞を主題「は」に | UD Tagalog: 主語 52%・目的語 35% | espeak-ng (インドネシア語の音声で代用) | [docs/tagalog.md](docs/tagalog.md) |
+| ドイツ語 | `de` | spaCy (de_core_news_sm。品詞・格・依存関係) + Wiktionary。動詞の組 (枠構造)・分離動詞をまとめる | UD German-GSD: 主語 77%・目的語 66% | say (Anna) | [docs/german.md](docs/german.md) |
 | 韓国語 | `ko` | kiwipiepy (形態素解析) + Wiktionary (漢字語の漢字も)。助詞から格、語尾から時制・接続、補助用言をまとめる | UD Korean-Kaist: 主語 69%・目的語 81% | say (Yuna) | [docs/korean.md](docs/korean.md) |
 | アイヌ語 | `ain` | 人称の接辞の分解 + 手作りの語彙表・Wiktionary。語順のまま日本語に | — | — | [docs/ainu.md](docs/ainu.md) |
 | 古文（平安の和文） | `kobun` | MeCab + 中古和文UniDic。品詞分解して現代語に組み立て直す | — | say (Kyoko) | [docs/kobun.md](docs/kobun.md) |
@@ -85,7 +86,7 @@ python3 tools/build_en_ja.py        # → ~/.local/share/dragoman-data/en-ja.sql
 ヘブライ文字 → ヘブライ語、アラビア文字はウルドゥー語の字（ٹ ڈ ڑ ں ے ھ）があればウルドゥー語、ペルシア語の字の多さで
 ペルシア語かアラビア語、デーヴァナーガリーはヒンディー語らしい語の有無でヒンディー語かサンスクリット、チベット文字 →
 古典チベット語、インドネシア語らしい語のあるラテン文字はインドネシア語かマレー語、タガログ語らしい語（ang, ng, mga, ay …）
-があればタガログ語、ハングル → 韓国語、かな交じりの日本語は古文）。
+があればタガログ語、ドイツ語らしい語（der, die, das, und, ist …）かウムラウト・ß があればドイツ語、ハングル → 韓国語、かな交じりの日本語は古文）。
 
 | 共通のオプション | |
 |---|---|
@@ -311,6 +312,8 @@ dragoman/                パッケージ
   indonesian/              インドネシア語 (接辞・接語・重複の解析、語順からの格の枠、受動、関係節、見えない繋辞)
   malay/                   マレー語 (解析は indonesian/。マレー語の辞書の項目を先に)
   tagalog/                 タガログ語 (焦点の接辞・アスペクトの重複の解析、ang / ng / sa と焦点からの格、繋ぎ、関係節)
+  german/                  ドイツ語 (spaCy の格・依存関係による語の項目、冠詞の掛け先、動詞の組 (完了・受動・未来・話法の助動詞)、
+                           分離動詞、前置詞の格による訳の選択、es gibt)
   korean/                  韓国語 (kiwipiepy による形態素の切り分け、助詞からの格・主題、語尾の時制・接続、補助用言、
                            連体形と関係節、二重主語、改訂ローマ字の簡略版)
   ainu/                    アイヌ語 (古いローマ字表記の正規化、人称の接辞の分解、後置詞・助詞から語順のままの日本語訳)

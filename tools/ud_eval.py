@@ -14,6 +14,7 @@
 #   python3 tools/ud_eval.py --lang=id [--source=gsd,csui,pud]       インドネシア語
 #   python3 tools/ud_eval.py --lang=tl [--source=newscrawl,trg,ugnayan] タガログ語
 #   python3 tools/ud_eval.py --lang=ko                               韓国語 (UD Korean-Kaist, CC BY-SA 4.0)
+#   python3 tools/ud_eval.py --lang=de                               ドイツ語 (UD German-GSD, CC BY-SA 4.0)
 #
 # 古典ギリシア語 (--lang=grc) の既定は $DRAGOMAN_DATA/grc/ud/grc_*-ud-*.conllu (UD Ancient Greek-PROIEL / Perseus,
 # CC BY-NC-SA) のうち、新約聖書とヘロドトス『歴史』。マクロンの推定・品詞タガーは使わない。
@@ -73,6 +74,10 @@ try:
     from dragoman.korean import analyzer as korean_analyzer
 except ImportError:
     korean_analyzer = None
+try:
+    from dragoman.german import analyzer as german_analyzer
+except ImportError:
+    german_analyzer = None
 from dragoman.core.Word import Word
 from dragoman.core.AndOr import AndOr
 from dragoman.core.PrepClause import PrepClause
@@ -90,6 +95,7 @@ URDU_FILES = sorted(glob.glob(os.path.join(DATA_DIR, 'ur', 'ud', 'ur_*-ud-test.c
 INDONESIAN_FILES = sorted(glob.glob(os.path.join(DATA_DIR, 'id', 'ud', 'id_*-ud-test.conllu')))
 TAGALOG_FILES = sorted(glob.glob(os.path.join(DATA_DIR, 'tl', 'ud', 'tl_*-ud-test.conllu')))
 KOREAN_FILES = sorted(glob.glob(os.path.join(DATA_DIR, 'ko', 'ud', 'ko_*-ud-test.conllu')))
+GERMAN_FILES = sorted(glob.glob(os.path.join(DATA_DIR, 'de', 'ud', 'de_*-ud-test.conllu')))
 # Perseus の作品番号 (TLG) → 作品
 TLG_WORKS = {'tlg0012': 'homer', 'tlg0016': 'herodotus', 'tlg0003': 'thucydides', 'tlg0011': 'sophocles',
              'tlg0085': 'aeschylus', 'tlg0006': 'euripides', 'tlg0020': 'hesiod', 'tlg0008': 'athenaeus',
@@ -227,6 +233,8 @@ def arabic_word_map(analysis, owners):
         stem = next((w for w in words if getattr(w, 'reading', None) is not None or
                      (w.items and w.items[0].attrib('main'))), words[-1])
         content = next((g for g in golds if g.upos in CONTENT_UPOS and g.upos != 'PRON'), golds[-1])
+        if stem.items and stem.items[0].pos == 'preposition':   # 前置詞と冠詞の融合形 (ドイツ語の im = in + dem)
+            content = next((g for g in golds if g.upos == 'ADP'), content)
         mapping[id(stem)] = content
         rest_w = [w for w in words if w is not stem]
         rest_g = [g for g in golds if g is not content]
@@ -273,11 +281,12 @@ def evaluate(files, sources, limit=0, show_errors=0, macronize=True, lang='la'):
     greek, sanskrit, russian, arabic = lang == 'grc', lang == 'sa', lang == 'ru', lang == 'ar'
     persian = lang in ('fa', 'hi', 'ur', 'id', 'tl', 'ko')  # 格を測らず、nmod を属格として測る言語
     korean = lang == 'ko'
+    german = lang == 'de'
     indonesian = lang in ('id', 'tl')
     tagalog = lang == 'tl'
     hindi = lang in ('hi', 'ur')
     urdu = lang == 'ur'
-    mwt = arabic or persian  # 書かれたとおりの語を渡し、解析器の切れ目を UD の語に対応させる
+    mwt = arabic or persian or german  # 書かれたとおりの語を渡し、解析器の切れ目を UD の語に対応させる
     if greek or sanskrit or russian or mwt:
         macronize = False  # マクロンの推定はラテン語だけ
     absolute_case = 'Gen' if greek else 'Loc' if sanskrit else 'Abl'  # 独立奪格 / 属格独立 / 処格独立
@@ -311,6 +320,7 @@ def evaluate(files, sources, limit=0, show_errors=0, macronize=True, lang='la'):
         try:
             analysis = (greek_analyzer.analyze_sentence(surfaces) if greek
                         else korean_analyzer.analyze_sentence(surfaces) if korean
+                        else german_analyzer.analyze_sentence(surfaces) if german
                         else arabic_analyzer.analyze_sentence(surfaces) if arabic
                         else urdu_analyzer.analyze_sentence(surfaces) if urdu
                         else tagalog_analyzer.analyze_sentence(surfaces) if tagalog
@@ -509,7 +519,7 @@ def main():
         elif option == '--no-wiktionary':
             latindic.LatinDic.use_wiktionary = False
         elif option in ('-h', '--help'):
-            print('Usage: python %s [--lang=la|grc|sa|ru|ar|fa|hi|ur|id|tl|ko] [--source=caesar,cicero-off,cicero-att,vulgate,other] [--limit=N] '
+            print('Usage: python %s [--lang=la|grc|sa|ru|ar|fa|hi|ur|id|tl|ko|de] [--source=caesar,cicero-off,cicero-att,vulgate,other] [--limit=N] '
                   '[-e N] [--no-macronize] [--no-tagger] [--no-wiktionary] [FILE.conllu...]' % sys.argv[0])
             sys.exit()
     if sources is None:
@@ -517,12 +527,12 @@ def main():
                    else {'gsd', 'taiga', 'syntagrus'} if lang == 'ru' else {'padt'} if lang == 'ar'
                    else {'perdt', 'seraji'} if lang == 'fa' else {'hdtb'} if lang == 'hi' else {'udtb'} if lang == 'ur'
                    else {'gsd', 'csui', 'pud'} if lang == 'id' else {'newscrawl', 'trg', 'ugnayan'} if lang == 'tl'
-                   else {'kaist'} if lang == 'ko'
+                   else {'kaist'} if lang == 'ko' else {'gsd'} if lang == 'de'
                    else {'caesar', 'cicero-off', 'cicero-att'})
     files = files or {'grc': GREEK_FILES, 'sa': SANSKRIT_FILES, 'ru': RUSSIAN_FILES,
                       'ar': ARABIC_FILES, 'fa': PERSIAN_FILES, 'hi': HINDI_FILES,
                       'ur': URDU_FILES, 'id': INDONESIAN_FILES, 'tl': TAGALOG_FILES,
-                      'ko': KOREAN_FILES}.get(lang, DEFAULT_FILES)
+                      'ko': KOREAN_FILES, 'de': GERMAN_FILES}.get(lang, DEFAULT_FILES)
     if not files:
         sys.exit('no CoNLL-U files (put UD Latin-PROIEL in %s/ud/)' % DATA_DIR)
     latindic.load()

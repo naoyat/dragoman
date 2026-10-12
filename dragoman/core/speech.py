@@ -52,11 +52,11 @@ MMS_SPEAKING_RATE = 0.9   # 1より小さいとゆっくり
 MMS_SENTENCE_PAUSE = 0.4  # 秒 (区切り記号 ། ごと)
 # macOS の say の言語ごとの音声 (現代語の読み方になる)
 SAY_VOICES = {'ru': 'Milena', 'sa': 'Lekha', 'grc': 'Melina', 'he': 'Carmit', 'ar': 'Majed', 'hi': 'Lekha', 'ja': 'Kyoko',
-              'id': 'Damayanti', 'ms': 'Amira', 'ain': 'Kyoko', 'ko': 'Yuna'}
+              'id': 'Damayanti', 'ms': 'Amira', 'ain': 'Kyoko', 'ko': 'Yuna', 'de': 'Anna'}
 # 方式を指定しないときに試す順 (言語ごと。無ければ DEFAULT_BACKEND → FALLBACK_BACKEND)
 LANGUAGE_BACKENDS = {'ru': ('say', 'espeak'), 'he': ('say', 'espeak'), 'ar': ('say', 'espeak'), 'fa': ('espeak',),
                      'hi': ('say', 'espeak'), 'ur': ('espeak',), 'ja': ('say',), 'bo': ('mms', 'espeak'),
-                     'id': ('say', 'espeak'), 'ms': ('say', 'espeak'), 'tl': ('espeak',), 'ko': ('say', 'espeak'),
+                     'id': ('say', 'espeak'), 'ms': ('say', 'espeak'), 'tl': ('espeak',), 'ko': ('say', 'espeak'), 'de': ('say', 'espeak'),
                      'ain': ('espeak', 'say')}
 DEFAULT_BACKEND = 'mbrola'
 FALLBACK_BACKEND = 'espeak'
@@ -69,7 +69,7 @@ language = 'la'          # 'la' / 'grc' / 'sa'
 divine_name = 'adonai'   # ヘブライ語の神の名の読み方 (adonai / hashem / literal。hebrew.script.qere)
 pronunciation = 'attic'  # ギリシア語の発音の流儀 (attic / koine / erasmian)
 ESPEAK_VOICES = {'la': 'la', 'grc': 'grc', 'sa': 'hi', 'ru': 'ru', 'he': 'he', 'ar': 'ar', 'fa': 'fa', 'hi': 'hi', 'ur': 'ur',
-                 'bo': 'cmn', 'id': 'id', 'ms': 'ms', 'ko': 'ko',
+                 'bo': 'cmn', 'id': 'id', 'ms': 'ms', 'ko': 'ko', 'de': 'de',
                  'tl': 'id', 'ain': 'id'}  # タガログ語の音声が無いので、綴りと発音の近いインドネシア語の音声で  # チベット語は普通話の音声に音素 ([[...]]。tibetan/phonology.py) で渡す
 # サンスクリットを読む MBROLA のヒンディー語音声 (in1 男声 / in2 女声)
 SANSKRIT_VOICE = os.path.join(MBROLA_HOME, 'voices', 'in1', 'in1')

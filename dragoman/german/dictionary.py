@@ -1,0 +1,64 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# ドイツ語の辞書 ($DRAGOMAN_DATA/de/wiktionary.sqlite。tools/build_german_dic.py で作る) を引く
+#
+import functools
+import os
+import sqlite3
+
+from dragoman.core import paths
+
+DB_PATH = paths.data('de', 'wiktionary.sqlite')
+FIELDS = ('key', 'pos', 'en', 'gender', 'aux', 'senses', 'word')
+_db = None
+
+
+def _connect():
+    global _db
+    if _db is None and os.path.exists(DB_PATH):
+        _db = sqlite3.connect(DB_PATH, check_same_thread=False)
+    return _db
+
+
+def available():
+    return _connect() is not None
+
+
+@functools.lru_cache(maxsize=100000)
+def _rows(key):
+    db = _connect()
+    if db is None or not key:
+        return ()
+    return tuple(dict(zip(FIELDS, row)) for row in
+                 db.execute('SELECT %s FROM lemmas WHERE key = ?' % ', '.join(FIELDS), (key.lower(),)).fetchall())
+
+
+def lemmas(word, pos=None):
+    """見出し → [{key, pos, en, gender, aux, senses, word}] (品詞 pos (タプルでもよい) の項目を、表記の大文字・小文字の
+    合うもの・語義の多い順に)"""
+    poses = (pos,) if isinstance(pos, str) else pos
+    rows = [r for r in _rows(word) if not poses or r['pos'] in poses]
+    return sorted(rows, key=lambda r: (r['word'] != word, -(r['senses'] or 0)))
+
+
+@functools.lru_cache(maxsize=100000)
+def forms(word):
+    """語形 → [(見出し語, 品詞, 印のタプル)]"""
+    db = _connect()
+    if db is None or not word:
+        return ()
+    return tuple((lemma, pos, tuple(t for t in tags.split(',') if t)) for lemma, pos, tags in
+                 db.execute('SELECT lemma, pos, tags FROM forms WHERE form = ?', (word.lower(),)).fetchall())
+
+
+def lookup(word, langs=None):
+    return []
+
+
+def descendants(lemma):
+    return []
+
+
+def etymology(lemma):
+    return []
