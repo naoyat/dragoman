@@ -251,5 +251,7 @@ def analyze_sentence(surfaces):
 
 
 def analyze_text(text):
+    from .script import from_latin
+    text = from_latin(text)   # ラテン文字の転写の入力はキリル文字に直して読む (Ja ljubljú tebjá → Я люблю тебя)
     for surfaces in sentences(text):
         yield analyze_sentence(surfaces)

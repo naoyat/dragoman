@@ -190,5 +190,7 @@ def analyze_sentence(surfaces):
 
 
 def analyze_text(text):
+    from .romanize import from_latin
+    text = from_latin(text)   # 学術転写・Beta Code の入力はギリシア文字に直して読む (en archêi ên ho lógos)
     for surfaces in sentences(text):
         yield analyze_sentence(surfaces)

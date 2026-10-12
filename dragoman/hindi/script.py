@@ -154,3 +154,111 @@ def translit_known(word, lemma, lemma_roman):
         out.append(rule[last:i1] + lemma_roman[j1:j2])
         last = i2
     return ''.join(out) + rule[last:]
+
+
+# ----------------------------------------------------------------------
+# ラテン文字 → デーヴァナーガリー (入力用)。IAST と ISO 15919 (ē ō・ṁ・m̐・r̥・ṛ = ड़・ṛh = ढ़) と Wiktionary 式の
+# 転写 (mẽ・hū̃・laṛkā・q x ġ z f のヌクタ)。内在の a は書いても (laṛakā) 書かなくても (laṛkā) よい。
+#
+#   子音の連続は結合文字 (प्यार pyār) か、内在の a の脱落 (कमरा kamrā・बोलना bolnā) か一意に決まらない。
+#   子音の前の鼻音 (hindī) も anusvāra (हिंदी) か結合文字 (हिन्दी) か。候補を作って辞書にある綴りを選ぶ
+
+LATIN_CONSONANTS = {
+    'kh': 'ख', 'gh': 'घ', 'ch': 'छ', 'jh': 'झ', 'ṭh': 'ठ', 'ḍh': 'ढ', 'th': 'थ', 'dh': 'ध', 'ph': 'फ', 'bh': 'भ',
+    'ṛh': 'ढ़', 'k': 'क', 'g': 'ग', 'ṅ': 'ङ', 'c': 'च', 'j': 'ज', 'ñ': 'ञ', 'ṭ': 'ट', 'ḍ': 'ड', 'ṇ': 'ण',
+    't': 'त', 'd': 'द', 'n': 'न', 'p': 'प', 'b': 'ब', 'm': 'म', 'y': 'य', 'ẏ': 'य़', 'r': 'र', 'l': 'ल', 'ḷ': 'ळ',
+    'v': 'व', 'w': 'व', 'ś': 'श', 'ṣ': 'ष', 's': 'स', 'h': 'ह', 'q': 'क़', 'x': 'ख़', 'ġ': 'ग़', 'z': 'ज़',
+    'f': 'फ़', 'ṛ': 'ड़',
+}
+LATIN_VOWELS = {'ai': ('ऐ', 'ै'), 'au': ('औ', 'ौ'), 'a': ('अ', ''), 'ā': ('आ', 'ा'), 'i': ('इ', 'ि'),
+                'ī': ('ई', 'ी'), 'u': ('उ', 'ु'), 'ū': ('ऊ', 'ू'), 'e': ('ए', 'े'), 'ē': ('ए', 'े'),
+                'o': ('ओ', 'ो'), 'ō': ('ओ', 'ो'), 'r̥': ('ऋ', 'ृ'), 'ŕ': ('ऋ', 'ृ'), 'ê': ('ऍ', 'ॅ'),
+                'ô': ('ऑ', 'ॉ'), 'æ': ('ऍ', 'ॅ'), 'ŏ': ('ऑ', 'ॉ')}
+UPPER_SIGNS = set('िीेैोौॅॉ')   # 線の上に出る母音記号 (鼻音化は candrabindu でなく anusvāra で書く)
+NASALS = set('ṅñṇnm')
+LATIN_UNITS = sorted(list(LATIN_CONSONANTS) + list(LATIN_VOWELS) + ['ṁ', 'ṃ', 'm̐', 'ḥ', '~'], key=len, reverse=True)
+LATIN_WORD = r"[A-Za-zÀ-ɏḀ-ỿ̀-ͯ~]+"
+
+
+def _latin_units(word):
+    word = unicodedata.normalize('NFC', word.lower()).replace('a͠i', 'ai~').replace('a͠u', 'au~')
+    # 鼻音化の母音 (ã ẽ ĩ õ ũ・ā̃ ī̃ ū̃) は母音 + ~ に (m̐ は candrabindu として残す)
+    word = unicodedata.normalize('NFD', word)
+    word = re.sub('([aeiou][̄]?)̃', r'\1~', word)
+    word = unicodedata.normalize('NFC', word.replace('m̐', '\0')).replace('\0', 'm̐')
+    units, i = [], 0
+    while i < len(word):
+        for u in LATIN_UNITS:
+            if word.startswith(u, i):
+                units.append(u)
+                i += len(u)
+                break
+        else:
+            units.append(word[i])
+            i += 1
+    return units
+
+
+def _cluster_default_conjunct(units, k):
+    """子音 k と次の子音の間の既定: 結合文字 (y・r・v が続く、語頭の連続、s・ś・ṣ が先) なら True"""
+    nxt = units[k + 1]
+    return nxt in ('y', 'r', 'v', 'w') or k == 0 or units[k] in ('s', 'ś', 'ṣ') and k == 0 or \
+        (k > 0 and units[k - 1] in LATIN_CONSONANTS)
+
+
+def _devanagari_word(word):
+    units = _latin_units(word)
+    options = []
+    k = 0
+    after_consonant = False
+    while k < len(units):
+        u = units[k]
+        nxt = units[k + 1] if k + 1 < len(units) else None
+        if u == 'ṛ' and after_consonant and nxt not in LATIN_VOWELS:
+            u = 'r̥'   # 子音の後ろで母音が続かない ṛ は母音 (IAST の kṛpā → कृपा)
+        if u in LATIN_CONSONANTS:
+            letter = LATIN_CONSONANTS[u]
+            if nxt in LATIN_VOWELS and nxt != 'r̥':
+                options.append([letter])   # 母音記号は次の位置で
+            elif nxt in LATIN_CONSONANTS:
+                conjunct, bare = letter + VIRAMA, letter
+                choices = [conjunct, bare] if _cluster_default_conjunct(units, k) else [bare, conjunct]
+                if u in NASALS and units[k - 1:k] and units[k - 1] in LATIN_VOWELS:
+                    choices = [ANUSVARA] + choices   # hindī → हिंदी / हिन्दी
+                options.append(choices)
+            else:
+                options.append([letter])   # 語末の子音・内在の a の脱落
+            after_consonant = True
+        elif u in LATIN_VOWELS:
+            independent, sign = LATIN_VOWELS[u]
+            options.append([sign if after_consonant else independent])
+            after_consonant = False
+        elif u in ('ṁ', 'ṃ'):
+            options.append([ANUSVARA])
+            after_consonant = False
+        elif u in ('m̐', '~'):
+            prev = options[-1][0][-1:] if options else ''
+            options.append([ANUSVARA if prev in UPPER_SIGNS else CANDRABINDU])
+            after_consonant = False
+        elif u == 'ḥ':
+            options.append([VISARGA])
+            after_consonant = False
+        else:
+            options.append([u])
+            after_consonant = False
+        k += 1
+
+    def known(w):
+        from . import dictionary
+        return bool(dictionary.forms(w) or dictionary.lemmas(w))
+
+    from dragoman.core.reverse import pick
+    return unicodedata.normalize('NFC', pick(options, known))
+
+
+def from_latin(text):
+    """ラテン文字で書いたヒンディー語 → デーヴァナーガリー (デーヴァナーガリーを含めばそのまま。文末の . は ।)"""
+    if is_devanagari(text) or not re.search('[A-Za-z]', text):
+        return text
+    text = re.sub(r'\.(?=\s|$)', '।', text)
+    return re.sub(LATIN_WORD, lambda m: _devanagari_word(m.group(0)), text)

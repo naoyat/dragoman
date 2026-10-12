@@ -616,5 +616,6 @@ def analyze_sentence(surfaces):
 
 
 def analyze_text(text):
+    text = script.from_latin(text)   # IAST・ISO 15919 の入力はデーヴァナーガリーに直して読む (laṛkā → लड़का)
     for surfaces in sentences(text):
         yield analyze_sentence(surfaces)

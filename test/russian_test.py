@@ -119,5 +119,21 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(morphology.stressed('книги'), 'кни́ги')
 
 
+
+@unittest.skipUnless(HAVE_PYMORPHY, 'pymorphy3 が無い')
+class FromLatinTestCase(unittest.TestCase):
+    def test_schemes(self):
+        self.assertEqual(script.from_latin('Ja ljubljú tebjá.'), 'Я люблю тебя.')        # 学術転写 (強勢記号は除く)
+        self.assertEqual(script.from_latin('Ya lyublyu tebya.'), 'Я люблю тебя.')        # 英語式
+        self.assertEqual(script.from_latin('Ščí i kaša'), 'Щи и каша')
+        self.assertEqual(script.from_latin('Novyy god'), 'Новый год')                   # y: 子音の後ろ ы・母音の後ろ й
+
+    def test_ambiguous(self):
+        self.assertEqual(script.from_latin('Eto moja kniga.'), 'Это моя книга.')         # 語頭の e → э (辞書で)
+        self.assertEqual(script.from_latin("Est' detskiy dom i otets."), 'Есть детский дом и отец.')  # ts → тс / ц
+        self.assertEqual(script.from_latin("S'ezd"), 'Съезд')                           # ' → ъ (辞書で)
+        self.assertEqual(script.from_latin('Привет'), 'Привет')
+
+
 if __name__ == '__main__':
     unittest.main()

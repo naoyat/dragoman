@@ -69,5 +69,22 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertIn('学校に', self.translate('मैं स्कूल जाता हूँ।')[0])
 
 
+
+@unittest.skipUnless(HAVE_DATA, 'ヒンディー語の辞書が無い')
+class FromLatinTestCase(unittest.TestCase):
+    def test_iast_and_iso15919(self):
+        self.assertEqual(script.from_latin('laṛkā kitāb paṛhtā hai.'), 'लड़का किताब पढ़ता है।')
+        self.assertEqual(script.from_latin('laṛakā kitāba paṛhatā hai.'), 'लड़का किताब पढ़ता है।')   # 内在の a を書いても
+        self.assertEqual(script.from_latin('ghara mēṁ'), 'घर में')                    # ISO 15919 の ē・ṁ
+        self.assertEqual(script.from_latin('saṁskr̥t kṛpayā'), 'संस्कृत कृपया')           # r̥・子音の後ろの ṛ は母音
+        self.assertEqual(script.from_latin('maĩ ghar jātā hū̃.'), 'मैं घर जाता हूँ।')     # 鼻音化 (線の上の記号なら ं)
+
+    def test_clusters(self):
+        self.assertEqual(script.from_latin('kamrā'), 'कमरा')        # 内在の a の脱落
+        self.assertEqual(script.from_latin('pyār'), 'प्यार')        # 結合文字
+        self.assertEqual(script.from_latin('samajhte'), 'समझते')
+        self.assertEqual(script.from_latin('hindī'), 'हिंदी')       # 子音の前の鼻音は anusvāra (辞書で)
+
+
 if __name__ == '__main__':
     unittest.main()
