@@ -32,6 +32,36 @@
 * 述語の形容詞（Das Haus ist schön「家は美しい」）と副詞として使う形容詞（schnell → 速く）。
 * spaCy の小さいモデルが副詞と読み誤る動詞の定形（dass du mich liebst の liebst）は、辞書の語形の表で動詞に戻す。
 
+## 古い綴り（グリム童話など）
+
+19世紀の綴り（1901年の正書法統一より前）や 1996年の改革より前の綴りは、今の綴りに直してから spaCy と辞書に渡します
+（`german/orthography.py`。語ごとの表の注に「古い綴り roth → rot」）:
+
+| 古い綴り | 今の綴り | 規則 |
+|---|---|---|
+| roth・Thüre・Athem・Hochmuth・übermüthig | rot・Türe・Atem・Hochmut・übermütig | th → t |
+| todt・tödten | tot・töten | dt → t |
+| gieng・fieng | ging・fing | ie → i（小文字の語だけ） |
+| erschrack | erschrak | ck → k |
+| daß・wußte・haßte | dass・wusste・hasste | ß → ss（辞書の「Formerly standard spelling of …」も） |
+| Waare | Ware | aa → a |
+| hätt・wär・Stund | hätte・wäre・Stunde | 語末の e の脱落 |
+| wills・wars | will es・war es | es の縮約 |
+
+規則は直した形が辞書にあるときだけ採ります。th・dt・aa・ey は今の綴りに出ない並びなので辞書に形がある語にも当て、ie・ck・ß は
+今の綴りにもある並び（die・rief・saß・großen）なので辞書に無い語にだけ当てます。固有名詞（Amiens）・略語はそのまま。
+
+縮小形（-lein・-chen・-elein・-elchen）は元の名詞の訳を使います（Spieglein → Spiegel「鏡」、Töchterlein → Tochter「娘」、
+Häuslein → Haus「家」、Gäbelchen → Gabel「フォーク」。ウムラウトを戻して探す）。
+
+グリム童話は Wikisource（ドイツ語版）の翻刻を使えます。ページごとの翻刻（`Seite:…`）を `action=raw` で取り、
+`tools/import_wikisource.py` でつないでテキストにします（テキストは `$DRAGOMAN_DATA/de/texts/` に置き、リポジトリには入れない）:
+
+```
+python3 tools/import_wikisource.py ~/.local/share/dragoman-data/de/texts/sneewittchen-1857.txt PAGE264.wiki … PAGE273.wiki
+./dragoman.py de -w ~/.local/share/dragoman-data/de/texts/sneewittchen-1857.txt
+```
+
 ## 準備
 
 ```

@@ -21,7 +21,7 @@ import re
 from dragoman.core import analyzer as common
 from dragoman.core import language
 from dragoman.core.Word import Word
-from . import dictionary, morphology
+from . import dictionary, morphology, orthography
 
 PUNCTUATION = {'.': 'period', '!': 'period', '?': 'question', '…': 'period', ',': 'comma', ';': 'comma',
                ':': 'comma', '—': 'comma', '–': 'comma', '-': 'comma', '(': 'comma', ')': 'comma', '"': None,
@@ -86,9 +86,21 @@ def _base(lemma, row=None):
     return '%s%s' % (lemma, ' (%s)' % article if article else '')
 
 
+def _verb_lemma(text):
+    """語形の表で動詞の見出しを引く (spaCy が原形に戻せない強変化の形: aß → essen、fing → fangen)"""
+    found = [lemma for lemma, pos, tags in dictionary.forms(text) if pos == 'verb' and tags]
+    return found[0] if found else None
+
+
 def _verb_data(token, feats, lemma=None):
     lemma = lemma or token.lemma_
     ja, gloss_lang, row = morphology.gloss(lemma, 'verb')
+    if ja is None or gloss_lang == 'en' and lemma not in morphology.GLOSSES:
+        better = _verb_lemma(token.text)
+        if better and better != lemma:
+            found = morphology.gloss(better, 'verb')
+            if found[0]:
+                lemma, (ja, gloss_lang, row) = better, found
     tense = {'Pres': 'present', 'Past': 'perfect'}.get(feats.get('Tense'), 'present')
     mood = {'Ind': 'indicative', 'Sub': 'subjunctive', 'Imp': 'imperative'}.get(feats.get('Mood'), 'indicative')
     if token.tag_ in NONFINITE_TAGS:
@@ -149,15 +161,33 @@ def item_of(token, doc):
                     'gloss_lang': 'ja'}
         return {'surface': text, 'pos': 'pronoun', 'base': lemma, 'ja': ja, 'gloss_lang': 'ja', 'person': person,
                 'number': number, '_': morphology.cngs(feats), 'compact': True}
+    if tag in ('NN', 'NE', 'FM', 'XY', 'TRUNC') and text.islower():
+        verb = _verb_form(token)   # 小文字の名詞は動詞の読み誤り (命令形 hüte・bring)
+        if verb is not None:
+            return verb
     if tag in ('NN', 'NE', 'FM', 'XY', 'TRUNC'):
         ja, gloss_lang, row = morphology.gloss(lemma, 'name' if tag == 'NE' else 'noun')
         if ja is None and lemma != text:
             ja, gloss_lang, row = morphology.gloss(text, 'name' if tag == 'NE' else 'noun')
+        if (ja is None or gloss_lang == 'en') and text.endswith('s') and text[:-1] in morphology.GLOSSES:
+            lemma = text[:-1]   # 名前の属格 (Sneewittchens)
+            ja, gloss_lang, row = morphology.gloss(lemma, 'noun')
+        diminutive = None
+        if ja is None or ja == text:
+            diminutive = orthography.diminutive_base(lemma) or orthography.diminutive_base(text)
+            if diminutive:   # 縮小形 (Spieglein → Spiegel)
+                ja, gloss_lang, row = morphology.gloss(diminutive, 'noun')
+                feats = dict(feats, Gender='Neut')
         data = {'surface': text, 'pos': 'noun', 'base': _base(lemma, row), 'lemma': lemma, 'ja': ja or text,
                 'gloss_lang': gloss_lang or 'en', '_': morphology.cngs(feats, (row or {}).get('gender')), 'main': True}
         if tag == 'NE':
             data['proper'] = True
+        if diminutive:
+            data.update(base='%s (das。%s の縮小形)' % (text, diminutive), form='縮小形 (-lein / -chen)')
         return data
+    if tag == 'ADJA' and re.sub('(e|er|en|em|es)$', '', lower) in morphology.ORDINALS_JA:
+        return {'surface': text, 'pos': 'adj', 'base': lemma, 'ja': morphology.ORDINALS_JA[re.sub('(e|er|en|em|es)$', '', lower)],
+                'gloss_lang': 'ja', '_': morphology.cngs(feats), 'main': True}
     if tag == 'ADJA':
         ja, gloss_lang, row = morphology.gloss(lemma, 'adj')
         return {'surface': text, 'pos': 'adj', 'base': lemma, 'ja': ja or lemma, 'gloss_lang': gloss_lang or 'en',
@@ -171,7 +201,7 @@ def item_of(token, doc):
         ja = morphology.adverbial(ja) if ja and gloss_lang == 'ja' else ja
         return {'surface': text, 'pos': 'adv', 'base': lemma, 'ja': ja or lemma, 'gloss_lang': gloss_lang or 'en'}
     if tag == 'CARD':
-        return {'surface': text, 'pos': 'adj', 'base': text, 'ja': text, 'gloss_lang': 'ja',
+        return {'surface': text, 'pos': 'adj', 'base': text, 'ja': morphology.NUMBERS_JA.get(lower, text), 'gloss_lang': 'ja',
                 '_': [(c, n, g) for c in morphology.ALL_CASES for n in ('sg', 'pl') for g in ('m', 'f', 'n')]}
     if tag in FINITE_TAGS or tag in NONFINITE_TAGS:
         return _verb_data(token, feats)
@@ -204,6 +234,10 @@ def _verb_form(token):
     if not text.islower() or dictionary.lemmas(text, ('adv', 'particle', 'adj', 'conj')) or text in morphology.GLOSSES:
         return None
     for lemma, pos, tags in dictionary.forms(text):
+        if pos == 'verb' and 'imperative' in tags:
+            data = _verb_data(token, {'Person': '2', 'Number': 'Plur' if 'plural' in tags else 'Sing'}, lemma)
+            data['mood'] = 'imperative'
+            return data
         if pos != 'verb' or not set(tags) & set(PERSON_TAGS):
             continue
         feats = {'Person': str(next(PERSON_TAGS[t] for t in tags if t in PERSON_TAGS)),
@@ -238,7 +272,7 @@ def _preposition(text, prep, case):
 
 def merge_verbs(words, doc):
     """助動詞・話法の助動詞と本動詞 (過去分詞・不定詞)、分離動詞の前つづりを、定動詞の位置の1語にまとめる"""
-    by_i = {w.token_ix: w for w in words}
+    by_i = {w.doc_i: w for w in words}   # spaCy の語の番号 (縮約を分けた語の列での位置)
     removed = set()
     for token in doc:
         word = by_i.get(token.i)
@@ -375,12 +409,17 @@ def passive_agents(words):
 
 
 def lookup_all(surfaces):
-    doc = morphology.parse(surfaces)
+    modern, origin = orthography.tokens(surfaces)   # 古い綴りを今の綴りに (roth → rot、gieng → ging)
+    doc = morphology.parse(modern)
     words = []
     for token in doc:
         data = item_of(token, doc)
+        old = surfaces[origin[token.i]]
+        if data is not None and old != token.text:
+            data['old_spelling'] = old
         word = Word(token.text, None if data is None else [data])
-        word.token_ix = token.i
+        word.token_ix = origin[token.i]
+        word.doc_i = token.i
         words.append(word)
     global _display
     _display = list(words)

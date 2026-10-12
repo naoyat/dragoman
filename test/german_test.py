@@ -38,6 +38,28 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Ich weiß, dass du mich liebst.'), '私が / 知っている / 〜ということ / 君が / 私を / 愛する')
         self.assertEqual(self.ja('Das Haus, das ich gekauft habe, ist sehr schön.'), 'とても / {私が 買った}家は / 美しい')
 
+    def test_old_spelling(self):
+        from dragoman.german import orthography as o
+        self.assertEqual([o.modern(w) for w in ('roth', 'Thüre', 'todt', 'gieng', 'erschrack', 'daß', 'wußte', 'Waare',
+                                                'übermüthig')],
+                         ['rot', 'Türe', 'tot', 'ging', 'erschrak', 'dass', 'wusste', 'Ware', 'übermütig'])
+        # 今の綴りの語・固有名詞はそのまま
+        self.assertEqual([o.modern(w) for w in ('die', 'rief', 'saß', 'großen', 'Theater', 'Stadt', 'Amiens', 'May')],
+                         ['die', 'rief', 'saß', 'großen', 'Theater', 'Stadt', 'Amiens', 'May'])
+        self.assertEqual(o.tokens(['ich', 'wills', 'nicht'])[0], ['ich', 'will', 'es', 'nicht'])
+
+    def test_diminutives(self):
+        from dragoman.german import orthography as o
+        self.assertEqual([o.diminutive_base(w) for w in ('Spieglein', 'Töchterlein', 'Häuslein', 'Stühlchen',
+                                                          'Gäbelchen', 'Löffelein')],
+                         ['Spiegel', 'Tochter', 'Haus', 'Stuhl', 'Gabel', 'Löffel'])
+
+    def test_fairy_tale(self):
+        # グリム童話『白雪姫』(1857年版。パブリックドメイン) の綴りのまま
+        self.assertEqual(self.ja('Da war sie zufrieden, denn sie wußte daß der Spiegel die Wahrheit sagte.'),
+                         'そこで,その時 / 彼女は / 満足していた / というのは / 彼女が / 知っていた / 〜ということ / 鏡が / 真実を / 言った')
+        self.assertEqual(self.ja('Da erschrack die Königin.'), 'そこで,その時 / 女王が / 驚いた')
+
     def test_detect(self):
         from dragoman.main import detect
         self.assertEqual(detect('Der Mann liest das Buch.'), 'de')

@@ -21,6 +21,8 @@ def explain(word):
     out = []
     if item.attrib('form'):
         out.append(item.attrib('form'))
+    if item.attrib('old_spelling'):
+        out.append('古い綴り %s → %s' % (item.attrib('old_spelling'), word.surface))
     if item.attrib('separable'):
         out.append('分離動詞 (前つづり %s)' % item.attrib('separable'))
     return out
