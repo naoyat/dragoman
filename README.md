@@ -323,7 +323,7 @@ test/                    テスト
 ## Author
 
 naoya_t (@naoya_t)
-http://github.com/naoyat | http://twitter.com/naoya_t | http://naoyat.hatenablog.jp/
+http://github.com/naoyat | http://x.com/naoya_t | http://naoyat.hatenablog.jp/
 
 2026年の改修は Claude Opus 5.5（Anthropic）と共同で行いました。
 
