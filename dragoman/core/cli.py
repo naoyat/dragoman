@@ -225,6 +225,8 @@ def run(command, argv=None, texts=None):
             else:
                 render.render_analysis(analysis, show_word_detail=options.show_word_detail, word_notes=notes,
                                        romanize=command.romanize if options.romanize else None)
+            if getattr(analysis, 'literal', None):   # 語順のままの訳 (韓国語)
+                print('  ≒  %s  (語順のまま)' % analysis.literal)
             if speech:
                 speech.pause_while_speaking()
     if notebook is not None:

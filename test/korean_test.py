@@ -51,6 +51,17 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('예쁜 꽃이 피었다.'), '{美しい,かわいい}花が / 咲いた')
         self.assertEqual(self.ja('고양이와 개가 마당에서 논다.'), '猫と犬が / {庭}〜で,〜から / 遊ぶ')
 
+    def test_literal(self):
+        from dragoman.korean.literal import literal
+        lit = lambda t: literal(next(analyzer.sentences(t)))
+        self.assertEqual(lit('소년이 학교에서 책을 읽었다.'), '少年が 学校で 本を 読んだ。')
+        self.assertEqual(lit('비가 와서 집에 있었다.'), '雨が 降って 家に いた。')            # -어서「〜て」、있다「いる」
+        self.assertEqual(lit('나는 어머니가 만든 음식을 먹었다.'), '私は 母が 作った 食べ物を 食べた。')
+        self.assertEqual(lit('내 친구는 일본에서 왔습니다.'), '私の 友達は 日本から 来た。')     # 移動の動詞の 에서「から」
+        self.assertEqual(lit('날씨가 좋으면 공원에 가자.'), '天気が 良いなら 公園に 行こう。')
+        self.assertEqual(lit('그는 밥을 먹으면서 텔레비전을 봤다.'), '彼は ご飯を 食べながら テレビを 見た。')
+        self.assertEqual(lit('이것은 책이 아니다.'), 'これは 本ではない。')
+
     def test_detect(self):
         from dragoman.main import detect
         self.assertEqual(detect('소년이 책을 읽었다.'), 'ko')

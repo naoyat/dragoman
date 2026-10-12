@@ -742,6 +742,8 @@ def analyze_sentence(surfaces):
         analysis = common.analyze_words([w.surface for w in words], words, word_details, [])
     analysis.original = list(surfaces)
     analysis.display = _display
+    from .literal import literal
+    analysis.literal = literal(surfaces)   # 語順のままの日本語訳
     return analysis
 
 
