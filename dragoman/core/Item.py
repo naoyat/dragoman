@@ -34,6 +34,9 @@ class Item:
 
     # itemをレンダリング
     def description(self):
+        def _blank(value):
+            return '' if value is None else value
+
         name = {
             # tense
             'present':'現在', 'imperfect':'未完了', 'future':'未来', # 'past':'過去',
@@ -64,8 +67,8 @@ class Item:
             return get_base('base') + '%s.%s [%s]' % (self.pos[0], self.ja, short_(self._))
         elif self.pos == 'verb':
             return get_base('pres1sg') + 'v.%s %s%s %s.%s.%s' % (self.ja,
-                                                                 self.item.get('person', 0),
-                                                                 self.item.get('number', '-'),
+                                                                 _blank(self.item.get('person', 0)),   # 人称の無い言語 (韓国語) は空
+                                                                 _blank(self.item.get('number', '-')),
                                                                  name.get(self.item.get('mood', 'indicative'), '?'),
                                                                  name.get(self.item.get('voice', 'active'), '?'),
                                                                  name.get(self.item.get('tense', 'present'), '?'),

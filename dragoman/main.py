@@ -37,10 +37,10 @@ import tempfile
 
 LANGUAGES = {'la': 'latin', 'grc': 'greek', 'sa': 'sanskrit', 'ru': 'russian', 'he': 'hebrew', 'ar': 'arabic',
              'fa': 'persian', 'hi': 'hindi', 'ur': 'urdu', 'bo': 'tibetan', 'id': 'indonesian', 'ms': 'malay',
-             'tl': 'tagalog', 'ain': 'ainu', 'kobun': 'kobun'}
+             'tl': 'tagalog', 'ko': 'korean', 'ain': 'ainu', 'kobun': 'kobun'}
 NAMES = {'la': 'ラテン語', 'grc': '古典ギリシア語', 'sa': 'サンスクリット', 'ru': 'ロシア語',
          'he': '聖書ヘブライ語 (聖書アラム語も)', 'ar': 'アラビア語 (現代標準アラビア語)', 'fa': 'ペルシア語',
-         'hi': 'ヒンディー語', 'ur': 'ウルドゥー語', 'bo': '古典チベット語', 'id': 'インドネシア語', 'ms': 'マレー語', 'tl': 'タガログ語', 'ain': 'アイヌ語', 'kobun': '古文 (平安の和文。現代語に組み立て直す)'}
+         'hi': 'ヒンディー語', 'ur': 'ウルドゥー語', 'bo': '古典チベット語', 'id': 'インドネシア語', 'ms': 'マレー語', 'tl': 'タガログ語', 'ko': '韓国語', 'ain': 'アイヌ語', 'kobun': '古文 (平安の和文。現代語に組み立て直す)'}
 CODE = re.compile('^[a-z]{2,5}$')
 INDONESIAN_WORDS = {'yang', 'dan', 'di', 'ini', 'itu', 'dengan', 'untuk', 'tidak', 'adalah', 'akan', 'dari', 'ke', 'pada',
                     'saya', 'mereka', 'ada', 'sudah', 'juga', 'dalam', 'oleh', 'bahwa', 'bahawa', 'kami', 'kita'}
@@ -61,6 +61,7 @@ def detect(text):
         'arabic-script': len(re.findall('[؀-ۿ]', text)),
         'deva': len(re.findall('[ऀ-ॿ]', text)),
         'bo': len(re.findall('[\u0f00-\u0fff]', text)),
+        'ko': len(re.findall('[\uac00-\ud7a3\u1100-\u11ff\u3130-\u318f]', text)) * 3,  # ハングル
         'la': len(re.findall('[A-Za-zāēīōūȳĀĒĪŌŪ]', text)),
         'kobun': len(re.findall('[\u3040-\u30ff]', text)) * 2,  # かな (日本語の文は古文として)
     }
