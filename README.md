@@ -3,7 +3,7 @@
 古典語・現代語の文を辞書引き・構文解析して、日本語の逐語訳を付けるプログラムです（日本語の古文は現代語に組み立て直します）。語ごとの辞書引きと文法の解説、
 並列・係り先・前置詞句・格の枠・関係節・間接疑問の解析、日本語の動詞の活用を含む逐語訳、音読ができます。
 解析の結果はノート（HTML / PDF。行間逐語訳と構造の図）に清書できます。また、解析から言語に依らない「文の枠」を取り出し、
-そこから別の言語の文を作り直す試み（対応している16言語と英語・日本語の間。チベット語・アイヌ語・古文・英語は出口だけ）もあります
+そこから別の言語の文を作り直す試み（対応している21言語と英語・日本語の間。チベット語・アイヌ語・古文・英語は出口だけ）もあります
 （下の「文の生成」）。
 もとはラテン語の読解のための「latin」で、解析の骨組みを言語に依存しない形（`core/`）にして、ほかの言語へ広げています。
 
@@ -107,7 +107,7 @@ python3 tools/build_en_ja.py        # → ~/.local/share/dragoman-data/en-ja.sql
 | `--pdf=FILE` | ノートを PDF にする（Google Chrome / Chromium のヘッドレス印刷） |
 | `--marks` / `--legend` / `--provenance` | ノートに確かさの印 / 印の凡例 / 再現条件を載せる |
 | `--gaps` | 解析の穴の一覧だけを出す（辞書に無い語・推測した語形・構造の外の語・述語の見つからない文の数）。本文は出さず、語は理由ごとに重複を除いて並べ替える。手元だけで読むテキスト（歌詞など）の穴を、本文を渡さずに伝えるため |
-| `--compare=LANGS` | ノートに要素ごとの比較の表（言語の符号をカンマで: `la,grc,ja`。`all` で全部: la grc sa ru en id tl ar he fa hi ur ain bo ja kobun） |
+| `--compare=LANGS` | ノートに要素ごとの比較の表（言語の符号をカンマで: `la,grc,ja`。`all` で全部: la grc sa ru de fi en id tl ar he fa hi ur tr mn ko ain bo ja kobun） |
 
 言語ごとの例文とその訳は `python3 tools/samples.py --lang=xx` で、解析の精度は `python3 tools/ud_eval.py --lang=xx` で
 見られます（評価用のツリーバンクは言語ごとの文書を参照）。
@@ -181,6 +181,11 @@ PDF に載せるものはオプションで選びます。
 | アイヌ語 | 解析器 | 解析側の手作りの語彙表 (日本語の訳語) と Wiktionary。SOV、人称の接辞 ku=・e=・ci=・en=、状態の動詞 (pirka)、否定 somo・禁止 iteki、繋辞 ne、後置詞 ta・un・orowa、受動 a=、ラテン文字とカタカナ |
 | 古典チベット語 | 解析器 | 辞書の英語の訳語と時制の語幹の表から。チベット文字 (pyewts で Wylie から) と Wylie の2行。SOV、能格 kyis/gyis/gis/-s・属格・終止の助詞 (ngo/do/no …) の形、否定 mi/ma、繋辞 yin/yod、関係節は名詞化 + 属格、受動は能動に |
 | 聖書ヘブライ語 | 解析器 | OSHB に現れた語形 (無ければ binyan の型から)。動詞 - 主語 (分詞なら主語が先)、אֶת־、冠詞と前置詞の縮約、現在は分詞、אֲשֶׁר の関係節 |
+| ドイツ語 | 解析器 | Wiktionary の変化表 (名詞の格・動詞の人称と時制)。定冠詞と形容詞の弱変化、主文の動詞は2番目、分離動詞 (ruft … an)、完了・受動・未来、関係節 (der / die / das …) は動詞を最後に |
+| フィンランド語 | 解析器 | Wiktionary の変化表 (15格・動詞の人称と時制)。目的語の属格・分格 (否定・継続の動詞)、否定動詞 ei、所有 (Minulla on …)、関係節 joka |
+| トルコ語 | 解析器 | 規則: 母音調和の格の接尾辞・有声化 (kitabı)・母音の脱落 (şehri)、時制と人称 (-dı・-iyor・-acak)、否定 -ma、受動、分詞の関係節 (-an・-dığı) |
+| モンゴル語 | 解析器 | 規則: 4通りの母音調和の格の接尾辞と動詞の語尾、つなぎの母音、否定 -гүй、繋辞は書かない (過去 байсан・否定 биш)、分詞の関係節 |
+| 韓国語 | 解析器 | 規則: 한다体の活用 (過去の母音の縮約・ㅂ/ㄷ/르 不規則)、助詞の交替 (이/가・을/를)、連体形の関係節、名前はハングルに (마르쿠스) |
 | 英語 | — | 規則と語形の表 |
 | 日本語 | MeCab + UniDic と規則（長い文は GiNZA の係り受け） | 動詞の活用 (core/japanese.py)、連体修飾節、〜か・〜とき |
 | 古文 | — | 現代語の訳語を古語の活用 (四段・上二段・下二段・変格) に直す、けり・ず・む・る/らる・なり、已然形 + ば、係り結びの間接疑問 |
@@ -195,7 +200,7 @@ PDF に載せるものはオプションで選びます。
 ```
 python3 tools/generate.py "Puella rosam pulchram in hortō videt."            # ラテン語 → 文の枠 → 全部の出口の言語
 python3 tools/generate.py --to=grc,ja latin/texts/fabulae_faciles/perseus.txt
-python3 tools/generate.py --from=grc "ἡ κόρη τὸ καλὸν ῥόδον ἐν τῷ κήπῳ βλέπει."   # --from=ru / sa / grc / fa / hi / ur / ar / he / id / tl / ja
+python3 tools/generate.py --from=grc "ἡ κόρη τὸ καλὸν ῥόδον ἐν τῷ κήπῳ βλέπει."   # --from=ru / sa / grc / fa / hi / ur / ar / he / id / tl / de / fi / tr / mn / ko / ja
 python3 tools/generate.py --from=ja "少女が庭で美しい薔薇を見た。"
 python3 tools/generate.py --gaps FILE   # 言語ごとに訳語の見つからない語の一覧だけ (生成文・元の文は出さない)
 ```
