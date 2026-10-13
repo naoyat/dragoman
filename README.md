@@ -42,7 +42,8 @@ $ echo "लड़के ने किताब पढ़ी।" | python3 dragom
 | タガログ語 | `tl` | 焦点の接辞とアスペクトの解析 + Wiktionary。焦点の名詞を主題「は」に | UD Tagalog: 主語 53%・目的語 37% | espeak-ng (インドネシア語の音声で代用) | [docs/tagalog.md](docs/tagalog.md) |
 | ドイツ語 | `de` | spaCy (de_core_news_sm。品詞・格・依存関係) + Wiktionary。動詞の組 (枠構造)・分離動詞をまとめる | UD German-GSD: 主語 90%・目的語 80% | say (Anna) | [docs/german.md](docs/german.md) |
 | トルコ語 | `tr` | zeyrek (形態素解析) + Wiktionary。格・所有・時制・人称の接尾辞、分詞の関係節、副動詞。語順のままの訳も | UD Turkish-BOUN・Kenet: 主語 41%・目的語 34% | say (Yelda) | [docs/turkish.md](docs/turkish.md) |
-| モンゴル語 | `mn` | 辞書 (Wiktionary) と規則で格・時制・副動詞・分詞の接尾辞を分ける。語順のままの訳も。ラテン文字の転写も読む | UD Mongolian-GDUD (88文): 主語 75%・目的語 31% | — | [docs/mongolian.md](docs/mongolian.md) |
+| モンゴル語 | `mn` | 辞書 (Wiktionary) と規則で格・時制・副動詞・分詞の接尾辞を分ける。語順のままの訳も。ラテン文字の転写も読む | UD Mongolian-GDUD (88文): 主語 74%・目的語 30% | — | [docs/mongolian.md](docs/mongolian.md) |
+| フィンランド語 | `fi` | spaCy (fi_core_news_sm。15格・依存関係) + Wiktionary。否定動詞 ei・完了・話法をまとめ、目的語の属格・分格を「を」に | UD Finnish-TDT: 主語 70%・目的語 48% | say (Satu) | [docs/finnish.md](docs/finnish.md) |
 | 韓国語 | `ko` | kiwipiepy (形態素解析) + Wiktionary (漢字語の漢字も)。助詞から格、語尾から時制・接続、補助用言をまとめる | UD Korean-Kaist: 主語 69%・目的語 81% | say (Yuna) | [docs/korean.md](docs/korean.md) |
 | アイヌ語 | `ain` | 人称の接辞の分解 + 手作りの語彙表・Wiktionary。語順のまま日本語に | — | — | [docs/ainu.md](docs/ainu.md) |
 | 古文（平安の和文） | `kobun` | MeCab + 中古和文UniDic。品詞分解して現代語に組み立て直す | — | say (Kyoko) | [docs/kobun.md](docs/kobun.md) |
@@ -90,7 +91,7 @@ python3 tools/build_en_ja.py        # → ~/.local/share/dragoman-data/en-ja.sql
 ヘブライ文字 → ヘブライ語、アラビア文字はウルドゥー語の字（ٹ ڈ ڑ ں ے ھ）があればウルドゥー語、ペルシア語の字の多さで
 ペルシア語かアラビア語、デーヴァナーガリーはヒンディー語らしい語の有無でヒンディー語かサンスクリット、チベット文字 →
 古典チベット語、インドネシア語らしい語のあるラテン文字はインドネシア語かマレー語、タガログ語らしい語（ang, ng, mga, ay …）
-があればタガログ語、ğ・ı・ş・İ かトルコ語らしい語（bir, ve, bu, için …）があればトルコ語、ドイツ語らしい語（der, die, das, und, ist …）かウムラウト・ß があればドイツ語、ハングル → 韓国語、かな交じりの日本語は古文）。
+があればタガログ語、ğ・ı・ş・İ かトルコ語らしい語（bir, ve, bu, için …）があればトルコ語、フィンランド語らしい語（ja, on, ei, että …）があればフィンランド語、ドイツ語らしい語（der, die, das, und, ist …）かウムラウト・ß があればドイツ語、ハングル → 韓国語、かな交じりの日本語は古文）。
 
 | 共通のオプション | |
 |---|---|
@@ -322,6 +323,7 @@ dragoman/                パッケージ
                            語順のままの訳)
   mongolian/               モンゴル語 (辞書と規則による格・時制・副動詞・分詞の切り分け、不定の目的語、繋辞の補い、関係節、
                            語順のままの訳、ラテン文字の転写からの入力)
+  finnish/                 フィンランド語 (spaCy の15格・依存関係による語の項目、目的語の格の読み替え、否定動詞・完了・話法のまとめ)
   korean/                  韓国語 (kiwipiepy による形態素の切り分け、助詞からの格・主題、語尾の時制・接続、補助用言、
                            連体形と関係節、二重主語、改訂ローマ字の簡略版)
   ainu/                    アイヌ語 (古いローマ字表記の正規化、人称の接辞の分解、後置詞・助詞から語順のままの日本語訳)
