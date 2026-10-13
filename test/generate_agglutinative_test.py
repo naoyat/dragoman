@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# 韓国語・トルコ語・モンゴル語の出口 (generate/korean.py・turkish.py・mongolian.py): 活用・格の接尾辞・母音調和
+# 韓国語・トルコ語・モンゴル語・ドイツ語の出口 (generate/korean.py・turkish.py・mongolian.py・german.py):
+# 活用・格の接尾辞・母音調和・冠詞と形容詞の語尾。ドイツ語は辞書 (語形の表) が無ければ飛ばす
 #
 import unittest
 
-from dragoman.generate import korean, turkish, mongolian
+from dragoman.generate import korean, turkish, mongolian, german
 from dragoman.generate.name_script import hangul
 
 
@@ -53,6 +54,24 @@ class MongolianTestCase(unittest.TestCase):
         self.assertEqual(mongolian.conjugate('өгөх', 'perfect'), 'өгсөн')
         self.assertEqual(mongolian.conjugate('явах', 'perfect', negated=True), 'явсангүй')
         self.assertEqual(mongolian.conjugate('хайрлах'), 'хайрлана')
+
+
+@unittest.skipUnless(german._db() is not None, 'ドイツ語の辞書が無い')
+class GermanTestCase(unittest.TestCase):
+    def test_noun_phrase(self):
+        from dragoman.generate.frame import NP, Lex
+        rose = NP(Lex('Rose', 'noun', lang='de'), modifiers=[Lex('schön', 'adj', lang='de')])
+        self.assertEqual(german.noun_phrase(rose, 'Acc'), 'die schöne Rose')
+        garden = NP(Lex('Garten', 'noun', lang='de'), prep=Lex('in', 'preposition'), case='Abl')
+        self.assertEqual(german.prepositional(garden), 'im Garten')            # in + dem → im
+        books = NP(Lex('Buch', 'noun', lang='de'), number='pl')
+        self.assertEqual(german.noun_phrase(books, 'Dat'), 'den Büchern')     # 与格複数 -n
+
+    def test_verbs(self):
+        self.assertEqual(german.finite('sehen', 'present', 3, 'sg'), ('sieht', ''))
+        self.assertEqual(german.finite('sehen', 'past', 3, 'pl'), ('sahen', ''))
+        self.assertEqual(german.finite('anrufen', 'present', 3, 'sg'), ('ruft', 'an'))   # 分離動詞
+        self.assertEqual(german.participle_form('lesen'), 'gelesen')
 
 
 if __name__ == '__main__':

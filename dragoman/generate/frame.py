@@ -319,10 +319,13 @@ def lex_of(word, item=None):
     pronoun = SOURCE_PRONOUNS.get(lang, {}).get(lemma.lower()) if item.pos in ('pronoun', 'adj', 'det') else None
     if pronoun:   # 閉じた語類はラテン語の形に (я → ego、tad → is)
         personal = lemma.lower() in ('я', 'ты', 'он', 'она', 'оно', 'мы', 'вы', 'они', 'asmad', 'yuṣmad')
-        return Lex(pronoun[0], 'pronoun', item.ja,
+        pos = 'adj' if pronoun[0] in ('meus', 'tuus', 'suus', 'noster', 'vester', 'omnis', 'tālis') else 'pronoun'
+        return Lex(pronoun[0], pos, item.ja,   # 所有形容詞 (мой・mein → meus) は形容詞として (名詞に一致させる)
                    desc='人称代名詞' if personal else (item.attrib('desc') or _pronoun_desc(pronoun[0])),
                    surface=word.surface if word is not None else item.surface)
     proper = item.attrib('name') is True or (lemma[:1].isupper() and item.pos in ('noun', 'unknown'))
+    if lang == 'de':   # ドイツ語の名詞はすべて大文字で始まる: 解析器の固有名詞の印だけで
+        proper = bool(item.attrib('proper'))
     return Lex(lemma, item.pos, item.ja, proper=proper and item.pos in ('noun', 'unknown', 'name'), lang=lang,
                degree=item.attrib('rank') or '', en=english,
                desc=(focus if focus.startswith('stem:') else 'focus:' + focus) if focus else (item.attrib('desc') or ''),
