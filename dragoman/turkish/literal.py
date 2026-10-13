@@ -131,6 +131,8 @@ def _adjective(rec):
         if ja.endswith('い') and gloss_lang == 'ja':
             return japanese_plain(ja, True, features.get('tense'), features.get('negated'))
         return ja + _copula(features)
+    if rec.get('supplied') == 'copula':   # 補った繋辞の形容詞の述語 (mutlu「幸せだ」)
+        return ja if ja.endswith('い') else (ja[:-1] if ja.endswith('な') else ja) + 'だ'
     return ja
 
 

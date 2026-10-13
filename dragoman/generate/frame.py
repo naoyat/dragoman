@@ -55,7 +55,7 @@ SOURCE_PRONOUNS.update({
            'wir': ('ego', 'pl'), 'ihr': ('tū', 'pl'), 'dieser': ('hic', ''), 'jener': ('ille', ''), 'sich': ('sē', ''),
            'wer': ('quis', ''), 'was': ('quid', ''), 'mein': ('meus', ''), 'dein': ('tuus', ''), 'sein': ('suus', ''),
            'unser': ('noster', ''), 'euer': ('vester', ''), 'all': ('omnis', ''), 'jeder': ('omnis', '')},
-    'tr': {'ben': ('ego', 'sg'), 'sen': ('tū', 'sg'), 'o': ('is', 'sg'), 'biz': ('ego', 'pl'), 'siz': ('tū', 'pl'),
+    'tr': {'(関係節の空所)': ('quī', ''), 'ben': ('ego', 'sg'), 'sen': ('tū', 'sg'), 'o': ('is', 'sg'), 'biz': ('ego', 'pl'), 'siz': ('tū', 'pl'),
            'onlar': ('is', 'pl'), 'bu': ('hic', ''), 'şu': ('iste', ''), 'kendi': ('sē', ''), 'kim': ('quis', ''),
            'ne': ('quid', '')},
     'mn': {'би': ('ego', 'sg'), 'чи': ('tū', 'sg'), 'та': ('tū', 'sg'), 'тэр': ('is', 'sg'), 'бид': ('ego', 'pl'),

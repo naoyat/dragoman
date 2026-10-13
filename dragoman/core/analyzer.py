@@ -1409,6 +1409,15 @@ def _connecting_relative(pronoun, sentence_words):
     return words[1].surface.lower() in SUBORDINATORS
 
 
+def _head_after(pred, clause):
+    """名詞の前の関係節の先行詞: 関係節の動詞より後ろの、後ろの節の最初の名詞・代名詞 (Kitap okuyan çocuk の çocuk)"""
+    verb_index = pred.verb.index if isinstance(pred.verb, Word) and pred.verb.index is not None else -1
+    words = sorted((n for n in _nodes_in(clause.predicate, clause.not_solved)
+                    if isinstance(n, Word) and n.items and n.index is not None and n.index > verb_index and
+                    n.items[0].pos in ('noun', 'pronoun')), key=lambda w: w.index)
+    return words[0] if words else None
+
+
 def _antecedent_after(pronoun, clause):
     """関係節が先行詞より前に来る形の先行詞: 後ろの節の語のうち位置の早い6語までの、性・数の一致する指示代名詞
     (is, ille, hic …: Quem puella amat, eum magister laudat の eum)"""
@@ -1466,9 +1475,12 @@ def detect_relative_clauses(clauses, trace, sentence_words=()):
         pronoun, gap, slot_obj = _relative_pronoun(pred, q.not_solved)
         if pronoun is None or pronoun.index is None or _comparative_quam(pronoun, words_by_index):
             continue
-        antecedent = _antecedent(pronoun, words_by_index, adverb=slot_obj == 'conjunction')
+        prenominal = language.current().relatives_before_head
+        antecedent = None if prenominal else _antecedent(pronoun, words_by_index, adverb=slot_obj == 'conjunction')
         k = out.index(q)
         before = antecedent is None   # 関係節が先行詞より前 (相関の形)
+        if prenominal and k + 1 < len(out):
+            antecedent = _head_after(pred, out[k + 1])
         if antecedent is None and _connecting_relative(pronoun, sentence_words):
             continue   # 関係の接続 (Quod cum vīdisset Ulixēs「それを見たとき」): 前の文を指す。関係節ではない
         if antecedent is None and slot_obj != 'conjunction' and k + 1 < len(out) and pred.person() not in (1, 2):

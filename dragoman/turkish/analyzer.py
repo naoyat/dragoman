@@ -57,6 +57,7 @@ TURKISH = language.Language(
     pronoun_subject=True,
     genitive_precedes_head=True,
     possessor_cases=('Gen', 'Dat'),
+    relatives_before_head=True,
 )
 
 
@@ -523,6 +524,66 @@ def build_words(recs):
 # ----------------------------------------------------------------------
 # 分詞: 後ろの名詞に掛ける関係節
 
+RELATIVE_CLAUSES = True   # 分詞の節を共通の解析器の関係節に (False なら名詞の訳に組み込むだけ)
+
+
+def relative_participles(words):
+    """分詞 (-an・-dığı・-acağı) の節を共通の解析器の関係節にする: 節の頭に見えない関係代名詞を補い (空所の格:
+    -an は主格、-dığı・-acağı は対格)、分詞を節の定動詞にする。先行詞は節の後ろの名詞 (共通の解析器の「関係節が
+    先行詞より前」の形)。節の主語の属格 (Ali'nin okuduğu) は主格に"""
+    out = []
+    for i, word in enumerate(words):
+        if not getattr(word, 'attributive', None):
+            out.append(word)
+            continue
+        head = next((w for w in words[i + 1:i + 3] if _pos(w) in ('noun', 'pronoun')), None)
+        if head is None:
+            out.append(word)
+            continue
+        rec = word.record
+        subject_gap = rec['participle'] in ('PresPart', 'AorPart', 'NarrPart')
+        start = len(out)
+        while start > 0:
+            prev = out[start - 1]
+            item = _item(prev)
+            nominative = item is not None and item.pos in ('noun', 'pronoun') and item._ and item._[0][0] == 'Nom'
+            if prev.items is None or _pos(prev) in ('verb', 'conj') or \
+                    nominative and not (subject_gap and start == len(out)):
+                break
+            if nominative:   # -an の直前の主格は不定の目的語 (kitap okuyan「本を読む」)
+                item._ = [('Acc',) + c[1:] for c in item._[:1]]
+                if getattr(prev, 'record', None) is not None:
+                    prev.record['role_case'] = 'Acc'
+            if item is not None and item.pos in ('noun', 'pronoun') and item._ and item._[0][0] == 'Gen' and \
+                    not subject_gap:
+                item._ = [('Nom',) + c[1:] for c in item._[:1]]   # 関係節の主語 (Ali'nin okuduğu)
+            start -= 1
+        item = _item(word)
+        tense = {'PastPart': 'perfect', 'FutPart': 'future', 'NarrPart': 'perfect'}.get(rec['participle'], 'present')
+        person, number = (3, 'sg')
+        possessor = morphology.POSSESSOR_PERSON.get(rec.get('subject') or '')
+        if possessor and not subject_gap:
+            person, number = possessor
+        verb = dict(item.item, pos='verb', mood='indicative', tense=tense, person=person, number=number,
+                    form=(item.attrib('form') or '') + '・分詞 (関係節)')
+        word.items = [type(item)(verb)]
+        word.attributive = None
+        word.relative_participle = True
+        gap = 'Nom' if subject_gap else 'Acc'
+        pronoun = Word('(ki)', [{'surface': '(ki)', 'pos': 'pronoun', 'base': '(関係節の空所)', 'ja': '〜するところの',
+                                 'gloss_lang': 'ja', 'desc': '関係代名詞', '_': [(gap, 'sg', GENDER), (gap, 'pl', GENDER)],
+                                 'compact': True}])
+        pronoun.token_ix = None
+        boundary = Word(',', None)
+        boundary.token_ix = None
+        out[start:start] = [boundary, pronoun]
+        out.append(word)
+        comma = Word(',', None)
+        comma.token_ix = None
+        out.append(comma)
+    return out
+
+
 def mark_participles(words):
     """分詞 (-an・-dığı・-acağı) を後ろの名詞に掛け、前の補語と一緒に関係節として名詞の訳に組み込む"""
     from dragoman.core.japanese import japanese_plain
@@ -592,8 +653,14 @@ def mark_participles(words):
 # ----------------------------------------------------------------------
 
 def mark_topic(words):
-    """文の最初の主格の名詞・代名詞 (動詞より前) は主題「は」"""
-    for w in words:
+    """文の最初の主格の名詞・代名詞 (動詞より前) は主題「は」。名詞の前の関係節の語は飛ばす"""
+    relatives = [k for k, w in enumerate(words) if getattr(w, 'relative_participle', False)]
+    first_verb = next((k for k, w in enumerate(words) if _pos(w) == 'verb' and
+                       not getattr(w, 'relative_participle', False)), len(words))
+    start = max([k + 1 for k in relatives if k < first_verb], default=0)
+    for w in words[start:]:
+        if w.items is None and w.token_ix is None:
+            continue   # 関係節の区切りに補った読点
         if _pos(w) == 'verb' or w.items is None:
             return
         if _pos(w) in ('noun', 'pronoun') and _item(w)._ and _item(w)._[0][0] == 'Nom':
@@ -608,7 +675,7 @@ def assign_roles(words):
     (kitap okudu「本を読んだ」)、文頭の主格・代名詞は主題「は」。動詞の無い節には見えない繋辞を補う
     (Kitap masada「本は机にある」、Ali öğretmen「アリは先生である」)"""
     out, clause = [], []
-    verbless = not any(_pos(w) == 'verb' for w in words)
+    verbless = not any(_pos(w) == 'verb' and not getattr(w, 'relative_participle', False) for w in words)
     for word in words + [None]:
         if word is None or word.items is None and PUNCTUATION.get(word.surface) in ('period', 'question') or \
                 word.items is not None and _pos(word) == 'conj' and word.surface.lower() not in TURKISH.and_words:
@@ -621,7 +688,11 @@ def assign_roles(words):
 
 
 def _clause_roles(clause, supply=True):
-    verbs = [w for w in clause if _pos(w) == 'verb']
+    verbs = [w for w in clause if _pos(w) == 'verb' and not getattr(w, 'relative_participle', False)]
+    relatives = [k for k, w in enumerate(clause) if getattr(w, 'relative_participle', False)]
+    if relatives:   # 関係節 (格は relative_participles で決めた) の後ろの主節の部分だけを見る
+        cut = relatives[-1] + 1
+        return clause[:cut] + _clause_roles(clause[cut:], supply)
     nominals = [w for w in clause if _pos(w) in ('noun', 'pronoun')]
     if verbs:
         verb = verbs[-1]
@@ -637,6 +708,10 @@ def _clause_roles(clause, supply=True):
     if not nominals or not supply:
         return clause   # 動詞の無い文の最後の区切りにだけ繋辞を補う (読点で並べた名詞の一つ一つにではなく)
     last = nominals[-1]
+    tail = [w for w in clause if _pos(w) == 'adj' and clause.index(w) > clause.index(last)]
+    if tail:   # 形容詞の述語 (Çocuklar mutlu「子供たちは幸せだ」)
+        last = tail[-1]
+        _item(last)._ = [('Nom',) + c[1:] for c in (_item(last)._ or [])[:1]] or _item(last)._
     case = _item(last)._[0][0] if _item(last)._ else 'Nom'
     copula = _copula({}, {'tense': 'present'})
     if case in ('Loc', 'Dat', 'Abl'):
@@ -668,7 +743,7 @@ def lookup_all(surfaces):
             rec['role_case'] = _item(w)._[0][0]
     global _display
     _display = list(words)
-    words = mark_participles(words)
+    words = relative_participles(words) if RELATIVE_CLAUSES else mark_participles(words)
     words = assign_roles(words)
     mark_topic(words)
     for w in words:
