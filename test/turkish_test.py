@@ -36,13 +36,13 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Bu ev çok büyük değil.'), 'とても,多い / {この}家は / 大きくない')
 
     def test_literal(self):
-        self.assertEqual(self.lit("Ali'nin okuduğu kitap güzeldi."), 'Aliが 読んだ 本は 美しかった。')
+        self.assertEqual(self.lit("Ali'nin okuduğu kitap güzeldi."), 'アリが 読んだ 本は 美しかった。')
         self.assertEqual(self.lit('Eve gelince yemek yedik.'), '家に 来ると 食事を 食べた。')
         self.assertEqual(self.lit('Kitap okuyan çocuk benim kardeşim.'), '本を 読む 子供は 私の 兄弟だ。')
         self.assertEqual(self.lit('Kapıyı açıp içeri girdi.'), 'ドアを 開けて 中へ 入った。')
         self.assertEqual(self.lit('Dün akşam evde değildim.'), '昨日 夕方 家に いなかった。')
         self.assertEqual(self.lit('Sen bu filmi gördün mü?'), '君は この 映画を 見たか？')
-        self.assertEqual(self.lit('Bu kitap Ali tarafından yazıldı.'), 'この 本は Ali によって 書かれた。')
+        self.assertEqual(self.lit('Bu kitap Ali tarafından yazıldı.'), 'この 本は アリ によって 書かれた。')
 
     def test_detect(self):
         from dragoman.main import detect

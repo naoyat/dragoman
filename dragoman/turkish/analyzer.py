@@ -338,8 +338,11 @@ def _noun_word(rec):
                 'person': person, 'number': pnumber, '_': _cngs([case], pnumber), 'compact': True, 'main': True}
         return Word(rec['surface'], [data])
     ja, gloss_lang, row = morphology.gloss(lemma, 'name' if rec.get('proper') else 'noun')
+    if rec.get('proper') and (ja is None or gloss_lang == 'en'):
+        from dragoman.core.katakana_names import turkish as katakana
+        ja, gloss_lang = katakana(lemma), 'ja'   # 辞書に無い名前はカタカナ (Ali → アリ)
     if ja is None:
-        ja, gloss_lang = (lemma, 'en') if rec.get('proper') else (lemma, 'ja')
+        ja, gloss_lang = lemma, 'ja'
     possessive = morphology.POSSESSIVES.get(rec.get('possessive') or '', '')
     if possessive and gloss_lang == 'ja':
         ja = ','.join(possessive + j for j in ja.split(',')[:2])

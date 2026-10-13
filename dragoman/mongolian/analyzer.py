@@ -253,10 +253,11 @@ def _noun_word(rec):
                 'main': True}
         return Word(rec['surface'], [data])
     ja, gloss_lang, row = morphology.gloss(lemma, 'noun')
+    if rec.get('proper') and (ja is None or gloss_lang == 'en'):
+        from dragoman.core.katakana_names import mongolian as katakana
+        ja, gloss_lang = katakana(lemma), 'ja'   # 辞書に無い名前はカタカナ (Бат → バト)
     if ja is None:
-        ja, gloss_lang = lemma, 'en' if rec.get('proper') else 'ja'
-        if rec.get('proper'):
-            ja = rec['surface'][:1].upper() + lemma[1:]
+        ja, gloss_lang = lemma, 'ja'
     if rec.get('reflexive') and gloss_lang == 'ja':
         ja = ','.join('自分の' + j for j in ja.split(',')[:1])
     data = {'surface': rec['surface'], 'pos': 'noun', 'base': '%s %s' % (lemma, (row or {}).get('roman') or ''),

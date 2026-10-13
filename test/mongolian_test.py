@@ -43,7 +43,7 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.lit('Би чамайг иртэл хүлээнэ.'), '私は 君を 来るまで 待つ。')
         self.assertEqual(self.lit('Тэр сандал дээр суугаад ном уншиж байна.'), 'その 椅子の上で 座って 本を 読んでいる。')
         self.assertEqual(self.lit('Бид өчигдөр кино үзсэнгүй.'), '私たちは 昨日 映画を 見なかった。')
-        self.assertEqual(self.lit('Батын бичсэн захиа ширээн дээр байна.'), 'Батが 書いた 手紙は 机の上に ある。')
+        self.assertEqual(self.lit('Батын бичсэн захиа ширээн дээр байна.'), 'バトが 書いた 手紙は 机の上に ある。')
         self.assertEqual(self.lit('Энэ бол миний ном.'), 'これは 私の 本だ。')
 
     def test_latin_input(self):
