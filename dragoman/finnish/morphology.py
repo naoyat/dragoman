@@ -66,7 +66,8 @@ GLOSSES = {
     'jo': 'もう', 'vielä': 'まだ', 'myös': '〜も', 'hyvin': 'よく,とても', 'paljon': 'たくさん', 'vähän': '少し',
     'täällä': 'ここで', 'siellä': 'そこで', 'kotiin': '家へ', 'kotona': '家で', 'ei': '〜ない', 'kyllä': 'はい',
     'yksi': '一', 'kaksi': '二', 'kolme': '三', 'neljä': '四', 'viisi': '五', 'kuusi': '六', 'seitsemän': '七',
-    'kahdeksan': '八', 'yhdeksän': '九', 'kymmenen': '十', 'sata': '百', 'tuhat': '千', 'omena': 'りんご', 'talo': '家',
+    'kuningas': '王', 'kuningatar': '女王', 'puutarha': '庭', 'ruusu': 'バラ', 'sotilas': '兵士', 'vihollinen': '敵',
+    'jumala': '神', 'sota': '戦争', 'maanviljelijä': '農夫', 'runoilija': '詩人', 'saari': '島', 'kahdeksan': '八', 'yhdeksän': '九', 'kymmenen': '十', 'sata': '百', 'tuhat': '千', 'omena': 'りんご', 'talo': '家',
 }
 
 

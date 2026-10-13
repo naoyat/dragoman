@@ -27,7 +27,7 @@ from collections import Counter
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dragoman.latin import analyzer, latindic
-from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, arabic, hebrew, persian, hindi, urdu, ainu, tibetan, japanese, kobun, korean
+from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, arabic, hebrew, persian, hindi, urdu, ainu, tibetan, japanese, kobun, korean, turkish, mongolian
 
 
 def _word_list(text):
@@ -106,7 +106,7 @@ def show_frame(clauses):
 OTHERS = [('ru', 'ロシア語:', russian), ('sa', '梵語:    ', sanskrit), ('grc', 'ギリシア語:', greek),
           ('id', 'インドネシア語:', indonesian), ('tl', 'タガログ語:', tagalog), ('ar', 'アラビア語:', arabic),
           ('he', 'ヘブライ語:', hebrew), ('fa', 'ペルシア語:', persian), ('hi', 'ヒンディー語:', hindi),
-          ('ur', 'ウルドゥー語:', urdu), ('ain', 'アイヌ語:', ainu), ('ko', '韓国語:  ', korean),
+          ('ur', 'ウルドゥー語:', urdu), ('ain', 'アイヌ語:', ainu), ('tr', 'トルコ語: ', turkish), ('mn', 'モンゴル語:', mongolian), ('ko', '韓国語:  ', korean),
           ('bo', 'チベット語:', tibetan), ('ja', '日本語:  ', japanese),
           ('kobun', '古文:    ', kobun)]
 
@@ -148,7 +148,7 @@ def run_other(text, source):
                'sa': ('梵語:    ', sanskrit), 'grc': ('ギリシア語:', greek), 'id': ('インドネシア語:', indonesian),
                'tl': ('タガログ語:', tagalog), 'ar': ('アラビア語:', arabic), 'he': ('ヘブライ語:', hebrew), 'fa': ('ペルシア語:', persian), 'hi': ('ヒンディー語:', hindi),
                'ur': ('ウルドゥー語:', urdu), 'ain': ('アイヌ語:', ainu), 'bo': ('チベット語:', tibetan), 'ja': ('日本語:  ', japanese),
-               'ko': ('韓国語:  ', korean),
+               'ko': ('韓国語:  ', korean), 'tr': ('トルコ語: ', turkish), 'mn': ('モンゴル語:', mongolian),
                'kobun': ('古文:    ', kobun)}
     for analysis in analyzer_module.analyze_text(text):
         print(analysis.text)
@@ -157,7 +157,7 @@ def run_other(text, source):
             print('  (述語が見つからない)\n')
             continue
         show_frame(clauses)
-        for lang in ['ja', 'kobun', 'la', 'en', 'ru', 'sa', 'grc', 'id', 'tl', 'ar', 'he', 'fa', 'hi', 'ur', 'ko', 'ain', 'bo']:
+        for lang in ['ja', 'kobun', 'la', 'en', 'ru', 'sa', 'grc', 'id', 'tl', 'ar', 'he', 'fa', 'hi', 'ur', 'tr', 'mn', 'ko', 'ain', 'bo']:
             if lang not in TARGETS and lang != source:
                 continue
             label, module = modules[lang]

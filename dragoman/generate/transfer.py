@@ -61,7 +61,39 @@ def _index(lang):
                     continue
                 for rank, g in enumerate(glosses):
                     index.setdefault(g.lower(), []).append((rank, target))
+    _add_hand_glosses(lang, index)
     return index
+
+
+def _guess_pos(lang, lemma, known):
+    if known:
+        return known
+    if lang == 'ko' and lemma.endswith('다') or lang == 'mn' and lemma.endswith('х') or \
+            lang == 'tr' and lemma.endswith(('mak', 'mek')) or lang == 'de' and lemma.islower() and lemma.endswith('en'):
+        return 'verb'
+    return 'noun'
+
+
+def _add_hand_glosses(lang, index):
+    """解析器の手作りの訳語の表の語を、日本語の訳語から和英 (JMdict) で引いた英語の索引にも入れる (辞書に無い基本語:
+    モンゴル語の сарнай「バラ」)"""
+    table = hand_glosses(lang)
+    if not table:
+        return
+    poses = {}
+    for entries in index.values():
+        for _, target in entries:
+            poses.setdefault(target.lemma, target.pos)
+    for lemma, jas in table.items():
+        pos = _guess_pos(lang, lemma, poses.get(lemma))
+        english_words = []
+        for ja in jas:
+            english_words += [e for e in _ja_english(ja)[:3] if e not in english_words]
+        if not english_words:
+            continue
+        target = Target(lemma, pos, tuple(english_words), '', '', 3)
+        for rank, en in enumerate(english_words[:4]):
+            index.setdefault(en.lower(), []).append((rank, target))
 
 
 @functools.lru_cache(maxsize=1)
@@ -268,6 +300,7 @@ PREFERRED = {
            ('carefully', 'adv'): ('yatnena', ''), ('centaur', 'noun'): ('kinnara', 'm'),
            ('boat', 'noun'): ('nOkA', 'f'), ('ship', 'noun'): ('nO', 'f'), ('cattle', 'noun'): ('go', 'm'),
            ('fruit', 'noun'): ('Pala', 'n'), ('priestess', 'noun'): ('tApasI', 'f'), ('victim', 'noun'): ('paSu', 'm')},
+    'mn': {('great', 'adj'): ('том', ''), ('big', 'adj'): ('том', ''), ('large', 'adj'): ('том', '')},
     'id': {('only-begotten', 'adj'): ('tunggal', ''), ('leave', 'verb'): ('pergi', ''), ('depart', 'verb'): ('pergi', ''),
            ('desire', 'verb'): ('ingin', ''), ('girl', 'noun'): ('gadis', ''), ('boy', 'noun'): ('anak laki-laki', ''), ('child', 'noun'): ('anak', ''),
            ('son', 'noun'): ('putra', ''), ('daughter', 'noun'): ('putri', ''), ('teacher', 'noun'): ('guru', ''),

@@ -79,7 +79,8 @@ GLOSSES = {
     'mutlu': '幸せな', 'hızlı': '速い', 'yavaş': '遅い', 'çok': 'とても,多い', 'az': '少ない', 'daha': 'もっと',
     'en': '最も', 'şimdi': '今', 'bugün': '今日', 'dün': '昨日', 'yarın': '明日', 'her zaman': 'いつも',
     'hep': 'いつも', 'artık': 'もう', 'hâlâ': 'まだ', 'henüz': 'まだ', 'yine': 'また', 'tekrar': '再び', 'burada': 'ここで',
-    'orada': 'そこで', 'mektup': '手紙', 'kardeş': '兄弟', 'içeri': '中へ', 'dışarı': '外へ', 'film': '映画',
+    'orada': 'そこで', 'kral': '王', 'kraliçe': '女王', 'bahçe': '庭', 'gül': 'バラ', 'asker': '兵士', 'düşman': '敵',
+    'tanrı': '神', 'savaş': '戦争', 'çiftçi': '農夫', 'şair': '詩人', 'ada': '島', 'mektup': '手紙', 'kardeş': '兄弟', 'içeri': '中へ', 'dışarı': '外へ', 'film': '映画',
     'evet': 'はい', 'hayır': 'いいえ', 'belki': 'たぶん', 'gerçekten': '本当に', 'birlikte': '一緒に',
 }
 # 助詞の無いときに副詞として読む時の名詞・場所の語

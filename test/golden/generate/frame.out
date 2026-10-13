@@ -2,6 +2,8 @@ Puella nautae rosam dat .
   述語: dō [現在 3sg 直説法 能動]
     主語 (Nom/Voc): puella sg f ← 属格 nauta sg m
     目的語 (Acc): rosa sg f
+  トルコ語:  Bahriyelinin kızı gülü veriyor.
+  モンゴル語: Далайчины охин сарнайг өгнө.
   韓国語:   해원의 소녀가 장미를 준다.
 Agricola in agrō labōrat .
   (述語が見つからない)
@@ -9,16 +11,22 @@ Mārcus et Iūlia in vīllā habitant .
   述語: habitō [現在 3pl 直説法 能動]
     前置詞句 (in + Acc): ? sg
     主語 (Nom): Mārcus sg et Iūlia sg
-  韓国語:   마르쿠스와 율리아가 거주한다.
+  トルコ語:  Markus ve Iulia yaşıyor.
+  モンゴル語: Маркус ба Иулиа амьдрана.
+  韓国語:   마르쿠스와 율리아가 산다.
 Puerī puellaeque cantant .
   述語: cantō [現在 3pl 直説法 能動]
-  韓国語:   노래한다.
+  トルコ語:  Ötüyorlar.
+  モンゴル語: Дуулна.
+  韓国語:   부른다.
 Et dominus et servus labōrant .
   (述語が見つからない)
 Fīlia agricolae rosās pulchrās amat .
   述語: amō [現在 3sg 直説法 能動]
     主語 (Nom/Voc): fīlia sg f ← 属格 agricola sg m
     目的語 (Acc): rosa pl f + pulcher
+  トルコ語:  Çiftçinin kızı güzel gülleri seviyor.
+  モンゴル語: Тариачины охин сайхан сарнайг хайрлана.
   韓国語:   농부의 딸이 아름다운 장미를 사랑한다.
 Bonus et fortis vir pugnat .
   (述語が見つからない)
@@ -26,106 +34,148 @@ Haec puella illum puerum videt .
   述語: videō [現在 3sg 直説法 能動]
     主語 (Nom/Voc): puella sg f + hīc
     目的語 (Acc): puer sg m + ille
+  トルコ語:  Bu kız o oğlanı görüyor.
+  モンゴル語: Энэ охин тэр хүүг үзнэ.
   韓国語:   이 소녀가 그 소년을 본다.
 Rōma magna est .
   述語: sum [現在 3sg 直説法 能動]
     主語 (Nom/Voc): Rōma sg f
     補語 (Nom/Voc/Acc): magnus sg f
+  トルコ語:  Roma büyük.
+  モンゴル語: Рома том.
   韓国語:   로마가 좋다.
 Mārcus est agricola .
   述語: sum [現在 3sg 直説法 能動]
     主語 (Nom/Voc): agricola sg m
     辞書に無い語 (): Mārcus sg
+  トルコ語:  Çiftçi var.
+  モンゴル語: Тариачин байна.
   韓国語:   농부가 있다.
 Puellae pulchrae erant .
   述語: sum [未完了 3pl 直説法 能動]
     主語 (Dat/Nom/Voc): puella pl f
     補語 (Gen/Dat/Nom/Voc): pulcher pl f
+  トルコ語:  Kızlar güzellerdi.
+  モンゴル語: Охинууд сайхан байсан.
   韓国語:   소녀들이 아름다웠다.
 Via longa et lāta est .
   述語: sum [現在 3sg 直説法 能動]
     主語 (Nom/Voc): via sg f
     補語 (Nom/Voc/Nom/Voc/Acc): longus sg f et lātus sg f
+  トルコ語:  Yol uzun ve ferah.
+  モンゴル語: Мөр урт ба өргөн.
   韓国語:   길이 길고 드넓다.
 Agricola laetus nōn erit .
   述語: sum [未来 3sg 直説法 能動 否定]
     主語 (Nom/Voc): agricola sg m
     補語 (Nom): laetus sg m
+  トルコ語:  Çiftçi mutlu değil.
+  モンゴル語: Тариачин жаргалтай биш.
   韓国語:   농부가 안 기쁠 것이다.
 Via longa et lāta nōn erat .
   述語: sum [未完了 3sg 直説法 能動 否定]
     主語 (Nom/Voc): via sg f
     補語 (Nom/Voc/Nom/Voc/Acc): longus sg f et lātus sg f
+  トルコ語:  Yol uzun ve ferah değildi.
+  モンゴル語: Мөр урт ба өргөн биш байсан.
   韓国語:   길이 길고 안 드넓었다.
 Templum aureum est .
   述語: sum [現在 3sg 直説法 能動]
     主語 (Nom/Voc/Acc): templum sg n
     辞書に無い語 (): aureum sg
+  トルコ語:  Tapınak var.
+  モンゴル語: Сүм байна.
   韓国語:   관자놀이가 있다.
 Magnus vir est .
   述語: sum [現在 3sg 直説法 能動]
     主語 (Nom/Voc): vir sg m + magnus
+  トルコ語:  Büyük adam var.
+  モンゴル語: Том хүн байна.
   韓国語:   좋은 남자가 있다.
 Mihi est liber .
   述語: sum [現在 3sg 直説法 能動]
     受け手 (Dat): ego sg m
     主語 (Nom/Voc): liber sg m
+  トルコ語:  Kitap var.
+  モンゴル語: Ном байна.
   韓国語:   책이 있다.
 Est in hortō rosa .
   述語: sum [現在 3sg 直説法 能動]
     前置詞句 (in + Abl): hortus sg m
     主語 (Nom/Voc): rosa sg f
+  トルコ語:  Gül bahçede var.
+  モンゴル語: Сарнай цэцэрлэгт байна.
   韓国語:   장미가 정원에 있다.
 Puer ā magistrō laudātur .
   述語: laudō [現在 3sg 直説法 受動]
     主語 (Nom/Voc): puer sg m
     前置詞句 (ā + Abl): magister sg m
-  韓国語:   소년이 선생님에 의해 격찬된다.
+  トルコ語:  Oğlan öğretmen tarafından alkışlanıyor.
+  モンゴル語: Хүү багшаар [praise].
+  韓国語:   소년이 선생에 의해 격찬된다.
 Servī epistulās portāvērunt .
   述語: portō [完了 3pl 直説法 能動]
     目的語 (Acc): epistula pl f ← 属格 servus sg m
+  トルコ語:  Kulun mektuplarını götürdüler.
+  モンゴル語: Боолын захиаг өмссөн.
   韓国語:   노비의 편지를 운반했다.
 Nautae mare nōn timent .
   述語: timeō [現在 3pl 直説法 能動 否定]
     目的語 (Nom/Voc/Acc): mare sg n ← 属格 nauta sg m
+  トルコ語:  Bahriyelinin denizini korkmuyorlar.
+  モンゴル語: Далайчины далайг айхгүй.
   韓国語:   해원의 바다를 안 겁낸다.
 Servus epistulam nōn portābat .
   述語: portō [未完了 3sg 直説法 能動 否定]
     主語 (Nom): servus sg m
     目的語 (Acc): epistula sg f
+  トルコ語:  Kul mektubu götürmedi.
+  モンゴル語: Боол захиаг өмссөнгүй.
   韓国語:   노비가 편지를 안 운반했다.
 Puer ā magistrō nōn laudātus est .
   述語: laudō [完了 3sg 直説法 受動 否定]
     主語 (Nom/Voc): puer sg m
     前置詞句 (ā + Abl): magister sg m
-  韓国語:   소년이 선생님에 의해 안 격찬됐다.
+  トルコ語:  Oğlan öğretmen tarafından alkışlanmadı.
+  モンゴル語: Хүү багшаар [praise].
+  韓国語:   소년이 선생에 의해 안 격찬됐다.
 Cum amīcīs ad oppidum ambulāmus .
   述語: ambulō [現在 1pl 直説法 能動]
     前置詞句 (cum + Abl): amīcus pl m
     前置詞句 (ad + Acc): oppidum sg n
-  韓国語:   친구들과 함께 시에 걷는다.
+  トルコ語:  Arkadaşlarla şehre yürüyoruz.
+  モンゴル語: Найзуудтай хот руу аялна.
+  韓国語:   친구들과 함께 도시에 걷는다.
 Hīs rēbus cognitīs agricola ad vīllam vēnit .
   述語: veniō [完了 3sg 直説法 能動]
     受け手 (Dat/Abl): rēs pl f + hīc
     主語 (Nom/Voc): agricola sg m
     前置詞句 (ad + Acc): ? sg
     辞書に無い語 (): cognitīs sg
+  トルコ語:  Çiftçi bu nesnelere geldi.
+  モンゴル語: Тариачин энэ объектод ирсэн.
   韓国語:   농부가 이 적에게 왔다.
 Puellā cantante puer dormit .
   述語: dormiō [現在 3sg 直説法 能動]
     手段・道具 (Abl): puella sg f
     主語 (Nom/Voc): puer sg m
     辞書に無い語 (): cantante sg
+  トルコ語:  Oğlan kıza uyuyor.
+  モンゴル語: Хүү охинд унтна.
   韓国語:   소년이 소녀에게 잔다.
 Rēge mortuō populus flēvit .
   述語: fleō [完了 3sg 直説法 能動]
     手段・道具 (Abl): rēx sg m
     主語 (Nom): populus sg m
     辞書に無い語 (): mortuō sg
+  トルコ語:  Cemaat krala ağladı.
+  モンゴル語: Иргэн хаанд уйлсан.
   韓国語:   군집이 왕에게 울었다.
 Cum hīs rēbus cognitīs vēnit .
   述語: veniō [完了 3sg 直説法 能動]
     前置詞句 (cum + Abl): rēs pl f + hīc
+  トルコ語:  Bu nesnelerle geldi.
+  モンゴル語: Энэ объекттой ирсэн.
   韓国語:   이 적과 함께 왔다.
 Mīlitēs locīs apertīs pugnābant .
   (述語が見つからない)
@@ -136,7 +186,9 @@ Puella flōrēs carpēns cantat .
     主語 (Nom/Voc): puella sg f
     目的語 (Nom/Voc/Acc): flōs pl f
     辞書に無い語 (): carpēns sg
-  韓国語:   소녀가 꽃을 노래한다.
+  トルコ語:  Kız çiçekleri ötüyor.
+  モンゴル語: Охин цэцэгийг дуулна.
+  韓国語:   소녀가 꽃을 부른다.
 Haec locūtus discessit .
   (述語が見つからない)
 Rēgīna , verbīs nūntiī commōta , lacrimāvit .
@@ -145,12 +197,16 @@ Rēgīna , verbīs nūntiī commōta , lacrimāvit .
     受け手 (Dat/Abl): verbum pl n
     辞書に無い語 (): nūntiī sg
     分詞句: commōtus (commoveō、完了分詞・受動 Nom sg f)
-  韓国語:   여왕이 낱말에게 울었다.
+  トルコ語:  Kraliçe sözlere ağladı.
+  モンゴル語: Хатан үгт уйлсан.
+  韓国語:   여왕이 말에게 울었다.
 Mīlitēs hostem fugientem cēpērunt .
   述語: capiō [完了 3pl 直説法 能動]
     主語 (Nom/Voc/Acc): mīles pl m
     目的語 (Acc): hostis sg m ← 分詞 (修飾): fugiēns (fugiō、現在分詞 Acc sg m)
-  韓国語:   병사가 적을 잡았다.
+  トルコ語:  Askerler düşmanı aldı.
+  モンゴル語: Цэрэг дайсаныг авсан.
+  韓国語:   군인이 적을 잡았다.
 Puer mātrī flōrēs dans rīsit .
   (述語が見つからない)
 Mārcus dīcit puerōs in hortō lūdere .
@@ -160,12 +216,16 @@ Mārcus dīcit puerōs in hortō lūdere .
       述語: lūdō [現在 3sg 不定法 能動]
         前置詞句 (in + Abl): hortus sg m
         主語 (Acc): puer pl m
+  トルコ語:  Markus söylüyor.
+  モンゴル語: Маркус хэлнэ.
   韓国語:   마르쿠스가 이른다.
 Videō puellam cantāre .
   述語: videō [現在 1sg 直説法 能動]
     不定詞句 (perception):
       述語: cantō [現在 3sg 不定法 能動]
         主語 (Acc): puella sg f
+  トルコ語:  Görüyorum.
+  モンゴル語: Үзнэ.
   韓国語:   본다.
 Puella dīcit sē rosās amāre .
   述語: dīcō [現在 3sg 直説法 能動]
@@ -174,6 +234,8 @@ Puella dīcit sē rosās amāre .
       述語: amō [現在 3sg 不定法 能動]
         主語 (Acc/Abl): sē sg c
         目的語 (Acc): rosa pl f
+  トルコ語:  Kız söylüyor.
+  モンゴル語: Охин хэлнэ.
   韓国語:   소녀가 이른다.
 Putō Rōmam magnam esse .
   述語: putō [現在 1sg 直説法 能動]
@@ -181,6 +243,8 @@ Putō Rōmam magnam esse .
       述語: sum [現在 3sg 不定法 能動]
         主語 (Acc): Rōma sg f
         補語 (Acc): magnus sg f
+  トルコ語:  Yargılıyorum.
+  モンゴル語: Цэвэрлэнэ.
   韓国語:   판가름한다.
 Dominus servum epistulam portāre iubet .
   述語: portō [現在 3sg 不定法 能動]
@@ -188,12 +252,16 @@ Dominus servum epistulam portāre iubet .
     目的語 (Acc): servus sg m
     目的語 (Acc): epistula sg f
     辞書に無い語 (): iubet sg
+  トルコ語:  Ağa kulu götürüyor.
+  モンゴル語: Эзэн боолыг өмснө.
   韓国語:   주가 노비를 운반한다.
 Puer librum legere potest .
   述語: legō [現在 3sg 不定法 能動]
     主語 (Nom/Voc): puer sg m
     目的語 (Acc): liber sg m
     辞書に無い語 (): potest sg
+  トルコ語:  Oğlan kitabı okuyor.
+  モンゴル語: Хүү номыг уншина.
   韓国語:   소년이 책을 읽는다.
 Caesar hostēs veritus castra mōvit .
   述語: moveō [完了 3sg 直説法 能動]
@@ -201,32 +269,44 @@ Caesar hostēs veritus castra mōvit .
     主語 (Nom): Caesar sg
     辞書に無い語 (): veritus sg
     辞書に無い語 (): castra sg
-  韓国語:   케사르가 적들을 옮겼다.
+  トルコ語:  Kesar düşmanları gitti.
+  モンゴル語: Кэсар дайсануудыг явсан.
+  韓国語:   케사르가 적들을 갔다.
 Cicerō Pompēium laudat .
   述語: laudō [現在 3sg 直説法 能動]
     主語 (Nom): Cicerō sg
     目的語 (Acc): Pompēium sg
+  トルコ語:  Kikero Pompeium'u alkışlıyor.
+  モンゴル語: Кикэро Помпэиумыг [praise].
   韓国語:   키케로가 폼페윰을 격찬한다.
 Julia et Juno in caelo sunt .
   述語: sum [現在 3pl 直説法 能動]
     前置詞句 (in + Acc): ? sg
     主語 (Nom): Julia sg et Juno sg
+  トルコ語:  Julia ve Juno var.
+  モンゴル語: Йулиа ба Йуно байна.
   韓国語:   율리아와 유노가 있다.
 Uir uiam uidet .
   述語: videō [現在 3sg 直説法 能動]
     主語 (Nom/Voc): vir sg m
     目的語 (Acc): via sg f
+  トルコ語:  Adam yolu görüyor.
+  モンゴル語: Хүн мөрийг үзнэ.
   韓国語:   남자가 길을 본다.
 Puella nautae rosam dat .
   述語: dō [現在 3sg 直説法 能動]
     主語 (Nom/Voc): puella sg f ← 属格 nauta sg m
     目的語 (Acc): rosa sg f
+  トルコ語:  Bahriyelinin kızı gülü veriyor.
+  モンゴル語: Далайчины охин сарнайг өгнө.
   韓国語:   해원의 소녀가 장미를 준다.
 Hic servus dominum suum amat .
   述語: amō [現在 3sg 直説法 能動]
     主語 (Nom): servus sg m
     目的語 (Acc): dominus sg m + suus
     辞書に無い語 (): Hic sg
+  トルコ語:  Kul kendi ağayı Hik'te seviyor.
+  モンゴル語: Боол өөрийн эзэнийг Хикд хайрлана.
   韓国語:   노비가 자기의 주를 히크에서 사랑한다.
 Mīles hostem gladiō acūtō vulnerāvit .
   (述語が見つからない)
