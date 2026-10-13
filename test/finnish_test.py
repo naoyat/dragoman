@@ -30,7 +30,7 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Voin puhua suomea.'), '私が / フィンランド語を / 話すことができる')
 
     def test_possession(self):
-        self.assertEqual(self.ja('Minulla on kaksi kissaa.'), '私には / {二}猫が / いる')         # 所格 + olla
+        self.assertEqual(self.ja('Minulla on kaksi kissaa.'), '私には / {二つの}猫が / いる')         # 所格 + olla
 
     def test_detect(self):
         from dragoman.main import detect

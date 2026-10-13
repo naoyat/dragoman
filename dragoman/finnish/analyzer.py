@@ -112,6 +112,8 @@ def item_of(token):
         if possessor and gloss_lang == 'ja':
             ja = ','.join(possessor + j for j in ja.split(',')[:2])
         if pos == 'NUM':
+            if ja and gloss_lang == 'ja' and len(ja) <= 2:
+                ja += 'つの'   # 数詞は「二つの」(名詞に掛ける)
             return {'surface': text, 'pos': 'adj', 'base': lemma, 'ja': ja, 'gloss_lang': gloss_lang,
                     '_': [(c, n, GENDER) for c in morphology.CASES for n in ('sg', 'pl')], 'main': True}
         data = {'surface': text, 'pos': 'noun', 'base': lemma, 'lemma': lemma, 'ja': ja, 'gloss_lang': gloss_lang,

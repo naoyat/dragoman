@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# 韓国語・トルコ語・モンゴル語・ドイツ語の出口 (generate/korean.py・turkish.py・mongolian.py・german.py):
+# 韓国語・トルコ語・モンゴル語・ドイツ語・フィンランド語の出口 (generate/korean.py・turkish.py・mongolian.py・german.py):
 # 活用・格の接尾辞・母音調和・冠詞と形容詞の語尾。ドイツ語は辞書 (語形の表) が無ければ飛ばす
 #
 import unittest
 
-from dragoman.generate import korean, turkish, mongolian, german
+from dragoman.generate import korean, turkish, mongolian, german, finnish
 from dragoman.generate.name_script import hangul
 
 
@@ -72,6 +72,21 @@ class GermanTestCase(unittest.TestCase):
         self.assertEqual(german.finite('sehen', 'past', 3, 'pl'), ('sahen', ''))
         self.assertEqual(german.finite('anrufen', 'present', 3, 'sg'), ('ruft', 'an'))   # 分離動詞
         self.assertEqual(german.participle_form('lesen'), 'gelesen')
+
+
+@unittest.skipUnless(finnish._db() is not None, 'フィンランド語の辞書 (語形の表) が無い')
+class FinnishTestCase(unittest.TestCase):
+    def test_cases(self):
+        self.assertEqual([finnish.case_form('talo', c) for c in ('Gen', 'Par', 'Ine', 'Ela', 'Ill', 'Ade', 'All')],
+                         ['talon', 'taloa', 'talossa', 'talosta', 'taloon', 'talolla', 'talolle'])
+        self.assertEqual(finnish.case_form('talo', 'Ine', 'pl'), 'taloissa')
+
+    def test_verbs(self):
+        from dragoman.generate.frame import Clause, Lex
+        clause = Clause(Lex('lukea', 'verb', lang='fi'), tense='perfect')
+        self.assertEqual(finnish.verb_form(clause, 3, 'sg'), 'luki')
+        clause = Clause(Lex('lukea', 'verb', lang='fi'), negated=True)
+        self.assertEqual(finnish.verb_form(clause, 1, 'sg'), 'en lue')        # 否定動詞 + 本動詞
 
 
 if __name__ == '__main__':

@@ -316,6 +316,9 @@ def lex_of(word, item=None):
         lemma = item.attrib('lemma')   # 表示の形 (학교 (學校) hakgyo) でなく見出し (辞書・生成器の見出しと同じ)
     if lang == 'ar' and item.attrib('lex'):
         lemma = item.attrib('lex')   # 表示の形 (bint ⁧بِنْت⁩) でなく CAMeL の見出しの鍵 (بِنْت。生成器の見出しと同じ)
+    numeral = SOURCE_NUMERALS.get(lang, {}).get(lemma.lower()) if item.pos in ('adj', 'num', 'det', 'noun') else None
+    if numeral:   # 数詞はラテン語の数詞に (kaksi → duo)
+        return Lex(numeral, 'adj', item.ja, surface=word.surface if word is not None else item.surface)
     pronoun = SOURCE_PRONOUNS.get(lang, {}).get(lemma.lower()) if item.pos in ('pronoun', 'adj', 'det') else None
     if pronoun:   # 閉じた語類はラテン語の形に (я → ego、tad → is)
         personal = lemma.lower() in ('я', 'ты', 'он', 'она', 'оно', 'мы', 'вы', 'они', 'asmad', 'yuṣmad')
@@ -395,6 +398,8 @@ def np_of(node, case=None):
             if readings:
                 np.number, np.gender = readings[0]
             np.animate = relative.gender != 'n'
+    if _lang in SOURCE_NUMERALS and any(isinstance(m, Lex) and m.lemma in _LATIN_NUMERALS[1:] for m in np.modifiers):
+        np.number = 'pl'   # 数詞の後ろの単数の名詞 (kaksi kissaa・iki kedi) はほかの言語では複数 (duo cattī)
     return np
 
 
@@ -504,6 +509,9 @@ def clause_of(predicate, lang=None):
                 if not np.case:
                     np.case = case
                 role = SOURCE_ROLES.get(_lang, {}).get(case) or ROLES.get(case, case)
+                if _lang == 'fi' and case == 'Ade' and clause.copula and np.head is not None and \
+                        (np.head.pos == 'pronoun' or np.animate):
+                    role, np.case = 'recipient', 'Dat'   # 所有の所格 + olla (Minulla on …「私には…がある」→ mihi est)
                 if role in ('means', 'source', 'place') and _lang not in ('', 'la'):
                     # ラテン語に無い格は、ラテン語の形に: 具格 → 奪格、奪格 (起点) → ex + 奪格、処格 → in + 奪格
                     if role == 'means':
@@ -611,6 +619,14 @@ def _second_person_address(clause):
                 np.case = 'Voc'
 
 
+# 数詞 → ラテン語の数詞 (新しい言語の入口: kaksi・zwei・iki・хоёр・두 → duo)
+_LATIN_NUMERALS = ('ūnus', 'duo', 'trēs', 'quattuor', 'quīnque', 'sex', 'septem', 'octō', 'novem', 'decem')
+SOURCE_NUMERALS = {lang: dict(zip(words, _LATIN_NUMERALS)) for lang, words in {
+    'fi': ('yksi', 'kaksi', 'kolme', 'neljä', 'viisi', 'kuusi', 'seitsemän', 'kahdeksan', 'yhdeksän', 'kymmenen'),
+    'de': ('eins', 'zwei', 'drei', 'vier', 'fünf', 'sechs', 'sieben', 'acht', 'neun', 'zehn'),
+    'tr': ('bir', 'iki', 'üç', 'dört', 'beş', 'altı', 'yedi', 'sekiz', 'dokuz', 'on'),
+    'mn': ('нэг', 'хоёр', 'гурван', 'дөрвөн', 'таван', 'зургаан', 'долоон', 'найман', 'есөн', 'арван'),
+    'ko': ('한', '두', '세', '네', '다섯', '여섯', '일곱', '여덟', '아홉', '열')}.items()}
 # 繋辞を中立の sum にする言語
 NEUTRAL_COPULA = ('ko', 'de', 'tr', 'mn', 'fi')
 # 動詞が人称で変わらない言語 (人称は主語の代名詞から)

@@ -27,7 +27,7 @@ from collections import Counter
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dragoman.latin import analyzer, latindic
-from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, arabic, hebrew, persian, hindi, urdu, ainu, tibetan, japanese, kobun, korean, turkish, mongolian, german
+from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, arabic, hebrew, persian, hindi, urdu, ainu, tibetan, japanese, kobun, korean, turkish, mongolian, german, finnish
 
 
 def _word_list(text):
@@ -103,7 +103,7 @@ def show_frame(clauses):
         from dragoman.generate import compare
         print('  要素ごとの比較:')
         print(compare.text_table(clauses, [lang for lang in compare.LANGS if lang in COMPARE]))
-OTHERS = [('ru', 'ロシア語:', russian), ('de', 'ドイツ語:', german), ('sa', '梵語:    ', sanskrit), ('grc', 'ギリシア語:', greek),
+OTHERS = [('ru', 'ロシア語:', russian), ('de', 'ドイツ語:', german), ('fi', 'フィンランド語:', finnish), ('sa', '梵語:    ', sanskrit), ('grc', 'ギリシア語:', greek),
           ('id', 'インドネシア語:', indonesian), ('tl', 'タガログ語:', tagalog), ('ar', 'アラビア語:', arabic),
           ('he', 'ヘブライ語:', hebrew), ('fa', 'ペルシア語:', persian), ('hi', 'ヒンディー語:', hindi),
           ('ur', 'ウルドゥー語:', urdu), ('ain', 'アイヌ語:', ainu), ('tr', 'トルコ語: ', turkish), ('mn', 'モンゴル語:', mongolian), ('ko', '韓国語:  ', korean),
@@ -148,7 +148,7 @@ def run_other(text, source):
                'sa': ('梵語:    ', sanskrit), 'grc': ('ギリシア語:', greek), 'id': ('インドネシア語:', indonesian),
                'tl': ('タガログ語:', tagalog), 'ar': ('アラビア語:', arabic), 'he': ('ヘブライ語:', hebrew), 'fa': ('ペルシア語:', persian), 'hi': ('ヒンディー語:', hindi),
                'ur': ('ウルドゥー語:', urdu), 'ain': ('アイヌ語:', ainu), 'bo': ('チベット語:', tibetan), 'ja': ('日本語:  ', japanese),
-               'ko': ('韓国語:  ', korean), 'tr': ('トルコ語: ', turkish), 'mn': ('モンゴル語:', mongolian), 'de': ('ドイツ語:', german),
+               'ko': ('韓国語:  ', korean), 'tr': ('トルコ語: ', turkish), 'mn': ('モンゴル語:', mongolian), 'de': ('ドイツ語:', german), 'fi': ('フィンランド語:', finnish),
                'kobun': ('古文:    ', kobun)}
     for analysis in analyzer_module.analyze_text(text):
         print(analysis.text)
@@ -157,7 +157,7 @@ def run_other(text, source):
             print('  (述語が見つからない)\n')
             continue
         show_frame(clauses)
-        for lang in ['ja', 'kobun', 'la', 'en', 'ru', 'de', 'sa', 'grc', 'id', 'tl', 'ar', 'he', 'fa', 'hi', 'ur', 'tr', 'mn', 'ko', 'ain', 'bo']:
+        for lang in ['ja', 'kobun', 'la', 'en', 'ru', 'de', 'fi', 'sa', 'grc', 'id', 'tl', 'ar', 'he', 'fa', 'hi', 'ur', 'tr', 'mn', 'ko', 'ain', 'bo']:
             if lang not in TARGETS and lang != source:
                 continue
             label, module = modules[lang]
