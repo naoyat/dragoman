@@ -37,10 +37,10 @@ import tempfile
 
 LANGUAGES = {'la': 'latin', 'grc': 'greek', 'sa': 'sanskrit', 'ru': 'russian', 'he': 'hebrew', 'ar': 'arabic',
              'fa': 'persian', 'hi': 'hindi', 'ur': 'urdu', 'bo': 'tibetan', 'id': 'indonesian', 'ms': 'malay',
-             'tl': 'tagalog', 'ko': 'korean', 'de': 'german', 'ain': 'ainu', 'kobun': 'kobun'}
+             'tl': 'tagalog', 'ko': 'korean', 'de': 'german', 'tr': 'turkish', 'ain': 'ainu', 'kobun': 'kobun'}
 NAMES = {'la': 'ラテン語', 'grc': '古典ギリシア語', 'sa': 'サンスクリット', 'ru': 'ロシア語',
          'he': '聖書ヘブライ語 (聖書アラム語も)', 'ar': 'アラビア語 (現代標準アラビア語)', 'fa': 'ペルシア語',
-         'hi': 'ヒンディー語', 'ur': 'ウルドゥー語', 'bo': '古典チベット語', 'id': 'インドネシア語', 'ms': 'マレー語', 'tl': 'タガログ語', 'ko': '韓国語', 'de': 'ドイツ語', 'ain': 'アイヌ語', 'kobun': '古文 (平安の和文。現代語に組み立て直す)'}
+         'hi': 'ヒンディー語', 'ur': 'ウルドゥー語', 'bo': '古典チベット語', 'id': 'インドネシア語', 'ms': 'マレー語', 'tl': 'タガログ語', 'ko': '韓国語', 'de': 'ドイツ語', 'tr': 'トルコ語', 'ain': 'アイヌ語', 'kobun': '古文 (平安の和文。現代語に組み立て直す)'}
 CODE = re.compile('^[a-z]{2,5}$')
 INDONESIAN_WORDS = {'yang', 'dan', 'di', 'ini', 'itu', 'dengan', 'untuk', 'tidak', 'adalah', 'akan', 'dari', 'ke', 'pada',
                     'saya', 'mereka', 'ada', 'sudah', 'juga', 'dalam', 'oleh', 'bahwa', 'bahawa', 'kami', 'kita'}
@@ -51,6 +51,8 @@ TAGALOG_WORDS = {'ang', 'ng', 'mga', 'ay', 'si', 'hindi', 'ako', 'ko', 'siya', '
 GERMAN_WORDS = {'der', 'die', 'das', 'und', 'ist', 'nicht', 'ich', 'ein', 'eine', 'zu', 'mit', 'sich', 'auf', 'für',
                 'von', 'den', 'dem', 'des', 'sie', 'es', 'wir', 'aber', 'auch', 'ich', 'nach', 'wie', 'sind', 'hat',
                 'haben', 'wird', 'werden', 'kann', 'nur', 'noch', 'schon', 'sehr', 'mein', 'dein', 'im', 'zum'}
+TURKISH_WORDS = {'bir', 've', 'bu', 'için', 'ile', 'çok', 'ben', 'sen', 'biz', 'değil', 'var', 'yok', 'gibi', 'daha',
+                 'ama', 'çünkü', 'kadar', 'mı', 'mi', 'mu', 'mü'}
 MALAY_WORDS = {'kerana', 'sahaja', 'bahawa', 'wang', 'jepun', 'inggeris', 'kerajaan', 'boleh', 'hendak', 'awak'}
 HINDI_WORDS = {'है', 'हैं', 'का', 'की', 'के', 'में', 'नहीं', 'को', 'से', 'ने', 'था', 'थी', 'और', 'पर', 'भी'}
 
@@ -84,6 +86,8 @@ def detect(text):
             return 'ain'  # ラテン文字のアイヌ語 (kamuy, kotan, wa, kor, ne …)
         if len(words & TAGALOG_WORDS) >= 2 and len(words & TAGALOG_WORDS) >= len(words & INDONESIAN_WORDS):
             return 'tl'  # ラテン文字のタガログ語 (ang, ng, mga, ay …)
+        if re.search('[ğışİĞŞçÇ]', text) or len(words & TURKISH_WORDS) >= 2:
+            return 'tr'  # ラテン文字のトルコ語 (ğ ı ş İ か bir, ve, bu, için …)
         if len(words & GERMAN_WORDS) >= 2 or re.search('[äöüßÄÖÜ]', text):
             return 'de'  # ラテン文字のドイツ語 (der, die, das, und, ist … かウムラウト・ß)
         if len(words & INDONESIAN_WORDS) >= 2:

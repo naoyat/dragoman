@@ -11,7 +11,7 @@
 # (-고「〜て」・-지만「〜が」・-면「〜なら」…) も元の文のまま
 #
 from dragoman.core import verb_flags as Verb
-from dragoman.core.japanese import JaVerb, copula_predicate
+from dragoman.core.japanese import JaVerb, japanese_form, japanese_plain
 from . import analyzer, morphology
 
 PUNCTUATION = {'.': '。', ',': '、', '?': '？', '!': '！'}
@@ -181,35 +181,11 @@ def _ending_tail(rec, _):
 
 
 def _plain(ja, adjective, tense, negated):
-    if adjective:
-        return copula_predicate(ja, True, 'past' if tense in ('perfect', 'pluperfect') else 'present', negated)
-    flag = Verb.INDICATIVE
-    if tense in ('perfect', 'pluperfect'):
-        flag |= Verb.PERFECT
-    elif tense == 'future':
-        flag |= Verb.FUTURE
-    try:
-        return JaVerb(ja).form(flag, negated)
-    except Exception:
-        return ja
+    return japanese_plain(ja, adjective, tense, negated)
 
 
 def _form(ja, adjective, form, tense, negated):
-    from dragoman.kobun.modernize import Modern
-    try:
-        if form == 'plain':
-            return _plain(ja, adjective, tense, negated)
-        if form == 'te':
-            if adjective:
-                return ja[:-1] + ('くなくて' if negated else 'くて') if ja.endswith('い') else ja + 'で'
-            return Modern.neg_stem(ja) + 'ないで' if negated else Modern.te(ja)
-        if form == 'masu':
-            return Modern.masu_stem(ja)
-        if form == 'volitional':
-            return Modern.volitional(ja)
-    except Exception:
-        pass
-    return ja
+    return japanese_form(ja, adjective, form, tense, negated)
 
 
 def _particles_after_nominal(rec):

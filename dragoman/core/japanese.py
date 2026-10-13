@@ -566,3 +566,40 @@ def attach_auxiliary(verb, suffix):
     except Exception:
         pass
     return verb + suffix
+
+
+def japanese_plain(ja, adjective, tense, negated):
+    """日本語の訳語の普通形 (読む → 読んだ・読まない・読むだろう。形容詞は 美しい → 美しかった・美しくない)"""
+    if adjective:
+        return copula_predicate(ja, True, 'past' if tense in ('perfect', 'pluperfect') else 'present', negated)
+    from . import verb_flags as Verb
+    flag = Verb.INDICATIVE
+    if tense in ('perfect', 'pluperfect'):
+        flag |= Verb.PERFECT
+    elif tense == 'future':
+        flag |= Verb.FUTURE
+    try:
+        return JaVerb(ja).form(flag, negated)
+    except Exception:
+        return ja
+
+
+def japanese_form(ja, adjective, form, tense, negated):
+    """日本語の訳語の接続の形: plain (普通形)・te (て形)・masu (連用形)・volitional (意志形)・neg (未然形)"""
+    from dragoman.kobun.modernize import Modern
+    try:
+        if form == 'plain':
+            return japanese_plain(ja, adjective, tense, negated)
+        if form == 'te':
+            if adjective:
+                return ja[:-1] + ('くなくて' if negated else 'くて') if ja.endswith('い') else ja + 'で'
+            return Modern.neg_stem(ja) + 'ないで' if negated else Modern.te(ja)
+        if form == 'masu':
+            return Modern.masu_stem(ja)
+        if form == 'volitional':
+            return Modern.volitional(ja)
+        if form == 'neg':
+            return Modern.neg_stem(ja)
+    except Exception:
+        pass
+    return ja
