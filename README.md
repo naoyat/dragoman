@@ -34,18 +34,20 @@ $ echo "लड़के ने किताब पढ़ी।" | python3 dragom
 | ロシア語 | `ru` | pymorphy3、Wiktionary (訳語・強勢) | SynTagRus: 主語 68%・目的語 46% | say (Milena) | [docs/russian.md](docs/russian.md) |
 | 聖書ヘブライ語・アラム語 | `he` | OSHB、HebrewLexicon (Strong・BDB) | (OSHB の解析の選択 97%) | say (Carmit) | [docs/hebrew.md](docs/hebrew.md) |
 | アラビア語 (MSA) | `ar` | CAMeL Tools、Wiktionary | PADT: 主語 66%・目的語 54% | say (Majed) | [docs/arabic.md](docs/arabic.md) |
-| ペルシア語 | `fa` | 自前の規則 + Wiktionary | PerDT: 主語 55%・目的語 43% | espeak-ng | [docs/persian.md](docs/persian.md) |
+| ペルシア語 | `fa` | 自前の規則 + Wiktionary | PerDT: 主語 61%・目的語 48% | espeak-ng | [docs/persian.md](docs/persian.md) |
 | ヒンディー語 | `hi` | Wiktionary の変化表 | HDTB: 主語 53%・目的語 31% | say (Lekha) | [docs/hindi.md](docs/hindi.md) |
 | ウルドゥー語 | `ur` | ヒンディー語の語形に引き当てる | UDTB: 主語 40%・目的語 32% | espeak-ng | [docs/urdu.md](docs/urdu.md) |
 | 古典チベット語 | `bo` | botok で語に分ける、Hill & Garrett の品詞辞書・Wiktionary・蔵英辞書。語順のまま日本語に | Hill & Garrett のコーパス: 語の区切り 87%・格助詞 87% | MMS-TTS / espeak-ng (ラサ方言の音素・声調) | [docs/tibetan.md](docs/tibetan.md) |
-| インドネシア語・マレー語 | `id` / `ms` | 接辞の解析 (meN- の鼻音の交替など) + Wiktionary | UD Indonesian: 主語 59%・目的語 65% | say (Damayanti / Amira) | [docs/indonesian.md](docs/indonesian.md) |
-| タガログ語 | `tl` | 焦点の接辞とアスペクトの解析 + Wiktionary。焦点の名詞を主題「は」に | UD Tagalog: 主語 52%・目的語 35% | espeak-ng (インドネシア語の音声で代用) | [docs/tagalog.md](docs/tagalog.md) |
-| ドイツ語 | `de` | spaCy (de_core_news_sm。品詞・格・依存関係) + Wiktionary。動詞の組 (枠構造)・分離動詞をまとめる | UD German-GSD: 主語 77%・目的語 66% | say (Anna) | [docs/german.md](docs/german.md) |
+| インドネシア語・マレー語 | `id` / `ms` | 接辞の解析 (meN- の鼻音の交替など) + Wiktionary | UD Indonesian: 主語 67%・目的語 69% | say (Damayanti / Amira) | [docs/indonesian.md](docs/indonesian.md) |
+| タガログ語 | `tl` | 焦点の接辞とアスペクトの解析 + Wiktionary。焦点の名詞を主題「は」に | UD Tagalog: 主語 53%・目的語 37% | espeak-ng (インドネシア語の音声で代用) | [docs/tagalog.md](docs/tagalog.md) |
+| ドイツ語 | `de` | spaCy (de_core_news_sm。品詞・格・依存関係) + Wiktionary。動詞の組 (枠構造)・分離動詞をまとめる | UD German-GSD: 主語 90%・目的語 80% | say (Anna) | [docs/german.md](docs/german.md) |
 | 韓国語 | `ko` | kiwipiepy (形態素解析) + Wiktionary (漢字語の漢字も)。助詞から格、語尾から時制・接続、補助用言をまとめる | UD Korean-Kaist: 主語 69%・目的語 81% | say (Yuna) | [docs/korean.md](docs/korean.md) |
 | アイヌ語 | `ain` | 人称の接辞の分解 + 手作りの語彙表・Wiktionary。語順のまま日本語に | — | — | [docs/ainu.md](docs/ainu.md) |
 | 古文（平安の和文） | `kobun` | MeCab + 中古和文UniDic。品詞分解して現代語に組み立て直す | — | say (Kyoko) | [docs/kobun.md](docs/kobun.md) |
 
 評価は関係節の中の主語・目的語も数えます（UD では関係代名詞が関係節の主語・目的語。2026-10-12 から）。
+2026-10-13 に評価ツールの不具合（複合語の行の範囲を次の文の語にも当てていた）を直して測り直しました
+（書かれたとおりの語を渡す言語: アラビア語・ペルシア語・ウルドゥー語・インドネシア語・タガログ語・ドイツ語）。
 ラテン語以外は作りかけです。日本語の訳語の無い語は、英語の語義（Wiktionary・CAMeL Tools）を英語 → 日本語の表で
 置き換えます（下の「訳語」）。それでも訳せない語は英語のまま出ます。
 
