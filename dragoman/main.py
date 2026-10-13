@@ -37,10 +37,10 @@ import tempfile
 
 LANGUAGES = {'la': 'latin', 'grc': 'greek', 'sa': 'sanskrit', 'ru': 'russian', 'he': 'hebrew', 'ar': 'arabic',
              'fa': 'persian', 'hi': 'hindi', 'ur': 'urdu', 'bo': 'tibetan', 'id': 'indonesian', 'ms': 'malay',
-             'tl': 'tagalog', 'ko': 'korean', 'de': 'german', 'tr': 'turkish', 'ain': 'ainu', 'kobun': 'kobun'}
+             'tl': 'tagalog', 'ko': 'korean', 'de': 'german', 'tr': 'turkish', 'mn': 'mongolian', 'ain': 'ainu', 'kobun': 'kobun'}
 NAMES = {'la': 'ラテン語', 'grc': '古典ギリシア語', 'sa': 'サンスクリット', 'ru': 'ロシア語',
          'he': '聖書ヘブライ語 (聖書アラム語も)', 'ar': 'アラビア語 (現代標準アラビア語)', 'fa': 'ペルシア語',
-         'hi': 'ヒンディー語', 'ur': 'ウルドゥー語', 'bo': '古典チベット語', 'id': 'インドネシア語', 'ms': 'マレー語', 'tl': 'タガログ語', 'ko': '韓国語', 'de': 'ドイツ語', 'tr': 'トルコ語', 'ain': 'アイヌ語', 'kobun': '古文 (平安の和文。現代語に組み立て直す)'}
+         'hi': 'ヒンディー語', 'ur': 'ウルドゥー語', 'bo': '古典チベット語', 'id': 'インドネシア語', 'ms': 'マレー語', 'tl': 'タガログ語', 'ko': '韓国語', 'de': 'ドイツ語', 'tr': 'トルコ語', 'mn': 'モンゴル語', 'ain': 'アイヌ語', 'kobun': '古文 (平安の和文。現代語に組み立て直す)'}
 CODE = re.compile('^[a-z]{2,5}$')
 INDONESIAN_WORDS = {'yang', 'dan', 'di', 'ini', 'itu', 'dengan', 'untuk', 'tidak', 'adalah', 'akan', 'dari', 'ke', 'pada',
                     'saya', 'mereka', 'ada', 'sudah', 'juga', 'dalam', 'oleh', 'bahwa', 'bahawa', 'kami', 'kita'}
@@ -75,6 +75,8 @@ def detect(text):
         return None
     if best == 'kobun' and re.search('[\u31f0-\u31ff]', text):
         return 'ain'   # アイヌ語のカタカナの小書きの文字 (ㇰ・ㇼ・ㇷ゚ …。音節末の子音) があればアイヌ語
+    if best == 'ru' and re.search('[өүӨҮ]', text):
+        return 'mn'  # キリル文字のモンゴル語 (ө・ү)
     if best == 'arabic-script':
         if re.search('[\u0679\u0688\u0691\u06ba\u06d2\u06d3\u06be]', text):
             return 'ur'  # ٹ ڈ ڑ ں ے ۓ ھ
