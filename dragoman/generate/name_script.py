@@ -107,6 +107,64 @@ def _devanagari(stem):
     return out   # 語末の子音は inherent a を書かない慣用 (मार्क)
 
 
+# ハングル: 初声・中声の番号 (korean.py の _compose と同じ並び)
+HANGUL_INITIALS = {'g': 0, 'k': 15, 'n': 2, 'd': 3, 't': 16, 'r': 5, 'l': 5, 'm': 6, 'b': 7, 'p': 17, 'f': 17, 's': 9,
+                   '': 11, 'j': 11, 'w': 11, 'z': 12, 'x': 15, 'h': 18, 'c': 15, 'q': 15, 'v': 7}
+HANGUL_VOWELS = {'a': 0, 'A': 0, 'e': 5, 'E': 5, 'i': 20, 'I': 20, 'o': 8, 'O': 8, 'u': 13, 'U': 13}
+HANGUL_JVOWELS = {'a': 2, 'e': 7, 'o': 12, 'u': 17, 'i': 20}            # y + 母音 (야・예・요・유)
+HANGUL_WVOWELS = {'a': 9, 'e': 15, 'i': 16, 'o': 14, 'u': 13}           # w + 母音 (와・웨・위・워)
+HANGUL_FINALS = {'n': 4, 'm': 16, 'l': 8, 'k': 1, 'p': 17, 'g': 0}      # 音節末に残す子音 (ほかは 으 を付けて独立の音節)
+
+
+def _hangul_syllable(initial, vowel, final=0):
+    return chr(0xAC00 + initial * 588 + vowel * 28 + final)
+
+
+def hangul(latin):
+    """ラテン文字の名前 → ハングル (外来語の表記の簡略版。語尾は残す: Mārcus → 마르쿠스、Iūlia → 율리아、Rōma → 로마)"""
+    word = _normalize(latin)
+    out = []
+    k = 0
+    while k < len(word):
+        c = word[k]
+        nxt = word[k + 1] if k + 1 < len(word) else ''
+        if c in HANGUL_VOWELS:
+            out.append(_hangul_syllable(11, HANGUL_VOWELS[c]))
+            k += 1
+            continue
+        if c == 'j' and nxt.lower() in HANGUL_JVOWELS:
+            out.append(_hangul_syllable(11, HANGUL_JVOWELS[nxt.lower()]))
+            k += 2
+            continue
+        if c == 'w' and nxt.lower() in HANGUL_WVOWELS:
+            out.append(_hangul_syllable(11, HANGUL_WVOWELS[nxt.lower()]))
+            k += 2
+            continue
+        if c == 'k' and nxt == 's':   # x = ks → 크스
+            c = 'k'
+        if c == 'l' and nxt in HANGUL_VOWELS and out and (ord(out[-1]) - 0xAC00) % 28 == 0:
+            code = ord(out[-1]) - 0xAC00   # 母音の間の l は ㄹㄹ (Iūlia → 율리아)
+            out[-1] = chr(0xAC00 + code + 8)
+        if nxt in HANGUL_VOWELS:   # 子音 + 母音
+            out.append(_hangul_syllable(HANGUL_INITIALS.get(c, 11), HANGUL_VOWELS[nxt]))
+            k += 2
+            continue
+        # 母音の続かない子音: n・m・l は前の音節の終声、ほかは 으 (s は 스、r は 르)
+        if out and c in ('n', 'm', 'l') and (ord(out[-1]) - 0xAC00) % 28 == 0 and nxt not in ('l',):
+            code = ord(out[-1]) - 0xAC00
+            out[-1] = chr(0xAC00 + code - code % 28 + HANGUL_FINALS[c])
+            k += 1
+            continue
+        if c == 'l' and nxt == 'l' and out:   # ll → ㄹㄹ (Gallia → 갈리아)
+            code = ord(out[-1]) - 0xAC00
+            out[-1] = chr(0xAC00 + code - code % 28 + 8)
+            k += 1
+            continue
+        out.append(_hangul_syllable(HANGUL_INITIALS.get(c, 11), 18))   # 으
+        k += 1
+    return ''.join(out)
+
+
 def to_script(lang, latin):
     """ラテン文字の名前 → 言語 lang の文字。写せない言語・空なら None"""
     if not latin or not re.search('[A-Za-zĀ-ž]', latin):
@@ -125,4 +183,6 @@ def to_script(lang, latin):
         return _hebrew(stem)
     if lang == 'hi':
         return _devanagari(stem)
+    if lang == 'ko':
+        return hangul(latin)
     return None

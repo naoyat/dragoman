@@ -9,6 +9,7 @@
 #   python3 tools/build_english_index.py --lang=grc
 #   python3 tools/build_english_index.py --lang=id
 #   python3 tools/build_english_index.py --lang=tl
+#   python3 tools/build_english_index.py --lang=ko   (de・tr・mn・fi も。辞書 wiktionary.sqlite から)
 #
 # 各行: 見出し語、品詞、英語の訳語 (語義の頭の語句を先に。読点区切り、多くて12)、性 (名詞)、語根の類 (サンスクリットの動詞)、
 #       語義の数 (よく使う語ほど多い)
@@ -93,10 +94,34 @@ def entries(lang):
             yield lemma, pos, en, gender, gana, len(senses)
 
 
+# 抽出データを置いていない言語 (ドイツ語・トルコ語・フィンランド語は標準入力から読んで辞書だけ残した) と、韓国語・モンゴル語:
+# 辞書 ($DRAGOMAN_DATA/<lang>/wiktionary.sqlite。tools/build_<言語>_dic.py) の見出し・品詞・英語の訳語 (多くて3つ)・性から
+DB_LANGS = {'ko': 'key', 'de': 'word', 'tr': 'word', 'mn': 'key', 'fi': 'word'}
+DB_POS = {'noun': 'noun', 'name': 'noun', 'adj': 'adj', 'verb': 'verb', 'adv': 'adv', 'pronoun': 'pronoun',
+          'det': 'pronoun', 'preposition': 'preposition', 'postposition': 'preposition', 'conj': 'conj', 'num': 'num'}
+
+
+def db_entries(lang):
+    import sqlite3
+    db = sqlite3.connect(paths.data(lang, 'wiktionary.sqlite'))
+    columns = [row[1] for row in db.execute('PRAGMA table_info(lemmas)')]
+    gender = 'gender' if 'gender' in columns else "''"
+    for lemma, pos, en, g, senses in db.execute('SELECT %s, pos, en, %s, senses FROM lemmas WHERE en != ""'
+                                                % (DB_LANGS[lang], gender)):
+        pos = DB_POS.get(pos)
+        if pos is None or not en:
+            continue
+        en = ','.join(e for e in en.split(',') if e and len(e) < 60)
+        yield lemma, pos, en, g if g in ('m', 'f', 'n') else '', '', senses or 1
+
+
 def main():
     opts, _ = getopt.getopt(sys.argv[1:], '', ['lang='])
     lang = dict(opts).get('--lang', 'ru')
     out = paths.data(lang, 'en-index.tsv')
+    if lang in DB_LANGS:
+        global entries
+        entries = db_entries
     seen = set()
     n = 0
     with open(out, 'w', encoding='utf-8') as f:

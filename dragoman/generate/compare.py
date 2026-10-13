@@ -12,17 +12,19 @@
 import dataclasses
 
 from . import latin, english, russian, sanskrit, greek, indonesian, tagalog, arabic, hebrew, persian, hindi, ainu, tibetan, \
-    japanese, kobun
+    japanese, kobun, korean
 
-LANGS = ('la', 'grc', 'sa', 'ru', 'en', 'id', 'tl', 'ar', 'he', 'fa', 'hi', 'ur', 'ain', 'bo', 'ja', 'kobun')
+LANGS = ('la', 'grc', 'sa', 'ru', 'en', 'id', 'tl', 'ar', 'he', 'fa', 'hi', 'ur', 'ko', 'ain', 'bo', 'ja', 'kobun')
 NAMES = {'la': 'ラテン語', 'grc': 'ギリシア語', 'sa': 'サンスクリット', 'ru': 'ロシア語', 'en': '英語', 'id': 'インドネシア語',
          'tl': 'タガログ語', 'ar': 'アラビア語', 'he': 'ヘブライ語', 'fa': 'ペルシア語', 'hi': 'ヒンディー語',
-         'ur': 'ウルドゥー語', 'ain': 'アイヌ語', 'bo': 'チベット語',
+         'ur': 'ウルドゥー語', 'ko': '韓国語', 'ain': 'アイヌ語', 'bo': 'チベット語',
          'ja': '日本語', 'kobun': '古文'}
 MODULES = {'la': latin, 'grc': greek, 'sa': sanskrit, 'ru': russian, 'en': english, 'id': indonesian, 'tl': tagalog,
-           'ar': arabic, 'he': hebrew, 'fa': persian, 'hi': hindi, 'ur': hindi, 'ain': ainu,
+           'ar': arabic, 'he': hebrew, 'fa': persian, 'hi': hindi, 'ur': hindi, 'ko': korean, 'ain': ainu,
            'bo': tibetan, 'ja': japanese,
            'kobun': kobun}
+# 比較の表の口 (compare_np・compare_predicate と説明の文字列) を持つ生成器の言語 (言語ごとの分岐を書かない)
+GENERIC = ('ko',)
 ROLE_NAMES = {'subject': '主語', 'object': '目的語', 'recipient': '受け手', 'means': '手段', 'possessor': '所有者',
               'complement': '補語', 'place': '場所', 'source': '起点', 'prep': '前置詞句', 'address': '呼びかけ'}
 CASE_NAMES = {'Nom': '主格', 'Acc': '対格', 'Gen': '属格', 'Dat': '与格', 'Abl': '奪格', 'Loc': '処格', 'Ins': '具格',
@@ -190,6 +192,11 @@ def _bo(wylie):
 
 
 def _np_form(lang, role, np, clause):
+    if lang in GENERIC:
+        try:
+            return MODULES[lang].compare_np(role, np, clause)
+        except Exception as e:
+            return '(作れない: %s)' % type(e).__name__, ''
     if lang in ('ain', 'bo'):
         try:
             return _ain_bo_np(lang, role, np, clause)
@@ -384,6 +391,12 @@ def predicate_form(lang, clause):
         clause = arabic.to_active(clause)
         kept = [(role, np) for role, np in clause.args if role == 'subject']
         reduced = dataclasses.replace(reduced, voice='active', args=kept, person=clause.person, number=clause.number)
+    if lang in GENERIC:
+        try:
+            text, how = MODULES[lang].compare_predicate(clause, reduced)
+            return _display(lang, text), how
+        except Exception as e:
+            return '(作れない: %s)' % type(e).__name__, ''
     if lang in ('ain', 'bo'):
         how = COPULA_HOW[lang] if clause.copula and clause.role('complement') else PREDICATE_HOW[lang]
         try:
@@ -505,7 +518,8 @@ def rows(clause, langs=LANGS):
             key = ({1: 'ego', 2: 'tū'}.get(clause.person, 'is'), clause.number)
             forms = tagalog.PRONOUNS.get(key, ('siya', 'niya', 'kaniya'))
             supplied['tl'] = forms[0] if voice == 'actor' else forms[1]
-        out.append(('主語 (書かれていない)', {lang: (supplied[lang], PRO_DROP.get(lang, '')) for lang in langs}))
+        out.append(('主語 (書かれていない)', {lang: (supplied[lang], PRO_DROP.get(lang) or
+                                                    getattr(MODULES[lang], 'PRO_DROP_HOW', '')) for lang in langs}))
     for role, np in clause.args:
         if copular and role == 'complement':   # 補語は述語の行に (繋辞と合わせて。語形は主語に一致)
             continue
@@ -536,7 +550,7 @@ def parse_langs(value):
     """--compare の値 (la,grc,ja / all) → 言語の符号の列。知らない符号は ValueError"""
     if value.strip() in ('all', ''):   # データの要る言語 (アラビア語・ヘブライ語・ペルシア語・ヒンディー語・ウルドゥー語) は、あるものだけ
         return [lang for lang in LANGS if not hasattr(MODULES[lang], 'available') or
-                lang not in ('ar', 'he', 'fa', 'hi', 'ur', 'ain', 'bo') or
+                lang not in ('ar', 'he', 'fa', 'hi', 'ur', 'ain', 'bo') + GENERIC or
                 MODULES[lang].available()]
     langs = [v.strip() for v in value.split(',') if v.strip()]
     unknown = [lang for lang in langs if lang not in LANGS]

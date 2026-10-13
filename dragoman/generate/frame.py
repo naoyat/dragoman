@@ -46,6 +46,24 @@ SOURCE_PRONOUNS = {
     'sa': {'asmad': ('ego', ''), 'yuṣmad': ('tū', ''), 'tad': ('is', ''), 'idam': ('hic', ''), 'etad': ('hic', ''),
            'adas': ('ille', ''), 'yad': ('quī', ''), 'kim': ('quis', ''), 'sva': ('suus', ''), 'sarva': ('omnis', '')},
 }
+SOURCE_PRONOUNS.update({
+    'ko': {'나': ('ego', 'sg'), '저': ('ego', 'sg'), '우리': ('ego', 'pl'), '저희': ('ego', 'pl'), '너': ('tū', 'sg'),
+           '당신': ('tū', 'sg'), '너희': ('tū', 'pl'), '그': ('is', 'sg'), '그녀': ('is', 'sg'), '그들': ('is', 'pl'),
+           '이것': ('hic', ''), '그것': ('ille', ''), '자기': ('sē', ''), '누구': ('quis', ''), '무엇': ('quid', ''),
+           '이': ('hic', ''), '저것': ('ille', ''), '이런': ('tālis', ''), '그런': ('tālis', ''), '모든': ('omnis', '')},
+    'de': {'ich': ('ego', 'sg'), 'du': ('tū', 'sg'), 'er': ('is', 'sg'), 'sie': ('is', ''), 'es': ('is', 'sg'),
+           'wir': ('ego', 'pl'), 'ihr': ('tū', 'pl'), 'dieser': ('hic', ''), 'jener': ('ille', ''), 'sich': ('sē', ''),
+           'wer': ('quis', ''), 'was': ('quid', ''), 'mein': ('meus', ''), 'dein': ('tuus', ''), 'sein': ('suus', ''),
+           'unser': ('noster', ''), 'euer': ('vester', ''), 'all': ('omnis', ''), 'jeder': ('omnis', '')},
+    'tr': {'ben': ('ego', 'sg'), 'sen': ('tū', 'sg'), 'o': ('is', 'sg'), 'biz': ('ego', 'pl'), 'siz': ('tū', 'pl'),
+           'onlar': ('is', 'pl'), 'bu': ('hic', ''), 'şu': ('iste', ''), 'kendi': ('sē', ''), 'kim': ('quis', ''),
+           'ne': ('quid', '')},
+    'mn': {'би': ('ego', 'sg'), 'чи': ('tū', 'sg'), 'та': ('tū', 'sg'), 'тэр': ('is', 'sg'), 'бид': ('ego', 'pl'),
+           'тэд': ('is', 'pl'), 'энэ': ('hic', ''), 'өөрөө': ('sē', ''), 'хэн': ('quis', ''), 'юу': ('quid', '')},
+    'fi': {'minä': ('ego', 'sg'), 'sinä': ('tū', 'sg'), 'hän': ('is', 'sg'), 'me': ('ego', 'pl'), 'te': ('tū', 'pl'),
+           'he': ('is', 'pl'), 'tämä': ('hic', ''), 'tuo': ('ille', ''), 'se': ('is', 'sg'), 'itse': ('sē', ''),
+           'kuka': ('quis', ''), 'mikä': ('quid', '')},
+})
 # ロシア語の前置詞 + 格 → ラテン語の前置詞 + 格
 SOURCE_PREPOSITIONS = {
     'grc': {('ἐν', 'Dat'): ('in', 'Abl'), ('εἰς', 'Acc'): ('in', 'Acc'), ('ἐς', 'Acc'): ('in', 'Acc'),
@@ -102,8 +120,40 @@ for _surface, _latin in (('فِي', ('in', 'Abl')), ('في', ('in', 'Abl')), ('�
                          ('قبل', ('ante', 'Acc')), ('تَحْتَ', ('sub', 'Abl')), ('تحت', ('sub', 'Abl'))):
     SOURCE_PREPOSITIONS.setdefault('ar', {})[(_surface, 'Gen')] = _latin
     SOURCE_PREPOSITIONS['ar'][(_surface, None)] = _latin
-# 前置詞の無い格の役割 (ラテン語に無い格): 具格は手段、サンスクリットの奪格は起点、処格は場所
-SOURCE_ROLES = {'ru': {'Ins': 'means', 'Loc': 'place'}, 'sa': {'Ins': 'means', 'Abl': 'source', 'Loc': 'place'}}
+# 韓国語・トルコ語・モンゴル語の後置詞 (解析器は前置詞の語にして斜格を支配させる)、ドイツ語の前置詞
+for _code, _table in (('ko', (('에서', ('in', 'Abl')), ('에', ('in', 'Abl')), ('로', ('ad', 'Acc')), ('으로', ('ad', 'Acc')),
+                               ('와', ('cum', 'Abl')), ('과', ('cum', 'Abl')), ('하고', ('cum', 'Abl')), ('에게서', ('ab', 'Abl')),
+                               ('부터', ('ab', 'Abl')), ('까지', ('ad', 'Acc')))),
+                      ('tr', (('için', ('prō', 'Abl')), ('ile', ('cum', 'Abl')), ('gibi', ('sīcut', '')),
+                              ('tarafından', ('ab', 'Abl')), ('sonra', ('post', 'Acc')), ('önce', ('ante', 'Acc')),
+                              ('hakkında', ('dē', 'Abl')))),
+                      ('mn', (('дээр', ('super', 'Acc')), ('доор', ('sub', 'Abl')), ('дотор', ('in', 'Abl')),
+                              ('өмнө', ('ante', 'Acc')), ('дараа', ('post', 'Acc')), ('хойно', ('post', 'Acc')),
+                              ('тухай', ('dē', 'Abl')), ('төлөө', ('prō', 'Abl')), ('хамт', ('cum', 'Abl')))),
+                      ('fi', (('kanssa', ('cum', 'Abl')), ('jälkeen', ('post', 'Acc')), ('ennen', ('ante', 'Acc')),
+                              ('ilman', ('sine', 'Abl')), ('takia', ('propter', 'Acc')), ('kautta', ('per', 'Acc')),
+                              ('alla', ('sub', 'Abl')), ('päällä', ('super', 'Acc')), ('luona', ('apud', 'Acc'))))):
+    for _surface, _latin in _table:
+        for _case in ('Obl', 'Gen', None):
+            SOURCE_PREPOSITIONS.setdefault(_code, {})[(_surface, _case)] = _latin
+for (_surface, _case), _latin in {('in', 'Dat'): ('in', 'Abl'), ('in', 'Acc'): ('in', 'Acc'), ('an', 'Dat'): ('in', 'Abl'),
+                                  ('an', 'Acc'): ('ad', 'Acc'), ('auf', 'Dat'): ('in', 'Abl'), ('auf', 'Acc'): ('in', 'Acc'),
+                                  ('mit', 'Dat'): ('cum', 'Abl'), ('von', 'Dat'): ('ab', 'Abl'), ('zu', 'Dat'): ('ad', 'Acc'),
+                                  ('nach', 'Dat'): ('ad', 'Acc'), ('aus', 'Dat'): ('ex', 'Abl'), ('bei', 'Dat'): ('apud', 'Acc'),
+                                  ('für', 'Acc'): ('prō', 'Abl'), ('durch', 'Acc'): ('per', 'Acc'), ('ohne', 'Acc'): ('sine', 'Abl'),
+                                  ('über', 'Acc'): ('dē', 'Abl'), ('unter', 'Dat'): ('sub', 'Abl'), ('vor', 'Dat'): ('ante', 'Acc'),
+                                  ('gegen', 'Acc'): ('contrā', 'Acc'), ('seit', 'Dat'): ('ab', 'Abl'),
+                                  ('im', 'Dat'): ('in', 'Abl'), ('ins', 'Acc'): ('in', 'Acc'), ('am', 'Dat'): ('in', 'Abl'),
+                                  ('zum', 'Dat'): ('ad', 'Acc'), ('zur', 'Dat'): ('ad', 'Acc'), ('vom', 'Dat'): ('ab', 'Abl'),
+                                  ('beim', 'Dat'): ('apud', 'Acc')}.items():
+    SOURCE_PREPOSITIONS.setdefault('de', {})[(_surface, _case)] = _latin
+# 前置詞の無い格の役割 (ラテン語に無い格): 具格は手段、サンスクリットの奪格は起点、処格は場所。
+# フィンランド語の場所の格 (内格・所格 → 場所、出格・離格 → 起点、入格・向格 → 場所)、トルコ語・モンゴル語の位格・奪格・具格
+SOURCE_ROLES = {'ru': {'Ins': 'means', 'Loc': 'place'}, 'sa': {'Ins': 'means', 'Abl': 'source', 'Loc': 'place'},
+                'fi': {'Ine': 'place', 'Ade': 'place', 'Ela': 'source', 'Abl': 'source', 'Ill': 'place', 'All': 'recipient',
+                       'Ins': 'means', 'Com': 'means', 'Ess': 'complement', 'Tra': 'complement', 'Par': 'object'},
+                'tr': {'Loc': 'place', 'Abl': 'source', 'Ins': 'means', 'Equ': 'means'},
+                'mn': {'Abl': 'source', 'Ins': 'means', 'Com': 'means', 'Dir': 'place'}}
 VOICES = {'middle': 'active', 'middle-passive': 'active'}   # 中動態は能動に (Clause.middle に印。ギリシア語に戻すとき中動)
 TENSES = {'aorist': 'perfect'}   # ギリシア語・サンスクリットのアオリストは完了 (語りの過去) に
 SOURCE_TENSES = {'sa': {'imperfect': 'perfect'},   # サンスクリットの laṅ は語りの過去 (ラテン語の完了に)
@@ -262,6 +312,8 @@ def lex_of(word, item=None):
         lemma = item.attrib('lemma')
         if item.pos == 'verb' and item.attrib('stem'):
             focus = 'stem:' + item.attrib('stem')
+    if lang in ('ko', 'de', 'tr', 'mn', 'fi') and item.attrib('lemma'):
+        lemma = item.attrib('lemma')   # 表示の形 (학교 (學校) hakgyo) でなく見出し (辞書・生成器の見出しと同じ)
     if lang == 'ar' and item.attrib('lex'):
         lemma = item.attrib('lex')   # 表示の形 (bint ⁧بِنْت⁩) でなく CAMeL の見出しの鍵 (بِنْت。生成器の見出しと同じ)
     pronoun = SOURCE_PRONOUNS.get(lang, {}).get(lemma.lower()) if item.pos in ('pronoun', 'adj', 'det') else None
@@ -397,6 +449,9 @@ def clause_of(predicate, lang=None):
                     number=verb_item.attrib('number') or 'sg', copula=predicate.is_sum, surface=predicate.surface)
     if clause.number == 'du':
         clause.number, clause.dual = 'pl', True   # 両数はほかの言語では複数
+    if clause.copula and _lang in NEUTRAL_COPULA:
+        # 繋辞は中立の sum に (韓国語の 이다 は同じ綴りの「瓦をふく」、トルコ語の繋辞は見出しの無い (dir))
+        clause.verb = Lex('sum', 'verb', clause.verb.ja or 'である', surface=clause.verb.surface)
     if clause.voice in VOICES and _lang not in ('', 'la'):
         clause.middle = clause.voice
         clause.voice = VOICES[clause.voice]
@@ -495,6 +550,7 @@ def clause_of(predicate, lang=None):
     for sub in predicate.subordinates:
         if isinstance(sub, (ParticiplePhrase, AblativeAbsolute)):
             clause.adjuncts.append(participial_of(sub))
+    _person_from_subject(clause, predicate)
     _agree_with_subject(clause, predicate)
     return clause
 
@@ -550,6 +606,25 @@ def _second_person_address(clause):
             clause.args[k] = ('address', np)
             if not np.cases or 'Voc' in np.cases:   # 格の分からない語 (辞書に無い Mārce) と呼格と同形の語は呼格に
                 np.case = 'Voc'
+
+
+# 繋辞を中立の sum にする言語
+NEUTRAL_COPULA = ('ko', 'de', 'tr', 'mn', 'fi')
+# 動詞が人称で変わらない言語 (人称は主語の代名詞から)
+PERSONLESS = ('ko', 'mn', 'ja')
+
+
+def _person_from_subject(clause, predicate):
+    """人称の無い言語の動詞: 主語の代名詞から人称・数を (나 → 1人称単数)"""
+    if _lang not in PERSONLESS or predicate.first_item.attrib('person') is not None:
+        return
+    subjects = clause.role('subject')
+    head = subjects[0].head if subjects else None
+    if head is not None and head.pos == 'pronoun' and head.lemma in ('ego', 'tū'):
+        clause.person = 1 if head.lemma == 'ego' else 2
+        clause.number = subjects[0].number or 'sg'
+    elif subjects:
+        clause.number = 'pl' if subjects[0].members or subjects[0].number == 'pl' else 'sg'
 
 
 def _agree_with_subject(clause, predicate):

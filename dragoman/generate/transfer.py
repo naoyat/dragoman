@@ -97,6 +97,24 @@ def _in_hand_dictionary(lemma):
     return lemma in latin._hand_index()
 
 
+# 解析器の手作りの訳語の表 (基本の語の日本語。Wiktionary の語義の順だけでは 계집・tappo のような語が先に来る) を、
+# ラテン語の手作りの辞書と同じく語の選択に使う言語
+HAND_GLOSSES = {'ko': 'korean', 'de': 'german', 'tr': 'turkish', 'mn': 'mongolian', 'fi': 'finnish'}
+
+
+@functools.lru_cache(maxsize=None)
+def hand_glosses(lang):
+    """見出し → 日本語の訳語の集合 (解析器の GLOSSES)"""
+    if lang not in HAND_GLOSSES:
+        return {}
+    import importlib
+    try:
+        table = importlib.import_module('dragoman.%s.morphology' % HAND_GLOSSES[lang]).GLOSSES
+    except ImportError:
+        return {}
+    return {lemma: frozenset(j.strip() for j in ja.split(',')) for lemma, ja in table.items()}
+
+
 def source_key(lang, lemma):
     """元の言語の見出しを表の形に (サンスクリットは IAST → SLP1)"""
     if lang == 'sa':
@@ -153,6 +171,7 @@ def japanese(lang, target):
         for _, item in latin._forms(target.lemma, target.pos)[:20]:
             out.update(_keys(item.get('ja')))
         return frozenset(out)
+    out.update(hand_glosses(lang).get(target.lemma, ()))
     db = _db(lang) if _has_japanese(lang) else None   # 日本語の訳語の列が無い辞書 (ギリシア語・インドネシア語) は英語から
     if db is not None:
         pos = 'root' if target.pos == 'verb' and lang == 'sa' else target.pos
@@ -384,8 +403,8 @@ def candidates(lex, lang, pos=None):
             # 出現数は、元の語の筆頭の英語が語の筆頭の語義のときだけ (よく出る хороший を great で、πόλις を villa の
             # 4番目の city で取らない)
             score = 3 * i + j - math.log(1 + target.senses) - (_frequency(lang, target) if i == 0 and j == 0 else 0)
-            if lang == 'la' and _in_hand_dictionary(target.lemma):
-                score -= 3   # 手作りの辞書にある (よく使う) ラテン語の語 (hortus を gardīnum より)
+            if lang == 'la' and _in_hand_dictionary(target.lemma) or target.lemma in hand_glosses(lang):
+                score -= 3   # 手作りの辞書にある (よく使う) 語 (hortus を gardīnum より、소녀 を 계집 より)
             ja = japanese(lang, target)
             if wanted and wanted[0] in ja:
                 score -= 3     # 日本語の一番の訳語が合う
