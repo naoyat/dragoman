@@ -64,8 +64,34 @@ def lookup(english, lang, original=''):
     return word, gender
 
 
+MN_LATIN = dict(zip('абвгдеёжзийклмноөпрстуүфхцчшщъыьэюя',
+                    ['a', 'b', 'v', 'g', 'd', 'ye', 'yo', 'zh', 'z', 'i', 'i', 'k', 'l', 'm', 'n', 'o', 'ö', 'p', 'r', 's',
+                     't', 'u', 'ü', 'f', 'kh', 'ts', 'ch', 'sh', 'shch', '', 'y', '', 'e', 'yu', 'ya']))
+
+
+def latin_spelling(lex):
+    """ほかの言語の固有名詞のラテン文字の綴り (민수 → Minsu、Дорж → Dorzh)。ラテン文字の言語はそのまま"""
+    lemma = lex.lemma
+    if lex.lang == 'ko':
+        from dragoman.korean.script import romanize
+        lemma = romanize(lemma)
+    elif lex.lang == 'mn':   # 英語式の綴り (Дорж → Dorzh、Цэцэг → Tsetseg、Улаанбаатар → Ulaanbaatar)
+        lemma = ''.join(MN_LATIN.get(c, c) for c in lemma.lower())
+    elif lex.lang == 'ru':
+        from dragoman.russian.script import translit
+        lemma = translit(lemma)
+    elif lex.lang == 'grc':
+        from dragoman.greek.romanize import romanize_word
+        lemma = romanize_word(lemma)
+    return lemma[:1].upper() + lemma[1:]
+
+
 def localized(lex, lang):
     """固有名詞の語 (Lex) → (言語 lang の名前, 性)。英語の名前が分からないか表に無ければ None"""
+    if lex.origin and lex.origin[0] == lang:
+        return lex.origin[1], ''   # 元の言語に戻す (Minsu → 민수)
+    if lex.origin and lex.origin[0] == 'mn' and lang == 'ru':
+        return lex.origin[1], ''   # モンゴル語のキリル文字の名前はロシア語でもそのまま (Дорж)
     from . import english
     name = english.word(lex)
     if not is_name(name):

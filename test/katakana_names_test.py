@@ -19,6 +19,14 @@ class KatakanaNamesTestCase(unittest.TestCase):
 
     def test_latin_script(self):
         self.assertEqual([k.latin(n) for n in ('Helsinki', 'Berlin')], ['ヘルシンキ', 'ベルリン'])
+        self.assertEqual([k.latin(n, 'fi') for n in ('Matti', 'Liisa', 'Anna', 'Jyväskylä')],
+                         ['マッティ', 'リーサ', 'アンナ', 'ユヴァスキュラ'])           # 重子音は ッ
+        self.assertEqual([k.latin(n, 'de') for n in ('Hänsel', 'Müller', 'Heinrich', 'Stefan', 'München')],
+                         ['ヘンゼル', 'ミュラー', 'ハインリヒ', 'シュテファン', 'ミュンヘン'])
+
+    def test_korean(self):
+        self.assertEqual([k.korean(n) for n in ('민수', '김철수', '서울', '경희', '최', '민기', '대구')],
+                         ['ミンス', 'キムチョルス', 'ソウル', 'キョンヒ', 'チェ', 'ミンギ', 'テグ'])
 
 
 if __name__ == '__main__':

@@ -106,8 +106,11 @@ def item_of(token):
             return {'surface': text, 'pos': 'pronoun', 'base': lemma, 'ja': ja, 'gloss_lang': 'ja', 'person': person,
                     'number': pnumber, '_': _cngs(case, pnumber), 'compact': True, 'main': True}
         ja, gloss_lang, row = morphology.gloss(lemma, 'name' if pos == 'PROPN' else 'noun')
+        if pos == 'PROPN' and (ja is None or gloss_lang == 'en' and ja.split(',')[0] in (lemma, text)):
+            from dragoman.core.katakana_names import latin as katakana
+            ja, gloss_lang = katakana(lemma, 'fi'), 'ja'   # 辞書に無い名前はカタカナ (Matti → マッティ)
         if ja is None:
-            ja, gloss_lang = (lemma, 'en') if pos == 'PROPN' else (lemma, 'ja')
+            ja, gloss_lang = lemma, 'ja'
         possessor = morphology.POSSESSORS.get((feats.get('Person[psor]'), feats.get('Number[psor]')))
         if possessor and gloss_lang == 'ja':
             ja = ','.join(possessor + j for j in ja.split(',')[:2])

@@ -23,6 +23,8 @@ class KoreanTestCase(unittest.TestCase):
         self.assertEqual(korean.particle('책', '을', '를'), '책을')
         self.assertEqual(korean.particle('장미', '을', '를'), '장미를')
         self.assertEqual([hangul(n) for n in ('Mārcus', 'Iūlia', 'Rōma')], ['마르쿠스', '율리아', '로마'])
+        self.assertEqual([hangul(n) for n in ('Matti', 'Anna', 'Ulaanbaatar', 'Tsetseg', 'Dorzh')],
+                         ['마티', '안나', '울란바타르', '체체그', '도르즈'])           # 重子音・長母音・ts・zh
 
 
 class TurkishTestCase(unittest.TestCase):
@@ -85,6 +87,8 @@ class FinnishTestCase(unittest.TestCase):
         self.assertEqual([finnish.case_form('talo', c) for c in ('Gen', 'Par', 'Ine', 'Ela', 'Ill', 'Ade', 'All')],
                          ['talon', 'taloa', 'talossa', 'talosta', 'taloon', 'talolla', 'talolle'])
         self.assertEqual(finnish.case_form('talo', 'Ine', 'pl'), 'taloissa')
+        self.assertEqual([finnish.case_form(n, c) for n, c in (('Liisa', 'Par'), ('Matti', 'Gen'), ('Gretel', 'Par'))],
+                         ['Liisaa', 'Matin', 'Greteliä'])                    # 辞書に無い名前の格語尾
 
     def test_possessive(self):
         self.assertEqual([finnish.possessive(w, c, 'sg', p, n) for w, c, p, n in

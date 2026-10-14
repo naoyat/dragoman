@@ -106,7 +106,31 @@ def case_form(word, case, number='sg', pos='noun'):
         find_form(word, pos, (CASE_TAGS.get(case, 'nominative'), number_tag))
     if form is None and pos == 'adj':
         form = find_form(word, 'noun', (CASE_TAGS.get(case, 'nominative'), number_tag))
+    if form is None and number == 'sg' and word[:1].isupper() and word.isalpha():
+        form = name_case(word, case)
     return form or word
+
+
+# 辞書に無い名前の単数の格語尾 (Liisa → Liisaa・Liisan、Matti → Mattia・Matin、Gretel → Greteliä)。
+# 閉じた音節の格では重子音を短くする (子音階程交替の量の交替だけ)
+NAME_ENDINGS = {'Gen': ('n', True), 'Par': ('a', False), 'Ine': ('ssa', True), 'Ela': ('sta', True), 'Ill': ('+n', False),
+                'Ade': ('lla', True), 'Abl': ('lta', True), 'All': ('lle', True), 'Ess': ('na', False), 'Tra': ('ksi', True)}
+
+
+def name_case(word, case):
+    if case not in NAME_ENDINGS:
+        return None
+    ending, weak = NAME_ENDINGS[case]
+    if word[-1:] not in 'aeiouyäö':
+        word += 'i'   # 子音で終わる名前 (Gretel → Gretelin・Greteliä)
+    back = any(c in BACK_VOWELS for c in word.lower())
+    if weak and len(word) > 3 and word[-3] == word[-2] and word[-2] in 'kpt':
+        word = word[:-2] + word[-1]   # Matti → Matin
+    if ending == '+n':
+        return word + word[-1] + 'n'   # Liisa → Liisaan
+    if ending == 'a' and len(word) > 2 and word[-1] == word[-2]:
+        ending = 'ta'
+    return word + (ending if back else ending.replace('a', 'ä'))
 
 
 POSSESSOR_PERSONS = {'meus': (1, 'sg'), 'tuus': (2, 'sg'), 'suus': (3, 'sg'), 'noster': (1, 'pl'), 'vester': (2, 'pl')}

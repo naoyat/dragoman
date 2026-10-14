@@ -5,10 +5,13 @@
 #
 #   turkish('Ali') → アリ、turkish('Ayşe') → アイシェ、turkish('Çağlar') → チャーラル、turkish('İstanbul') → イスタンブル
 #   mongolian('Бат') → バト、mongolian('Дорж') → ドルジ、mongolian('Улаанбаатар') → ウラーンバータル
+#   latin('Matti', 'fi') → マッティ、latin('Hänsel', 'de') → ヘンゼル、latin('Müller', 'de') → ミュラー
+#   korean('민수') → ミンス、korean('김철수') → キムチョルス、korean('서울') → ソウル
 #
 # 綴りを (子音, 母音, 長音) の列に直してから、子音の行と母音の段でカタカナを選ぶ。母音の続かない子音は
 # ウ段 (ト・ドは o 段) で書く (n は ン)
 #
+import re
 import unicodedata
 
 ROWS = {
@@ -17,12 +20,12 @@ ROWS = {
     'p': 'パピプペポ', 'b': 'バビブベボ', 'm': 'マミムメモ', 'r': 'ラリルレロ', 'l': 'ラリルレロ', 'y': ('ヤ', 'イ', 'ユ', 'イェ', 'ヨ'),
     'w': ('ワ', 'ウィ', 'ウ', 'ウェ', 'ウォ'), 'v': ('ヴァ', 'ヴィ', 'ヴ', 'ヴェ', 'ヴォ'), 'sh': ('シャ', 'シ', 'シュ', 'シェ', 'ショ'),
     'ch': ('チャ', 'チ', 'チュ', 'チェ', 'チョ'), 'j': ('ジャ', 'ジ', 'ジュ', 'ジェ', 'ジョ'), 'ts': ('ツァ', 'ツィ', 'ツ', 'ツェ', 'ツォ'),
-    'kh': 'ハヒフヘホ',
+    'kh': 'ハヒフヘホ', 'ç': ('ヒャ', 'ヒ', 'ヒュ', 'ヒェ', 'ヒョ'),
 }
 # 前舌の円唇母音 (ö・ü) は子音の後ろで拗音 (キュ・ギョ)
 FRONT_ROUNDED = {'ü': 'u', 'ö': 'o'}
 CODA = {'k': 'ク', 'g': 'グ', 's': 'ス', 'z': 'ズ', 't': 'ト', 'd': 'ド', 'n': 'ン', 'h': 'フ', 'f': 'フ', 'p': 'プ', 'b': 'ブ',
-        'm': 'ム', 'r': 'ル', 'l': 'ル', 'y': 'イ', 'w': 'ウ', 'v': 'ヴ', 'sh': 'シュ', 'ch': 'チ', 'j': 'ジ', 'ts': 'ツ', 'kh': 'フ'}
+        'm': 'ム', 'r': 'ル', 'l': 'ル', 'y': 'イ', 'w': 'ウ', 'v': 'ヴ', 'sh': 'シュ', 'ch': 'チ', 'j': 'ジ', 'ts': 'ツ', 'kh': 'フ', 'Q': 'ッ', 'ç': 'ヒ'}
 DAN = 'aiueo'
 SMALL = {'u': 'ュ', 'o': 'ョ', 'a': 'ャ'}
 
@@ -140,24 +143,124 @@ LATIN_CONSONANTS = {'b': 'b', 'c': 'k', 'd': 'd', 'f': 'f', 'g': 'g', 'h': 'h', 
 LATIN_VOWELS = {'a': 'a', 'e': 'e', 'i': 'i', 'o': 'o', 'u': 'u', 'y': 'ü', 'ä': 'a', 'ö': 'ö', 'ü': 'ü'}
 
 
-def latin(name):
+GERMAN_RULES = (('sch', 'ʃ'), ('tsch', 'tʃ'), ('ck', 'k'), ('tz', 'z'), ('ph', 'f'), ('th', 't'), ('qu', 'kv'),
+                ('ei', 'ai'), ('ey', 'ai'), ('ai', 'ai'), ('ie', 'ii'), ('eu', 'oi'), ('äu', 'oi'), ('ä', 'e'),
+                ('v', 'f'), ('w', 'v'), ('z', 'ʦ'), ('ß', 's'))
+
+
+def _german(word):
+    if word.startswith('sp') or word.startswith('st'):
+        word = 'ʃ' + word[1:]   # Stefan → シュテファン
+    for a, b in GERMAN_RULES:
+        word = word.replace(a, b)
+    word = re.sub(r'([aeiouöü])h(?=[^aeiouöü]|$)', r'\1\1', word)   # 長音の h (Lehmann → レーマン)
+    word = re.sub(r'(?<=[^aeiouöü])er$', 'aa', word)                    # 語末の -er (Müller → ミュラー)
+    word = re.sub(r'(?<=[aeiouöü])s(?=[aeiouöü])', 'z', word)          # 母音の間の s (Hänsel・Rose)
+    word = re.sub(r'(?<=[lnmr])s(?=[aeiouöü])', 'z', word)
+    word = re.sub(r'^s(?=[aeiouöü])', 'z', word)
+    word = re.sub(r'b$', 'p', re.sub(r'd$', 't', re.sub(r'g$', 'k', word)))   # 語末の無声化 (Jakob → ヤコプ)
+    word = re.sub(r'(?<=[eiäöüylr])ch|(?<!n)chen$', lambda m: 'ç' + m.group(0)[2:], word)   # ich-Laut (Heinrich → ハインリヒ、-chen → ヒェン)
+    return word.replace('ʦ', 'ts').replace('ch', 'h')
+
+
+def latin(name, lang=''):
+    """ラテン文字の名前。lang='fi' は重子音を ッ (Matti → マッティ)、'de' はドイツ語の読み (Hänsel → ヘンゼル)"""
     word = ''.join(c for c in unicodedata.normalize('NFD', name.lower()) if not unicodedata.combining(c) or c in '̈')
-    word = unicodedata.normalize('NFC', word).replace('sch', 'ʃ').replace('ch', 'h').replace('sh', 'ʃ')
+    word = unicodedata.normalize('NFC', word)
+    if lang == 'de':
+        word = _german(word)
+    word = word.replace('sch', 'ʃ').replace('ch', 'h').replace('sh', 'ʃ')
+    vowels = dict(LATIN_VOWELS, ä='e') if lang == 'de' else LATIN_VOWELS
+    consonants = dict(LATIN_CONSONANTS, z='ts' if lang != 'de' else 'z', j='y', s='s')
     phonemes = []
     k = 0
     while k < len(word):
         c = word[k]
         nxt = word[k + 1] if k + 1 < len(word) else ''
-        if c in LATIN_VOWELS:
+        if c in vowels:
             long_ = nxt == c
-            phonemes.append(('V', (LATIN_VOWELS[c], long_)))
+            phonemes.append(('V', (vowels[c], long_)))
             k += 2 if long_ else 1
             continue
         if c == 'ʃ':
             phonemes.append(('C', 'sh'))
-        elif c in LATIN_CONSONANTS:
-            if nxt == c and c in 'kptsfg':
-                k += 1   # 重子音 (Pekka → ペッカ は ッ を省いてペカ)
-            phonemes.append(('C', LATIN_CONSONANTS[c]))
+        elif c == 'ç':
+            phonemes.append(('C', 'ç'))
+        elif c in consonants:
+            if nxt == c:
+                k += 1
+                if lang == 'fi' and c in 'kptslr':
+                    phonemes.append(('C', 'Q'))    # 重子音 (Pekka → ペッカ、Ville → ヴィッレ)
+                elif lang == 'fi' and c in 'nm':
+                    phonemes.append(('C', 'n'))    # Anna → アンナ、Emma → エンマ
+                elif lang == 'de' and c in 'kptf' and phonemes and phonemes[-1][0] == 'V':
+                    phonemes.append(('C', 'Q'))    # Otto → オット
+            phonemes.append(('C', consonants[c]))
         k += 1
     return _kana(_segments(phonemes))
+
+
+# ----------------------------------------------------------------------
+# 韓国語 (ハングルの音節を 初声・中声・終声 に分けて)
+
+KO_INITIALS = ('k', 'kk', 'n', 't', 'tt', 'r', 'm', 'p', 'pp', 's', 'ss', '', 'ch', 'jj', 'ch', 'k', 't', 'p', 'h')
+KO_INITIALS_VOICED = {'k': 'g', 't': 'd', 'p': 'b', 'ch': 'j'}   # 語中の平音は濁る (민기 → ミンギ)
+KO_VOWELS = ('a', 'e', 'ya', 'ye', 'o', 'e', 'yo', 'ye', 'o', 'wa', 'we', 'we', 'yo', 'u', 'wo', 'we', 'wi', 'yu', 'u', 'ui', 'i')
+KO_FINALS = ('', 'ク', 'ク', 'ク', 'ン', 'ン', 'ン', 'ッ', 'ル', 'ク', 'ム', 'ル', 'ル', 'ル', 'プ', 'ル', 'ム', 'プ', 'プ',
+             'ッ', 'ッ', 'ン', 'ッ', 'ッ', 'ク', 'ッ', 'プ', 'ッ')
+KO_PLAIN = {0, 3, 7, 12}   # ㄱ ㄷ ㅂ ㅈ (平音)
+
+
+def _korean_syllable(cons, vowel):
+    if cons == 'jj':
+        cons = 'ch'
+    cons = {'kk': 'k', 'tt': 't', 'pp': 'p', 'ss': 's'}.get(cons, cons)
+    glide = vowel[0] if len(vowel) == 2 and vowel[0] in 'yw' else ''
+    base = vowel[-1] if glide else vowel
+    if vowel == 'ui':
+        return _korean_syllable(cons, 'i') if cons else 'ウイ'   # 희 → ヒ、의 → ウイ
+    if glide == 'w' and base == 'e' and cons in ('ch', 'j', 's'):
+        glide, vowel = '', 'e'   # 최 → チェ
+    if glide == 'y':
+        if cons == '':
+            return {'a': 'ヤ', 'e': 'イェ', 'o': 'ヨ', 'u': 'ユ'}[base]
+        if cons in ('ch', 'j', 's'):   # 자・주 などは拗音にしない
+            return ROWS['sh' if cons == 's' else cons][DAN.index(base)] if base in 'aou' else ROWS[cons][3]
+        row = ROWS.get(cons, ROWS[''])
+        head = row[1] if isinstance(row, tuple) else row[1]
+        return head + ({'a': 'ャ', 'o': 'ョ', 'u': 'ュ'}.get(base) or 'ェ')
+    if glide == 'w':
+        if cons == '':
+            return {'a': 'ワ', 'e': 'ウェ', 'i': 'ウィ', 'o': 'ウォ'}[base]
+        row = ROWS.get(cons, ROWS[''])
+        return (row[2] if isinstance(row, tuple) else row[2]) + {'a': 'ァ', 'e': 'ェ', 'i': 'ィ', 'o': 'ォ'}[base]
+    if cons == 's' and base == 'i':
+        return 'シ'
+    if cons in ('ch', 'j'):
+        return ROWS[cons][DAN.index(base)]
+    if cons == 't' and base == 'u':
+        return 'トゥ'
+    if cons == 'd' and base == 'u':
+        return 'ドゥ'
+    return ROWS.get(cons, ROWS[''])[DAN.index(base)]
+
+
+def korean(name):
+    out = []
+    previous_final = None
+    for ix, ch in enumerate(name):
+        code = ord(ch) - 0xAC00
+        if not 0 <= code < 11172:
+            out.append(ch)
+            previous_final = None
+            continue
+        initial, vowel, final = code // 588, code % 588 // 28, code % 28
+        cons = KO_INITIALS[initial]
+        if ix and initial in KO_PLAIN and previous_final in (0, 4, 8, 16, 21):   # 母音・ㄴㄹㅁㅇ の後ろで濁る
+            cons = KO_INITIALS_VOICED[cons]
+        if initial == 5 and ix == 0:
+            cons = 'n' if KO_VOWELS[vowel] not in ('i', 'ya', 'yo', 'yu', 'ye') else ''   # 頭音法則風 (리 → イ)
+        out.append(_korean_syllable(cons, KO_VOWELS[vowel]))
+        out.append(KO_FINALS[final])
+        previous_final = final
+    return ''.join(out)

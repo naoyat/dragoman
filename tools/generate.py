@@ -169,8 +169,8 @@ def run_other(text, source):
             if lang == source:
                 first = out.split('\n')[0]
                 # 解析の表示の文は標識 (ng・ang) を落としたり冠詞・前置詞を切り離したり (הַ מֶּלֶךְ) するので、
-                # インドネシア語・タガログ語・ヘブライ語は入力の文と比べる
-                original = _source_words(text if source in ('id', 'tl', 'he') else analysis.text, source)
+                # インドネシア語・タガログ語・ヘブライ語・韓国語 (助詞を切り離す) は入力の文と比べる
+                original = _source_words(text if source in ('id', 'tl', 'he', 'ko') else analysis.text, source)
                 mark = '   ✓ 同じ語' if original == _source_words(first, source) else '   ✗'
             first, _, rest = out.partition('\n')
             print('  %s %s%s%s' % (label, first, mark, ('\n' + rest) if rest else ''))

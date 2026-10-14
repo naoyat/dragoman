@@ -191,6 +191,7 @@ class Lex:
     surface: str = ''      # 文中の形 (変化しない語 (副詞) は元の言語に戻すときこの形で)
     ptense: str = ''       # 分詞の時制: present / past / future (future は動形容詞 adeundus「近づかれるべき」も)
     lang: str = ''         # 元の言語 ('' / 'la' はラテン語。ru・sa の語は作るときに英語を仲立ちに置き換える)
+    origin: tuple = ()     # ラテン文字に写した固有名詞の元の (言語, 綴り) (민수 → Minsu。元の言語に戻すときはこの綴り)
 
 
 @dataclass
@@ -290,6 +291,10 @@ def _pronoun_desc(latin):
             'quī': '関係代名詞', 'quis': '疑問代名詞', 'quid': '疑問代名詞', 'sē': '再帰代名詞'}.get(latin, '')
 
 
+# 固有名詞をラテン文字に写して渡す言語 (names.latin_spelling)
+NON_LATIN_NAMES = ('ko', 'mn')
+
+
 def lex_of(word, item=None):
     item = item or word.items[0]
     lemma = item.attrib('base') or _verb_lemma(item.attrib('pres1sg'))
@@ -329,6 +334,14 @@ def lex_of(word, item=None):
     proper = item.attrib('name') is True or (lemma[:1].isupper() and item.pos in ('noun', 'unknown'))
     if lang == 'de':   # ドイツ語の名詞はすべて大文字で始まる: 解析器の固有名詞の印だけで
         proper = bool(item.attrib('proper'))
+    elif item.attrib('proper') and item.pos in ('noun', 'unknown', 'name'):
+        proper = True   # 解析器の固有名詞の印 (민수・Ali。カタカナの訳を辞書で引かない)
+        if lemma[:1].islower():
+            lemma = lemma[:1].upper() + lemma[1:]
+        if lang in NON_LATIN_NAMES:   # ラテン文字に写して、ほかの言語ではラテン文字の名前として扱う
+            from .names import latin_spelling
+            spelling = latin_spelling(Lex(lemma, 'noun', lang=lang))
+            return Lex(spelling, item.pos, item.ja, proper=True, surface=spelling, origin=(lang, lemma))
     return Lex(lemma, item.pos, item.ja, proper=proper and item.pos in ('noun', 'unknown', 'name'), lang=lang,
                degree=item.attrib('rank') or '', en=english,
                desc=(focus if focus.startswith('stem:') else 'focus:' + focus) if focus else (item.attrib('desc') or ''),

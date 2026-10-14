@@ -108,9 +108,10 @@ def to_latin(lex):
     if not lex.lang or lex.lang == 'la':
         return lex
     from . import transfer
-    if lex.proper:   # 名前はそのまま (Rāma)
-        return frame.Lex(lex.lemma[:1].upper() + lex.lemma[1:], 'noun', '', proper=True,
-                         surface=lex.lemma[:1].upper() + lex.lemma[1:])
+    if lex.proper:   # 名前はそのまま (Rāma)。ラテン文字でなければ写す (민수 → Minsu)
+        from .names import latin_spelling
+        name = latin_spelling(lex)
+        return frame.Lex(name, 'noun', '', proper=True, surface=name)
     target = transfer.best(lex, 'la', {'participle': 'verb', 'name': 'noun'}.get(lex.pos, lex.pos))
     if target is None:
         return frame.Lex(lex.surface or lex.lemma, 'unknown', lex.ja, proper=lex.proper, surface=lex.surface or lex.lemma)

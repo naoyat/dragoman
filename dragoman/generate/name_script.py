@@ -19,7 +19,7 @@ def _normalize(latin):
     word = unicodedata.normalize('NFC', latin.strip())
     word = ''.join(LONG.get(c, c) for c in word.lower())
     word = ''.join(c for c in unicodedata.normalize('NFD', word) if not unicodedata.combining(c))
-    for a, b in (('ae', 'E'), ('oe', 'E'), ('ph', 'f'), ('th', 't'), ('ch', 'x'), ('qu', 'kw'), ('x', 'ks'),
+    for a, b in (('sh', 'ʃ'), ('zh', 'ʒ'), ('kh', 'x'), ('ae', 'E'), ('oe', 'E'), ('ph', 'f'), ('th', 't'), ('ch', 'x'), ('qu', 'kw'), ('x', 'ks'),
                  ('c', 'k'), ('y', 'i')):
         word = word.replace(a, b)
     word = re.sub(r'^[ij](?=[aeiouAEIOU])', 'j', word)   # Iūlia → jUlia
@@ -38,17 +38,18 @@ def _stem(word):
 
 GREEK = {'a': 'α', 'A': 'α', 'b': 'β', 'd': 'δ', 'e': 'ε', 'E': 'η', 'f': 'φ', 'g': 'γ', 'h': '', 'i': 'ι', 'I': 'ι',
          'j': 'ι', 'k': 'κ', 'l': 'λ', 'm': 'μ', 'n': 'ν', 'o': 'ο', 'O': 'ω', 'p': 'π', 'r': 'ρ', 's': 'σ', 't': 'τ',
-         'u': 'ου', 'U': 'ου', 'w': 'ου', 'x': 'χ', 'z': 'ζ'}
+         'u': 'ου', 'U': 'ου', 'w': 'ου', 'x': 'χ', 'z': 'ζ', 'ʃ': 'σ', 'ʒ': 'ζ'}
 ARABIC = {'a': 'ا', 'A': 'ا', 'b': 'ب', 'd': 'د', 'e': 'ي', 'E': 'ي', 'f': 'ف', 'g': 'غ', 'h': 'ه', 'i': 'ي', 'I': 'ي',
           'j': 'ي', 'k': 'ك', 'l': 'ل', 'm': 'م', 'n': 'ن', 'o': 'و', 'O': 'و', 'p': 'ب', 'r': 'ر', 's': 'س', 't': 'ت',
-          'u': 'و', 'U': 'و', 'w': 'و', 'x': 'خ', 'z': 'ز'}
-PERSIAN = dict(ARABIC, p='پ', g='گ', k='ک', w='و', e='ی', E='ی', i='ی', I='ی', j='ی')
+          'u': 'و', 'U': 'و', 'w': 'و', 'x': 'خ', 'z': 'ز', 'ʃ': 'ش', 'ʒ': 'ج'}
+PERSIAN = dict(ARABIC, p='پ', g='گ', k='ک', w='و', e='ی', E='ی', i='ی', I='ی', j='ی', ʒ='ژ')
 HEBREW = {'a': '', 'A': 'א', 'b': 'ב', 'd': 'ד', 'e': '', 'E': 'י', 'f': 'פ', 'g': 'ג', 'h': 'ה', 'i': 'י', 'I': 'י',
           'j': 'י', 'k': 'ק', 'l': 'ל', 'm': 'מ', 'n': 'נ', 'o': 'ו', 'O': 'ו', 'p': 'פ', 'r': 'ר', 's': 'ס', 't': 'ט',
-          'u': 'ו', 'U': 'ו', 'w': 'ו', 'x': 'כ', 'z': 'ז'}
+          'u': 'ו', 'U': 'ו', 'w': 'ו', 'x': 'כ', 'z': 'ז', 'ʃ': 'ש', 'ʒ': "ז'"}
 HEBREW_FINALS = {'כ': 'ך', 'מ': 'ם', 'נ': 'ן', 'פ': 'ף', 'צ': 'ץ'}
 DEVANAGARI_CONSONANTS = {'b': 'ब', 'd': 'ड', 'f': 'फ़', 'g': 'ग', 'h': 'ह', 'j': 'य', 'k': 'क', 'l': 'ल', 'm': 'म',
-                         'n': 'न', 'p': 'प', 'r': 'र', 's': 'स', 't': 'ट', 'w': 'व', 'x': 'ख़', 'z': 'ज़'}
+                         'n': 'न', 'p': 'प', 'r': 'र', 's': 'स', 't': 'ट', 'w': 'व', 'x': 'ख़', 'z': 'ज़', 'ʃ': 'श',
+                         'ʒ': 'झ़'}
 DEVANAGARI_VOWELS = {'a': ('अ', ''), 'A': ('आ', 'ा'), 'e': ('ए', 'े'), 'E': ('ए', 'े'), 'i': ('इ', 'ि'), 'I': ('ई', 'ी'),
                      'o': ('ओ', 'ो'), 'O': ('ओ', 'ो'), 'u': ('उ', 'ु'), 'U': ('ऊ', 'ू')}
 VIRAMA = '्'
@@ -109,7 +110,7 @@ def _devanagari(stem):
 
 # ハングル: 初声・中声の番号 (korean.py の _compose と同じ並び)
 HANGUL_INITIALS = {'g': 0, 'k': 15, 'n': 2, 'd': 3, 't': 16, 'r': 5, 'l': 5, 'm': 6, 'b': 7, 'p': 17, 'f': 17, 's': 9,
-                   '': 11, 'j': 11, 'w': 11, 'z': 12, 'x': 15, 'h': 18, 'c': 15, 'q': 15, 'v': 7}
+                   '': 11, 'j': 11, 'w': 11, 'z': 12, 'x': 15, 'h': 18, 'c': 15, 'q': 15, 'v': 7, 'ʃ': 9, 'ʒ': 12, 'ʦ': 14}
 HANGUL_VOWELS = {'a': 0, 'A': 0, 'e': 5, 'E': 5, 'i': 20, 'I': 20, 'o': 8, 'O': 8, 'u': 13, 'U': 13}
 HANGUL_JVOWELS = {'a': 2, 'e': 7, 'o': 12, 'u': 17, 'i': 20}            # y + 母音 (야・예・요・유)
 HANGUL_WVOWELS = {'a': 9, 'e': 15, 'i': 16, 'o': 14, 'u': 13}           # w + 母音 (와・웨・위・워)
@@ -128,6 +129,9 @@ def hangul(latin):
     while k < len(word):
         c = word[k]
         nxt = word[k + 1] if k + 1 < len(word) else ''
+        if c in HANGUL_VOWELS and k and word[k - 1] == c or c in 'kptsfgbdr' and nxt == c:
+            k += 1   # 長母音・重子音は1つに (Ulaanbaatar → 울란바타르、Matti → 마티)
+            continue
         if c in HANGUL_VOWELS:
             out.append(_hangul_syllable(11, HANGUL_VOWELS[c]))
             k += 1
@@ -139,6 +143,19 @@ def hangul(latin):
         if c == 'w' and nxt.lower() in HANGUL_WVOWELS:
             out.append(_hangul_syllable(11, HANGUL_WVOWELS[nxt.lower()]))
             k += 2
+            continue
+        if c == 't' and nxt == 's':   # ts → ㅊ (Tsetseg → 체체그)
+            c, k = 'ʦ', k + 1
+            nxt = word[k + 1] if k + 1 < len(word) else ''
+        if c == 'w' and nxt not in HANGUL_VOWELS:   # 語末の v → 브 (Sharav → 샤라브)
+            c = 'b'
+        if c == 'ʃ':   # sh → 샤・쇼・슈・시 (母音が続かなければ 시)
+            if nxt.lower() in ('a', 'o', 'u'):
+                out.append(_hangul_syllable(9, HANGUL_JVOWELS[nxt.lower()]))
+                k += 2
+            else:
+                out.append(_hangul_syllable(9, 20 if nxt not in HANGUL_VOWELS else HANGUL_VOWELS[nxt]))
+                k += 1 if nxt not in HANGUL_VOWELS else 2
             continue
         if c == 'k' and nxt == 's':   # x = ks → 크스
             c = 'k'

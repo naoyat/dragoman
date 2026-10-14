@@ -330,7 +330,17 @@ def word(lex):
     if lex.proper:
         # 固有名詞は Wiktionary の英語の名前 (Iēsus → Jesus、Rōma → Rome)。名前でない説明 (Roman statesman and
         # orator、Roman cognomen …) しか無ければ綴りのまま (Cicero)
-        from .names import is_name
+        from .names import is_name, latin_spelling
+        if lex.lang not in ('', 'la') or lex.origin:
+            # ほかの言語の名前: その言語の辞書の英語の名前 (訳語の日本語は引かない: ミンス → 民主)。綴りの似ていない
+            # 英語の名前 (Liisa → Alice) は使わず綴りを写す
+            import difflib
+            from . import transfer
+            lang, lemma = lex.origin or (lex.lang, lex.lemma)
+            spelling = latin_spelling(lex)
+            found = [g for g in transfer.english_glosses(lang, lemma, 'noun') if is_name(g) and
+                     difflib.SequenceMatcher(None, _flat(g).lower(), _flat(spelling).lower()).ratio() >= 0.5]
+            return found[0] if found else spelling
         found = candidates(lex)
         return found[0] if found and is_name(found[0]) else _flat(lex.lemma)
     en = gloss(lex)
