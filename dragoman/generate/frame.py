@@ -389,6 +389,12 @@ def np_of(node, case=None):
             cases=list(dict.fromkeys(t[0] for t in item._ or [])), surface=node.surface)
     if np.number == 'du':
         np.number, np.dual = 'pl', True
+    if np.head.proper and _lang not in ('', 'la', 'ru') and \
+            (np.gender not in ('m', 'f') or len({g for _, _, g in item._ or []}) > 1):
+        # 性の分からない名前 (トルコ語・フィンランド語 …、ドイツ語の Gretel): 名前の表・語尾 -a から (Liisa → 女性)
+        from .names import name_gender
+        lang, word = np.head.origin or (_lang, np.head.lemma)
+        np.gender = name_gender(lang, word, np.head.lemma) or np.gender
     if _lang in ('grc', 'he'):   # 冠詞のある言語なら、定かかどうか (冠詞の有無)。冠詞の無い言語 (ロシア語 …) は分からない
         np.definite = any(isinstance(m, Word) and m.items and m.items[0].pos == 'article' for m in node.modifiers)
     elif _lang == 'ar':   # アラビア語の冠詞は語に付く (الوَلَد)。属格のつながり (كِتابُ الوَلَدِ) の頭は後ろで定に

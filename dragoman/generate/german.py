@@ -143,8 +143,11 @@ def noun_form(noun, case, number):
         return noun
     weak = [f for f in (noun.lower() + 'n', noun.lower() + 'en') if f in forms]
     genitives = [f for f, tags in _forms(noun, 'noun') if {'genitive', 'singular'} <= tags]
-    if weak and case in ('Acc', 'Dat') and any(g in (noun.lower() + 'n', noun.lower() + 'en') for g in genitives):
-        return noun[0] + weak[0][1:]   # 弱変化の男性名詞 (den Bauern・dem Menschen。口語の den Mensch は選ばない)
+    if weak and case in ('Acc', 'Dat') and \
+            any(g in (noun.lower() + e for e in ('n', 'en', 'ns', 'ens')) for g in genitives):
+        # 弱変化の男性名詞 (den Bauern・dem Menschen。口語の den Mensch は選ばない)、属格 -(e)ns の名詞 (dem Namen・
+        # dem Herzen。Herz の対格は表に Herz だけなので Herz のまま)
+        return noun[0] + weak[0][1:]
     if noun.lower() in forms and case != 'Gen':
         return noun   # 見出しと同じ形があれば (Buch の与格は Buche より Buch)
     form = forms[0]

@@ -42,6 +42,31 @@ def _index(lang):
     return index
 
 
+@functools.lru_cache(maxsize=None)
+def _genders(lang):
+    """名前 → 性 (表に m / f のあるもの)"""
+    path = paths.data(lang, 'names.tsv')
+    genders = {}
+    if os.path.exists(path):
+        with open(path, encoding='utf-8') as f:
+            for line in f:
+                fields = line.rstrip('\n').split('\t')
+                if len(fields) >= 3 and fields[2] in ('m', 'f'):
+                    genders.setdefault(fields[0], fields[2])
+    return genders
+
+
+def name_gender(lang, word, spelling=''):
+    """ほかの言語の名前の性: その言語の名前の表から。無ければ綴りの語尾 -a の名前は女性 (Liisa・Anna)。分からなければ ''"""
+    found = _genders(lang).get(word)
+    if found:
+        return found
+    latin = spelling or word
+    if re.fullmatch('[A-Za-zÀ-ž]+', latin) and len(latin) > 2:
+        return 'f' if latin.endswith('a') and not latin.endswith(('ssa', 'kka')) else 'm'
+    return ''
+
+
 def available(lang):
     return bool(_index(lang))
 

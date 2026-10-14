@@ -8,6 +8,7 @@ import unittest
 
 from dragoman.generate import korean, turkish, mongolian, german, finnish
 from dragoman.generate.name_script import hangul
+from dragoman.generate.names import name_gender
 
 
 class KoreanTestCase(unittest.TestCase):
@@ -25,6 +26,11 @@ class KoreanTestCase(unittest.TestCase):
         self.assertEqual([hangul(n) for n in ('Mārcus', 'Iūlia', 'Rōma')], ['마르쿠스', '율리아', '로마'])
         self.assertEqual([hangul(n) for n in ('Matti', 'Anna', 'Ulaanbaatar', 'Tsetseg', 'Dorzh')],
                          ['마티', '안나', '울란바타르', '체체그', '도르즈'])           # 重子音・長母音・ts・zh
+
+
+class NameGenderTestCase(unittest.TestCase):
+    def test_spelling(self):
+        self.assertEqual([name_gender('xx', n) for n in ('Liisa', 'Matti', 'Anna', 'Minsu')], ['f', 'm', 'f', 'm'])
 
 
 class TurkishTestCase(unittest.TestCase):
@@ -75,6 +81,7 @@ class GermanTestCase(unittest.TestCase):
         self.assertEqual(german.noun_phrase(books, 'Dat'), 'den Büchern')     # 与格複数 -n
         self.assertEqual([german.noun_form(n, 'Acc', 'sg') for n in ('Bauer', 'Mensch', 'Buch')],
                          ['Bauern', 'Menschen', 'Buch'])                    # 弱変化の男性名詞
+        self.assertEqual([german.noun_form('Herz', c, 'sg') for c in ('Acc', 'Dat')], ['Herz', 'Herzen'])   # 属格 -ens
 
     def test_verbs(self):
         self.assertEqual(german.finite('sehen', 'present', 3, 'sg'), ('sieht', ''))

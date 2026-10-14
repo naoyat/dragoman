@@ -179,6 +179,13 @@ def verb_lemma(lex, aspect='impf', transitive=False):
 # ----------------------------------------------------------------------
 # 名詞句
 
+def _foreign_name(np):
+    """ラテン語以外から来た名前で、枠に性があるもの (Liisa・Gretel。ラテン語の Rōma の女性は Рим に持ち込まない)"""
+    head = np.head
+    return head is not None and head.proper and (head.lang not in ('', 'la') or bool(head.origin)) and \
+        np.gender in ('m', 'f')
+
+
 def _gender_of(lemma, gender):
     parse = _parse(lemma, 'NOUN')
     if parse is not None:
@@ -275,7 +282,8 @@ def noun_phrase(np, case):
         parses = [p for p in _morph().parse(lemma) if p.tag.POS == 'NOUN' and p.normal_form == lemma.lower()]
         if parses and all(any(g in p.tag for g in ('Geox', 'Name', 'Surn', 'Orgn')) for p in parses):
             word = word[:1].upper() + word[1:]   # 固有名詞 (России)
-    g = _gender_of(lemma, gender or np.gender)
+    g = GENDERS[np.gender] if _foreign_name(np) and not gender else \
+        _gender_of(lemma, gender or np.gender)
     animate = _animate(lemma)
     before = []
     for mod in np.modifiers:
@@ -501,8 +509,10 @@ def _subject_agreement(subject, clause):
     if subject.members:
         return 'masc', 3, 'pl'
     lemma, gender = noun_lemma(subject.head)
-    if subject.head.pos == 'pronoun':
-        return GENDERS.get(subject.gender, 'masc'), clause.person, clause.number
+    if subject.head.pos == 'pronoun' or _foreign_name(subject) and not gender:
+        # 名前の性は枠の性 (Liisa → прочитала。pymorphy3 の推測の Лииса は男性になる)
+        return GENDERS.get(subject.gender, 'masc'), clause.person if subject.head.pos == 'pronoun' else 3, \
+            clause.number if subject.head.pos == 'pronoun' else subject.number
     return _gender_of(lemma, gender or subject.gender), 3, subject.number
 
 
@@ -666,7 +676,8 @@ def _agreeing(np, subject):
         return np
     import dataclasses
     lemma, gender = noun_lemma(subject.head) if not subject.members else ('', '')
-    g = _gender_of(lemma, gender or subject.gender) if lemma else 'masc'
+    g = (GENDERS[subject.gender] if _foreign_name(subject) and not gender else
+         _gender_of(lemma, gender or subject.gender)) if lemma else 'masc'
     return dataclasses.replace(np, number=subject.number if not subject.members else 'pl',
                                gender={'masc': 'm', 'femn': 'f', 'neut': 'n'}[g])
 
