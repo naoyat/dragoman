@@ -5,7 +5,7 @@
 # (文の生成 dragoman/generate で、Iēsus → Jesus → Иисус・Ἰησοῦς・يَسُوع のように固有名詞を置き換えるのに使う)
 #
 #   python3 tools/build_name_index.py --lang=ru      (ru / grc / sa / id / tl / ar / he / fa / hi / ur。--lang=all で全部)
-#   python3 tools/build_name_index.py --lang=de      (ko / de / tr / mn / fi は辞書 wiktionary.sqlite の固有名詞の見出しから)
+#   python3 tools/build_name_index.py --lang=de      (ko / de / fr / tr / mn / fi は辞書 wiktionary.sqlite の固有名詞の見出しから)
 #
 # 各行: 名前 (アラビア語・ヘブライ語は見出しの行の母音記号付きの形、サンスクリットは SLP1)、英語の名前 (読点区切り)、
 #       性 (m / f。分からなければ空)、語義の数
@@ -91,7 +91,7 @@ def entries(lang):
 
 # 抽出データを置いていない言語: 辞書 ($DRAGOMAN_DATA/<lang>/wiktionary.sqlite) の固有名詞 (pos = name) の見出しと
 # 英語の訳語 (読点区切りの語義の頭) から。見出しの列 (word) が無い言語 (ko・mn) は鍵 (小文字) の頭を大文字に
-DB_LANGS = {'ko': 'key', 'de': 'word', 'tr': 'word', 'mn': 'key', 'fi': 'word'}
+DB_LANGS = {'ko': 'key', 'de': 'word', 'fr': 'word', 'tr': 'word', 'mn': 'key', 'fi': 'word'}
 
 
 def db_entries(lang):

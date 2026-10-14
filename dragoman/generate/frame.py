@@ -55,6 +55,18 @@ SOURCE_PRONOUNS.update({
            'wir': ('ego', 'pl'), 'ihr': ('tū', 'pl'), 'dieser': ('hic', ''), 'jener': ('ille', ''), 'sich': ('sē', ''),
            'wer': ('quis', ''), 'was': ('quid', ''), 'mein': ('meus', ''), 'dein': ('tuus', ''), 'sein': ('suus', ''),
            'unser': ('noster', ''), 'euer': ('vester', ''), 'all': ('omnis', ''), 'jeder': ('omnis', '')},
+    'fr': {'je': ('ego', 'sg'), "j'": ('ego', 'sg'), 'me': ('ego', 'sg'), "m'": ('ego', 'sg'), 'moi': ('ego', 'sg'),
+           'tu': ('tū', 'sg'), 'te': ('tū', 'sg'), "t'": ('tū', 'sg'), 'toi': ('tū', 'sg'), 'il': ('is', 'sg'),
+           'elle': ('is', 'sg'), 'le': ('is', 'sg'), 'la': ('is', 'sg'), "l'": ('is', 'sg'), 'lui': ('is', 'sg'),
+           'nous': ('ego', 'pl'), 'vous': ('tū', 'pl'), 'ils': ('is', 'pl'), 'elles': ('is', 'pl'), 'les': ('is', 'pl'),
+           'leur': ('is', 'pl'), 'eux': ('is', 'pl'), 'se': ('sē', ''), "s'": ('sē', ''), 'soi': ('sē', ''),
+           'on': ('is', 'sg'), 'ce': ('hic', ''), 'cet': ('hic', ''), 'cette': ('hic', ''), 'ces': ('hic', ''),
+           "c'": ('is', 'sg'), 'cela': ('ille', ''), 'ça': ('ille', ''), 'ceci': ('hic', ''), 'qui': ('quis', ''),
+           'quoi': ('quid', ''), 'mon': ('meus', ''), 'ma': ('meus', ''), 'mes': ('meus', ''), 'ton': ('tuus', ''),
+           'ta': ('tuus', ''), 'tes': ('tuus', ''), 'son': ('suus', ''), 'sa': ('suus', ''), 'ses': ('suus', ''),
+           'notre': ('noster', ''), 'nos': ('noster', ''), 'votre': ('vester', ''), 'vos': ('vester', ''),
+           'leurs': ('suus', ''), 'tout': ('omnis', ''), 'toute': ('omnis', ''), 'tous': ('omnis', ''),
+           'toutes': ('omnis', ''), 'chaque': ('omnis', '')},
     'tr': {'(関係節の空所)': ('quī', ''), 'ben': ('ego', 'sg'), 'sen': ('tū', 'sg'), 'o': ('is', 'sg'), 'biz': ('ego', 'pl'), 'siz': ('tū', 'pl'),
            'onlar': ('is', 'pl'), 'bu': ('hic', ''), 'şu': ('iste', ''), 'kendi': ('sē', ''), 'kim': ('quis', ''),
            'ne': ('quid', '')},
@@ -147,6 +159,17 @@ for (_surface, _case), _latin in {('in', 'Dat'): ('in', 'Abl'), ('in', 'Acc'): (
                                   ('zum', 'Dat'): ('ad', 'Acc'), ('zur', 'Dat'): ('ad', 'Acc'), ('vom', 'Dat'): ('ab', 'Abl'),
                                   ('beim', 'Dat'): ('apud', 'Acc')}.items():
     SOURCE_PREPOSITIONS.setdefault('de', {})[(_surface, _case)] = _latin
+# フランス語の前置詞 (解析器は前置詞の目的語を 'Gen' にする)
+for _surface, _latin in {'à': ('in', 'Abl'), 'au': ('in', 'Abl'), 'aux': ('in', 'Abl'), 'dans': ('in', 'Abl'),
+                         'en': ('in', 'Abl'), 'sur': ('in', 'Abl'), 'sous': ('sub', 'Abl'), 'avec': ('cum', 'Abl'),
+                         'sans': ('sine', 'Abl'), 'pour': ('prō', 'Abl'), 'par': ('per', 'Acc'), 'de': ('ab', 'Abl'),
+                         'du': ('ab', 'Abl'), 'des': ('ab', 'Abl'), "d'": ('ab', 'Abl'), 'chez': ('apud', 'Acc'),
+                         'vers': ('ad', 'Acc'), 'entre': ('inter', 'Acc'), 'devant': ('ante', 'Acc'),
+                         'derrière': ('post', 'Acc'), 'après': ('post', 'Acc'), 'avant': ('ante', 'Acc'),
+                         'contre': ('contrā', 'Acc'), 'pendant': ('per', 'Acc'), 'depuis': ('ab', 'Abl'),
+                         'près': ('prope', 'Acc'), 'parmi': ('inter', 'Acc')}.items():
+    for _case in ('Gen', None):
+        SOURCE_PREPOSITIONS.setdefault('fr', {})[(_surface, _case)] = _latin
 # 前置詞の無い格の役割 (ラテン語に無い格): 具格は手段、サンスクリットの奪格は起点、処格は場所。
 # フィンランド語の場所の格 (内格・所格 → 場所、出格・離格 → 起点、入格・向格 → 場所)、トルコ語・モンゴル語の位格・奪格・具格
 SOURCE_ROLES = {'ru': {'Ins': 'means', 'Loc': 'place'}, 'sa': {'Ins': 'means', 'Abl': 'source', 'Loc': 'place'},
@@ -318,7 +341,7 @@ def lex_of(word, item=None):
         lemma = item.attrib('lemma')
         if item.pos == 'verb' and item.attrib('stem'):
             focus = 'stem:' + item.attrib('stem')
-    if lang in ('ko', 'de', 'tr', 'mn', 'fi') and item.attrib('lemma'):
+    if lang in ('ko', 'de', 'tr', 'mn', 'fi', 'fr') and item.attrib('lemma'):
         lemma = item.attrib('lemma')   # 表示の形 (학교 (學校) hakgyo) でなく見出し (辞書・生成器の見出しと同じ)
     if lang == 'ar' and item.attrib('lex'):
         lemma = item.attrib('lex')   # 表示の形 (bint ⁧بِنْت⁩) でなく CAMeL の見出しの鍵 (بِنْت。生成器の見出しと同じ)
@@ -330,7 +353,8 @@ def lex_of(word, item=None):
         found = MN_PRONOUNS.get(lemma.lower())
         if found:   # 斜格の代名詞 (чамайг・надад) → 主格 (чи・би)
             lemma = next((k for k, v in MN_PRONOUNS.items() if v[:3] == found[:3] and v[3] == 'Nom'), lemma)
-    pronoun = SOURCE_PRONOUNS.get(lang, {}).get(lemma.lower()) if item.pos in ('pronoun', 'adj', 'det') else None
+    pronoun = SOURCE_PRONOUNS.get(lang, {}).get(lemma.lower()) if item.pos in ('pronoun', 'adj', 'det') and \
+        item.attrib('desc') != '関係代名詞' else None
     if pronoun:   # 閉じた語類はラテン語の形に (я → ego、tad → is)
         personal = lemma.lower() in ('я', 'ты', 'он', 'она', 'оно', 'мы', 'вы', 'они', 'asmad', 'yuṣmad')
         pos = 'adj' if pronoun[0] in ('meus', 'tuus', 'suus', 'noster', 'vester', 'omnis', 'tālis') else 'pronoun'
@@ -370,6 +394,8 @@ def np_of(node, case=None):
             if plain[:1] in 'בלכ' and ('\u05b7' in plain or '\u05b8' in plain):
                 np.definite = True
         latin = SOURCE_PREPOSITIONS.get(_lang, {}).get((node.item.surface.lower(), node.dominated_case))
+        if _lang == 'fr' and node.item.attrib('agent'):
+            latin = ('ab', 'Abl')   # 受動の動作主 par (解析器の印): ā + 奪格
         if latin:   # в + 前置格 → in + 奪格 (元の前置詞と格も持つ: 同じ言語に戻すとき на столе を в столе にしない)
             np.prep = Lex(latin[0], 'preposition', node.item.ja, surface=node.item.surface.lower(), lang=_lang)
             np.case = latin[1]
@@ -403,6 +429,11 @@ def np_of(node, case=None):
         np.gender = name_gender(lang, word, np.head.lemma) or np.gender
     if _lang in ('grc', 'he'):   # 冠詞のある言語なら、定かかどうか (冠詞の有無)。冠詞の無い言語 (ロシア語 …) は分からない
         np.definite = any(isinstance(m, Word) and m.items and m.items[0].pos == 'article' for m in node.modifiers)
+    elif _lang == 'fr':   # 定冠詞 (le・la・les) か不定冠詞・部分冠詞 (un・une・des・du)
+        articles = [m.items[0].attrib('base') for m in node.modifiers
+                    if isinstance(m, Word) and m.items and m.items[0].pos == 'article']
+        if articles:
+            np.definite = articles[0] not in ('un', 'une', 'des', 'du', 'de', "d'")
     elif _lang == 'ar':   # アラビア語の冠詞は語に付く (الوَلَد)。属格のつながり (كِتابُ الوَلَدِ) の頭は後ろで定に
         np.definite = item.attrib('prc0') == 'Al_det' or node.surface.startswith('ال')
     for mod in node.modifiers:
@@ -667,6 +698,7 @@ _LATIN_NUMERALS = ('ūnus', 'duo', 'trēs', 'quattuor', 'quīnque', 'sex', 'sept
 SOURCE_NUMERALS = {lang: dict(zip(words, _LATIN_NUMERALS)) for lang, words in {
     'fi': ('yksi', 'kaksi', 'kolme', 'neljä', 'viisi', 'kuusi', 'seitsemän', 'kahdeksan', 'yhdeksän', 'kymmenen'),
     'de': ('eins', 'zwei', 'drei', 'vier', 'fünf', 'sechs', 'sieben', 'acht', 'neun', 'zehn'),
+    'fr': ('un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix'),
     'tr': ('bir', 'iki', 'üç', 'dört', 'beş', 'altı', 'yedi', 'sekiz', 'dokuz', 'on'),
     'mn': ('нэг', 'хоёр', 'гурван', 'дөрвөн', 'таван', 'зургаан', 'долоон', 'найман', 'есөн', 'арван'),
     'ko': ('한', '두', '세', '네', '다섯', '여섯', '일곱', '여덟', '아홉', '열')}.items()}
@@ -674,7 +706,7 @@ SOURCE_NUMERALS = {lang: dict(zip(words, _LATIN_NUMERALS)) for lang, words in {
 POSSESSIVE_SUFFIXES = {'P1sg': 'meus', 'P2sg': 'tuus', 'P3sg': 'suus', 'P1pl': 'noster', 'P2pl': 'vester', 'P3pl': 'suus'}
 OWNER_JA = {'meus': '私の', 'tuus': '君の', 'noster': '私たちの', 'vester': '君たちの', 'suus': ''}
 # 繋辞を中立の sum にする言語
-NEUTRAL_COPULA = ('ko', 'de', 'tr', 'mn', 'fi')
+NEUTRAL_COPULA = ('ko', 'de', 'tr', 'mn', 'fi', 'fr')
 # 動詞が人称で変わらない言語 (人称は主語の代名詞から)
 PERSONLESS = ('ko', 'mn', 'ja')
 

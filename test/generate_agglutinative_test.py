@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# 韓国語・トルコ語・モンゴル語・ドイツ語・フィンランド語の出口 (generate/korean.py・turkish.py・mongolian.py・german.py):
+# 韓国語・トルコ語・モンゴル語・ドイツ語・フィンランド語・フランス語の出口 (generate/korean.py・turkish.py・mongolian.py・german.py):
 # 活用・格の接尾辞・母音調和・冠詞と形容詞の語尾。ドイツ語は辞書 (語形の表) が無ければ飛ばす
 #
 import unittest
 
-from dragoman.generate import korean, turkish, mongolian, german, finnish
+from dragoman.generate import korean, turkish, mongolian, german, finnish, french
 from dragoman.generate.name_script import hangul
 from dragoman.generate.names import name_gender
 
@@ -111,6 +111,26 @@ class GermanTestCase(unittest.TestCase):
 
 
 @unittest.skipUnless(finnish._db() is not None, 'フィンランド語の辞書 (語形の表) が無い')
+@unittest.skipUnless(french._db() is not None, 'フランス語の辞書が無い')
+class FrenchTestCase(unittest.TestCase):
+    def test_noun_phrase(self):
+        from dragoman.generate.frame import NP, Lex
+        rose = NP(Lex('rose', 'noun', lang='fr'), modifiers=[Lex('beau', 'adj', lang='fr')])
+        self.assertEqual(french.noun_phrase(rose), 'la belle rose')                 # 前に置く形容詞・女性の一致
+        school = NP(Lex('école', 'noun', lang='fr'))
+        self.assertEqual(french.noun_phrase(school), "l'école")                      # エリジオン
+        self.assertEqual(french.with_preposition('à', 'le marché'), 'au marché')     # 縮約
+        self.assertEqual(french.with_preposition('de', 'les livres'), 'des livres')
+        self.assertEqual([french.plural(n) for n in ('livre', 'cheval', 'bateau', 'fils')],
+                         ['livres', 'chevaux', 'bateaux', 'fils'])
+
+    def test_verbs(self):
+        self.assertEqual(french.finite('voir', 'present', 3, 'sg'), 'voit')
+        self.assertEqual(french.finite('parler', 'imperfect', 3, 'pl'), 'parlaient')
+        self.assertEqual(french.finite('être', 'future', 1, 'pl'), 'serons')
+        self.assertEqual(french.participle_form('aller', 'f'), 'allée')            # être の複合過去の一致
+
+
 class FinnishTestCase(unittest.TestCase):
     def test_cases(self):
         self.assertEqual([finnish.case_form('talo', c) for c in ('Gen', 'Par', 'Ine', 'Ela', 'Ill', 'Ade', 'All')],

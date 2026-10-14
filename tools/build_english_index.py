@@ -9,7 +9,7 @@
 #   python3 tools/build_english_index.py --lang=grc
 #   python3 tools/build_english_index.py --lang=id
 #   python3 tools/build_english_index.py --lang=tl
-#   python3 tools/build_english_index.py --lang=ko   (de・tr・mn・fi も。辞書 wiktionary.sqlite から)
+#   python3 tools/build_english_index.py --lang=ko   (de・fr・tr・mn・fi も。辞書 wiktionary.sqlite から)
 #
 # 各行: 見出し語、品詞、英語の訳語 (語義の頭の語句を先に。読点区切り、多くて12)、性 (名詞)、語根の類 (サンスクリットの動詞)、
 #       語義の数 (よく使う語ほど多い)
@@ -96,7 +96,7 @@ def entries(lang):
 
 # 抽出データを置いていない言語 (ドイツ語・トルコ語・フィンランド語は標準入力から読んで辞書だけ残した) と、韓国語・モンゴル語:
 # 辞書 ($DRAGOMAN_DATA/<lang>/wiktionary.sqlite。tools/build_<言語>_dic.py) の見出し・品詞・英語の訳語 (多くて3つ)・性から
-DB_LANGS = {'ko': 'key', 'de': 'word', 'tr': 'word', 'mn': 'key', 'fi': 'word'}
+DB_LANGS = {'ko': 'key', 'de': 'word', 'fr': 'word', 'tr': 'word', 'mn': 'key', 'fi': 'word'}
 DB_POS = {'noun': 'noun', 'name': 'noun', 'adj': 'adj', 'verb': 'verb', 'adv': 'adv', 'pronoun': 'pronoun',
           'det': 'pronoun', 'preposition': 'preposition', 'postposition': 'preposition', 'conj': 'conj', 'num': 'num'}
 

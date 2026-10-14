@@ -161,9 +161,10 @@ def _verb_feats(feats, tags=None):
     if tags:
         tense = 'perfect' if 'historic' in tags else 'imperfect' if 'imperfect' in tags else \
             'future' if 'future' in tags else 'present'
-        mood = 'imperative' if 'imperative' in tags else 'subjunctive' if 'subjunctive' in tags or \
-            'conditional' in tags else 'indicative'
-        person = next((k + 1 for k, p in enumerate(FINITE) if p in tags), 3)
+        # 語義からの印は複数の読みが混ざる (first/third-person singular present indicative/subjunctive): 直説法・3人称を先に
+        mood = 'indicative' if 'indicative' in tags else 'imperative' if 'imperative' in tags else \
+            'subjunctive' if 'subjunctive' in tags or 'conditional' in tags else 'indicative'
+        person = 3 if 'third-person' in tags else next((k + 1 for k, p in enumerate(FINITE) if p in tags), 3)
         return tense, mood, person, 'pl' if 'plural' in tags else 'sg'
     tense = {'Pres': 'present', 'Imp': 'imperfect', 'Past': 'perfect', 'Fut': 'future'}.get(feats.get('Tense'), 'present')
     mood = {'Ind': 'indicative', 'Sub': 'subjunctive', 'Cnd': 'subjunctive', 'Imp': 'imperative'}.get(
@@ -229,8 +230,8 @@ def item_of(token, doc, fixed):
     lower = text.lower()
     if pos == 'PUNCT' or lower in PUNCTUATION:
         return None
-    if fixed.get(token.i) == 'VERB':
-        forms = _finite_forms(lower)
+    if fixed.get(token.i) == 'VERB':   # 3人称の読みを先に (qui chante・le garçon lit。je・tu の後ろは subject_persons で)
+        forms = sorted(_finite_forms(lower), key=lambda f: 'third-person' not in f[1])
         return _verb_data(token, {}, forms[0][0], forms[0][1])
     if fixed.get(token.i) == 'CLITIC' or (lower in morphology.CLITICS and pos == 'PRON'):
         ja, person, number, cases = morphology.PRONOUNS[lower]
@@ -466,6 +467,27 @@ def attach_articles(words):
     return out
 
 
+SUBJECT_PERSONS = {'je': (1, 'sg'), "j'": (1, 'sg'), 'tu': (2, 'sg'), 'il': (3, 'sg'), 'elle': (3, 'sg'), 'on': (3, 'sg'),
+                   'nous': (1, 'pl'), 'vous': (2, 'pl'), 'ils': (3, 'pl'), 'elles': (3, 'pl')}
+
+
+def subject_persons(words):
+    """動詞の人称・数を直前の主語の代名詞から (間は接語・ne だけ。spaCy は Je le lui ai の ai を3人称と読む)"""
+    for i, word in enumerate(words):
+        item = _item(word)
+        if item is None or item.pos != 'verb' or item.attrib('mood') in ('infinitive', 'participle'):
+            continue
+        k = i - 1
+        while k >= 0 and _item(words[k]) is not None and (_item(words[k]).attrib('clitic') or
+                                                           _item(words[k]).attrib('base') == 'ne'):
+            k -= 1
+        lower = words[k].surface.lower() if k >= 0 else ''
+        if lower in SUBJECT_PERSONS and not (_item(words[k]) is not None and _item(words[k]).attrib('clitic')):
+            person, number = SUBJECT_PERSONS[lower]
+            if (item.attrib('person'), item.attrib('number')) != (person, number):
+                word.items = [type(item)(dict(item.item, person=person, number=number))]
+
+
 def clitic_cases(words):
     """接語が2つ並ぶとき (me le・le lui・me l'): 3人称の le・la・les は対格、ほか (me・te・nous・vous・lui・leur) は与格"""
     for i in range(len(words) - 1):
@@ -514,7 +536,8 @@ def existential_il_y_a(words):
         if item is None or item.pos != 'verb' or item.attrib('lemma') != 'avoir' or i < 2:
             continue
         if words[i - 1].surface.lower() == 'y' and words[i - 2].surface.lower() == 'il':
-            item.item.update(ja='ある,いる', gloss_lang='ja', existential=True, lemma='il y a')
+            item.item.update(ja='ある,いる', gloss_lang='ja', existential=True, lemma='être', pres1sg='être',
+                             base='il y a', person=3, number='sg')
             word.items = [type(item)(item.item)]
             for w in (words[i - 1], words[i - 2]):
                 w.items = [type(_item(w))(dict(_item(w).item, pos='particle', ja='', _=None))]
@@ -555,7 +578,7 @@ def assign_cases(words, doc, existential=False):
         feats = item.attrib('feats') or {}
         if after_prep or getattr(word, 'genitive_of_de', False):
             cases = ('Gen',)
-        elif existential and verb_before is not None and verb_before.attrib('lemma') == 'il y a':
+        elif existential and verb_before is not None and verb_before.attrib('base') == 'il y a':
             cases = ('Nom',)
         elif verb_before is None:
             cases = ('Nom',)
@@ -621,7 +644,7 @@ def passive_agents(words):
     for w in words:
         item = _item(w)
         if item is not None and item.pos == 'preposition' and item.attrib('base') == 'par':
-            w.items = [type(item)(dict(item.item, ja='〜によって'))]
+            w.items = [type(item)(dict(item.item, ja='〜によって', agent=True))]
 
 
 def lookup_all(surfaces):
@@ -637,6 +660,7 @@ def lookup_all(surfaces):
     global _display
     _display = list(words)
     clitic_cases(words)
+    subject_persons(words)
     words = negation(words)
     words = merge_verbs(words)
     existential = existential_il_y_a(words)

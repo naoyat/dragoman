@@ -41,6 +41,29 @@ python3 tools/samples.py --lang=fr              # サンプル (samples/french.t
 * 人名はフランス語の読みのカタカナ（Jean → ジャン、Camus → カミュ、Claude → クロード。英語の名前 John の訳にしない）、
   地名は辞書の訳（Londres → ロンドン）。
 
+## 文の生成 (出口)
+
+ほかの言語の文の枠からフランス語の文を作ります（`generate/french.py`）。比較の表（`tools/generate.py --compare`）にも出ます。
+
+```
+python3 tools/generate.py --to=fr "Puella rosam in hortō vīdit."
+  フランス語: La fille a vu la rose dans le jardin.
+python3 tools/generate.py --to=fr "Ego tē amō. Agricola est. Via longa et lāta est."
+  フランス語: Je t'aime.  /  Il y a un agriculteur.  /  La route est longue et large.
+python3 tools/generate.py --from=fr "Je le lui ai donné hier."      # 入口から: ラテン語 Eī eum here dedī.
+```
+
+* 語は英語を仲立ちにした置き換え（解析器の訳語の表 GLOSSES の語を先に: soldat を drille より）。名詞の性と、名詞・形容詞・動詞の
+  語形は辞書の語形の表から（無ければ規則: 複数 -s・-x・-aux、女性 -e、-er 動詞の活用）。
+* 名詞句: 定冠詞 le / la / l' / les（元の言語の不定冠詞なら un / une / des）、前に置く形容詞（beau・petit・grand …）と後ろに置く
+  形容詞（性・数の一致）、所有形容詞・指示形容詞（mon / ma / mes、ce / cet / cette / ces）、de + 属格、エリジオン（l'école・d'ami）、
+  前置詞と冠詞の縮約（au・aux・du・des）。町の名前は à（à Rome）。
+* 語順: 主語 - ne - 接語の代名詞（me・te・le・la・lui・leur …。me le・le lui の順）- 動詞 - pas - 過去分詞 - 目的語 - à + 受け手 -
+  前置詞句。関係節は qui（主語の空所）・que（目的語の空所）。
+* 時制: 現在、完了は複合過去（avoir + 過去分詞。移動・変化の動詞は être + 過去分詞で主語に一致: Elle est allée）、未完了は半過去、
+  大過去、単純未来。受動は être + 過去分詞（par + 動作主）。否定 ne … pas。存在の文は il y a + 不定冠詞。
+* 入口 (--from=fr) から: 冠詞の定・不定を枠に渡し、元の前置詞（à l'école）は元の言語に戻すときそのまま使う。
+
 ## 準備
 
 ```
@@ -70,4 +93,4 @@ il y a + 名詞は訳では「〜がある」の主語なので、主語とし�
 * pour・sans + 不定詞「〜するために」「〜せずに」を不定詞の節の接続詞に（今は行き場の無い語句になる）。
 * 倒置の主語（a expliqué Véronique、Que dit l'Eglise ?）、疑問文の est-ce que。
 * 代名動詞（se lever「起きる」、s'appeler「〜という名前である」）を見出しに。
-* 出口（文の生成）と比較の表。
+* 出口: 否定の文の部分冠詞（ne mange pas de pain）、主語の倒置・疑問文、接続法（bien que・pour que の後ろ）。

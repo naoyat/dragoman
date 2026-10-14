@@ -131,7 +131,7 @@ def _in_hand_dictionary(lemma):
 
 # 解析器の手作りの訳語の表 (基本の語の日本語。Wiktionary の語義の順だけでは 계집・tappo のような語が先に来る) を、
 # ラテン語の手作りの辞書と同じく語の選択に使う言語
-HAND_GLOSSES = {'ko': 'korean', 'de': 'german', 'tr': 'turkish', 'mn': 'mongolian', 'fi': 'finnish'}
+HAND_GLOSSES = {'ko': 'korean', 'de': 'german', 'fr': 'french', 'tr': 'turkish', 'mn': 'mongolian', 'fi': 'finnish'}
 
 
 @functools.lru_cache(maxsize=None)

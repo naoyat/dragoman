@@ -37,7 +37,7 @@ class AnalyzerTestCase(unittest.TestCase):
 
     def test_negation_existential_clauses(self):
         self.assertEqual(self.ja('Il ne mange pas de pain.'), '彼が / パンを / 食べない')
-        self.assertEqual(self.ja('Il y a un chat dans le jardin.'), '猫が / {庭}〜の中で,〜で / ある,いる')
+        self.assertEqual(self.ja('Il y a un chat dans le jardin.'), '{庭}〜の中に / 猫が / いる')
         self.assertEqual(self.ja('La fille qui chante est ma sœur.'), '{歌う}少女,娘は / {私の}姉妹である')
         self.assertEqual(self.ja("Je sais que tu m'aimes."), '私が / 知っている / 〜ということ / 君が / 私を / 愛する,好む')
 
