@@ -32,7 +32,8 @@ ROLE_PARTICLES = {'object': 'を', 'recipient': 'に', 'means': 'で', 'place': 
                   'source': 'から', 'complement': ''}
 SUBORDINATORS = {'ubi': 'とき', 'cum': 'とき', 'postquam': '後で', 'quod': 'ので', 'quia': 'ので', 'sī': 'なら',
                  'dum': 'あいだ', 'nisi': 'のでなければ', 'antequam': '前に', 'quamquam': 'けれども',
-                 'etsī': 'けれども', 'ut': 'ように', 'nē': 'ないように', 'simul': 'とすぐに', 'quoniam': 'ので'}
+                 'etsī': 'けれども', 'ut': 'ように', 'nē': 'ないように', 'simul': 'とすぐに', 'quoniam': 'ので',
+                 'dōnec': 'まで', 'priusquam': '前に'}
 WH = {'quis': '誰', 'quid': '何', 'cūr': 'なぜ', 'quārē': 'なぜ', 'ubi': 'どこで', 'quō': 'どこへ', 'unde': 'どこから',
       'quandō': 'いつ', 'quōmodo': 'どのように', 'num': '', 'utrum': ''}
 

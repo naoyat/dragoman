@@ -44,6 +44,7 @@ CONNECTIVES = {
     'cum': ('sub', 'when', 'когда', ('yadA', 'tadA')),   # 接続詞の cum (解析で中身の無い前置詞句になったもの)
     'postquam': ('sub', 'after', 'после того как', ('yadA', 'tadA')),
     'dum': ('sub', 'while', 'пока', ('yAvat', 'tAvat')),
+    'dōnec': ('sub', 'until', 'пока не', ('yAvat', 'tAvat')),   # 〜するまで (モンゴル語の -тал・韓国語の -ㄹ 때까지)
     'quod': ('sub', 'because', 'потому что', ('yataH', 'ataH')),
     'quia': ('sub', 'because', 'потому что', ('yataH', 'ataH')),
     'sī': ('sub', 'if', 'если', ('yadi', 'tarhi')),

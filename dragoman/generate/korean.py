@@ -37,7 +37,7 @@ CONNECTIVES = {'et': '그리고', 'que': '그리고', 'atque': '그리고', 'ac'
                'tamen': '그래도', 'tum': '그때', 'deinde': '그 다음에', 'aut': '또는', 'vel': '또는'}
 SUBORDINATORS = {'ubi': '때', 'cum': '때', 'postquam': '후에', 'dum': '동안', 'quod': '때문에', 'quia': '때문에',
                  'sī': '면', 'ut': '도록', 'nē': '지 않도록', 'quamquam': '지만', 'etsī': '지만', 'priusquam': '전에',
-                 'antequam': '전에'}
+                 'antequam': '전에', 'et': '고', 'dōnec': '때까지', 'simul': '자마자'}
 WORDS = {'nōn': '안', 'semper': '항상', 'saepe': '자주', 'iam': '이미', 'nunc': '지금', 'hodiē': '오늘', 'crās': '내일',
          'heri': '어제', 'ibi': '거기서', 'hīc': '여기서', 'etiam': '도', 'quoque': '도', 'valdē': '매우', 'magnopere': '매우',
          'statim': '곧', 'mox': '곧', 'tandem': '마침내', 'iterum': '다시', 'numquam': '결코', 'tum': '그때',
@@ -118,6 +118,8 @@ def infinitive(lemma):
             return head + _compose(initial, vowel) + ('와' if lemma in ('돕다', '곱다') else '워')
         if final == 7 and lemma in ('듣다', '걷다', '묻다', '깨닫다', '싣다'):   # ㄷ 不規則 (듣다 → 들어)
             return head + _compose(initial, vowel, FINAL_L) + '어'
+        if final == 19 and lemma in IRREGULAR_S:   # ㅅ 不規則 (붓다 → 부어、짓다 → 지어)
+            return head + _compose(initial, vowel) + ('아' if bright else '어')
         return stem + ('아' if bright else '어')
     if stem.endswith('르') and len(stem) >= 2 and lemma not in ('따르다', '치르다'):   # 르 不規則 (모르다 → 몰라)
         prev = _jamo(stem[-2])
@@ -160,6 +162,7 @@ def present(lemma, adjective=False):
 
 IRREGULAR_B = ('입다', '잡다', '좁다', '씹다', '뽑다', '접다', '업다')   # 規則の ㅂ 語幹 (입어・입을)
 IRREGULAR_D = ('듣다', '걷다', '묻다', '깨닫다', '싣다')                      # ㄷ 不規則 (들어・들을)
+IRREGULAR_S = ('붓다', '퍼붓다', '짓다', '낫다', '잇다', '젓다', '긋다')            # ㅅ 不規則 (부어・부을)
 
 
 def _eu_stem(lemma):
@@ -171,6 +174,8 @@ def _eu_stem(lemma):
         return stem[:-1] + _compose(j[0], j[1]) + '우', False
     if j and j[2] == 7 and lemma in IRREGULAR_D:
         return stem[:-1] + _compose(j[0], j[1], FINAL_L), True
+    if j and j[2] == 19 and lemma in IRREGULAR_S:
+        return stem[:-1] + _compose(j[0], j[1]), True   # 붓 → 부 + 을
     return stem, has_final(stem) and not final_is_rieul(stem)
 
 
@@ -205,6 +210,54 @@ def adnominal(lemma, tense='present', adjective=False):
 
 def imperative(lemma):
     return infinitive(lemma) + '라'
+
+
+def _eu(lemma, tail_vowel, tail_consonant):
+    """으 で始まる語尾: 子音の語幹は 으 + 語尾 (먹으면)、母音・ㄹ の語幹は語尾だけ (가면・살면)"""
+    stem, consonant = _eu_stem(lemma)
+    return stem + (tail_consonant if consonant else tail_vowel)
+
+
+def _future_adnominal(lemma):
+    """未来の連体形 -(으)ㄹ (올・먹을・살・들을)"""
+    stem, consonant = _eu_stem(lemma)
+    if final_is_rieul(stem) and not consonant:
+        return stem
+    return stem + '을' if consonant else _add_final(stem, FINAL_L)
+
+
+def connective(lemma, key, tense='present', negated=False, adjective=False):
+    """従属節の用言の形 (ラテン語の従属節の接続詞から): 왔을 때・온 후에・자는 동안・오기 때문에・오면・오기 전에。
+    et は続く動作の -고 (열고)"""
+    stem = _stem(lemma)
+    if key == 'et':
+        return ('안 ' if negated else '') + stem + '고'
+    if key == 'simul':
+        return ('안 ' if negated else '') + stem + '자마자'
+    past_stem = past(lemma)[:-1] if tense in ('perfect', 'past-perfect', 'imperfect') else ''   # 왔
+    if key in ('cum', 'ubi', 'simul'):
+        form = (past_stem + '을 때') if past_stem else _future_adnominal(lemma) + ' 때'
+    elif key == 'postquam':
+        form = adnominal(lemma, 'perfect') + ' 후에'
+    elif key == 'dum':
+        form = adnominal(lemma, 'present', adjective) + ' 동안'
+    elif key in ('quod', 'quia', 'quoniam'):
+        form = (past_stem or stem) + '기 때문에'
+    elif key == 'sī':
+        form = _eu(lemma, '면', '으면')
+    elif key in ('quamquam', 'etsī'):
+        form = (past_stem or stem) + '지만'
+    elif key in ('priusquam', 'antequam'):
+        form = stem + '기 전에'
+    elif key == 'ut':
+        form = stem + '기 위해'
+    elif key == 'nē':
+        return stem + '지 않도록'
+    elif key == 'dōnec':
+        form = _future_adnominal(lemma) + ' 때까지'
+    else:
+        return None
+    return ('안 ' + form) if negated else form
 
 
 # ----------------------------------------------------------------------
@@ -390,10 +443,36 @@ def _copula(complement, clause):
     return text + ('이다' if has_final(text) else '다')
 
 
-def realize(clause, gap=None, final=True):
-    """節の語の列 (gap: 関係節の空所の役割。関係節なら用言は連体形)"""
+def realize(clause, gap=None, final=True, subordinate=False):
+    """節の語の列 (gap: 関係節の空所の役割。関係節なら用言は連体形。subordinate なら従属節の接続の形)"""
     from .frame import lexical_negation, periphrastic
     clause = lexical_negation(periphrastic(clause))
+    if subordinate and gap is None and clause.copula and clause.subordinator in SUBORDINATORS and \
+            clause.role('complement'):
+        out = realize(dataclasses.replace(clause, subordinator=''), final=final)
+        complement = clause.role('complement')[0]
+        head = complement.head
+        if head is not None and not complement.members and out:
+            if head.pos in ('adj', 'participle'):   # 날씨가 좋으면・예쁠 때
+                lemma = to_korean(head, 'adj') or ''
+                lemma = lemma if lemma.endswith('다') or not lemma else lemma + '하다'
+                form = connective(lemma, clause.subordinator, clause.tense, clause.negated, adjective=True) \
+                    if lemma else None
+            else:   # 학생이면・학생일 때
+                text = noun_phrase(complement)
+                form = connective('이다', clause.subordinator, clause.tense, False, adjective=True)
+                form = text + form if form and not clause.negated else None
+            if form:
+                return out[:-1] + [form]
+        return out + [SUBORDINATORS[clause.subordinator]]
+    if subordinate and gap is None and not clause.copula and clause.subordinator in SUBORDINATORS:
+        out = realize(dataclasses.replace(clause, subordinator=''), final=final)
+        lemma = word(clause.verb, 'verb')
+        if lemma and not lemma.startswith('[') and clause.voice != 'passive':
+            form = connective(lemma, clause.subordinator, clause.tense, clause.negated)
+            if form and out:
+                return out[:-1] + [form]
+        return out + [SUBORDINATORS[clause.subordinator]]
     subject = (clause.role('subject') or [None])[0]
     out = []
     for adv in clause.adverbs:
@@ -455,28 +534,25 @@ def vocative(np):
 def sentence(clauses):
     if not clauses:
         return ''
-    from .frame import split_address
+    from .frame import split_address, chains_with_next
     parts = []
+    chained = False
     for k, c in enumerate(clauses):
         groups, rest = split_address(c)
         words = []
         for group in groups:
             words.append(', '.join(vocative(np) for np in group) + ',')
         for key in rest.connectives:
-            if key in CONNECTIVES and k > 0:
+            if key in CONNECTIVES and k > 0 and not chained:
                 words.append(CONNECTIVES[key])
-        words += realize(rest)
+        chain = chains_with_next(clauses, k)
+        if chain:   # 同じ主語の続く動作は -고 で次の節に (문을 열고 안으로 들어갔다)
+            rest = dataclasses.replace(rest, subordinator='et')
+        words += realize(rest, subordinate=k + 1 < len(clauses))
         text = ' '.join(w for w in words if w)
-        if rest.subordinator in SUBORDINATORS and k + 1 < len(clauses):
-            text = _subordinate(text, rest.subordinator)
-        parts.append(text)
-    return ', '.join(parts) + '.'
-
-
-def _subordinate(text, key):
-    """従属節: 文末の用言を接続の形に (〜할 때・〜하면)。作れなければ接続の語を後ろに"""
-    tail = SUBORDINATORS[key]
-    return text + ' ' + tail
+        parts.append(text + (' ' if chain else ', ') if k + 1 < len(clauses) else text)
+        chained = chain
+    return ''.join(parts) + '.'
 
 
 # ----------------------------------------------------------------------

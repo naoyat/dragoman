@@ -73,4 +73,5 @@ BOUN・Kenet の test（2,622 文）で、格の正解率 79%、主語の再現�
 * zeyrek の辞書に無い語（Unk）・新しい語の扱い。
 * 出口（`generate/turkish.py`）: 母音調和の格の接尾辞・有声化・母音の脱落、動詞の時制と人称、分詞の関係節は作れる。
   所有の接尾辞（benim annem「私の母」、kitabı「その人の本」）、数詞の後ろは単数（iki kedi）、所有の存在文
-  （Benim iki kedim var）。副動詞はまだ。
+  （Benim iki kedim var）。従属節は副動詞に（Eve gelince・Oğlan uyurken・Kızın öttüğü için・Yağarsa）、
+  同じ主語の et は -ıp（Eve gelip yemek yedi）。入口の副動詞の印（-ınca・-ıp・-ken）は枠の従属節の接続詞（cum・et・dum）に。

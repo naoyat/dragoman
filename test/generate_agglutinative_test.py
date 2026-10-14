@@ -20,6 +20,14 @@ class KoreanTestCase(unittest.TestCase):
         self.assertEqual(korean.adnominal('보다', 'perfect'), '본')                  # 過去の連体形
         self.assertEqual(korean.adnominal('아름답다', adjective=True), '아름다운')    # ㅂ 不規則
 
+    def test_connectives(self):
+        self.assertEqual([korean.connective('오다', k, t) for k, t in
+                          (('cum', 'perfect'), ('postquam', 'perfect'), ('dum', 'present'), ('quia', 'present'),
+                           ('sī', 'present'), ('et', 'perfect'))],
+                         ['왔을 때', '온 후에', '오는 동안', '오기 때문에', '오면', '오고'])
+        self.assertEqual([korean.connective(v, 'sī') for v in ('먹다', '살다', '듣다', '퍼붓다')],
+                         ['먹으면', '살면', '들으면', '퍼부으면'])                     # ㄷ・ㅅ 不規則
+
     def test_particles_and_names(self):
         self.assertEqual(korean.particle('책', '을', '를'), '책을')
         self.assertEqual(korean.particle('장미', '을', '를'), '장미를')
@@ -47,6 +55,12 @@ class TurkishTestCase(unittest.TestCase):
         self.assertEqual(turkish.conjugate('gitmek', 'future', 1), 'gideceğim')
         self.assertEqual(turkish.conjugate('okumak', 'perfect', negated=True), 'okumadı')
 
+    def test_converbs(self):
+        self.assertEqual([turkish.converb('gelmek', k) for k in ('et', 'cum', 'postquam', 'dum', 'sī', 'quia', 'priusquam')],
+                         ['gelip', 'gelince', 'geldikten sonra', 'gelirken', 'gelirse', 'geldiği için', 'gelmeden önce'])
+        self.assertEqual([turkish.converb(v, 'cum') for v in ('okumak', 'gitmek', 'yemek')], ['okuyunca', 'gidince', 'yiyince'])
+        self.assertEqual(turkish.converb('gelmek', 'cum', negated=True), 'gelmeyince')
+
     def test_possessive(self):
         self.assertEqual([turkish.possessive(w, p, n) for w, p, n in
                           (('kitap', 1, 'sg'), ('anne', 1, 'sg'), ('ev', 2, 'sg'), ('ağa', 3, 'sg'), ('kedi', 1, 'pl'))],
@@ -67,6 +81,12 @@ class MongolianTestCase(unittest.TestCase):
         self.assertEqual(mongolian.conjugate('өгөх', 'perfect'), 'өгсөн')
         self.assertEqual(mongolian.conjugate('явах', 'perfect', negated=True), 'явсангүй')
         self.assertEqual(mongolian.conjugate('хайрлах'), 'хайрлана')
+
+    def test_converbs(self):
+        self.assertEqual([mongolian.converb('ирэх', k) for k in ('et', 'cum', 'postquam', 'sī', 'priusquam', 'dōnec')],
+                         ['ирээд', 'ирэхэд', 'ирсний дараа', 'ирвэл', 'ирэхээс өмнө', 'иртэл'])
+        self.assertEqual([mongolian.converb(v, 'et') for v in ('унших', 'суух', 'явах')], ['уншаад', 'суугаад', 'яваад'])
+        self.assertEqual(mongolian.converb('явах', 'sī'), 'явбал')
 
 
 @unittest.skipUnless(german._db() is not None, 'ドイツ語の辞書が無い')

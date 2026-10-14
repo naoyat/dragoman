@@ -247,6 +247,7 @@ class Clause:
     adjuncts: list = field(default_factory=list)   # 独立奪格・述語的な分詞句 (Participial)
     connectives: list = field(default_factory=list)  # 文をつなぐ語 (et, autem, igitur, tum …。connectives.py の見出し)
     subordinator: str = ''   # 従属節の接続詞 (ubi, postquam, dum …)。あれば従属節
+    previous_subordinator: str = ''   # 前の節を従属節にする接続詞 (副動詞の印 -ınca が後ろの節に付いて来たもの)
     after_main: bool = False   # 従属節が主節の後ろにある (ubi「〜するところの」と読む)
     surface: str = ''
 
@@ -324,6 +325,11 @@ def lex_of(word, item=None):
     numeral = SOURCE_NUMERALS.get(lang, {}).get(lemma.lower()) if item.pos in ('adj', 'num', 'det', 'noun') else None
     if numeral:   # 数詞はラテン語の数詞に (kaksi → duo)
         return Lex(numeral, 'adj', item.ja, surface=word.surface if word is not None else item.surface)
+    if lang == 'mn' and item.pos == 'pronoun':
+        from dragoman.mongolian.morphology import PRONOUNS as MN_PRONOUNS
+        found = MN_PRONOUNS.get(lemma.lower())
+        if found:   # 斜格の代名詞 (чамайг・надад) → 主格 (чи・би)
+            lemma = next((k for k, v in MN_PRONOUNS.items() if v[:3] == found[:3] and v[3] == 'Nom'), lemma)
     pronoun = SOURCE_PRONOUNS.get(lang, {}).get(lemma.lower()) if item.pos in ('pronoun', 'adj', 'det') else None
     if pronoun:   # 閉じた語類はラテン語の形に (я → ego、tad → is)
         personal = lemma.lower() in ('я', 'ты', 'он', 'она', 'оно', 'мы', 'вы', 'они', 'asmad', 'yuṣmad')
@@ -501,6 +507,13 @@ def clause_of(predicate, lang=None):
                                   Lex(key, 'adv', surface=key))   # tum, tandem, statim … (tadā → tum)
         else:
             _add_connective(clause, conn.normalize(predicate.conjunction.surface, _lang))
+    elif _converb_key(predicate.conjunction):
+        # 副動詞・連結語尾の印 (gelince の -ınca、와서 の -어서): 前の節の従属の接続詞か、この節のつなぎの語に
+        key = _converb_key(predicate.conjunction)
+        if key in ('et', 'sed'):
+            _add_connective(clause, key)
+        else:
+            clause.previous_subordinator = key
     elif isinstance(predicate.conjunction, Word) and predicate.conjunction.items:
         clause.adverbs.append(lex_of(predicate.conjunction))   # 文頭の副詞 (解析では conjunction に入る: māgnopere)
     nominatives = []
@@ -933,6 +946,47 @@ def lexical_negation(clause):
     return dataclasses.replace(clause, verb=Lex(base, 'verb', ja), negated=not clause.negated)
 
 
+# 副動詞・連結語尾の印 (解析の語の見出し '-ınca「〜すると」'・'-어서 (連結語尾)' の頭) → ラテン語の接続詞
+CONVERB_KEYS = {
+    'tr': {'ınca': 'cum', 'ıp': 'et', 'arak': 'et', 'ken': 'dum', 'alı': 'postquam'},
+    'ko': {'어서': 'cum', '아서': 'cum', '서': 'cum', '여서': 'cum', '고': 'et', '지만': 'sed', '면': 'sī', '으면': 'sī',
+           '니까': 'quia', '으니까': 'quia', '면서': 'dum', '으면서': 'dum', '려고': 'ut', '으려고': 'ut', '러': 'ut',
+           '으러': 'ut', '도록': 'ut', '어도': 'etsī', '아도': 'etsī', '더라도': 'etsī', '자마자': 'simul'},
+    'mn': {'аад': 'et', 'ж': 'et', 'вал': 'sī', 'тал': 'dōnec', 'хаар': 'ut', 'саар': 'dum', 'магц': 'simul',
+           'н': 'et'},
+}
+
+
+def chains_with_next(clauses, k):
+    """節 k を次の節に副動詞でつなげるか (同じ主語で et だけのつなぎ: Domum vēnit et cēnāvit → Eve gelip yemek yedi)"""
+    if k + 1 >= len(clauses):
+        return False
+    this, nxt = clauses[k], clauses[k + 1]
+    if this.subordinator or this.copula or nxt.copula or this.mood != 'indicative' or nxt.connectives != ['et']:
+        return False
+    a, b = (this.role('subject') or [None])[0], (nxt.role('subject') or [None])[0]
+    if b is None:
+        return True
+    return a is not None and a.head is not None and b.head is not None and a.head.lemma == b.head.lemma and \
+        a.number == b.number
+
+
+def _converb_clause(sub, main):
+    """副動詞の節は時制・人称を持たない (gelince・açıp・와서): 現在なら主文の時制に、主語が無ければ主文の人称に"""
+    if sub.tense == 'present' and main.tense != 'present':
+        sub.tense = main.tense
+    if not sub.role('subject') and main.person:
+        sub.person, sub.number = main.person, main.number
+
+
+def _converb_key(word):
+    if _lang not in CONVERB_KEYS or not isinstance(word, Word) or not word.items or word.items[0].pos != 'conj':
+        return ''
+    base = (word.items[0].attrib('base') or '').lstrip('-')
+    head = re.split(r'[「 /]', base)[0]
+    return CONVERB_KEYS[_lang].get(head, '')
+
+
 def frames(analysis):
     """SentenceAnalysis → Clause の列"""
     _sentence_words[:] = analysis.words
@@ -954,6 +1008,11 @@ def frames(analysis):
                 if following is not None:
                     following.modifiers.insert(0, lex_of(word))
         clause.after_main = bool(clauses) and clause.subordinator in conn.AFTER_MAIN and not clause.connectives
+        if clause.previous_subordinator and clauses and not clauses[-1].subordinator:
+            clauses[-1].subordinator = clause.previous_subordinator   # Eve gelince → cum domum venit
+        if clauses and (clause.previous_subordinator or _lang in CONVERB_KEYS and 'et' in clause.connectives) and \
+                clauses[-1].mood == 'indicative':
+            _converb_clause(clauses[-1], clause)
         clauses.append(clause)
     _add_unknown_words(analysis, clauses)
     for clause in clauses:   # 辞書に無い語 (補った名詞句) にも

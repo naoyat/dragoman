@@ -166,6 +166,44 @@ def participle(lemma, tense='perfect', negated=False):
     return form + 'гүй' if negated else form
 
 
+# 従属節の副動詞 (ラテン語の従属節の接続詞 → モンゴル語の動詞の形)
+SUBORDINATORS = ('et', 'cum', 'ubi', 'simul', 'postquam', 'dum', 'sī', 'quod', 'quia', 'quoniam', 'quamquam', 'etsī',
+                 'priusquam', 'antequam', 'ut', 'dōnec')
+
+
+def converb(lemma, key, negated=False, tense='perfect'):
+    """従属節の動詞の形: ирэхэд・ирсний дараа・ирэх үед・ирвэл・ирсэн учраас・ирэхээс өмнө・ирэхийн тулд・иртэл"""
+    if negated:
+        return lemma + 'гүй ' + converb('байх', key, tense=tense)   # ирэхгүй байхад
+    stem = stem_of(lemma)
+    h = harmony(stem)
+    long_ = h * 2
+    if key == 'et':   # 続く動作 -аад (ирээд・уншаад・суугаад)
+        return stem + ('г' if _long_end(stem) else '') + long_ + 'д'
+    if key in ('cum', 'ubi', 'simul'):
+        return lemma + h + 'д'
+    if key == 'postquam':
+        past = participle(lemma, 'perfect')
+        return past[:-2] + ('ны' if h in 'ао' else 'ний') + ' дараа'
+    if key == 'dum':
+        return lemma + ' үед'   # 主語が違ってもよい (Хүү унтах үед, охин уншина)
+    if key == 'sī':
+        return stem + ('б' if stem.endswith('в') else 'в') + h + 'л'   # уншвал・явбал
+    past = tense in ('perfect', 'past-perfect', 'imperfect')
+    if key in ('quod', 'quia', 'quoniam'):
+        return participle(lemma, 'perfect' if past else 'present') + ' учраас'   # дуулсан / дуулдаг учраас
+    if key in ('quamquam', 'etsī'):
+        return participle(lemma, 'perfect' if past else 'present') + ' ч гэсэн'
+    if key in ('priusquam', 'antequam'):
+        return lemma + long_ + 'с өмнө'
+    if key == 'ut':
+        return lemma + ('ын' if h in 'ао' else 'ийн') + ' тулд'
+    if key == 'dōnec':
+        cluster = len(stem) >= 2 and stem[-1] not in VOWELS + 'йь' and stem[-2] not in VOWELS + 'йь'
+        return stem + ('и' if stem[-1:] in 'жчш' else h if cluster else '') + 'т' + h + 'л'   # уншитал・унтатал
+    return None
+
+
 # ----------------------------------------------------------------------
 # 語
 
@@ -281,9 +319,18 @@ def _copula(complement, clause):
     return text + (' байсан' if past else '')
 
 
-def realize(clause, gap=None):
+def realize(clause, gap=None, subordinate=False):
+    """節の語の列。subordinate なら従属節: 動詞を副動詞に (Гэртээ ирэхэд・Бороо орвол)"""
     from .frame import lexical_negation, periphrastic
     clause = lexical_negation(periphrastic(clause))
+    if subordinate and gap is None and not clause.copula and clause.subordinator in SUBORDINATORS:
+        out = realize(dataclasses.replace(clause, subordinator=''))
+        lemma = word(clause.verb, 'verb')
+        if out and lemma and not lemma.startswith('[') and clause.voice != 'passive':
+            form = converb(lemma, clause.subordinator, clause.negated, clause.tense)
+            if form:
+                return out[:-1] + [form]
+        return out
     subject = (clause.role('subject') or [None])[0]
     out = []
     if subject is not None and gap != 'subject':
@@ -328,17 +375,23 @@ def vocative(np):
 def sentence(clauses):
     if not clauses:
         return ''
-    from .frame import split_address
+    from .frame import split_address, chains_with_next
     parts = []
+    chained = False
     for k, c in enumerate(clauses):
         groups, rest = split_address(c)
         words = [', '.join(vocative(np) for np in group) + ',' for group in groups]
         for key in rest.connectives:
-            if key in CONNECTIVES and k > 0:
+            if key in CONNECTIVES and k > 0 and not chained:
                 words.append(CONNECTIVES[key])
-        words += realize(rest)
-        parts.append(' '.join(w for w in words if w))
-    text = ', '.join(parts)
+        chain = chains_with_next(clauses, k)
+        if chain:   # 同じ主語の続く動作は -аад で次の節に (Гэрт ирээд хоол идсэн)
+            rest = dataclasses.replace(rest, subordinator='et')
+        words += realize(rest, subordinate=k + 1 < len(clauses))
+        text = ' '.join(w for w in words if w)
+        parts.append(text + (' ' if chain else ', ') if k + 1 < len(clauses) else text)
+        chained = chain
+    text = ''.join(parts)
     return text[:1].upper() + text[1:] + '.'
 
 

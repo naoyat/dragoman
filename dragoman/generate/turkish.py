@@ -166,7 +166,10 @@ def stem_of(infinitive):
 
 def _vowel_stem(infinitive):
     """母音の前の語幹 (gitmek → gid、demek → di)"""
-    return IRREGULAR_STEMS.get(infinitive, stem_of(infinitive))
+    head, _, last = infinitive.rpartition(' ')
+    if last in IRREGULAR_STEMS:   # 複合動詞 (dans etmek → dans ed)
+        return (head + ' ' if head else '') + IRREGULAR_STEMS[last]
+    return stem_of(infinitive)
 
 
 def passive_stem(stem):
@@ -247,6 +250,66 @@ def participle(infinitive, gap, tense='present', negated=False, possessor=None):
     if owner in ('miz', 'niz'):
         return stem_part + v + owner[0] + v + 'z'
     return stem_part + v
+
+
+# 副動詞・従属節の形 (ラテン語の従属節の接続詞 → トルコ語の動詞の形)。'dik' は -dık + 所有の語尾 (主語は属格)
+SUBORDINATE_FORMS = {'et': 'ıp', 'cum': 'ınca', 'ubi': 'ınca', 'simul': 'ınca', 'postquam': 'dıktan sonra', 'dum': 'ken',
+                     'sī': 'sa', 'quod': 'dik için', 'quia': 'dik için', 'quoniam': 'dik için', 'quamquam': 'dik halde',
+                     'etsī': 'dik halde', 'priusquam': 'madan önce', 'antequam': 'madan önce', 'ut': 'mak için',
+                     'nē': 'mamak için', 'dōnec': 'ana kadar'}
+# 語幹 + -ır (超越形) の単音節の動詞 (ほかの単音節の子音で終わる語幹は -ar / -er)
+AORIST_IR = {'al', 'bil', 'bul', 'dur', 'gel', 'gör', 'kal', 'ol', 'öl', 'san', 'var', 'ver', 'vur', 'ol', 'sanmak', 'de',
+             'ye'}
+
+
+def aorist(infinitive, negated=False):
+    """超越形 (gelir・okur・yapar・gelmez)"""
+    stem = stem_of(infinitive)
+    if negated:
+        return stem + two(stem, 'maz', 'mez')
+    vstem = _vowel_stem(infinitive)
+    if _ends_vowel(stem):
+        return stem + 'r'
+    if sum(c in VOWELS for c in stem) == 1 and stem not in AORIST_IR:
+        return vstem + two(stem, 'ar', 'er')
+    return vstem + four(stem) + 'r'
+
+
+def converb(infinitive, key, person=3, number='sg', negated=False):
+    """従属節の動詞の形 (gelince・geldikten sonra・gelirken・gelirse・geldiği için・gelmeden önce)"""
+    form = SUBORDINATE_FORMS[key]
+    stem = stem_of(infinitive)
+    vstem = _vowel_stem(infinitive)
+    neg = stem + two(stem, 'ma', 'me')
+    if form == 'ıp':   # 続く動作 (açıp・gelip・okuyup・gidip)
+        base = neg if negated else vstem
+        return base + ('y' if _ends_vowel(base) else '') + four(base) + 'p'
+    if form == 'ınca':
+        base = neg if negated else vstem
+        y = 'y' if _ends_vowel(base) else ''
+        return base + y + four(base) + 'nc' + two(base, 'a', 'e')
+    if form == 'ana kadar':
+        base = neg if negated else vstem
+        return base + ('y' if _ends_vowel(base) else '') + two(base, 'an', 'en') + two(base, 'a', 'e') + ' kadar'
+    if form == 'dıktan sonra':
+        base = neg if negated else stem
+        past = base + _d(base) + four(base) + 'k'
+        return past + 't' + two(past, 'an', 'en') + ' sonra'
+    if form == 'ken':
+        return aorist(infinitive, negated) + 'ken'   # gelirken・okurken
+    if form == 'sa':
+        base = aorist(infinitive, negated)
+        return base + 's' + two(base, 'a', 'e') + {(1, 'sg'): 'm', (2, 'sg'): 'n', (1, 'pl'): 'k',
+                                                    (2, 'pl'): 'n' + four(base) + 'z'}.get((person, number), '')
+    if form.startswith('dik'):
+        possessor = {(1, 'sg'): ('ego', 'sg'), (2, 'sg'): ('tū', 'sg'), (1, 'pl'): ('ego', 'pl'),
+                     (2, 'pl'): ('tū', 'pl')}.get((person, number))
+        return participle(infinitive, 'object', 'past', negated, possessor) + form[3:]
+    if form == 'madan önce':
+        return neg + two(stem, 'dan', 'den') + ' önce'
+    if form in ('mak için', 'mamak için'):
+        return (neg + two(stem, 'mak', 'mek') if negated or form == 'mamak için' else infinitive) + ' için'
+    return conjugate(infinitive, 'present', person, number, negated)
 
 
 # ----------------------------------------------------------------------
@@ -399,9 +462,22 @@ def _copula(complement, clause, subject_person=(3, 'sg')):
     return text + suffix
 
 
-def realize(clause, gap=None):
+def realize(clause, gap=None, subordinate=False):
+    """節の語の列。subordinate なら従属節: 動詞を副動詞などの形に (Eve gelince・geldiği için)"""
     from .frame import lexical_negation, periphrastic
     clause = lexical_negation(periphrastic(clause))
+    if subordinate and clause.subordinator in SUBORDINATE_FORMS and not clause.copula and gap is None:
+        out = realize(dataclasses.replace(clause, subordinator=''))
+        lemma = word(clause.verb, 'verb')
+        if not out or not lemma or lemma.startswith('['):
+            return out
+        person, number = _person(clause)
+        form = converb(lemma, clause.subordinator, person, number, clause.negated)
+        subject = (clause.role('subject') or [None])[0]
+        if SUBORDINATE_FORMS[clause.subordinator].startswith('dik') and subject is not None and \
+                subject.head is not None and subject.head.pos != 'pronoun' and out[0] == noun_phrase(subject):
+            out[0] = noun_phrase(subject, 'Gen')   # -dık の主語は属格 (Ali'nin geldiği için)
+        return out[:-1] + [form]
     subject = (clause.role('subject') or [None])[0]
     out = []
     pronoun_subject = subject is not None and subject.head is not None and subject.head.pos == 'pronoun' and \
@@ -468,17 +544,23 @@ def vocative(np):
 def sentence(clauses):
     if not clauses:
         return ''
-    from .frame import split_address
+    from .frame import split_address, chains_with_next
     parts = []
+    chained = False
     for k, c in enumerate(clauses):
         groups, rest = split_address(c)
         words = [', '.join(vocative(np) for np in group) + ',' for group in groups]
         for key in rest.connectives:
-            if key in CONNECTIVES and k > 0:
+            if key in CONNECTIVES and k > 0 and not chained:
                 words.append(CONNECTIVES[key])
-        words += realize(rest)
-        parts.append(' '.join(w for w in words if w))
-    text = ', '.join(parts)
+        chain = chains_with_next(clauses, k)
+        if chain:   # 同じ主語の続く動作は -ıp で次の節に (Kapıyı açıp içeri girdi)
+            rest = dataclasses.replace(rest, subordinator='et')
+        words += realize(rest, subordinate=k + 1 < len(clauses))
+        text = ' '.join(w for w in words if w)
+        parts.append(text + (' ' if chain else ', ') if k + 1 < len(clauses) else text)
+        chained = chain
+    text = ''.join(parts)
     return text[:1].upper() + text[1:] + '.'
 
 
