@@ -141,6 +141,10 @@ def noun_form(noun, case, number):
     forms = [f for f, tags in _forms(noun, 'noun') if {tag, 'singular'} <= tags and ' ' not in f]
     if not forms:
         return noun
+    weak = [f for f in (noun.lower() + 'n', noun.lower() + 'en') if f in forms]
+    genitives = [f for f, tags in _forms(noun, 'noun') if {'genitive', 'singular'} <= tags]
+    if weak and case in ('Acc', 'Dat') and any(g in (noun.lower() + 'n', noun.lower() + 'en') for g in genitives):
+        return noun[0] + weak[0][1:]   # 弱変化の男性名詞 (den Bauern・dem Menschen。口語の den Mensch は選ばない)
     if noun.lower() in forms and case != 'Gen':
         return noun   # 見出しと同じ形があれば (Buch の与格は Buche より Buch)
     form = forms[0]

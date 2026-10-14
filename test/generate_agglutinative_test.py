@@ -73,6 +73,8 @@ class GermanTestCase(unittest.TestCase):
         self.assertEqual(german.prepositional(garden), 'im Garten')            # in + dem → im
         books = NP(Lex('Buch', 'noun', lang='de'), number='pl')
         self.assertEqual(german.noun_phrase(books, 'Dat'), 'den Büchern')     # 与格複数 -n
+        self.assertEqual([german.noun_form(n, 'Acc', 'sg') for n in ('Bauer', 'Mensch', 'Buch')],
+                         ['Bauern', 'Menschen', 'Buch'])                    # 弱変化の男性名詞
 
     def test_verbs(self):
         self.assertEqual(german.finite('sehen', 'present', 3, 'sg'), ('sieht', ''))
