@@ -338,7 +338,12 @@ def word(lex):
             from . import transfer
             lang, lemma = lex.origin or (lex.lang, lex.lemma)
             spelling = latin_spelling(lex)
-            found = [g for g in transfer.english_glosses(lang, lemma, 'noun') if is_name(g) and
+            pool = transfer.english_glosses(lang, lemma, 'noun') + transfer.english_glosses(lang, lemma.lower(), 'noun') + \
+                [e.strip() for e in (lex.en or '').split(',')]
+            first = (lex.ja or '').split(',')[0].strip()
+            if first and not first.isascii():
+                pool += transfer._ja_english(first)   # 辞書の日本語の訳 (モスクワ → Moscow)。似ていなければ使わない
+            found = [g for g in pool if is_name(g) and
                      difflib.SequenceMatcher(None, _flat(g).lower(), _flat(spelling).lower()).ratio() >= 0.5]
             return found[0] if found else spelling
         found = candidates(lex)

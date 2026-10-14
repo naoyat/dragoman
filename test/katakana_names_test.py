@@ -24,6 +24,10 @@ class KatakanaNamesTestCase(unittest.TestCase):
         self.assertEqual([k.latin(n, 'de') for n in ('Hänsel', 'Müller', 'Heinrich', 'Stefan', 'München')],
                          ['ヘンゼル', 'ミュラー', 'ハインリヒ', 'シュテファン', 'ミュンヘン'])
 
+    def test_russian(self):
+        self.assertEqual([k.russian(n) for n in ('Иван', 'Пётр', 'Чехов', 'Достоевский', 'Татьяна', 'Москва')],
+                         ['イヴァン', 'ピョートル', 'チェホフ', 'ドストエフスキー', 'タティヤナ', 'モスクヴァ'])
+
     def test_korean(self):
         self.assertEqual([k.korean(n) for n in ('민수', '김철수', '서울', '경희', '최', '민기', '대구')],
                          ['ミンス', 'キムチョルス', 'ソウル', 'キョンヒ', 'チェ', 'ミンギ', 'テグ'])

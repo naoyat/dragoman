@@ -5,6 +5,7 @@
 # (文の生成 dragoman/generate で、Iēsus → Jesus → Иисус・Ἰησοῦς・يَسُوع のように固有名詞を置き換えるのに使う)
 #
 #   python3 tools/build_name_index.py --lang=ru      (ru / grc / sa / id / tl / ar / he / fa / hi / ur。--lang=all で全部)
+#   python3 tools/build_name_index.py --lang=de      (ko / de / tr / mn / fi は辞書 wiktionary.sqlite の固有名詞の見出しから)
 #
 # 各行: 名前 (アラビア語・ヘブライ語は見出しの行の母音記号付きの形、サンスクリットは SLP1)、英語の名前 (読点区切り)、
 #       性 (m / f。分からなければ空)、語義の数
@@ -88,12 +89,38 @@ def entries(lang):
             yield word, ','.join(keys[:8]), gender, len(senses)
 
 
+# 抽出データを置いていない言語: 辞書 ($DRAGOMAN_DATA/<lang>/wiktionary.sqlite) の固有名詞 (pos = name) の見出しと
+# 英語の訳語 (読点区切りの語義の頭) から。見出しの列 (word) が無い言語 (ko・mn) は鍵 (小文字) の頭を大文字に
+DB_LANGS = {'ko': 'key', 'de': 'word', 'tr': 'word', 'mn': 'key', 'fi': 'word'}
+
+
+def db_entries(lang):
+    import sqlite3
+    db = sqlite3.connect(paths.data(lang, 'wiktionary.sqlite'))
+    columns = [row[1] for row in db.execute('PRAGMA table_info(lemmas)')]
+    gender = 'gender' if 'gender' in columns else "''"
+    for word, en, g, senses in db.execute("SELECT %s, en, %s, senses FROM lemmas WHERE pos = 'name' AND en != ''"
+                                          % (DB_LANGS[lang], gender)):
+        keys = []
+        for gloss in en.split(','):
+            for key in name_keys(gloss.strip()):
+                m = re.fullmatch(r'([A-Z][\w-]+) the [A-Z][\w-]+', key)   # Mark the Evangelist → Mark も
+                for k in (key, m.group(1) if m else None):
+                    if k and k not in keys and k.count(' ') >= word.count(' '):   # 長い見出し (Evankeliumi Markuksen mukaan) は名前でない
+                        keys.append(k)
+        spelling = word[:1].upper() + word[1:]
+        if re.search(r'given name|surname', en) and re.fullmatch('[A-Za-zÀ-ž]+', word) and spelling not in keys:
+            keys.append(spelling)   # 人名は綴りそのものも英語の名前に (Anna「equivalent to English Ann」→ Anna でも引ける)
+        if keys:
+            yield word[:1].upper() + word[1:], ','.join(keys[:8]), g if g in ('m', 'f') else '', senses or 1
+
+
 def build(lang):
     out = paths.data(lang, 'names.tsv')
     seen = set()
     n = 0
     with open(out, 'w', encoding='utf-8') as f:
-        for word, keys, gender, senses in entries(lang):
+        for word, keys, gender, senses in (db_entries(lang) if lang in DB_LANGS else entries(lang)):
             if (word, keys) in seen:
                 continue
             seen.add((word, keys))
@@ -105,7 +132,7 @@ def build(lang):
 def main():
     opts, _ = getopt.getopt(sys.argv[1:], '', ['lang='])
     lang = dict(opts).get('--lang', 'ru')
-    for code in (FILES if lang == 'all' else [lang]):
+    for code in (list(FILES) + list(DB_LANGS) if lang == 'all' else [lang]):
         build(code)
 
 

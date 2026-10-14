@@ -292,7 +292,7 @@ def _pronoun_desc(latin):
 
 
 # 固有名詞をラテン文字に写して渡す言語 (names.latin_spelling)
-NON_LATIN_NAMES = ('ko', 'mn')
+NON_LATIN_NAMES = ('ko', 'mn', 'ru')
 
 
 def lex_of(word, item=None):

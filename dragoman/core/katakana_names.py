@@ -6,6 +6,7 @@
 #   turkish('Ali') → アリ、turkish('Ayşe') → アイシェ、turkish('Çağlar') → チャーラル、turkish('İstanbul') → イスタンブル
 #   mongolian('Бат') → バト、mongolian('Дорж') → ドルジ、mongolian('Улаанбаатар') → ウラーンバータル
 #   latin('Matti', 'fi') → マッティ、latin('Hänsel', 'de') → ヘンゼル、latin('Müller', 'de') → ミュラー
+#   russian('Иван') → イヴァン、russian('Пётр') → ピョートル、russian('Чехов') → チェホフ
 #   korean('민수') → ミンス、korean('김철수') → キムチョルス、korean('서울') → ソウル
 #
 # 綴りを (子音, 母音, 長音) の列に直してから、子音の行と母音の段でカタカナを選ぶ。母音の続かない子音は
@@ -22,8 +23,8 @@ ROWS = {
     'ch': ('チャ', 'チ', 'チュ', 'チェ', 'チョ'), 'j': ('ジャ', 'ジ', 'ジュ', 'ジェ', 'ジョ'), 'ts': ('ツァ', 'ツィ', 'ツ', 'ツェ', 'ツォ'),
     'kh': 'ハヒフヘホ', 'ç': ('ヒャ', 'ヒ', 'ヒュ', 'ヒェ', 'ヒョ'),
 }
-# 前舌の円唇母音 (ö・ü) は子音の後ろで拗音 (キュ・ギョ)
-FRONT_ROUNDED = {'ü': 'u', 'ö': 'o'}
+# 前舌の円唇母音 (ö・ü) は子音の後ろで拗音 (キュ・ギョ)。ä はロシア語の я (リャ)
+FRONT_ROUNDED = {'ü': 'u', 'ö': 'o', 'ä': 'a'}
 CODA = {'k': 'ク', 'g': 'グ', 's': 'ス', 'z': 'ズ', 't': 'ト', 'd': 'ド', 'n': 'ン', 'h': 'フ', 'f': 'フ', 'p': 'プ', 'b': 'ブ',
         'm': 'ム', 'r': 'ル', 'l': 'ル', 'y': 'イ', 'w': 'ウ', 'v': 'ヴ', 'sh': 'シュ', 'ch': 'チ', 'j': 'ジ', 'ts': 'ツ', 'kh': 'フ', 'Q': 'ッ', 'ç': 'ヒ'}
 DAN = 'aiueo'
@@ -39,7 +40,7 @@ def _kana(segments):
         if vowel in FRONT_ROUNDED:
             base = FRONT_ROUNDED[vowel]
             if cons in ('', 'y'):
-                out.append({'u': 'ユ', 'o': 'ヨ'}[base])
+                out.append({'u': 'ユ', 'o': 'ヨ', 'a': 'ヤ'}[base])
             elif cons in ('t', 'd'):
                 out.append({'t': 'テ', 'd': 'デ'}[cons] + SMALL[base])   # Türkiye → テュルキイェ
             else:
@@ -196,6 +197,57 @@ def latin(name, lang=''):
                 elif lang == 'de' and c in 'kptf' and phonemes and phonemes[-1][0] == 'V':
                     phonemes.append(('C', 'Q'))    # Otto → オット
             phonemes.append(('C', consonants[c]))
+        k += 1
+    return _kana(_segments(phonemes))
+
+
+# ----------------------------------------------------------------------
+# ロシア語 (子音の後ろの я・ё・ю は拗音、語末と無声子音の前の в は ф、ий・ый は長い イー)
+
+RU_CONSONANTS = dict(MN_CONSONANTS, щ='sh', х='h', ж='j', ч='ch', ц='ts')
+RU_VOICELESS = 'кпстфхцчшщ'
+
+
+def russian(name):
+    word = name.lower()
+    phonemes = []
+    k = 0
+    while k < len(word):
+        c = word[k]
+        nxt = word[k + 1] if k + 1 < len(word) else ''
+        prev = word[k - 1] if k else ''
+        after_consonant = prev in RU_CONSONANTS or prev == 'ь' and k > 1 and word[k - 2] in RU_CONSONANTS
+        if c in 'яёюе' and prev == 'ь' and phonemes and phonemes[-1][0] == 'C':
+            phonemes.append(('V', ('i', False)))   # Татьяна → タティヤナ
+            phonemes.append(('C', 'y'))
+            phonemes.append(('V', ({'я': 'a', 'ё': 'o', 'ю': 'u', 'е': 'e'}[c], c == 'ё')))
+            k += 1
+            continue
+        if c == 'е' and not after_consonant:
+            phonemes.append(('V', ('e', False)))   # Екатерина → エカテリナ、Достоевский → ドストエフスキー
+            k += 1
+            continue
+        if c in 'яёюе':
+            if after_consonant and phonemes and phonemes[-1][0] == 'C':
+                vowel = {'я': 'ä', 'ё': 'ö', 'ю': 'ü', 'е': 'e'}[c]
+                phonemes.append(('V', (vowel, c == 'ё')))   # Пётр → ピョートル
+            else:
+                phonemes.append(('C', 'y'))
+                phonemes.append(('V', ({'я': 'a', 'ё': 'o', 'ю': 'u', 'е': 'e'}[c], c == 'ё')))
+            k += 1
+            continue
+        if c in MN_VOWELS or c == 'ы':
+            vowel = 'i' if c == 'ы' else MN_VOWELS[c]
+            long_ = c in 'иы' and nxt == 'й' and k + 2 >= len(word)   # Достоевский → ドストエフスキー
+            phonemes.append(('V', (vowel, long_)))
+            k += 2 if long_ else 1
+            continue
+        if nxt == 'ь':
+            nxt = word[k + 2] if k + 2 < len(word) else ''
+        if c == 'в' and (not nxt or nxt in RU_VOICELESS):
+            phonemes.append(('C', 'f'))   # Чехов → チェホフ
+        elif c in RU_CONSONANTS:
+            phonemes.append(('C', RU_CONSONANTS[c]))
         k += 1
     return _kana(_segments(phonemes))
 

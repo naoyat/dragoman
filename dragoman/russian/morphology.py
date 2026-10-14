@@ -191,7 +191,15 @@ def _item(parse):
         if pos == 'NPRO' or lemma in PRONOUNS:
             return {'pos': 'pronoun', 'base': lemma, 'ja': PRONOUNS.get(lemma, lemma), 'gloss_lang': 'ja', '_': [cng]}
         ja, gloss_lang, entry = _gloss(lemma, ('noun', 'name'))
+        proper = bool({'Name', 'Surn', 'Patr', 'Geox'} & tag.grammemes)
+        if proper:   # 名前・姓・父称・地名 (Иван・Петров・Москва)。訳が日本語でなければカタカナ (Иван → イヴァン)
+            lemma = lemma[:1].upper() + lemma[1:]
+            if gloss_lang != 'ja':
+                from dragoman.core.katakana_names import russian as katakana
+                ja, gloss_lang = katakana(lemma), 'ja'
         item = {'pos': 'noun', 'base': lemma, 'ja': ja, 'gloss_lang': gloss_lang, '_': [cng]}
+        if proper:
+            item['proper'] = True
         if tag.animacy == 'anim':
             item['animate'] = True  # 人・動物 (存在の文で「いる」)
         if entry and entry['word'] != lemma:

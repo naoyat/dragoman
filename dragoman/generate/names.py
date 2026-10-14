@@ -90,8 +90,8 @@ def localized(lex, lang):
     """固有名詞の語 (Lex) → (言語 lang の名前, 性)。英語の名前が分からないか表に無ければ None"""
     if lex.origin and lex.origin[0] == lang:
         return lex.origin[1], ''   # 元の言語に戻す (Minsu → 민수)
-    if lex.origin and lex.origin[0] == 'mn' and lang == 'ru':
-        return lex.origin[1], ''   # モンゴル語のキリル文字の名前はロシア語でもそのまま (Дорж)
+    if lex.origin and lex.origin[0] in ('mn', 'ru') and lang in ('mn', 'ru'):
+        return lex.origin[1], ''   # キリル文字の名前はロシア語・モンゴル語でもそのまま (Дорж・Иван)
     from . import english
     name = english.word(lex)
     if not is_name(name):
