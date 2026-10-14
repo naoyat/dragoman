@@ -1,0 +1,22 @@
+# フィンランド語のサンプル (python3 tools/samples.py --lang=fi で表示する)
+#
+# 自作の文。「## 見出し」で節を分ける
+
+## 基本の語順、目的語の属格・分格
+Äiti antoi lapselle omenan.
+Olen lukenut tämän kirjan.
+
+## 場所の格 (入格・接格)
+Menen huomenna Helsinkiin junalla.
+
+## 所有の構文 (接格 + olla)、数詞の後ろの分格
+Minulla on kaksi kissaa.
+
+## 所有の接尾辞
+Siskoni on tyttö, joka laulaa.
+
+## 否定動詞 (ei)
+Hän ei tullut eilen kotiin.
+
+## 助動詞 + 不定詞
+Voin puhua suomea.

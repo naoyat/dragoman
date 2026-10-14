@@ -11,6 +11,7 @@
 ./dragoman.py id samples/indonesian.txt          # -w で語ごとの辞書引きを省く
 ./dragoman.py ms -e "Saya pergi ke sekolah kerana hendak belajar bahasa Inggeris."
 python3 tools/samples.py --lang=id
+python3 tools/samples.py --lang=ms              # マレー語のサンプル (samples/malay.txt)
 ```
 
 ## 準備

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# サンプル (samples/samples.txt) を tools/samples.py で例外なく表示できるか
+# サンプル (samples/samples.txt と言語ごとの samples/*.txt) を tools/samples.py で例外なく表示できるか
 #
 import contextlib
 import io
@@ -60,6 +60,13 @@ class SamplesTestCase(unittest.TestCase):
         langs.append(('ur', urdu_dictionary.available()))
         from dragoman.kobun import mecab as kobun_mecab
         langs.append(('kobun', kobun_mecab.available()))
+        import importlib
+        for lang, module in (('ko', 'korean'), ('de', 'german'), ('tr', 'turkish'), ('mn', 'mongolian'),
+                             ('fi', 'finnish'), ('ms', 'indonesian')):
+            try:
+                langs.append((lang, importlib.import_module('dragoman.%s.command' % module).available()))
+            except ImportError:
+                langs.append((lang, False))
         for lang, available in langs:
             sections = samples.read_sections(samples.LANG_FILES[lang])
             self.assertTrue(all(title and sentences for title, sentences in sections), lang)

@@ -1,0 +1,29 @@
+# ドイツ語のサンプル (python3 tools/samples.py --lang=de で表示する)
+#
+# 「## 見出し」で節を分ける。最後の節はグリム童話『白雪姫』(1857年の第7版。パブリックドメイン) の冒頭などで、
+# 古い綴り (roth・ward・daß) を今の綴りに直して読む。ほかは自作の文
+
+## 基本の語順 (動詞は2番目)、格 (冠詞の変化)
+Der Mann liest das Buch.
+Das Buch des Lehrers liegt auf dem Tisch.
+Ich habe meiner Mutter einen Brief geschrieben.
+
+## 完了 (haben・sein)、受動 (werden)
+Sie ist gestern in die Stadt gegangen.
+Das Buch wurde von dem Lehrer gelesen.
+
+## 分離動詞、話法の助動詞
+Er ruft seine Mutter an.
+Ich kann heute nicht kommen.
+
+## 否定 (kein・nicht)、es gibt
+Es gibt keinen Zucker.
+
+## 副文 (動詞は最後)、関係節
+Ich weiß, dass du mich liebst.
+Das Haus, das ich gekauft habe, ist sehr schön.
+
+## グリム童話『白雪姫』(1857年) から (古い綴り)
+Es war einmal mitten im Winter, und die Schneeflocken fielen wie Federn vom Himmel herab, da saß eine Königin an einem Fenster, das einen Rahmen von schwarzem Ebenholz hatte, und nähte.
+Und wie das Kind geboren war, starb die Königin.
+Da war sie zufrieden, denn sie wußte daß der Spiegel die Wahrheit sagte.

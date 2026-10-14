@@ -1,0 +1,27 @@
+# トルコ語のサンプル (python3 tools/samples.py --lang=tr で表示する)
+#
+# 自作の文。「## 見出し」で節を分ける。訳の行 (→) に続けて、語順のままの訳 (≒) も表示する
+
+## 基本の語順 (主語-目的語-動詞)、格の接尾辞
+Çocuk okulda kitap okudu.
+Annem bana bir mektup yazdı.
+
+## 名詞文 (人称の接尾辞・değil)、存在の場所
+Ben öğretmenim.
+Bu ev çok büyük değil.
+Dün akşam evde değildim.
+Kitap masada.
+
+## 受動 (-ıl-) と tarafından
+Bu kitap Ali tarafından yazıldı.
+
+## 疑問の mı
+Sen bu filmi gördün mü?
+
+## 分詞の関係節 (-an・-dık。名詞の前)
+Kitap okuyan çocuk benim kardeşim.
+Ali'nin okuduğu kitap güzeldi.
+
+## 副動詞 (-ınca・-ıp)
+Eve gelince yemek yedik.
+Kapıyı açıp içeri girdi.

@@ -9,9 +9,11 @@
   →  少年が / {学校}〜で,〜から / 本を / 読んだ
   ≒  少年が 学校で 本を 読んだ。  (語順のまま)
 ./dragoman.py ko -e "나는 어머니가 만든 음식을 먹었다."
-  →  私は / 母が作った食べ物を / 食べた
+  →  私は / {母が 作った}食べ物を / 食べた
 ./dragoman.py ko -e "그 사람은 키가 크다."
   →  {その}人は / 背が / 高い
+python3 tools/samples.py --lang=ko              # サンプル (samples/korean.txt) の訳
+./dragoman.py ko samples/korean.txt                # 解析の詳細 (-w で語ごとの辞書引きを省く)
 ```
 
 ハングルの文は言語を省略しても韓国語と推定します。

@@ -10,6 +10,8 @@
   ≒  Aliが 読んだ 本は 美しかった。  (語順のまま)
 ./dragoman.py tr -e "Eve gelince yemek yedik."
   ≒  家に 来ると 食事を 食べた。  (語順のまま)
+python3 tools/samples.py --lang=tr              # サンプル (samples/turkish.txt) の訳
+./dragoman.py tr samples/turkish.txt               # 解析の詳細 (-w で語ごとの辞書引きを省く)
 ```
 
 ğ・ı・ş・İ のある文、トルコ語らしい語（bir, ve, bu, için, değil …）が2つ以上ある文は、言語を省略してもトルコ語と推定します。

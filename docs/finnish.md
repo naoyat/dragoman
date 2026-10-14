@@ -11,6 +11,8 @@
   →  私が / {この}本を / 読んだ
 ./dragoman.py fi -e "Voin puhua suomea."
   →  私が / フィンランド語を / 話すことができる
+python3 tools/samples.py --lang=fi              # サンプル (samples/finnish.txt) の訳
+./dragoman.py fi samples/finnish.txt               # 解析の詳細 (-w で語ごとの辞書引きを省く)
 ```
 
 フィンランド語らしい語（ja, on, ei, että, minulla …）が2つ以上ある文は、言語を省略してもフィンランド語と推定します。

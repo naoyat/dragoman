@@ -23,8 +23,14 @@
 #   python3 tools/samples.py --lang=tl       # タガログ語 (samples/tagalog.txt)
 #   python3 tools/samples.py --lang=ain      # アイヌ語 (samples/ainu.txt。『アイヌ神謡集』第1話の冒頭)
 #   python3 tools/samples.py --lang=kobun    # 古文 (samples/kobun.txt)。現代語訳を表示
+#   python3 tools/samples.py --lang=ms       # マレー語 (samples/malay.txt)
+#   python3 tools/samples.py --lang=ko       # 韓国語 (samples/korean.txt)。語順のままの訳 (≒) も
+#   python3 tools/samples.py --lang=de       # ドイツ語 (samples/german.txt。グリム童話の古い綴りも)
+#   python3 tools/samples.py --lang=tr       # トルコ語 (samples/turkish.txt)。語順のままの訳 (≒) も
+#   python3 tools/samples.py --lang=mn       # モンゴル語 (samples/mongolian.txt)。語順のままの訳 (≒) も
+#   python3 tools/samples.py --lang=fi       # フィンランド語 (samples/finnish.txt)
 #
-#   --lang=la|grc|sa|ru|he|ar|fa|hi|ur|bo|id|tl|ain|kobun 言語 (既定は la。ラテン語)
+#   --lang=la|grc|sa|ru|he|ar|fa|hi|ur|bo|id|ms|tl|ain|kobun|ko|de|tr|mn|fi 言語 (既定は la。ラテン語)
 #   -f, --file=FILE     例文のファイル (既定は言語ごとの samples/*.txt)
 #   -r, --romanize      ラテン文字以外の文に転写を添える (-d なら語ごとにも)
 #   -l, --list          節の見出しの一覧を表示する
@@ -52,7 +58,12 @@ LANG_FILES = {'la': DEFAULT_FILE, 'grc': os.path.join(ROOT, 'samples', 'greek.tx
               'ur': os.path.join(ROOT, 'samples', 'urdu.txt'), 'bo': os.path.join(ROOT, 'samples', 'tibetan.txt'),
               'id': os.path.join(ROOT, 'samples', 'indonesian.txt'), 'tl': os.path.join(ROOT, 'samples', 'tagalog.txt'),
               'ain': os.path.join(ROOT, 'samples', 'ainu.txt'),
-              'kobun': os.path.join(ROOT, 'samples', 'kobun.txt')}
+              'kobun': os.path.join(ROOT, 'samples', 'kobun.txt'), 'ms': os.path.join(ROOT, 'samples', 'malay.txt'),
+              'ko': os.path.join(ROOT, 'samples', 'korean.txt'), 'de': os.path.join(ROOT, 'samples', 'german.txt'),
+              'tr': os.path.join(ROOT, 'samples', 'turkish.txt'), 'mn': os.path.join(ROOT, 'samples', 'mongolian.txt'),
+              'fi': os.path.join(ROOT, 'samples', 'finnish.txt')}
+# 解析器のモジュール名 (dragoman.<名前>.analyzer の analyze_text をそのまま使う言語)
+ANALYZER_MODULES = {'ko': 'korean', 'de': 'german', 'tr': 'turkish', 'mn': 'mongolian', 'fi': 'finnish'}
 
 
 def analyzer_for(lang):
@@ -93,6 +104,9 @@ def analyzer_for(lang):
     if lang == 'ain':
         from dragoman.ainu import analyzer as ainu_analyzer
         return ainu_analyzer.analyze_text
+    if lang in ANALYZER_MODULES:
+        import importlib
+        return importlib.import_module('dragoman.%s.analyzer' % ANALYZER_MODULES[lang]).analyze_text
     if lang in ('id', 'ms'):
         from dragoman.indonesian import analyzer as indonesian_analyzer
         return lambda text: indonesian_analyzer.analyze_text(text, lang=lang)
@@ -126,6 +140,8 @@ def brief(analysis):
         print('  → ', render.translate(clause.predicate))
         for item in clause.not_solved:
             print('     (行き場の無い語句: %s → %s)' % (item.surface, render.translate(item)))
+    if getattr(analysis, 'literal', None):   # 語順のままの訳 (韓国語・トルコ語・モンゴル語)
+        print('  ≒  %s  (語順のまま)' % analysis.literal)
 
 
 def romanizer(lang):
@@ -152,6 +168,9 @@ def romanizer(lang):
     if lang == 'hi':
         from dragoman.hindi import script as hindi_script
         return hindi_script.translit, hindi_script.translit
+    if lang == 'ko':
+        from dragoman.korean import script as korean_script
+        return korean_script.romanize, korean_script.romanize
     return None, None
 
 

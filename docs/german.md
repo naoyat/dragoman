@@ -11,6 +11,8 @@
   →  とても / {私が 買った}家は / 美しい
 ./dragoman.py de -e "Er ruft seine Mutter an."
   →  彼が / {彼の}母を / 電話する
+python3 tools/samples.py --lang=de              # サンプル (samples/german.txt) の訳
+./dragoman.py de samples/german.txt                # 解析の詳細 (-w で語ごとの辞書引きを省く)
 ```
 
 ラテン文字の文は、ドイツ語らしい語（der, die, das, und, ist, nicht …）が2つ以上あるか、ウムラウト・ß があればドイツ語と推定します。

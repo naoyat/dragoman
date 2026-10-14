@@ -1,0 +1,23 @@
+# マレー語のサンプル (python3 tools/samples.py --lang=ms で表示する)
+#
+# 自作の文。「## 見出し」で節を分ける。インドネシア語 (samples/indonesian.txt) と同じ解析器で、綴り・語の違う所
+# (kerana・wang・boleh・hendak・Jepun) はマレー語の辞書を先に引く
+
+## 基本の語順 (主語-動詞-目的語、前置詞句)
+Budak itu membaca buku di sekolah.
+Saya sudah makan nasi.
+
+## 受動 (di- + oleh)
+Buku itu ditulis oleh guru.
+
+## 所有 (接語 -nya)、wang
+Ibu memberi wang kepada anaknya.
+
+## 関係節 (yang)
+Orang yang membaca buku itu ialah guru saya.
+
+## 否定・時制 (tidak、akan)、助動詞的な語 (boleh、hendak)
+Dia tidak suka kucing.
+Kami akan pergi ke pasar esok.
+Saya boleh bercakap bahasa Jepun.
+Saya hendak belajar bahasa Inggeris kerana saya suka.

@@ -10,6 +10,8 @@
   ≒  少年は 昨日 少女に 本を 与えた。  (語順のまま)
 ./dragoman.py mn -e "Батын бичсэн захиа ширээн дээр байна."
   ≒  Батが 書いた 手紙は 机の上に ある。  (語順のまま)
+python3 tools/samples.py --lang=mn              # サンプル (samples/mongolian.txt) の訳
+./dragoman.py mn samples/mongolian.txt             # 解析の詳細 (-w で語ごとの辞書引きを省く)
 ```
 
 ө・ү のあるキリル文字の文は、言語を省略してもモンゴル語と推定します。ラテン文字の転写（Wiktionary の öčigdör・sajn、
