@@ -129,6 +129,20 @@ def case_form(word, case, possessed=False, proper=False):
     return word
 
 
+POSSESSOR_PERSONS = {'meus': (1, 'sg'), 'tuus': (2, 'sg'), 'suus': (3, 'sg'), 'noster': (1, 'pl'), 'vester': (2, 'pl')}
+
+
+def possessive(word, person, number):
+    """所有の接尾辞 (kitap → kitabım・kitabın・kitabı・kitabımız・kitabınız・kitapları)"""
+    if (person, number) == (3, 'sg'):
+        return possessive3(word)
+    if (person, number) == (3, 'pl'):
+        return word + two(word, 'ları', 'leri')
+    base = word if _ends_vowel(word) else _soften(word) + four(word)
+    v = four(base)
+    return base + {(1, 'sg'): 'm', (2, 'sg'): 'n', (1, 'pl'): 'm' + v + 'z', (2, 'pl'): 'n' + v + 'z'}[(person, number)]
+
+
 def possessive3(word):
     """所有の3人称 -(s)ı (kız → kızı、çiftçi → çiftçisi、kitap → kitabı)"""
     if _ends_vowel(word):
@@ -299,9 +313,17 @@ def noun_phrase(np, case='Nom'):
     noun = word(head, 'adj' if head.pos in ('adj', 'participle') else 'noun')
     if not noun:
         return ''
-    if np.number == 'pl':
+    counted = any(not isinstance(m, NP) and m.lemma in NUMERALS and m.lemma != 'ūnus' for m in np.modifiers)
+    if np.number == 'pl' and not counted:   # 数詞の後ろは単数 (iki kedi)
         noun = plural(noun)
     possessed = False
+    owners = [m for m in np.modifiers if not isinstance(m, NP) and m.lemma in POSSESSOR_PERSONS and m.lang in ('', 'la')]
+    if owners:   # 所有の接尾辞 (benim kitabım・annem。属格の代名詞は前に残す)
+        person, owner_number = POSSESSOR_PERSONS[owners[0].lemma]
+        noun = possessive(noun, person, owner_number)
+        possessed = person == 3
+        if owners[0].lemma == 'suus':
+            before = [b for b in before if b != POSSESSIVES['suus']]   # 3人称の所有は接尾辞だけ (kitabı)
     if np.genitives:   # 属格 + 所有の3人称 (çiftçinin kızı)
         before.insert(0, ' '.join(noun_phrase(g, 'Gen') for g in np.genitives))
         noun = possessive3(noun)
@@ -407,7 +429,17 @@ def realize(clause, gap=None):
             else:
                 out.append(_copula(complements[0], clause, _person(clause)))
         else:
-            out.append('vardı' if clause.tense in ('perfect', 'imperfect') else 'var')
+            owners = clause.role('recipient')
+            if owners and subject is not None and owners[0].head is not None and owners[0].head.pos == 'pronoun':
+                # 所有: 持ち主の属格 + 所有の接尾辞の付いた名詞 + var (Benim iki kedim var「私には猫が2匹いる」)
+                owner = {'ego': 'meus', 'tū': 'tuus', 'is': 'suus'}.get(owners[0].head.lemma, 'suus')
+                owner = 'noster' if owner == 'meus' and owners[0].number == 'pl' else \
+                    'vester' if owner == 'tuus' and owners[0].number == 'pl' else owner
+                from .frame import Lex
+                owned = dataclasses.replace(subject, modifiers=[Lex(owner, 'adj')] + list(subject.modifiers))
+                out = [noun_phrase(owned)]   # 属格の代名詞は所有の修飾語から (benim)
+            out.append(('yoktu' if clause.negated else 'vardı') if clause.tense in ('perfect', 'imperfect')
+                       else ('yok' if clause.negated else 'var'))
         return [w for w in out if w]
     for np in clause.role('recipient'):
         out.append(noun_phrase(np, 'Dat'))

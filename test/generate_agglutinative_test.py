@@ -38,6 +38,11 @@ class TurkishTestCase(unittest.TestCase):
         self.assertEqual(turkish.conjugate('beklemek', 'present'), 'bekliyor')
         self.assertEqual(turkish.conjugate('gitmek', 'future', 1), 'gideceğim')
         self.assertEqual(turkish.conjugate('okumak', 'perfect', negated=True), 'okumadı')
+
+    def test_possessive(self):
+        self.assertEqual([turkish.possessive(w, p, n) for w, p, n in
+                          (('kitap', 1, 'sg'), ('anne', 1, 'sg'), ('ev', 2, 'sg'), ('ağa', 3, 'sg'), ('kedi', 1, 'pl'))],
+                         ['kitabım', 'annem', 'evin', 'ağası', 'kedimiz'])      # 所有の接尾辞
         self.assertEqual(turkish.participle('görmek', 'object'), 'gördüğü')
         self.assertEqual(turkish.participle('gitmek', 'object'), 'gittiği')
 
@@ -80,6 +85,11 @@ class FinnishTestCase(unittest.TestCase):
         self.assertEqual([finnish.case_form('talo', c) for c in ('Gen', 'Par', 'Ine', 'Ela', 'Ill', 'Ade', 'All')],
                          ['talon', 'taloa', 'talossa', 'talosta', 'taloon', 'talolla', 'talolle'])
         self.assertEqual(finnish.case_form('talo', 'Ine', 'pl'), 'taloissa')
+
+    def test_possessive(self):
+        self.assertEqual([finnish.possessive(w, c, 'sg', p, n) for w, c, p, n in
+                          (('kirja', 'Nom', 1, 'sg'), ('äiti', 'Nom', 1, 'sg'), ('ystävä', 'All', 3, 'sg'), ('talo', 'Ill', 1, 'sg'))],
+                         ['kirjani', 'äidini', 'ystävälleen', 'talooni'])      # 所有の接尾辞 (子音階程交替・入格の n)
 
     def test_verbs(self):
         from dragoman.generate.frame import Clause, Lex

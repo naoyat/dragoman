@@ -398,6 +398,13 @@ def np_of(node, case=None):
             if readings:
                 np.number, np.gender = readings[0]
             np.animate = relative.gender != 'n'
+    owner = POSSESSIVE_SUFFIXES.get(item.attrib('possessive') or '') if _lang in ('tr', 'fi') else None
+    if owner and not any(isinstance(m, Lex) and m.lemma == owner for m in np.modifiers):
+        # 所有の接尾辞 (annem・siskoni) は所有形容詞に (mea māter)。訳語の頭の「私の」は外す (形容詞の側で付く)
+        np.modifiers.append(Lex(owner, 'adj', OWNER_JA.get(owner, '')))
+        prefix = OWNER_JA.get(owner, '')
+        if prefix and np.head.ja.startswith(prefix):
+            np.head.ja = ','.join(j[len(prefix):] if j.startswith(prefix) else j for j in np.head.ja.split(','))
     if _lang in SOURCE_NUMERALS and any(isinstance(m, Lex) and m.lemma in _LATIN_NUMERALS[1:] for m in np.modifiers):
         np.number = 'pl'   # 数詞の後ろの単数の名詞 (kaksi kissaa・iki kedi) はほかの言語では複数 (duo cattī)
     return np
@@ -563,6 +570,10 @@ def clause_of(predicate, lang=None):
             clause.adjuncts.append(participial_of(sub))
     _person_from_subject(clause, predicate)
     _agree_with_subject(clause, predicate)
+    if clause.copula and _lang in SOURCE_NUMERALS and clause.person == 3:
+        subjects = clause.role('subject')
+        if subjects and (subjects[0].number == 'pl' or subjects[0].members):
+            clause.number = 'pl'   # 数詞で複数にした主語 (kaksi kissaa → duo cattī) に繋辞を合わせる (sunt)
     return clause
 
 
@@ -627,6 +638,9 @@ SOURCE_NUMERALS = {lang: dict(zip(words, _LATIN_NUMERALS)) for lang, words in {
     'tr': ('bir', 'iki', 'üç', 'dört', 'beş', 'altı', 'yedi', 'sekiz', 'dokuz', 'on'),
     'mn': ('нэг', 'хоёр', 'гурван', 'дөрвөн', 'таван', 'зургаан', 'долоон', 'найман', 'есөн', 'арван'),
     'ko': ('한', '두', '세', '네', '다섯', '여섯', '일곱', '여덟', '아홉', '열')}.items()}
+# 所有の接尾辞 (トルコ語・フィンランド語の解析の possessive) → ラテン語の所有形容詞と、訳語の頭の日本語
+POSSESSIVE_SUFFIXES = {'P1sg': 'meus', 'P2sg': 'tuus', 'P3sg': 'suus', 'P1pl': 'noster', 'P2pl': 'vester', 'P3pl': 'suus'}
+OWNER_JA = {'meus': '私の', 'tuus': '君の', 'noster': '私たちの', 'vester': '君たちの', 'suus': ''}
 # 繋辞を中立の sum にする言語
 NEUTRAL_COPULA = ('ko', 'de', 'tr', 'mn', 'fi')
 # 動詞が人称で変わらない言語 (人称は主語の代名詞から)

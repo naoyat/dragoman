@@ -109,6 +109,32 @@ def case_form(word, case, number='sg', pos='noun'):
     return form or word
 
 
+POSSESSOR_PERSONS = {'meus': (1, 'sg'), 'tuus': (2, 'sg'), 'suus': (3, 'sg'), 'noster': (1, 'pl'), 'vester': (2, 'pl')}
+POSSESSIVE_SUFFIXES = {(1, 'sg'): 'ni', (2, 'sg'): 'si', (1, 'pl'): 'mme', (2, 'pl'): 'nne'}
+BACK_VOWELS = 'aou'
+
+
+def possessive(word, case, number, person, owner_number):
+    """所有の接尾辞 (kirja → kirjani・kirjasi・kirjansa、talossa → talossani・talossaan)"""
+    if case in ('Nom', 'Acc', 'Gen'):
+        base = case_form(word, 'Gen', number)
+        base = base[:-1] if base.endswith('n') else base   # 属格の -n を外した語幹 (talon → talo、talojen → taloje)
+        if number == 'pl' and case == 'Nom':
+            base = case_form(word, 'Gen', 'sg')[:-1]
+    else:
+        base = case_form(word, case, number)
+    back = any(v in base for v in BACK_VOWELS) and not any(v in base[-3:] for v in 'äöy')
+    if base.endswith('n') and case == 'Ill':
+        base = base[:-1]   # 入格の -n は落ちる (taloon → talooni・taloonsa)
+        if (person, owner_number) not in POSSESSIVE_SUFFIXES:
+            return base + ('nsa' if any(v in base for v in BACK_VOWELS) else 'nsä')
+    if (person, owner_number) in POSSESSIVE_SUFFIXES:
+        return base + POSSESSIVE_SUFFIXES[(person, owner_number)]
+    if base[-1:] in 'aeiouyäö' and case not in ('Nom', 'Acc', 'Gen'):
+        return base + base[-1] + 'n'   # 3人称: 母音で終わる格は母音を延ばして -n (talossaan)
+    return base + ('nsa' if back else 'nsä')
+
+
 # ----------------------------------------------------------------------
 # 語
 
@@ -177,6 +203,12 @@ def noun_phrase(np, case='Nom'):
     else:
         head_form = noun if proper and case == 'Nom' else case_form(noun, case, number,
                                                                      'adj' if head.pos in ('adj', 'participle') else 'noun')
+    owners = [m for m in np.modifiers if not isinstance(m, NP) and m.lemma in POSSESSOR_PERSONS and m.lang in ('', 'la')]
+    if owners and not proper:   # 所有の接尾辞 (minun kirjani。3人称の再帰 suus は接尾辞だけ: kirjansa)
+        person, owner_number = POSSESSOR_PERSONS[owners[0].lemma]
+        head_form = possessive(noun, case, number, person, owner_number)
+        if owners[0].lemma == 'suus':
+            before = [b for b in before if b != POSSESSIVES['suus']]
     text = ' '.join(x for x in before + [head_form] if x)
     for r in np.relatives:
         text += ', ' + relative_clause(r, number) + ','

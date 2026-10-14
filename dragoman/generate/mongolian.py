@@ -235,7 +235,8 @@ def noun_phrase(np, case='Nom'):
     noun = word(head, 'adj' if head.pos in ('adj', 'participle') else 'noun')
     if not noun:
         return ''
-    if np.number == 'pl' and np.animate:
+    counted = any(not isinstance(m, NP) and m.lemma in NUMERALS and m.lemma != 'ūnus' for m in np.modifiers)
+    if np.number == 'pl' and np.animate and not counted:   # 数詞の後ろは複数の語尾を付けない (хоёр муур)
         noun += 'ууд' if harmony(noun) in 'ао' else 'үүд'
     return ' '.join(x for x in before + [case_form(noun, case)] if x)
 

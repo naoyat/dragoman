@@ -280,7 +280,8 @@ def noun_phrase(np):
             continue
         before.append(_modifier(m))
     text = word(head, 'noun')
-    if np.number == 'pl' and np.animate:
+    counted = any(not isinstance(m, NP) and m.lemma in NUMERALS and m.lemma != 'ūnus' for m in np.modifiers)
+    if np.number == 'pl' and np.animate and not counted:   # 数詞の後ろは 들 を付けない (두 고양이)
         text += '들'
     return ' '.join(x for x in before + [text] if x)
 

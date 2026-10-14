@@ -120,6 +120,8 @@ def item_of(token):
                 '_': _cngs(case, number), 'main': True, 'case_name': morphology.CASE_NAMES.get(feats.get('Case'))}
         if pos == 'PROPN':
             data['proper'] = True
+        if possessor:   # 所有の接尾辞 (siskoni「私の姉妹」。文の枠では所有形容詞に)
+            data['possessive'] = 'P%s%s' % (feats.get('Person[psor]'), 'sg' if feats.get('Number[psor]') == 'Sing' else 'pl')
         return data
     if pos == 'PRON':   # 関係代名詞 joka
         return {'surface': text, 'pos': 'pronoun', 'base': lemma, 'ja': '〜するところの', 'gloss_lang': 'ja',
