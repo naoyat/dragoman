@@ -75,6 +75,7 @@ KOREAN = language.Language(
     genitive_precedes_head=True,
     topic_first=True,
     possessor_cases=('Dat',),
+    relatives_before_head=True,
 )
 
 
@@ -604,15 +605,35 @@ def mark_attributives(words):
                                           _cngs(morphology.CASES, True)))]
             out.append(word)
             continue
-        text = _relative_text(clause, word)
-        hitem = _item(head)
-        hja = (hitem.ja or '').split(',')[0]
-        head.items = [type(hitem)(dict(hitem.item, ja=text + hja, gloss_lang='ja', _=list(hitem._ or []),
-                                       relative=' '.join(dict.fromkeys(getattr(w, 'eojeol', w.surface)
-                                                                       for w in clause + [word]))))]
-        for w in clause + [word]:
-            w.relative_of = head
-        del out[start:]
+        # 関係節: 節の頭に見えない関係代名詞を補い (空所の格: 節に 이/가 の主語があれば対格、無ければ主格)、
+        # 連体形を節の定動詞にする。先行詞は節の後ろの名詞 (共通の解析器の relatives_before_head)
+        subject = any(_pos(w) in ('noun', 'pronoun') and _item(w)._ and _item(w)._[0][0] == 'Nom' and
+                      not getattr(w, 'open_case', False) for w in clause)
+        gap = 'Acc' if subject else 'Nom'
+        tense = 'future' if word.attributive in ('ㄹ', '을') else \
+            'perfect' if word.attributive in ('ㄴ', '은') and not getattr(word, 'adjective', False) else 'present'
+        word.items = [type(item)(dict(item.item, mood='indicative', tense=tense,
+                                      form=(item.attrib('form') or '') + '・連体形 (関係節)'))]
+        word.attributive = None
+        word.relative_participle = True
+        pronoun = Word('(관계)', [{'surface': '(관계)', 'pos': 'pronoun', 'base': '(関係節の空所)', 'ja': '〜するところの',
+                                   'gloss_lang': 'ja', 'desc': '関係代名詞', '_': _cngs((gap,)) + _cngs((gap,), True),
+                                   'compact': True}])
+        pronoun.token_ix = None
+        before, after = Word(',', None), Word(',', None)
+        before.token_ix = after.token_ix = None
+        # 関係節より前の、同じ節の語 (主題 나는) は関係節の後ろへ (共通の解析器が関係節の語にしないように)
+        lead = start
+        while lead > 0 and out[lead - 1].items is not None and _pos(out[lead - 1]) not in ('verb', 'conj') and \
+                not getattr(out[lead - 1], 'relative_participle', False):
+            lead -= 1
+        moved = out[lead:start]
+        del out[lead:start]
+        start = lead
+        out[start:start] = [before, pronoun]
+        out.append(word)
+        out.append(after)
+        out += moved
     return out
 
 

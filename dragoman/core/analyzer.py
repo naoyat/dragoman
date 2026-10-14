@@ -1411,10 +1411,14 @@ def _connecting_relative(pronoun, sentence_words):
 
 def _head_after(pred, clause):
     """名詞の前の関係節の先行詞: 関係節の動詞より後ろの、後ろの節の最初の名詞・代名詞 (Kitap okuyan çocuk の çocuk)"""
-    verb_index = pred.verb.index if isinstance(pred.verb, Word) and pred.verb.index is not None else -1
+    verb = pred.verb if isinstance(pred.verb, Word) else None
+    # 元の文の位置 (token_ix) があればそれで (関係節の前の主文の語を後ろへ移した韓国語: 나는 어머니가 만든 음식을)
+    position = (lambda w: w.token_ix) if verb is not None and getattr(verb, 'token_ix', None) is not None else \
+        (lambda w: w.index)
+    start = position(verb) if verb is not None and position(verb) is not None else -1
     words = sorted((n for n in _nodes_in(clause.predicate, clause.not_solved)
-                    if isinstance(n, Word) and n.items and n.index is not None and n.index > verb_index and
-                    n.items[0].pos in ('noun', 'pronoun')), key=lambda w: w.index)
+                    if isinstance(n, Word) and n.items and position(n) is not None and position(n) > start and
+                    n.items[0].pos in ('noun', 'pronoun')), key=position)
     return words[0] if words else None
 
 

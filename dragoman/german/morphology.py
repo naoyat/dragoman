@@ -113,7 +113,7 @@ GLOSSES = {
     'fallen': '落ちる', 'nähen': '縫う', 'stechen': '刺す', 'aussehen': '見える', 'bekommen': '得る', 'sterben': '死ぬ',
     'leiden': '耐える', 'übertreffen': '上回る', 'erblicken': '見つける', 'hassen': '憎む', 'wachsen': '育つ',
     'rufen': '呼ぶ', 'sprechen': '言う', 'antworten': '答える', 'erschrecken': '驚く', 'töten': '殺す', 'umbringen': '殺す',
-    'essen': '食べる', 'fressen': '食べる', 'schlafen': '眠る', 'erwachen': '目覚める', 'klopfen': 'たたく',
+    'essen': '食べる', 'fressen': '(動物が) 食べる', 'schlafen': '眠る', 'erwachen': '目覚める', 'klopfen': 'たたく',
     'verkaufen': '売る', 'kochen': '料理する', 'waschen': '洗う', 'stricken': '編む', 'tanzen': '踊る',
     'springen': '跳ぶ', 'beißen': 'かじる', 'schenken': '贈る', 'heiraten': '結婚する', 'weinen': '泣く',
     'gefallen': '気に入る', 'erzählen': '語る', 'heißen': '〜という名前である', 'aufblicken': '見上げる',

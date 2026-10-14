@@ -54,6 +54,7 @@ MONGOLIAN = language.Language(
     genitive_precedes_head=True,
     topic_first=True,
     possessor_cases=('Dat', 'Gen'),
+    relatives_before_head=True,
 )
 
 
@@ -112,8 +113,11 @@ def choose(token, k, surfaces):
             s += 1
         if nxt_low in morphology.POSTPOSITIONS and r['kind'] in ('noun', 'pronoun'):
             s += -2 if r.get('case') == 'Gen' else 0   # 後置詞の前は属格 (ширээн дээр「机の上に」)
-        if r['kind'] == 'noun' and r.get('case') not in (None, 'Nom') and r.get('pos') is None:
-            s -= 0.3   # 格の接尾辞を分けた読みを、同じ綴りの別の見出しより先に
+        if r['kind'] == 'noun' and r.get('case') not in (None, 'Nom') and r.get('pos') is None and \
+                not any(x.get('lemma') == token.lower() and x['kind'] in ('adj', 'noun', 'adv') for x in readings):
+            s -= 0.3   # 格の接尾辞を分けた読みを、同じ綴りの別の見出しより先に (語そのものが見出しなら見出しを)
+        if r.get('lemma') == token.lower() and r['kind'] in ('adj', 'adv'):
+            s -= 0.5   # 見出しそのものの形容詞・副詞 (сайхан「美しい」。сайх + 属格でなく)
         return s
     return sorted(readings, key=score)[0]
 
@@ -368,8 +372,9 @@ def build_words(recs):
 
 
 def mark_participles(words):
-    """連体の分詞を後ろの名詞に掛け、前の補語と一緒に関係節として名詞の訳に組み込む"""
-    from dragoman.core.japanese import japanese_plain
+    """連体の分詞の節を共通の解析器の関係節にする: 節の頭に見えない関係代名詞を補い (空所の格: 節に属格の主語
+    (Батын бичсэн) があれば対格、無ければ主格)、分詞を節の定動詞にする。先行詞は節の後ろの名詞
+    (relatives_before_head)。関係節より前の同じ節の語は関係節の後ろへ"""
     out = []
     for i, word in enumerate(words):
         if not getattr(word, 'attributive', False):
@@ -385,45 +390,43 @@ def mark_participles(words):
             item = _item(prev)
             nominative = item is not None and item.pos in ('noun', 'pronoun') and item._ and item._[0][0] == 'Nom'
             if prev.items is None or _pos(prev) in ('verb', 'conj') or getattr(prev, 'topic', False) or \
-                    nominative and start < len(out):
+                    nominative and start < len(out) or getattr(prev, 'relative_participle', False):
                 break
             start -= 1
         clause = out[start:]
+        subject = [w for w in clause if _pos(w) in ('noun', 'pronoun') and _item(w)._ and _item(w)._[0][0] == 'Gen']
+        for w in subject[:1]:
+            _item(w)._ = [('Nom',) + c[1:] for c in _item(w)._[:1]]   # 関係節の主語 (Батын бичсэн → Бат が)
+        gap = 'Acc' if subject else 'Nom'
         item = _item(word)
-        rec = word.record
-        tense = 'perfect' if rec.get('tense') == 'perfect' else 'present'
-        verb = japanese_plain(item.ja.split(',')[0], False, tense, rec.get('negated')) \
-            if item.attrib('gloss_lang') == 'ja' else item.ja
-        parts, pending = [], None
-        for w in clause:
-            it = _item(w)
-            if it.pos == 'preposition':
-                pending = it.ja.split(',')[0].lstrip('〜')
-                continue
-            text = (it.ja or '').split(',')[0]
-            if pending is not None:
-                parts.append(text + pending)
-                pending = None
-            elif it.pos in ('noun', 'pronoun'):
-                case = it._[0][0] if it._ else 'Nom'
-                parts.append(text + ('が' if case in ('Gen', 'Nom') else morphology.CASE_JA.get(case, '')))
-            elif w.surface not in MONGOLIAN.negations:
-                parts.append(text)
-        hitem = _item(head)
-        hja = (hitem.ja or '').split(',')[0]
-        head.items = [type(hitem)(dict(hitem.item, ja=''.join(parts) + verb + hja, gloss_lang='ja', _=list(hitem._ or []),
-                                       relative=' '.join(w.surface for w in clause + [word])))]
-        for w in clause + [word]:
-            w.relative_of = head
-        del out[start:]
+        word.items = [type(item)(dict(item.item, mood='indicative', form=(item.attrib('form') or '') + '・分詞 (関係節)'))]
+        word.attributive = False
+        word.relative_participle = True
+        pronoun = Word('(харьц)', [{'surface': '(харьц)', 'pos': 'pronoun', 'base': '(関係節の空所)', 'ja': '〜するところの',
+                                    'gloss_lang': 'ja', 'desc': '関係代名詞', '_': _cngs((gap,)) + _cngs((gap,), 'pl'),
+                                    'compact': True}])
+        pronoun.token_ix = None
+        before, after = Word(',', None), Word(',', None)
+        before.token_ix = after.token_ix = None
+        lead = start
+        while lead > 0 and out[lead - 1].items is not None and _pos(out[lead - 1]) not in ('verb', 'conj') and \
+                not getattr(out[lead - 1], 'relative_participle', False):
+            lead -= 1
+        moved = out[lead:start]
+        del out[lead:start]
+        out[lead:lead] = [before, pronoun]
+        out.append(word)
+        out.append(after)
+        out += moved
     return out
 
 
 def supply_copula(words):
     """動詞の無い文には、最後の名詞類の後ろに見えない繋辞を補う (Би багш「私は先生だ」)。与位格なら存在「ある」"""
-    if any(_pos(w) == 'verb' for w in words):
+    if any(_pos(w) == 'verb' and not getattr(w, 'relative_participle', False) for w in words):
         return words
-    nominals = [i for i, w in enumerate(words) if _pos(w) in ('noun', 'pronoun', 'adj')]
+    last_relative = max([k for k, w in enumerate(words) if getattr(w, 'relative_participle', False)], default=-1)
+    nominals = [i for i, w in enumerate(words) if _pos(w) in ('noun', 'pronoun', 'adj') and i > last_relative]
     if len(nominals) < 1:
         return words
     k = nominals[-1]
@@ -458,7 +461,13 @@ def bare_objects(words):
 
 
 def mark_topic(words):
-    for w in words:
+    relatives = [k for k, w in enumerate(words) if getattr(w, 'relative_participle', False)]
+    first_verb = next((k for k, w in enumerate(words) if _pos(w) == 'verb' and
+                       not getattr(w, 'relative_participle', False)), len(words))
+    start = max([k + 1 for k in relatives if k < first_verb], default=0)   # 名詞の前の関係節は飛ばす
+    for w in words[start:]:
+        if w.items is None and getattr(w, 'token_ix', 0) is None:
+            continue
         if _pos(w) == 'verb' or w.items is None:
             return
         if _pos(w) in ('noun', 'pronoun'):
