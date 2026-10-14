@@ -45,10 +45,13 @@ python3 tools/samples.py --lang=fi              # サンプル (samples/finnish.
 pip install spacy && python3 -m spacy download fi_core_news_sm      # 約14MB (CC BY-SA 4.0。UD Finnish-TDT で学習)
 mkdir -p ~/.local/share/dragoman-data/fi/ud
 curl -sL https://kaikki.org/dictionary/Finnish/kaikki.org-dictionary-Finnish.jsonl | python3 tools/build_finnish_dic.py -
+python3 tools/shrink_dic.py --lang=fi     # 語形の表を小さく (元は wiktionary.sqlite.bak に残る)
 ```
 
 Wiktionary のフィンランド語の抽出データは約 4.6GB（変化形の項目が多い）あるので、標準入力から読んで見出し語の品詞・英語の語義
-だけを `~/.local/share/dragoman-data/fi/wiktionary.sqlite` に残します（26 万項目・約 20MB）（語形変化は spaCy が原形に戻すので、語形の表は作らない）。
+と、文の生成に使う語形の表を `~/.local/share/dragoman-data/fi/wiktionary.sqlite` に残します（見出し 26 万・語形 509 万、
+`tools/shrink_dic.py` の後で約 320MB。解析では語形変化は spaCy が原形に戻すので、語形の表は生成だけが引く。動詞の不定詞の格の形・
+所有の接尾辞の形・具格は除く）。
 
 評価用に UD Finnish-TDT（CC BY-SA 4.0）の test を `~/.local/share/dragoman-data/fi/ud/` に置きます。spaCy のモデルは
 TDT の train で学習されているので、test で測る数字は spaCy の解析の精度に近くなります。
@@ -69,6 +72,6 @@ UD Finnish-TDT の test（1,555 文）で、主語の再現率 70%・目的語�
 * 受動（非人称の受動: kirja luetaan「本が読まれる・人は本を読む」）・条件法・可能法の訳。
 * 語順の自由な文（目的語が文頭）。
 * 出口（`generate/finnish.py`）: 15格・動詞の人称と時制・否定動詞は辞書の変化表から（辞書は変化形の表も残す。
-  所有の接尾辞の形・条件法・可能法は除いて約 520MB）、目的語の属格・分格、所有の構文、関係節 joka。比較の表にも。
+  所有の接尾辞の形・条件法・可能法は除いて約 320MB）、目的語の属格・分格、所有の構文、関係節 joka。比較の表にも。
   所有の接尾辞（minun kirjani、ystävälleen）は規則で付ける。辞書に無い名前の格語尾（Liisaa・Matin・Greteliä）も規則で。
 * 辞書に無い名前はカタカナ（Matti → マッティ、Liisa → リーサ。重子音は ッ）。

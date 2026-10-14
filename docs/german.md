@@ -70,11 +70,13 @@ python3 tools/import_wikisource.py ~/.local/share/dragoman-data/de/texts/sneewit
 pip install spacy && python3 -m spacy download de_core_news_sm      # 約13MB (MIT)
 mkdir -p ~/.local/share/dragoman-data/de/ud
 curl -sL https://kaikki.org/dictionary/German/kaikki.org-dictionary-German.jsonl | python3 tools/build_german_dic.py -
+python3 tools/shrink_dic.py --lang=de     # 語形の表を小さく (元は wiktionary.sqlite.bak に残る)
 ```
 
 Wiktionary のドイツ語の抽出データ（CC BY-SA）は約 1.1GB あるので、標準入力から読んで必要なものだけを sqlite に残します
-（元のファイルは置かなくてよい。`~/.local/share/dragoman-data/de/wiktionary.sqlite`、約 370MB。見出し語 9.4 万・語形 350 万）。
-見出し語ごとの品詞・英語の語義・名詞の性・完了の助動詞と、語形 → 見出し語・印（格・数・人称・時制）の表です。
+（元のファイルは置かなくてよい。`~/.local/share/dragoman-data/de/wiktionary.sqlite`、`tools/shrink_dic.py` の後で約 300MB。
+見出し語 9.4 万・語形 240 万）。見出し語ごとの品詞・英語の語義・名詞の性・完了の助動詞と、語形 → 見出し語・印（格・数・人称・時制）
+の表です。形容詞の語尾は規則で付けるので、形容詞の語形は印を除いて (語形, 見出し語) の組だけを残します。
 
 評価用に UD German-GSD（CC BY-SA 4.0）の `de_gsd-ud-test.conllu` を `~/.local/share/dragoman-data/de/ud/` に置きます。
 

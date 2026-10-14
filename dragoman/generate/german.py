@@ -91,7 +91,9 @@ def _db():
     if not os.path.exists(path):
         return None
     db = sqlite3.connect(path, check_same_thread=False)
-    db.execute('CREATE INDEX IF NOT EXISTS forms_lemma ON forms (lemma, pos)')
+    schema = (db.execute("SELECT sql FROM sqlite_master WHERE name = 'forms'").fetchone() or [''])[0]
+    if 'WITHOUT ROWID' not in schema:   # 見出し順に並べた表 (tools/shrink_dic.py) なら索引は要らない
+        db.execute('CREATE INDEX IF NOT EXISTS forms_lemma ON forms (lemma, pos)')
     return db
 
 

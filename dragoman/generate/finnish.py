@@ -106,6 +106,9 @@ def case_form(word, case, number='sg', pos='noun'):
         find_form(word, pos, (CASE_TAGS.get(case, 'nominative'), number_tag))
     if form is None and pos == 'adj':
         form = find_form(word, 'noun', (CASE_TAGS.get(case, 'nominative'), number_tag))
+    if form is None and word[:1].isupper():   # 固有名詞の見出しの変化表 (Helsinki → Helsingissä)
+        form = find_form(word, 'name', (CASE_TAGS.get(case, 'nominative'), number_tag), avoid=('accusative',)) or \
+            find_form(word, 'name', (CASE_TAGS.get(case, 'nominative'), number_tag))
     if form is None and number == 'sg' and word[:1].isupper() and word.isalpha():
         form = name_case(word, case)
     return form or word
