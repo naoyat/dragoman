@@ -1189,17 +1189,27 @@ def detect_infinitive_clauses(nodes, trace):
                 any(item.attrib('mood') == 'imperative' for item in nodes[i].verb.items):
             i += 1
             continue  # 命令法とも読める形 (miserēre) で、支配する動詞も分からない
-        start = i
-        for j in range(i - 1, -1, -1):
-            node = nodes[j]
-            if isinstance(node, Predicate) or _only_nominative(node):
-                break
-            if isinstance(node, Word) and (node.items is None or (node.items and node.items[0].pos == 'conj')):
-                break  # 句読点・接続詞
-            start = j
+        start = end = i
+        if language.current().infinitive_objects_follow:
+            # 不定詞の後ろの語句 (次の動詞・句読点・接続詞の手前まで) を不定詞句に (envoyer des lettres à …)
+            for j in range(i + 1, len(nodes)):
+                node = nodes[j]
+                if isinstance(node, (Predicate, InfinitiveClause)) or _only_nominative(node):
+                    break
+                if isinstance(node, Word) and (node.items is None or (node.items and node.items[0].pos == 'conj')):
+                    break
+                end = j
+        else:
+            for j in range(i - 1, -1, -1):
+                node = nodes[j]
+                if isinstance(node, Predicate) or _only_nominative(node):
+                    break
+                if isinstance(node, Word) and (node.items is None or (node.items and node.items[0].pos == 'conj')):
+                    break  # 句読点・接続詞
+                start = j
         inf = nodes[i]
         inf.subordinate = True
-        not_solved = _attach_to_predicate(nodes, list(range(start, i + 1)), i)
+        not_solved = _attach_to_predicate(nodes, list(range(start, end + 1)), i)
         # 句の中の主格は主格としてしか読めない語を除いてあるので、対格と読む (hostēs: Nom/Acc)
         accs = _sort_by_position(inf.case_slot.pop('Acc', []) + inf.case_slot.pop('Nom/Acc', []) +
                                  inf.case_slot.pop('Nom', []))
@@ -1223,8 +1233,8 @@ def detect_infinitive_clauses(nodes, trace):
             inf.case_slot['Acc'] = accs
         clause = InfinitiveClause(inf, governor, kind)
         trace.append("// INF #%d..#%d (%s) <- VERB#%d (%s) [%s]" % (
-            start, i, ' '.join(n.surface for n in nodes[start:i + 1]), governor_ix, governor.surface, kind))
-        nodes[start:i + 1] = not_solved + [clause]
+            start, end, ' '.join(n.surface for n in nodes[start:end + 1]), governor_ix, governor.surface, kind))
+        nodes[start:end + 1] = not_solved + [clause]
         clauses.append(clause)
         i = start + len(not_solved) + 1
     return nodes, clauses

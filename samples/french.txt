@@ -1,0 +1,33 @@
+# フランス語のサンプル (python3 tools/samples.py --lang=fr で表示する)
+#
+# 自作の文。「## 見出し」で節を分ける
+
+## 基本の語順 (主語-動詞-目的語)、冠詞・前置詞
+Le garçon lit un livre à l'école.
+Jean aime Marie.
+
+## 縮約形 (du・au) と de 句 (名詞の後ろは属格)
+Le livre du professeur est sur la table.
+La maison de mon père est grande.
+Elle est allée au marché avec son ami.
+
+## 部分冠詞、de を取る動詞
+Je veux manger du pain.
+Nous parlons du film.
+
+## 接語の代名詞 (動詞の前)
+Je le lui ai donné hier.
+Il me l'a dit.
+
+## 複合過去 (avoir・être)、受動、話法の助動詞
+Le livre a été écrit par le professeur.
+Nous voulons lire un livre.
+Il est venu pour voir son ami.
+
+## 否定 (ne … pas)、il y a
+Il ne mange pas de pain.
+Il y a un chat dans le jardin.
+
+## 関係節 (qui・que)、従属節 (que)
+La fille qui chante est ma sœur.
+Je sais que tu m'aimes.

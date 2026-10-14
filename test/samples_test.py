@@ -62,7 +62,7 @@ class SamplesTestCase(unittest.TestCase):
         langs.append(('kobun', kobun_mecab.available()))
         import importlib
         for lang, module in (('ko', 'korean'), ('de', 'german'), ('tr', 'turkish'), ('mn', 'mongolian'),
-                             ('fi', 'finnish'), ('ms', 'indonesian')):
+                             ('fi', 'finnish'), ('fr', 'french'), ('ms', 'indonesian')):
             try:
                 langs.append((lang, importlib.import_module('dragoman.%s.command' % module).available()))
             except ImportError:

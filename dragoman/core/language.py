@@ -41,6 +41,7 @@ class Language:
     topic_first: bool = False      # 主題 (「は」の句) を訳の先頭に置く (タガログ語の焦点)
     possessor_cases: tuple = ('Dat',)  # 繋辞の文で所有者を表す格 (mihi est liber「私には本がある」。サンスクリットは属格)
     question_moods: tuple = ('subjunctive',)  # 間接疑問の節の動詞の法 (ギリシア語は直説法・希求法も)
+    infinitive_objects_follow: bool = False  # 不定詞の目的語が不定詞の後ろに来る (フランス語の pour établir le baromètre)
     relatives_before_head: bool = False  # 関係節が名詞の前に来る (トルコ語の分詞の節: Kitap okuyan çocuk「本を読む子供」)。
     # 先行詞は節の後ろの最初の名詞 (前の名詞は探さない)
 

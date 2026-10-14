@@ -164,15 +164,43 @@ def _german(word):
     return word.replace('ʦ', 'ts').replace('ch', 'h')
 
 
+FRENCH_RULES = (('eaux', 'oo'), ('eau', 'oo'), ('aux', 'oo'), ('au', 'oo'), ('oi', 'Wa'), ('ou', 'u'), ('ch', 'ʃ'),
+                ('gn', 'ny'), ('qu', 'k'), ('ph', 'f'), ('th', 't'), ('ain', 'iN'), ('ein', 'iN'), ('ai', 'e'),
+                ('ei', 'e'), ('é', 'e'), ('è', 'e'), ('ê', 'e'), ('ç', 's'), ('ë', 'e'), ('ï', 'i'), ('ô', 'o'),
+                ('â', 'a'), ('û', 'u'), ('œ', 'e'))
+
+
+def _french(word):
+    """フランス語の名前の綴り → 読みに近い綴り (Jean → ʒaN、François → fraNsWa、Rousseau → rusoo)"""
+    word = re.sub(r'c(?=[eiyéèê])', 'S', re.sub(r'g(?=[eiyéèê])', 'ʒ', word)).replace('j', 'ʒ').replace('ç', 'S')
+    word = word.replace('é', 'E').replace('ʒea', 'ʒa').replace('u', 'ü').replace('oü', 'u').replace('qü', 'k')
+    word = word.replace('eaü', 'oo').replace('aü', 'oo')
+    for a, b in FRENCH_RULES:
+        word = word.replace(a, b)
+    word = re.sub(r'(?:[ae]n|[ae]m)(?=[^aeiouüyn]|$)', 'aN', word)   # 鼻母音 (Jean → ジャン、Antoine → アントワーヌ)
+    word = re.sub(r'(?:on|om)(?=[^aeiouüyn]|$)', 'oN', word)
+    word = re.sub(r'(?:in|im|ün|yn)(?=[^aeiouüyn]|$)', 'aN', word)
+    word = word.replace('iN', 'aN')
+    word = re.sub(r'(?<=[aeiouüyE])s(?=[aeiouüyE])', 'z', word)  # 母音の間の s (Rose → ローズ)
+    if len(word) > 3:
+        word = re.sub(r'(?:e?s|t|d|x|p)$', '', word)          # 読まない語末の子音字 (Paris → パリ、Louis → ルイ)
+        word = re.sub(r'(?<=[aiouüy])e$', '', word)           # 母音の後ろの e (Marie → マリ)
+        word = re.sub(r'(?<=[dt])e$', 'o', word)               # -de・-te はオ段 (Claude → クロード)
+        word = re.sub(r'(?<=[^aeiouüyEW])e$', 'u', word)      # 子音の後ろの e はウ段 (Céline → セリーヌ、Rose → ローズ)
+    return word.replace('h', '').replace('y', 'i').replace('N', 'n').replace('E', 'e').replace('S', 's')
+
+
 def latin(name, lang=''):
     """ラテン文字の名前。lang='fi' は重子音を ッ (Matti → マッティ)、'de' はドイツ語の読み (Hänsel → ヘンゼル)"""
     word = ''.join(c for c in unicodedata.normalize('NFD', name.lower()) if not unicodedata.combining(c) or c in '̈')
     word = unicodedata.normalize('NFC', word)
     if lang == 'de':
         word = _german(word)
+    if lang == 'fr':
+        word = _french(unicodedata.normalize('NFC', name.lower()))
     word = word.replace('sch', 'ʃ').replace('ch', 'h').replace('sh', 'ʃ')
     vowels = dict(LATIN_VOWELS, ä='e') if lang == 'de' else LATIN_VOWELS
-    consonants = dict(LATIN_CONSONANTS, z='ts' if lang != 'de' else 'z', j='y', s='s')
+    consonants = dict(LATIN_CONSONANTS, z='z' if lang in ('de', 'fr') else 'ts', j='y', s='s')
     phonemes = []
     k = 0
     while k < len(word):
@@ -185,6 +213,10 @@ def latin(name, lang=''):
             continue
         if c == 'ʃ':
             phonemes.append(('C', 'sh'))
+        elif c == 'ʒ':
+            phonemes.append(('C', 'j'))
+        elif c == 'W':
+            phonemes.append(('C', 'w'))
         elif c == 'ç':
             phonemes.append(('C', 'ç'))
         elif c in consonants:
