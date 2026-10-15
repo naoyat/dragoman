@@ -64,6 +64,13 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Cette ville plaît à mon père.'), '私の父は / この町が / 気に入っている')
         self.assertEqual(self.ja('Tu me plais.'), '私は / 君が / 気に入っている')           # plais を過去分詞と読む誤り
 
+    def test_reform_spelling(self):
+        # 1990年の綴りの改革: 辞書の「post-1990 spelling of …」から。記号で区別する語 (sûr・dû) は変わらない
+        self.assertEqual([morphology.reform_note(w, l) for w, l in
+                          (('plaît', 'plaire'), ('connait', 'connaitre'), ('événement', 'événement'), ('sûr', 'sûr'))],
+                         [('new', 'plait'), ('old', 'connaît'), ('new', 'évènement'), None])
+        self.assertEqual(morphology.gloss('cout', 'noun')[0], morphology.gloss('coût', 'noun')[0])   # 新しい綴りも同じ訳
+
     def test_names(self):
         self.assertEqual(self.ja('Jean aime Marie.'), 'ジャンが / マリを / 愛する,好む')
 

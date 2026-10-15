@@ -800,6 +800,10 @@ def lookup_all(surfaces):
     words = []
     for token in doc:
         data = item_of(token, doc, fixed)
+        if data is not None and data.get('pos') in ('verb', 'noun', 'adj', 'adv'):
+            note = morphology.reform_note(token.text, data.get('lemma') or data.get('base'))
+            if note:
+                data['reform'] = note   # 1990年の綴りの改革で変わった語 (plaît / plait)
         word = Word(token.text, None if data is None else [data])
         word.token_ix = token.i
         word.doc_i = token.i

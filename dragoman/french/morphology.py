@@ -209,6 +209,11 @@ def gloss(lemma, pos):
     row = rows[0] if rows else None
     if lemma in GLOSSES:
         return GLOSSES[lemma], 'ja', row
+    old = dictionary.reform_spellings()[0].get(lemma.lower())
+    if old and old != lemma.lower():   # 1990年の新しい綴り (cout) は従来の綴り (coût) の語義で訳す
+        found = gloss(old, pos)
+        if found[0]:
+            return found
     if row is None:
         return None, None, None
     if row['pos'] == 'name':
@@ -217,6 +222,34 @@ def gloss(lemma, pos):
         return (ja, 'ja', row) if ja else (lemma, 'en', row)
     ja = en_ja.translate(row['en'], pos if pos in ('noun', 'verb', 'adj', 'adv') else 'noun', limit=2)
     return (ja, 'ja', row) if ja else (row['en'], 'en', row)
+
+
+def reform_note(surface, lemma):
+    """1990年の綴りの改革の注: ('new', 新しい綴り) か ('old', 従来の綴り)。改革で変わらない語は None。
+    見出しの新旧が î・û の記号だけの違いなら、活用形にも同じ規則で (connaît → connait)"""
+    new_to_old, old_to_new = dictionary.reform_spellings()
+    word, lemma = surface.lower(), (lemma or surface).lower()
+    if word in old_to_new:
+        return 'new', old_to_new[word]
+    if word in new_to_old:
+        return 'old', new_to_old[word]
+    plain = lambda w: w.replace('î', 'i').replace('û', 'u')
+    if lemma in old_to_new and plain(lemma) == old_to_new[lemma] and plain(word) != word:
+        return 'new', plain(word)                     # connaît → connait (connaître → connaitre)
+    if lemma in new_to_old and plain(new_to_old[lemma]) == lemma:
+        restored = _restore_circumflex(word, new_to_old[lemma])   # connait → connaît
+        if restored != word:
+            return 'old', restored
+    return None
+
+
+def _restore_circumflex(word, old_lemma):
+    """新しい綴りの語形に、従来の綴りの見出しの記号を戻す (connait + connaître → connaît)。語幹の同じ位置の i・u だけ"""
+    out = list(word)
+    for k, c in enumerate(old_lemma):
+        if c in 'îû' and k < len(out) and out[k] == {'î': 'i', 'û': 'u'}[c]:
+            out[k] = c
+    return ''.join(out)
 
 
 def adverbial(ja):

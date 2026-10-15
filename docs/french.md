@@ -77,6 +77,25 @@ python3 tools/generate.py --from=fr "Je le lui ai donné hier."      # 入口か
   大過去、単純未来。受動は être + 過去分詞（par + 動作主）。否定 ne … pas。存在の文は il y a + 不定冠詞。
 * 入口 (--from=fr) から: 冠詞の定・不定を枠に渡し、元の前置詞（à l'école）は元の言語に戻すときそのまま使う。
 
+## 1990年の綴りの改革
+
+1990年の綴りの改革（rectifications orthographiques）で綴りが変わった語は、語ごとの詳細にもう一方の綴りを出します:
+
+```
+./dragoman.py fr -e "Le coût est élevé."
+   0  coût   (coût (le)) 代価,価格 [Nom.sg.m]
+            1990年の新しい綴りでは cout
+./dragoman.py fr -e "Il connait cet événement."
+   … connait   1990年の新しい綴り (従来の綴りは connaît)
+   … événement 1990年の新しい綴りでは évènement
+```
+
+* 対応は辞書の語義「post-1990 spelling of coût」から（292 語: î・û の記号を省く coût → cout・boîte → boite、é → è の événement →
+  évènement …）。見出しの新旧が î・û の記号だけの違いなら活用形にも同じ規則で（connaît → connait、plaît → plait）。
+  記号で別の語と区別する語（dû・sûr・mûr）は変わらないので出ない。
+* 新しい綴りで書いた語は従来の綴りの語義で訳す（cout → 代価,価格）。文の生成は従来の綴り（plaît）。
+* 連結符の改革（week-end → weekend、vingt et un → vingt-et-un）・二重子音の簡略化（ruisselle → ruissèle）は辞書の語義にある語だけ。
+
 ## 準備
 
 ```

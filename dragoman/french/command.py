@@ -23,6 +23,9 @@ def explain(word):
         out.append(item.attrib('form'))
     if item.attrib('clitic'):
         out.append('接語の代名詞 (動詞の前)')
+    if item.attrib('reform'):   # 1990年の綴りの改革 (rectifications orthographiques)
+        kind, other = item.attrib('reform')
+        out.append('1990年の新しい綴りでは %s' % other if kind == 'new' else '1990年の新しい綴り (従来の綴りは %s)' % other)
     return out
 
 

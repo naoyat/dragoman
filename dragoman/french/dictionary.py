@@ -5,6 +5,7 @@
 #
 import functools
 import os
+import re
 import sqlite3
 
 from dragoman.core import paths
@@ -49,6 +50,24 @@ def gender(noun):
     row = db.execute("SELECT gender FROM lemmas WHERE key = ? AND pos = 'noun' AND gender IN ('m', 'f') ORDER BY rowid "
                      "LIMIT 1", (noun.lower(),)).fetchone()
     return row[0] if row else None
+
+
+REFORM = re.compile(r'post-1990 spelling of ([^\s,;]+)')
+
+
+@functools.lru_cache(maxsize=1)
+def reform_spellings():
+    """1990年の綴りの改革: (新しい綴り → 従来の綴り, 従来の綴り → 新しい綴り)。辞書の語義「post-1990 spelling of coût」から"""
+    db = _connect()
+    new_to_old, old_to_new = {}, {}
+    if db is None:
+        return new_to_old, old_to_new
+    for key, en in db.execute("SELECT key, en FROM lemmas WHERE en LIKE '%post-1990 spelling of%'"):
+        m = REFORM.search(en)
+        if m:
+            new_to_old.setdefault(key, m.group(1).lower())
+            old_to_new.setdefault(m.group(1).lower(), key)
+    return new_to_old, old_to_new
 
 
 def valency(lemma):
