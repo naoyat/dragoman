@@ -379,6 +379,8 @@ def _modal(clause, gap, subordinate):
     if modal is None:
         return None
     inner = clause.infinitives[0]
+    if inner.role('subject') and modal not in ('lassen',) and clause.verb.lemma != 'oportet':
+        return None   # 主語のある補文は dass 節 (Ich will, dass du kommst)
     person_np = (inner.role('subject') or [None])[0] if modal == 'lassen' else None
     inner_words = realize(dataclasses.replace(inner, mood='indicative', args=[(r, np) for r, np in inner.args
                                                                              if r != 'subject']),
@@ -408,6 +410,16 @@ def realize(clause, gap=None, subordinate=False, infinitive=False):
     modal = _modal(clause, gap, subordinate)
     if modal is not None:
         return modal
+    complements = [inner for inner in clause.infinitives if inner.infinitive_kind in ('saying', 'command') and
+                   inner.role('subject')]
+    from .frame import reflexive_subject
+    if complements:   # 補文は dass 節 (Ich weiß, dass du kommst。動詞は最後)
+        main = realize(dataclasses.replace(clause, infinitives=[i for i in clause.infinitives if i not in complements]),
+                       gap, subordinate)
+        for inner in complements:
+            main += [',', 'dass'] + realize(dataclasses.replace(reflexive_subject(inner, clause), mood='indicative', infinitive_kind=''),
+                                           subordinate=True)
+        return main
     person, number = _person(clause)
     subject = (clause.role('subject') or [None])[0]
     head_words = []

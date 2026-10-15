@@ -466,6 +466,8 @@ def _modal(clause, gap, antecedent, subjunctive):
     if modal is None:
         return None
     inner = clause.infinitives[0]
+    if inner.role('subject') and modal not in ('faire', 'laisser', 'falloir'):
+        return None   # 主語のある補文は que 節 (Je veux que tu viennes)
     causative = modal in ('faire', 'laisser')
     person_np = (inner.role('subject') or [None])[0] if causative else None
     inner_words = realize(dataclasses.replace(inner, mood='indicative', args=[(r, np) for r, np in inner.args
@@ -494,6 +496,17 @@ def realize(clause, gap=None, antecedent=None, subjunctive=False, infinitive=Fal
     modal = _modal(clause, gap, antecedent, subjunctive)
     if modal is not None:
         return modal
+    complements = [inner for inner in clause.infinitives if inner.infinitive_kind in ('saying', 'command') and
+                   inner.role('subject')]
+    from .frame import reflexive_subject
+    if complements:   # 補文は que 節 (Je sais que tu viens、Je veux que tu viennes。望む・命じる動詞なら接続法)
+        main = realize(dataclasses.replace(clause, infinitives=[i for i in clause.infinitives if i not in complements]),
+                       gap, antecedent, subjunctive, infinitive)
+        for inner in complements:
+            sub = realize(dataclasses.replace(reflexive_subject(inner, clause), mood='indicative', infinitive_kind=''),
+                          subjunctive=inner.infinitive_kind == 'command')
+            main += ["qu'" + sub[0] if sub and _vowel(sub[0]) else 'que'] + (sub[1:] if sub and _vowel(sub[0]) else sub)
+        return main
     if clause.experiencer:   # 入れ替えた manquer à を元に (Ego tē dēsīderō の枠 → Tu me manques)
         subject, obj = (clause.role('subject') or [None])[0], (clause.role('object') or [None])[0]
         if subject is not None and obj is not None:

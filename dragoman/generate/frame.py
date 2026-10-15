@@ -262,6 +262,8 @@ class Clause:
     adverbs: list = field(default_factory=list)    # Lex
     infinitives: list = field(default_factory=list)  # 不定詞句 (Clause。mood='infinitive')
     infinitive_kind: str = ''   # 不定詞句なら、支配する動詞の種類 (saying / perception / command / complement)
+    source_mood: str = ''    # 補文にした節の元の法 (que + 接続法 / 直説法)
+    complementizer: bool = False   # 補文の接続詞 (フランス語の que・ドイツ語の dass) で始まる節。frames で主節の不定詞の節に
     question: bool = False   # 直接の疑問文 (文が ? で終わる: Quis venit?・Est-ce que tu viens ?)。文末の印は punctuate で
     questions: list = field(default_factory=list)  # 間接疑問 (Clause。question_word に疑問詞)
     question_word: str = ''   # 間接疑問の節なら疑問詞 (quid, cūr …。副詞の疑問詞は adverbs から除いてある)
@@ -533,6 +535,8 @@ def clause_of(predicate, lang=None):
     if _lang == 'he' and isinstance(predicate.conjunction, Word) and \
             unicodedata.normalize('NFC', predicate.conjunction.surface) in HEBREW_VAV:
         _add_connective(clause, 'et')   # 物語の接続詞 (וַיֹּאמֶר の וַ)
+    elif predicate.conjunction is not None and predicate.conjunction.surface.lower() in COMPLEMENTIZERS.get(_lang, ()):
+        clause.complementizer = True   # Je sais que tu viens の que (ラテン語の -que「そして」と読まない)
     elif predicate.conjunction is not None and is_negation(predicate.conjunction, predicate.language):
         clause.negated = True
     elif predicate.conjunction is not None and conn.is_connective(conn.normalize(predicate.conjunction.surface, _lang)):
@@ -1115,6 +1119,42 @@ def punctuate(text, clauses, lang):
     return mark(first) + (newline + mark(rest) if rest.strip() and lang not in ('ja', 'kobun') else newline + rest)
 
 
+# 補文の接続詞 (que 節・dass 節は主節の補文: 文の枠ではラテン語の対格不定詞と同じ不定詞の節)
+COMPLEMENTIZERS = {'fr': ('que', "qu'"), 'de': ('dass', 'daß')}
+# 補文を「望む・命じる」として取る動詞 (Je veux que tu viennes → Volō tē venīre・I want you to come)。ほかは「言う・思う」
+COMMAND_VERBS = {'vouloir', 'souhaiter', 'désirer', 'exiger', 'demander', 'ordonner', 'préférer', 'permettre',
+                 'interdire', 'empêcher', 'wollen', 'wünschen', 'verlangen', 'fordern', 'befehlen', 'bitten'}
+
+
+def reflexive_subject(inner, main):
+    """補文の主語の再帰代名詞 sē は主節の主語を指す (Puella sē … dīcit → elle・sie): 主節の主語の性・数の is に"""
+    subjects = inner.role('subject')
+    if not subjects or subjects[0].head is None or subjects[0].head.lemma != 'sē':
+        return inner
+    ref = (main.role('subject') or [None])[0]
+    gender = (ref.gender if ref is not None else '') or ''
+    if ref is not None and ref.head is not None and ref.head.pos != 'pronoun' and not gender:
+        gender = 'm'
+    pronoun = NP(Lex('is', 'pronoun', desc='人称代名詞'), number=(ref.number if ref is not None else '') or 'sg',
+                 gender=gender, case='Nom', animate=True)
+    return dataclasses.replace(inner, args=[(r, pronoun if np is subjects[0] else np) for r, np in inner.args])
+
+
+def _attach_complements(clauses):
+    """que 節・dass 節を直前の主節の補文 (不定詞の節) に: 望む・命じる動詞なら command、ほかは saying"""
+    out = []
+    for clause in clauses:
+        if clause.complementizer and out and not out[-1].copula:
+            main = out[-1]
+            inner = dataclasses.replace(clause, mood='infinitive', complementizer=False, subordinator='',
+                                        infinitive_kind='command' if main.verb.lemma in COMMAND_VERBS else 'saying',
+                                        source_mood=clause.mood)
+            main.infinitives.append(inner)
+            continue
+        out.append(clause)
+    return out
+
+
 def frames(analysis):
     """SentenceAnalysis → Clause の列"""
     _sentence_words[:] = analysis.words
@@ -1142,6 +1182,7 @@ def frames(analysis):
                 clauses[-1].mood == 'indicative':
             _converb_clause(clauses[-1], clause)
         clauses.append(clause)
+    clauses = _attach_complements(clauses)
     _add_unknown_words(analysis, clauses)
     if clauses and (analysis.text.rstrip().endswith(('?', '？', '؟', ';')) and _lang == 'grc' or
                     analysis.text.rstrip().endswith(('?', '？', '؟'))):

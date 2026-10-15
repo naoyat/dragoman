@@ -159,7 +159,7 @@ def predicate(clause, final=True):
         text = gloss(np.head) if adjective else noun_phrase(np)
         return copula_predicate(text, adjective, tense, clause.negated).split(',')[0]
     verb = collocation(clause, gloss(clause.verb))
-    if verb.endswith(('ない', 'たい')):   # 形容詞の活用の補助 (出発しなければならない・読みたい → ならなかった・読みたかった)
+    if verb.endswith(('ない', 'たい', 'しい')):   # 〜てほしい も   # 形容詞の活用の補助 (出発しなければならない・読みたい → ならなかった・読みたかった)
         return copula_predicate(verb, True, tense, clause.negated).split(',')[0]
     if not re.search('[うくぐすつぬぶむる]$', verb):
         verb += 'する' if not verb.endswith('する') else ''
@@ -181,6 +181,27 @@ def _negative_pronoun(np):
 # faciō + 不定詞「〜させる」)
 JA_MODALS = {'possum': 'ことができる', 'volō': 'たい', 'dēbeō': 'なければならない', 'oportet': 'なければならない',
              'faciō': 'させる', 'sinō': 'させておく'}
+
+
+WANT_VERBS = {'volō', 'cupiō', 'optō', 'vouloir', 'souhaiter', 'désirer', 'wollen', 'wünschen'}
+
+
+def _fold_want(clause):
+    """望む + 主語のある補文 (Je veux que tu viennes・Volō tē venīre) → 「君に来てほしい」"""
+    import dataclasses
+    from .frame import Lex
+    from dragoman.core.japanese import japanese_form
+    if clause.verb is None or clause.verb.lemma not in WANT_VERBS or len(clause.infinitives) != 1:
+        return clause
+    inner = clause.infinitives[0]
+    subjects = inner.role('subject')
+    if inner.infinitive_kind not in ('command', 'saying', 'complement') or not subjects or inner.copula:
+        return clause
+    ja = japanese_form(gloss(inner.verb).split(',')[0], False, 'te', 'present', inner.negated) + 'ほしい'
+    args = [(r, np) for r, np in clause.args] + [('recipient', subjects[0])] + \
+        [(r, np) for r, np in inner.args if np is not subjects[0]]
+    return dataclasses.replace(clause, verb=Lex(ja, 'verb', ja), infinitives=[], args=args,
+                               adverbs=clause.adverbs + inner.adverbs)
 
 
 def _fold_modal(clause):
@@ -214,7 +235,7 @@ def clause_text(clause, final=True, attributive=False):
     import dataclasses
     from .frame import dative_as_object, prohibition
     clause = dative_as_object(prohibition(clause), 'ja')   # miserēre nōbīs → 私たちを憐れめ、Nōlī timēre → 恐れるな
-    clause = _fold_modal(clause)
+    clause = _fold_want(_fold_modal(clause))
     if any(_negative_pronoun(np) for _, np in clause.args):
         clause = dataclasses.replace(clause, negated=True)
     parts = [_participial(p) for p in clause.adjuncts if p.kind == 'absolute']   # 独立奪格は節の頭 (王が死んで、…)
@@ -281,6 +302,8 @@ def infinitive(inner, governor):
         return text + 'と'
     if governor.verb.lemma == 'possum':
         return text + 'ことが'
+    if kind == 'command':   # 命じる・頼む (Il demande que tu viennes「君が来るように頼む」)
+        return text + 'ように'
     return text + 'ことを'
 
 

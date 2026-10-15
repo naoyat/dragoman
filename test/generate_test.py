@@ -994,5 +994,31 @@ class ModalTestCase(unittest.TestCase):
             self.assertEqual(self.generate('Il faut que je parte.', german), 'Ich muss abfahren.')
 
 
+class ComplementTestCase(unittest.TestCase):
+    """que 節・dass 節は主節の補文 (ラテン語の対格不定詞と同じ不定詞の節): 言う・思う → saying、望む・命じる → command"""
+
+    def generate(self, text, module):
+        from dragoman.french import analyzer as fr, morphology
+        from dragoman.generate import frame
+        if not morphology.available():
+            self.skipTest('フランス語のモデルか辞書が無い')
+        analysis, = fr.analyze_text(text)
+        return module.sentence(frame.frames(analysis))
+
+    def test_que_clauses(self):
+        from dragoman.generate import english, japanese, french, latin
+        self.assertEqual(self.generate('Je sais que tu viens.', english), 'I know that you come.')
+        self.assertEqual(self.generate('Je veux que tu viennes.', english), 'I want you to come.')
+        self.assertEqual(self.generate('Je veux que tu viennes.', latin), 'Tē venīre volō.')
+        self.assertEqual(self.generate('Je veux que tu viennes.', japanese), '私はあなたに来てほしい。')
+        self.assertEqual(self.generate('Je sais que tu viens.', french), 'Je sais que tu viens.')
+        self.assertEqual(self.generate('Je veux que tu viennes.', french), 'Je veux que tu viennes.')   # 接続法
+
+    def test_latin_accusative_infinitive(self):
+        from dragoman.generate import frame, french
+        analysis, = analyzer.analyze_text('Puella sē rosās amāre dīcit.')
+        self.assertEqual(french.sentence(frame.frames(analysis)), "La fille dit qu'elle aime les roses.")   # sē → elle
+
+
 if __name__ == '__main__':
     unittest.main()
