@@ -540,6 +540,35 @@ def clitic_cases(words):
             word.items = [type(item)(item.item)]
 
 
+PERSONAL_CLITICS = ('me', "m'", 'te', "t'", 'se', "s'", 'nous', 'vous')
+
+
+def clitic_valency(words):
+    """人を表す接語 (me・te・se・nous・vous) の格を動詞から: 間接他動詞・二重目的語の動詞なら与格 (Il me parle「私に話す」、
+    Il me donne le livre「私に本を与える」)、ほかは対格 (Il me voit「私を見る」)。2つ並ぶときは clitic_cases で決めてある"""
+    for i, word in enumerate(words):
+        item = _item(word)
+        if item is None or item.pos != 'verb':
+            continue
+        lemma = item.attrib('lemma')
+        run = []
+        k = i - 1
+        while k >= 0 and _item(words[k]) is not None and (_item(words[k]).attrib('clitic') or
+                                                           _item(words[k]).attrib('base') == 'ne'):
+            if _item(words[k]).attrib('clitic'):
+                run.append(words[k])
+            k -= 1
+        personal = [w for w in run if _item(w).attrib('base') in PERSONAL_CLITICS]
+        if len(run) != 1 or not personal:
+            continue
+        clitic = _item(personal[0])
+        reflexive = clitic.attrib('base') in ('se', "s'")
+        dative = lemma in morphology.INDIRECT_VERBS or lemma in morphology.DITRANSITIVE_VERBS and not reflexive
+        case = 'Dat' if dative else 'Acc'
+        cases = [c for c in clitic._ if c[0] == case] or [(case,) + c[1:] for c in clitic._[:1]]
+        personal[0].items = [type(clitic)(dict(clitic.item, _=cases))]
+
+
 def negation(words):
     """ne … pas: ne を否定の副詞に、pas は落とす (jamais・plus・rien は意味を残す)。ne の無い pas も否定"""
     has_ne = any(_item(w) is not None and _item(w).attrib('base') == 'ne' for w in words)
@@ -700,6 +729,7 @@ def lookup_all(surfaces):
     subject_persons(words)
     words = negation(words)
     words = merge_verbs(words)
+    clitic_valency(words)   # 動詞の組をまとめてから (Il m'a parlé は parler で決める)
     existential = existential_il_y_a(words)
     words = [w for w in words if _pos(w) != 'particle']
     words = infinitive_prepositions(words)

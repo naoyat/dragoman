@@ -79,6 +79,19 @@ NEGATIONS = {'pas': '〜ない', 'jamais': '決して〜ない', 'plus': 'もう
 MODALS = {'pouvoir': 'ことができる', 'vouloir': 'たい', 'devoir': 'なければならない', 'savoir': 'ことができる',
           'falloir': 'なければならない', 'aimer': 'のが好きだ', 'aller': 'つもりだ', 'venir': 'に来る', 'faire': 'させる',
           'laisser': 'させておく'}
+# 人を表す目的語の接語 (me・te・se・nous・vous) の格を決める動詞の表。le・la・les は対格、lui・leur は与格で決まる
+# 間接他動詞 (à + 人「〜に」): Il me parle「私に話す」
+INDIRECT_VERBS = {'parler', 'téléphoner', 'répondre', 'ressembler', 'plaire', 'déplaire', 'obéir', 'désobéir',
+                  'sourire', 'mentir', 'succéder', 'nuire', 'convenir', 'appartenir', 'manquer', 'suffire', 'échapper',
+                  'pardonner', 'résister', 'arriver', 'écrire', 'faire confiance', 'survivre', 'plaire', 'parvenir',
+                  'importer', 'sembler', 'paraître', 'falloir', 'rester', 'revenir', 'tenir', 'répliquer'}
+# 二重目的語の動詞 (物を対格・人を与格): Il me donne le livre「私に本を与える」。目的語が無くても人は与格 (Il me montre)
+DITRANSITIVE_VERBS = {'donner', 'dire', 'envoyer', 'montrer', 'prêter', 'offrir', 'raconter', 'expliquer', 'demander',
+                      'apprendre', 'enseigner', 'promettre', 'permettre', 'conseiller', 'proposer', 'rendre', 'apporter',
+                      'présenter', 'vendre', 'annoncer', 'interdire', 'souhaiter', 'confier', 'servir', 'lire', 'poser',
+                      'adresser', 'accorder', 'remettre', 'transmettre', 'indiquer', 'décrire', 'reprocher', 'avouer',
+                      'cacher', 'emprunter', 'voler', 'acheter', 'payer', 'ordonner', 'défendre', 'signaler', 'rappeler',
+                      'garder', 'laisser', 'faire', 'écrire'}
 # 複合過去で être を取る動詞 (移動・変化。代名動詞も être)
 ETRE_VERBS = {'aller', 'venir', 'arriver', 'partir', 'entrer', 'sortir', 'naître', 'mourir', 'monter', 'descendre',
               'tomber', 'rester', 'retourner', 'devenir', 'revenir', 'rentrer', 'passer', 'parvenir', 'survenir',

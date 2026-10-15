@@ -47,6 +47,13 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Ils chantent.'), '{彼ら,それら}が / 歌う')                      # spaCy の半過去を直す
         self.assertEqual(self.ja('Je les vois.'), '私が / {彼ら,それら}を / 見る')
 
+    def test_clitic_valency(self):
+        # 人を表す接語 (me・te・nous・vous) の格は動詞から: 間接他動詞・二重目的語の動詞は与格、ほかは対格
+        self.assertEqual(self.ja('Nous vous parlons.'), '私たちが / あなたに / 話す')
+        self.assertEqual(self.ja("Il m'a parlé."), '{彼,それ}が / 私に / 話した')            # 複合過去は本動詞で
+        self.assertEqual(self.ja('Il me donne le livre.'), '{彼,それ}が / 私に / 本を / 与える')
+        self.assertEqual(self.ja('Il me voit.'), '{彼,それ}が / 私を / 見る')
+
     def test_names(self):
         self.assertEqual(self.ja('Jean aime Marie.'), 'ジャンが / マリを / 愛する,好む')
 

@@ -27,6 +27,9 @@ python3 tools/samples.py --lang=fr              # サンプル (samples/french.t
   接語が2つ並ぶとき（me le・le lui）は le・la・les が対格、ほかが与格。3人称の代名詞は人にも物にも取れる訳
   （il「{彼,それ}が」、le「{彼,それ}を」、l'「{彼,彼女,それ}を」、lui「{彼,彼女}に」）。主語の代名詞の後ろの nous・vous は目的語、
   文頭・節の頭なら主語。動詞の人称は直前の主語の代名詞から（spaCy の読み誤りを直す）。
+  人を表す接語（me・te・se・nous・vous）の格は動詞の表から（`french/morphology.py`）: 間接他動詞（parler・répondre・plaire・obéir …。
+  Il me parle「私に話す」）と二重目的語の動詞（donner・dire・montrer・demander …。Il me montre「私に見せる」）は与格、ほか（voir・aimer …）
+  は対格。複合過去（Il m'a parlé）は本動詞で決める。
 * 冠詞（le・un・des）は名詞に掛けて訳さない。所有形容詞・指示形容詞（mon・ce・tout …）は「私の」「この」「すべての」。
   前置詞と冠詞の縮約形（au・aux・du・des）は前置詞。動詞のすぐ後ろの du・des は部分冠詞（manger du pain「パンを食べる」）。
   de を取る動詞（parler de「〜について」、venir de「〜から」…）の後ろは前置詞のまま。
@@ -94,5 +97,7 @@ il y a + 名詞は訳では「〜がある」の主語なので、主語とし�
 
 * pour・sans + 不定詞「〜するために」「〜せずに」を不定詞の節の接続詞に（今は行き場の無い語句になる）。
 * 倒置の主語（a expliqué Véronique、Que dit l'Eglise ?）、疑問文の est-ce que。
-* 代名動詞（se lever「起きる」、s'appeler「〜という名前である」）を見出しに。
+* 代名動詞（se lever「起きる」、s'appeler「〜という名前である」）を見出しに（今は Il se lève「自分を上げる」）。
+* 接語の格の動詞の表は手作り。Wiktionary の語義の印（transitive・intransitive と前置詞 à）から作れると広がる
+  （辞書を作り直すので抽出データの再ダウンロードが要る）。
 * 出口: 否定の文の部分冠詞（ne mange pas de pain）、主語の倒置・疑問文、接続法（bien que・pour que の後ろ）。
