@@ -168,13 +168,13 @@ class AnalyzerTestCase(unittest.TestCase):
         # 動詞-主語-目的語。אֵת の後ろは対格、אֱלֹהִים は形が複数でも単数の動詞の主語
         pred = self.analyze('בְּרֵאשִׁ֖ית בָּרָ֣א אֱלֹהִ֑ים אֵ֥ת הַשָּׁמַ֖יִם וְאֵ֥ת הָאָֽרֶץ׃')[0].clauses[0].predicate
         tr = pred.translate()[0]
-        self.assertTrue(tr.startswith('神'), tr)
+        self.assertTrue(tr.startswith('{神'), tr)
         self.assertIn('を / 創造した', tr)
 
     def test_jussive_and_wayyiqtol(self):
         a = self.analyze('וַיֹּ֥אמֶר אֱלֹהִ֖ים יְהִ֣י א֑וֹר וַֽיְהִי־אֽוֹר׃')[0]
         trs = [c.predicate.translate()[0] for c in a.clauses]
-        self.assertTrue(trs[0].startswith('そして / 神'), trs)  # 2つの動詞の間の1語 (主語) が落ちない
+        self.assertTrue(trs[0].startswith('そして / {神'), trs)  # 2つの動詞の間の1語 (主語) が落ちない
         self.assertEqual(trs[1], 'ひかりが / あれ')
         self.assertEqual(trs[2], 'そして / ひかりが / あった')
 

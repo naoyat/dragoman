@@ -6,9 +6,9 @@
 
 ```
 ./dragoman.py fi -e "Minulla on kaksi kissaa."
-  →  私には / {二}猫が / いる
+  →  私には / 二つの猫が / いる
 ./dragoman.py fi -e "Olen lukenut tämän kirjan."
-  →  私が / {この}本を / 読んだ
+  →  私が / この本を / 読んだ
 ./dragoman.py fi -e "Voin puhua suomea."
   →  私が / フィンランド語を / 話すことができる
 python3 tools/samples.py --lang=fi              # サンプル (samples/finnish.txt) の訳

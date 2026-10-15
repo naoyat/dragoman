@@ -106,6 +106,9 @@ def _finite_forms(text):
     return [(lemma, tags) for lemma, tags in morphology.verb_forms(text) if tags & set(FINITE) or 'imperative' in tags]
 
 
+SUBJECTS = {'je', "j'", 'tu', 'il', 'elle', 'on', 'nous', 'vous', 'ils', 'elles'}
+
+
 def corrections(doc):
     """語の番号 → 直した品詞 ('VERB' / 'CLITIC')"""
     fixed = {}
@@ -118,7 +121,10 @@ def corrections(doc):
             continue
         if not _finite_forms(lower):
             continue
-        if t.pos_ in ('NOUN', 'PROPN') and t.i > 0 and words[t.i - 1].pos_ in ('DET', 'ADJ', 'ADP', 'NUM'):
+        clitic_det = t.i > 1 and words[t.i - 1].text.lower() in ('le', 'la', "l'", 'les') and \
+            words[t.i - 2].text.lower() in SUBJECTS | {'ne', "n'"}   # 主語の代名詞の後ろの le・la・les は接語 (Je les vois)
+        if t.pos_ in ('NOUN', 'PROPN') and t.i > 0 and words[t.i - 1].pos_ in ('DET', 'ADJ', 'ADP', 'NUM') and \
+                not clitic_det:
             continue   # 冠詞・形容詞・前置詞の後ろの名詞はそのまま (la crise)
         if t.i == 0 and any('imperative' in tags for _, tags in _finite_forms(lower)) and len(words) > 1 and \
                 words[1].pos_ in ('DET', 'PRON', 'ADP'):
@@ -126,7 +132,8 @@ def corrections(doc):
             continue
         k = t.i - 1
         while k >= 0 and words[k].text.lower() in morphology.CLITICS | {'ne', "n'"} and \
-                (words[k].pos_ != 'DET' or words[k].text.lower() in ('lui', 'leur', 'y', 'en', 'me', 'te', 'se')):
+                (words[k].pos_ != 'DET' or words[k].text.lower() in ('lui', 'leur', 'y', 'en', 'me', 'te', 'se') or
+                 clitic_det):
             k -= 1
         prev = words[k] if k >= 0 else None
         if prev is None:

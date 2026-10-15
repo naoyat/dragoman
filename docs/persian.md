@@ -14,7 +14,7 @@ python3 dragoman.py --lang=fa samples/persian.txt          # 解析の詳細 (-w
 
 ```
 دختر کوچک گل‌های زیبا را دید.   (doxtar-e kučak golhâ-ye zibâ râ did.)
-  →  {小さい}娘,少女が / {美しい}花を / 見た
+  →  小さい{娘,少女}が / 美しい花を / 見た
 ما فردا به تهران خواهیم رفت.   (mâ fardâ be tehrân xâhim raft.)
   →  明日 / 私たちが / テヘラン[に,へ] / 行くだろう
 ```

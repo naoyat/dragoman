@@ -29,7 +29,7 @@ Agricola in silvā magnam casam aedificat .
       casam
         magnam
 
-  →  農夫が / 森[で,の中で,の上で] / {大きな}あばら屋を / 建てる
+  →  農夫が / 森[で,の中で,の上で] / 大きなあばら屋を / 建てる
 ```
 
 

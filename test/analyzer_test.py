@@ -117,14 +117,14 @@ class ExistentialTestCase(unittest.TestCase):
         return analyze(text).clauses[0].predicate.translate()[0]
 
     def test_dative_of_possession(self):
-        self.assertEqual(self.translate('Mihi est liber.'), '私には / 本,書物が / ある')
+        self.assertEqual(self.translate('Mihi est liber.'), '私には / {本,書物}が / ある')
 
     def test_negated(self):
         self.assertTrue(self.translate('Mihi nōn est liber.').endswith('が / ない'))
 
     def test_number_agreement(self):
         # templa (中性複数の主格・対格) は単数の動詞 aedificat の主語にならない → 対格「神殿を」
-        self.assertEqual(self.translate('Templa aedificat.'), '彼,彼女,それが / 神殿を / 建てる')
+        self.assertEqual(self.translate('Templa aedificat.'), '{彼,彼女,それ}が / 神殿を / 建てる')
         self.assertEqual(self.translate('Templa aedificant.'), '神殿が / 建てる')
 
     def test_predicate_noun_is_not_existential(self):
@@ -247,7 +247,7 @@ class ParticiplePhraseTestCase(unittest.TestCase):
         self.assertFalse(p.adverbial)
         self.assertEqual(p.head.surface, 'hostem')
         self.assertIn(p, p.head.modifiers)
-        self.assertIn('{逃げている}敵を', a.clauses[0].predicate.translate()[0])
+        self.assertIn('逃げている敵を', a.clauses[0].predicate.translate()[0])
 
     def test_parenthetical(self):
         _, p = self.phrase('Rēgīna, verbīs nūntiī commōta, lacrimāvit.')
@@ -301,7 +301,7 @@ class InfinitiveClauseTestCase(unittest.TestCase):
         _, inf = self.infinitive('Puer librum legere cupit.')
         self.assertEqual(inf.kind, 'complement')
         self.assertNotIn('Nom', inf.predicate.case_slot)
-        self.assertEqual(inf.translate()[0], '{本,書物を 読む}ことを')
+        self.assertEqual(inf.translate()[0], '{{本,書物}を 読む}ことを')
 
     def test_not_across_conjunction(self):
         # 接続詞の向こうの動詞は支配する動詞にしない

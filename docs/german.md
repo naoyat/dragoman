@@ -6,11 +6,11 @@
 
 ```
 ./dragoman.py de -e "Ich habe meiner Mutter einen Brief geschrieben."
-  →  私が / {私の}母に / 手紙を / 書いた
+  →  私が / 私の母に / 手紙を / 書いた
 ./dragoman.py de -e "Das Haus, das ich gekauft habe, ist sehr schön."
   →  とても / {私が 買った}家は / 美しい
 ./dragoman.py de -e "Er ruft seine Mutter an."
-  →  彼が / {彼の}母を / 電話する
+  →  彼が / 彼の母を / 電話する
 python3 tools/samples.py --lang=de              # サンプル (samples/german.txt) の訳
 ./dragoman.py de samples/german.txt                # 解析の詳細 (-w で語ごとの辞書引きを省く)
 ```

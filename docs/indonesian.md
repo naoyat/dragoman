@@ -7,7 +7,7 @@
 
 ```
 ./dragoman.py id -e "Anak itu membaca buku di sekolah."
-  →  {その}子供が / {学校}で / 本を / 読む
+  →  その子供が / 学校で / 本を / 読む
 ./dragoman.py id samples/indonesian.txt          # -w で語ごとの辞書引きを省く
 ./dragoman.py ms -e "Saya pergi ke sekolah kerana hendak belajar bahasa Inggeris."
 python3 tools/samples.py --lang=id

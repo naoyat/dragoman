@@ -36,15 +36,15 @@ class AnalyzerTestCase(unittest.TestCase):
     def test_copula_and_adjective(self):
         self.assertEqual(self.ja('저는 학생입니다.'), '私は / 学生である')
         self.assertEqual(self.ja('이것은 책이 아니다.'), 'これは / 本ではない')
-        self.assertEqual(self.ja('그 사람은 키가 크다.'), '{その}人は / 背が / 高い')     # 二重主語
+        self.assertEqual(self.ja('그 사람은 키가 크다.'), 'その人は / 背が / 高い')     # 二重主語
         self.assertEqual(self.ja('나는 선생님이 되었다.'), '私は / 先生に / なった')         # 補格の 되다
 
     def test_auxiliaries(self):
         self.assertEqual(self.ja('그는 한국어를 공부하고 있다.'), '彼は / 韓国語を / 勉強している')
-        self.assertEqual(self.ja('저는 한국 음식을 먹고 싶어요.'), '私は / {韓国の}食べ物を / 食べたい')
+        self.assertEqual(self.ja('저는 한국 음식을 먹고 싶어요.'), '私は / 韓国の食べ物を / 食べたい')
         self.assertEqual(self.ja('나는 한국어를 읽을 수 있다.'), '私は / 韓国語を / 読むことができる')
         self.assertEqual(self.ja('비가 오지 않았다.'), '雨が / 降らなかった')
-        self.assertEqual(self.ja('나는 그 영화를 못 봤다.'), '私は / {その}映画を / 見ることができなかった')
+        self.assertEqual(self.ja('나는 그 영화를 못 봤다.'), '私は / その映画を / 見ることができなかった')
 
     def test_attributive_and_coordination(self):
         self.assertEqual(self.ja('나는 어머니가 만든 음식을 먹었다.'), '私は / {母が 作った}食べ物を / 食べた')

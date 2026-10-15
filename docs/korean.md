@@ -11,7 +11,7 @@
 ./dragoman.py ko -e "나는 어머니가 만든 음식을 먹었다."
   →  私は / {母が 作った}食べ物を / 食べた
 ./dragoman.py ko -e "그 사람은 키가 크다."
-  →  {その}人は / 背が / 高い
+  →  その人は / 背が / 高い
 python3 tools/samples.py --lang=ko              # サンプル (samples/korean.txt) の訳
 ./dragoman.py ko samples/korean.txt                # 解析の詳細 (-w で語ごとの辞書引きを省く)
 ```

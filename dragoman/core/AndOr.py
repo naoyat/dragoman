@@ -196,3 +196,24 @@ def _has_top_level_comma(text):
 def _bracket(text):
     """読点 (訳語の候補の区切り) を括弧の外に含む訳を {…} で括る"""
     return '{%s}' % text if _has_top_level_comma(text) else text
+
+
+def needs_braces(text):
+    """訳を {…} で括るか: 括弧の外に訳語の候補の読点 (少女,娘)・語の切れ目の空白 (母が 作った)・& がある。
+    丸括弧・角括弧の中 (すべての(人,物)・学校[に,で]) と、全体がすでに括られたものは数えない"""
+    if not text:
+        return False
+    depth = 0
+    for k, c in enumerate(text):
+        if c in '{([':
+            depth += 1
+        elif c in '})]':
+            depth -= 1
+        elif depth == 0 and c in ', &' and not (c == ' ' and text[k + 1:k + 2] == '('):
+            return True   # 注記の括弧の前の空白 (主 (ヤハウェ)) は語の切れ目でない
+    return False
+
+
+def braced(text):
+    """必要なら {…} で括る (訳語の候補・複数の語の訳の後ろに助詞を付けるとき: {彼,それ}を、歌う{少女,娘}は)"""
+    return '{%s}' % text if needs_braces(text) else text

@@ -24,21 +24,21 @@ class AnalyzerTestCase(unittest.TestCase):
 
     def test_roles_and_articles(self):
         self.assertEqual(self.ja("Le garçon lit un livre à l'école."), '少年が / 学校[に,で] / 本を / 読む')   # lit を動詞に
-        self.assertEqual(self.ja('Le livre du professeur est sur la table.'), '机の上に / {先生の}本が / ある')
+        self.assertEqual(self.ja('Le livre du professeur est sur la table.'), '机の上に / 先生の本が / ある')
         self.assertEqual(self.ja('Je veux manger du pain.'), '私が / パンを / 食べたい')            # 部分冠詞
         self.assertEqual(self.ja('Nous parlons du film.'), '私たちが / 映画について / 話す')    # parler de
 
     def test_clitics_and_verb_groups(self):
-        self.assertEqual(self.ja('Je le lui ai donné hier.'), '私が / 彼に / 彼を / 昨日 / 与えた')
+        self.assertEqual(self.ja('Je le lui ai donné hier.'), '私が / {彼,彼女}に / {彼,それ}を / 昨日 / 与えた')
         self.assertEqual(self.ja('Elle est allée au marché avec son ami.'),
-                         '彼女が / 市場[に,で] / {彼の}友達[と,で] / 行った')                # être + 移動の動詞
+                         '彼女が / 市場[に,で] / 彼の友達[と,で] / 行った')                # être + 移動の動詞
         self.assertEqual(self.ja('Le livre a été écrit par le professeur.'), '本が / 先生によって / 書かれた')
         self.assertEqual(self.ja('Nous voulons lire un livre.'), '私たちが / 本を / 読みたい')
 
     def test_negation_existential_clauses(self):
         self.assertEqual(self.ja('Il ne mange pas de pain.'), '彼が / パンを / 食べない')
         self.assertEqual(self.ja('Il y a un chat dans le jardin.'), '庭の中に / 猫が / いる')
-        self.assertEqual(self.ja('La fille qui chante est ma sœur.'), '{歌う}少女,娘は / {私の}姉妹である')
+        self.assertEqual(self.ja('La fille qui chante est ma sœur.'), '歌う{少女,娘}は / 私の姉妹である')
         self.assertEqual(self.ja("Je sais que tu m'aimes."), '私が / 知っている / 〜ということ / 君が / 私を / 愛する,好む')
 
     def test_names(self):

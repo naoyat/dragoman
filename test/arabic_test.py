@@ -87,12 +87,12 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.forms('كتب الطالب رسالة طويلة.')[1], 'kataba aṭ-ṭālibu risālatan ṭawīlatan.')
 
     def test_construct(self):
-        self.assertIn('{先生の}本を', self.translate('قرأ الولد كتاب المعلم.')[0])
+        self.assertIn('先生の本を', self.translate('قرأ الولد كتاب المعلم.')[0])
 
     def test_nominal_sentence(self):
         self.assertEqual(self.translate('الولد كبير.')[0].split(' / ')[-1], '大きい')
         self.assertEqual(self.translate('هذا كتاب.')[0], 'これは / 本である')
-        self.assertIn('{この}本は', self.translate('هذا الكتاب جديد.')[0])
+        self.assertIn('この本は', self.translate('هذا الكتاب جديد.')[0])
 
     def test_existential(self):
         tr = self.translate('في البيت رجل.')[0]

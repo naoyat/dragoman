@@ -22,16 +22,16 @@ class AnalyzerTestCase(unittest.TestCase):
     def test_cases_and_articles(self):
         self.assertEqual(self.ja('Der Mann liest das Buch.'), '男が / 本を / 読む')
         self.assertEqual(self.ja('Das Buch des Lehrers liegt auf dem Tisch.'),
-                         '{先生の}本が / 机の上で / 横たわっている,ある')
+                         '先生の本が / 机の上で / 横たわっている,ある')
 
     def test_verb_groups(self):
-        self.assertEqual(self.ja('Ich habe meiner Mutter einen Brief geschrieben.'), '私が / {私の}母に / 手紙を / 書いた')
+        self.assertEqual(self.ja('Ich habe meiner Mutter einen Brief geschrieben.'), '私が / 私の母に / 手紙を / 書いた')
         self.assertEqual(self.ja('Sie ist gestern in die Stadt gegangen.'), '彼女が / 町[へ,の中へ] / 昨日 / 行った')
         self.assertEqual(self.ja('Das Buch wurde von dem Lehrer gelesen.'), '本が / 先生によって / 読まれた')
         self.assertEqual(self.ja('Ich kann heute nicht kommen.'), '私が / 今日 / 来ることができない')
 
     def test_separable_and_existential(self):
-        self.assertEqual(self.ja('Er ruft seine Mutter an.'), '彼が / {彼の}母を / 電話する')
+        self.assertEqual(self.ja('Er ruft seine Mutter an.'), '彼が / 彼の母を / 電話する')
         self.assertEqual(self.ja('Es gibt keinen Zucker.'), '砂糖が / ない,いない')
 
     def test_clauses(self):

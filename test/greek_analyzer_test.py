@@ -82,7 +82,7 @@ class GreekAnalyzerTestCase(unittest.TestCase):
 
     def test_verb_government(self):
         # 属格・与格を取る動詞は、その動詞の助詞で (ἀκούω + 属格「〜を聞く」, μάχομαι + 与格「〜と戦う」)
-        self.assertIn('人,人間,人類,奴隷を', self.translation('ἤκουσα τοῦ ἀνθρώπου.'))
+        self.assertIn('{人,人間,人類,奴隷}を', self.translation('ἤκουσα τοῦ ἀνθρώπου.'))
         self.assertIn('と / ', self.translation('οἱ Ἀθηναῖοι τοῖς Πέρσαις ἐμάχοντο.'))
 
     def test_time_nouns(self):
@@ -91,7 +91,7 @@ class GreekAnalyzerTestCase(unittest.TestCase):
 
     def test_comparative_genitive(self):
         tr = self.translation('ὁ υἱὸς μείζων ἐστὶ τοῦ πατρός.')
-        self.assertIn('父,父親,父なる神より', tr)
+        self.assertIn('{父,父親,父なる神}より', tr)
         self.assertTrue(tr.startswith('息子は'), tr)  # 述語的位置の μείζων は補語 (息子は父より大きい)
 
     def test_predicative_position(self):

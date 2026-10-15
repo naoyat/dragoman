@@ -43,7 +43,7 @@ class AnalyzerTestCase(unittest.TestCase):
 
     def test_habitual_present(self):
         tr = self.translate('लड़का किताब पढ़ता है।')[0]
-        self.assertTrue(tr.startswith('少年'))
+        self.assertTrue(tr.startswith('{少年'))
         self.assertIn('本を', tr)
 
     def test_ergative(self):

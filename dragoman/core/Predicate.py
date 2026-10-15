@@ -4,7 +4,7 @@
 from dragoman.core.LatinObject import LatinObject
 from dragoman.core.Word import Word
 
-from dragoman.core.AndOr import AndOr
+from dragoman.core.AndOr import AndOr, braced
 from dragoman.core.PrepClause import PrepClause
 from dragoman.core import language
 from .japanese import JaVerb, copula_predicate, copula_conjunctive
@@ -227,7 +227,7 @@ class Predicate (LatinObject):
             nom_particle = next((p for p in (self._particle('Nom', o) for o in self.case_slot.get('Nom', [])) if p), None)
             if nom_particle:
                 nom_case_ja = nom_particle  # 言語の設定で決まる主格の助詞 (タガログ語の焦点「は」)
-            joined = '='.join(noms)
+            joined = '='.join(braced(n) for n in noms)   # 訳語の候補は括ってから助詞 ({彼,彼女,それ}が)
             if joined.endswith(nom_case_ja):
                 nom_case_ja = ''  # 訳語に助詞まで入っているもの (何が)
             tr.append(joined + nom_case_ja)
@@ -258,6 +258,8 @@ class Predicate (LatinObject):
                 particles = ['に'] * len(objs)
             if existential_place:
                 trs = [t[:-2] + 'に' if t.endswith('には') else t for t in trs]  # 私たちは劇場にいた
+            if case_ja or any(particles):
+                trs = [braced(t) for t in trs]
             if any(particles):
                 # 言語の設定で語ごとに助詞を決める (ギリシア語: ἀκούω + 属格「〜を」, 比較の属格「〜より」)
                 tr.append('='.join(t + (p or case_ja) for t, p in zip(trs, particles)))
@@ -273,7 +275,7 @@ class Predicate (LatinObject):
                 t, neg = obj.translate()
                 if neg: negated = True
                 accs.append(t)
-            accs = [acc[:-1] if acc[-1:] == 'が' else acc for acc in accs]
+            accs = [braced(acc[:-1] if acc[-1:] == 'が' else acc) for acc in accs]
             particles = [self._particle('Acc', obj) for obj in acc_objs]
             if any(particles):
                 tr.append('='.join(t + (p or 'を') for t, p in zip(accs, particles)))  # 時の対格「〜の間」など
@@ -424,7 +426,11 @@ def copula_translation(obj, tense, negated):
     gloss = obj.translate()[0]
     # 修飾語 ({美しい}少女 / {人生の}満ちた) はそのまま前に置き、後ろの語だけを述語の形にする
     modifier, head = '', gloss
-    if '}' in gloss:
+    own = obj.items[0].ja if isinstance(obj, Word) and obj.items and obj.items[0].ja else None
+    if own and own != gloss and (gloss.endswith(own) or gloss.endswith(braced(own))):
+        # 修飾語の付いた語: 語の訳の前までが修飾語 (人生の + 満ちた,沢山の。訳語の候補は括らずに述語の形に)
+        modifier, head = gloss[:-len(braced(own) if gloss.endswith(braced(own)) else own)], own
+    elif '}' in gloss:
         cut = gloss.rindex('}') + 1
         modifier, head = gloss[:cut], gloss[cut:]
     if not head:

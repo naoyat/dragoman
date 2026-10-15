@@ -78,13 +78,13 @@ class AnalyzerTestCase(unittest.TestCase):
     def test_ezafe(self):
         tr, roman = self.run_text('دختر کوچک گل‌های زیبا را دید.')
         self.assertEqual(roman, 'doxtar-e kučak golhâ-ye zibâ râ did.')   # 書かれないエザーフェを補う
-        self.assertIn('{美しい}花を', tr[0])
+        self.assertIn('美しい花を', tr[0])
         tr, roman = self.run_text('کتاب علی روی میز است.')
         self.assertTrue(roman.startswith('ketâb-e ali'))
-        self.assertIn('{Aliの}本が', tr[0])
+        self.assertIn('Aliの本が', tr[0])
 
     def test_copula(self):
-        self.assertEqual(self.run_text('این کتاب خوب است.')[0][0], '{この}本は / 良い')
+        self.assertEqual(self.run_text('این کتاب خوب است.')[0][0], 'この本は / 良い')
         self.assertEqual(self.run_text('من خسته‌ام.')[0][0], '私は / 疲れている')
 
     def test_multiword_verbs(self):

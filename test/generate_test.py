@@ -132,7 +132,7 @@ class RelativeTestCase(unittest.TestCase):
         relative, = analysis.relatives
         self.assertEqual((relative.antecedent.surface, relative.pronoun.surface, relative.gap),
                          ('puerum', 'quem', 'Acc'))
-        self.assertIn('{教師,先生が 称賛する,ほめる}少年を', analysis.clauses[0].predicate.translate()[0])
+        self.assertIn('{{教師,先生}が 称賛する,ほめる}少年を', analysis.clauses[0].predicate.translate()[0])
 
     def test_subject_gap(self):
         # 主格・対格のどちらにも読める quae は、先行詞との一致と節の空きで主格 (主語を補わない)

@@ -6,8 +6,8 @@
 
 ```
 ./dragoman.py tr -e "Ali'nin okuduğu kitap güzeldi."
-  →  Aliが読んだ本は / 美しかった
-  ≒  Aliが 読んだ 本は 美しかった。  (語順のまま)
+  →  {アリが 読んだ}本は / 美しかった
+  ≒  アリが 読んだ 本は 美しかった。  (語順のまま)
 ./dragoman.py tr -e "Eve gelince yemek yedik."
   ≒  家に 来ると 食事を 食べた。  (語順のまま)
 python3 tools/samples.py --lang=tr              # サンプル (samples/turkish.txt) の訳

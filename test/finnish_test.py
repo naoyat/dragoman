@@ -25,12 +25,12 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertIn('りんごを', self.ja('Äiti antoi lapselle omenan.'))         # 目的語の属格 → 対格
 
     def test_verb_groups(self):
-        self.assertEqual(self.ja('Olen lukenut tämän kirjan.'), '私が / {この}本を / 読んだ')       # 完了
+        self.assertEqual(self.ja('Olen lukenut tämän kirjan.'), '私が / この本を / 読んだ')       # 完了
         self.assertIn('来なかった', self.ja('Hän ei tullut eilen kotiin.'))                        # 否定動詞 ei
         self.assertEqual(self.ja('Voin puhua suomea.'), '私が / フィンランド語を / 話すことができる')
 
     def test_possession(self):
-        self.assertEqual(self.ja('Minulla on kaksi kissaa.'), '私には / {二つの}猫が / いる')         # 所格 + olla
+        self.assertEqual(self.ja('Minulla on kaksi kissaa.'), '私には / 二つの猫が / いる')         # 所格 + olla
 
     def test_detect(self):
         from dragoman.main import detect

@@ -8,9 +8,9 @@
 ./dragoman.py fr -e "Le garçon lit un livre à l'école."
   →  少年が / 学校[に,で] / 本を / 読む
 ./dragoman.py fr -e "Je le lui ai donné hier."
-  →  私が / 彼に / 彼を / 昨日 / 与えた
+  →  私が / {彼,彼女}に / {彼,それ}を / 昨日 / 与えた
 ./dragoman.py fr -e "La fille qui chante est ma sœur."
-  →  {歌う}少女,娘は / {私の}姉妹である
+  →  歌う{少女,娘}は / 私の姉妹である
 python3 tools/samples.py --lang=fr              # サンプル (samples/french.txt) の訳
 ./dragoman.py fr samples/french.txt                # 解析の詳細 (-w で語ごとの辞書引きを省く)
 ```
