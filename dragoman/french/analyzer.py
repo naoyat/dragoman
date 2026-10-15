@@ -115,8 +115,11 @@ def corrections(doc):
     words = [t for t in doc]
     for t in words:
         lower = t.text.lower()
-        if t.pos_ in ('VERB', 'AUX', 'PUNCT', 'DET', 'PRON', 'CCONJ', 'SCONJ') or lower in morphology.ARTICLES:
+        if t.pos_ in ('VERB', 'AUX', 'PUNCT', 'DET', 'CCONJ', 'SCONJ') or lower in morphology.ARTICLES:
             continue
+        if t.pos_ == 'PRON' and (lower in morphology.PRONOUNS or lower in morphology.RELATIVES or
+                                 lower in morphology.DETERMINERS):
+            continue   # 本当の代名詞 (代名詞と読まれた動詞の形 aimez は直す)
         if lower in morphology.PREPOSITIONS or lower in morphology.CONJUNCTIONS:
             continue
         if not _finite_forms(lower):
@@ -135,6 +138,10 @@ def corrections(doc):
                 (words[k].pos_ != 'DET' or words[k].text.lower() in ('lui', 'leur', 'y', 'en', 'me', 'te', 'se') or
                  clitic_det):
             k -= 1
+        if k + 1 < t.i and words[k + 1].text.lower() in ('nous', 'vous') and \
+                (k < 0 or words[k].pos_ not in ('VERB', 'AUX')):
+            fixed[t.i] = 'VERB'   # 主語の nous・vous (接語の表にもある) の後ろ (Nous chanterons)
+            continue
         prev = words[k] if k >= 0 else None
         if prev is None:
             continue
@@ -196,6 +203,14 @@ def _verb_data(token, feats, lemma=None, tags=None):
                 ja, gloss_lang, row = morphology.gloss(lemma, 'verb')
                 break
     tense, mood, person, number = _verb_feats(feats, tags if tags and set(tags) & set(FINITE) else None)
+    if not tags and feats.get('VerbForm') == 'Fin':
+        # spaCy の時制が語形の表のどの読みにも無ければ表から (chantent を半過去と読む)。現在を先に
+        readings = [t for l, t in morphology.verb_forms(token.text.lower()) if l == lemma and t & set(FINITE)]
+        wanted = {'present': 'present', 'imperfect': 'imperfect', 'future': 'future', 'perfect': 'historic'}[tense] \
+            if tense in ('present', 'imperfect', 'future', 'perfect') else None
+        if readings and wanted and not any(wanted in t for t in readings):
+            best = sorted(readings, key=lambda t: ('present' not in t, 'indicative' not in t))[0]
+            tense = _verb_feats({}, best)[0]
     if tags and 'participle' in tags:
         mood = 'participle'
     if mood in ('infinitive', 'participle'):
@@ -240,6 +255,12 @@ def item_of(token, doc, fixed):
     if fixed.get(token.i) == 'VERB':   # 3人称の読みを先に (qui chante・le garçon lit。je・tu の後ろは subject_persons で)
         forms = sorted(_finite_forms(lower), key=lambda f: 'third-person' not in f[1])
         return _verb_data(token, {}, forms[0][0], forms[0][1])
+    starts = token.i == 0 or doc[token.i - 1].pos_ in ('PUNCT', 'CCONJ', 'SCONJ') or \
+        doc[token.i - 1].text.lower() in ('que', "qu'", 'si', 'quand')
+    if lower in ('nous', 'vous') and starts:   # 文頭・節の頭の nous・vous は主語 (Nous vous parlons)
+        return {'surface': text, 'pos': 'pronoun', 'base': lower, 'ja': morphology.PRONOUNS[lower][0], 'gloss_lang': 'ja',
+                'person': morphology.PRONOUNS[lower][1], 'number': 'pl', '_': morphology.cngs(('Nom',), feats),
+                'compact': True}
     if fixed.get(token.i) == 'CLITIC' or (lower in morphology.CLITICS and pos == 'PRON'):
         ja, person, number, cases = morphology.PRONOUNS[lower]
         if lower in ('se', "s'"):
@@ -491,12 +512,21 @@ def subject_persons(words):
         lower = words[k].surface.lower() if k >= 0 else ''
         if lower in SUBJECT_PERSONS and not (_item(words[k]) is not None and _item(words[k]).attrib('clitic')):
             person, number = SUBJECT_PERSONS[lower]
-            if (item.attrib('person'), item.attrib('number')) != (person, number):
-                word.items = [type(item)(dict(item.item, person=person, number=number))]
+            mood = 'indicative' if item.attrib('mood') == 'imperative' else item.attrib('mood')   # 主語があれば命令形でない
+            if (item.attrib('person'), item.attrib('number'), item.attrib('mood')) != (person, number, mood):
+                word.items = [type(item)(dict(item.item, person=person, number=number, mood=mood))]
 
 
 def clitic_cases(words):
-    """接語が2つ並ぶとき (me le・le lui・me l'): 3人称の le・la・les は対格、ほか (me・te・nous・vous・lui・leur) は与格"""
+    """接語が2つ並ぶとき (me le・le lui・me l'): 3人称の le・la・les は対格、ほか (me・te・nous・vous・lui・leur) は与格。
+    主語の代名詞の後ろの nous・vous は目的語 (Je vous aime)"""
+    for i in range(1, len(words)):
+        item = _item(words[i])
+        if item is not None and item.attrib('base') in ('nous', 'vous') and \
+                words[i - 1].surface.lower() in set(SUBJECT_PERSONS) | {'ne', "n'"}:
+            item.item['_'] = [c for c in item._ if c[0] != 'Nom'] or item._
+            item.item['clitic'] = True
+            words[i].items = [type(item)(item.item)]
     for i in range(len(words) - 1):
         a, b = _item(words[i]), _item(words[i + 1])
         if a is None or b is None or not a.attrib('clitic') or not b.attrib('clitic'):

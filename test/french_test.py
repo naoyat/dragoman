@@ -31,15 +31,21 @@ class AnalyzerTestCase(unittest.TestCase):
     def test_clitics_and_verb_groups(self):
         self.assertEqual(self.ja('Je le lui ai donné hier.'), '私が / {彼,彼女}に / {彼,それ}を / 昨日 / 与えた')
         self.assertEqual(self.ja('Elle est allée au marché avec son ami.'),
-                         '彼女が / 市場[に,で] / 彼の友達[と,で] / 行った')                # être + 移動の動詞
+                         '{彼女,それ}が / 市場[に,で] / 彼の友達[と,で] / 行った')                # être + 移動の動詞
         self.assertEqual(self.ja('Le livre a été écrit par le professeur.'), '本が / 先生によって / 書かれた')
         self.assertEqual(self.ja('Nous voulons lire un livre.'), '私たちが / 本を / 読みたい')
 
     def test_negation_existential_clauses(self):
-        self.assertEqual(self.ja('Il ne mange pas de pain.'), '彼が / パンを / 食べない')
+        self.assertEqual(self.ja('Il ne mange pas de pain.'), '{彼,それ}が / パンを / 食べない')
         self.assertEqual(self.ja('Il y a un chat dans le jardin.'), '庭の中に / 猫が / いる')
         self.assertEqual(self.ja('La fille qui chante est ma sœur.'), '歌う{少女,娘}は / 私の姉妹である')
         self.assertEqual(self.ja("Je sais que tu m'aimes."), '私が / 知っている / 〜ということ / 君が / 私を / 愛する,好む')
+
+    def test_pronoun_subjects(self):
+        self.assertEqual(self.ja('Je vous aime.'), '私が / あなたを / 愛する,好む')               # 主語の後ろの vous は目的語
+        self.assertEqual(self.ja('Nous chanterons.'), '私たちが / 歌うだろう')
+        self.assertEqual(self.ja('Ils chantent.'), '{彼ら,それら}が / 歌う')                      # spaCy の半過去を直す
+        self.assertEqual(self.ja('Je les vois.'), '私が / {彼ら,それら}を / 見る')
 
     def test_names(self):
         self.assertEqual(self.ja('Jean aime Marie.'), 'ジャンが / マリを / 愛する,好む')
