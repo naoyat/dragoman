@@ -57,7 +57,7 @@ SAY_VOICES = {'ru': 'Milena', 'sa': 'Lekha', 'grc': 'Melina', 'he': 'Carmit', 'a
 LANGUAGE_BACKENDS = {'ru': ('say', 'espeak'), 'he': ('say', 'espeak'), 'ar': ('say', 'espeak'), 'fa': ('espeak',),
                      'hi': ('say', 'espeak'), 'ur': ('espeak',), 'ja': ('say',), 'bo': ('mms', 'espeak'),
                      'id': ('say', 'espeak'), 'ms': ('say', 'espeak'), 'tl': ('espeak',), 'ko': ('say', 'espeak'), 'de': ('say', 'espeak'), 'fr': ('say', 'espeak'), 'tr': ('say', 'espeak'), 'fi': ('say', 'espeak'),
-                     'ain': ('espeak', 'say')}
+                     'ain': ('espeak', 'say'), 'ang': ('espeak',)}
 DEFAULT_BACKEND = 'mbrola'
 FALLBACK_BACKEND = 'espeak'
 ESPEAK_SPEED = 140  # words per minute (espeak-ng の既定は175)
@@ -70,7 +70,7 @@ divine_name = 'adonai'   # ヘブライ語の神の名の読み方 (adonai / has
 pronunciation = 'attic'  # ギリシア語の発音の流儀 (attic / koine / erasmian)
 ESPEAK_VOICES = {'la': 'la', 'grc': 'grc', 'sa': 'hi', 'ru': 'ru', 'he': 'he', 'ar': 'ar', 'fa': 'fa', 'hi': 'hi', 'ur': 'ur',
                  'bo': 'cmn', 'id': 'id', 'ms': 'ms', 'ko': 'ko', 'de': 'de', 'fr': 'fr', 'tr': 'tr', 'fi': 'fi',
-                 'tl': 'id', 'ain': 'id'}  # タガログ語の音声が無いので、綴りと発音の近いインドネシア語の音声で  # チベット語は普通話の音声に音素 ([[...]]。tibetan/phonology.py) で渡す
+                 'tl': 'id', 'ain': 'id', 'ang': 'de'}  # タガログ語の音声が無いので、綴りと発音の近いインドネシア語の音声で  # チベット語は普通話の音声に音素 ([[...]]。tibetan/phonology.py) で渡す
 # サンスクリットを読む MBROLA のヒンディー語音声 (in1 男声 / in2 女声)
 SANSKRIT_VOICE = os.path.join(MBROLA_HOME, 'voices', 'in1', 'in1')
 # 現代ギリシア語式 (--pron=modern) で読む MBROLA の現代ギリシア語音声 (gr1 / gr2)
@@ -225,6 +225,10 @@ def _plain_text(text):
     if language == 'bo' and not text.startswith('[['):
         from dragoman.tibetan import phonology
         return phonology.espeak_phonemes(text, pron=pronunciation if pronunciation in ('lhasa', 'chant') else 'lhasa')
+    if language == 'ang' and not text.startswith('[['):
+        from dragoman.oldenglish import phonology
+        # 古英語の音声は無い: ドイツ語の音声に音素で (θ・ð・w・ɣ はドイツ語の音素表にもある。æ は ɛ で代える)
+        return phonology.espeak_phonemes(text)
     if language == 'grc' and backend == 'say':
         return _monotonic(text)  # 現代ギリシア語の音声は多調符 (気息記号・曲アクセント) を読めない
     return text

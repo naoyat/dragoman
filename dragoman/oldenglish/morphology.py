@@ -181,6 +181,16 @@ GLOSSES = {
     'Cantwaraburg': 'カンタベリー', 'Wintanceaster': 'ウィンチェスター', 'Rōm': 'ローマ', 'Dene': 'デーン人', 'Engle': 'アングル人', 'Seaxe': 'サクソン人',
 }
 GLOSSES = {orthography.lemma_key(k): v for k, v in GLOSSES.items()}
+# 手で書いた表の語の長音符付きの綴り (音読で母音の長さに)
+LONG_SPELLINGS = {
+    'he': 'hē', 'heo': 'hēo', 'hie': 'hīe', 'we': 'wē', 'me': 'mē', 'ge': 'ġē', 'us': 'ūs', 'eow': 'ēow', 'þu': 'þū',
+    'ic': 'iċ', 'hwa': 'hwā', 'se': 'sē', 'seo': 'sēo', 'þa': 'þā', 'þæm': 'þǣm', 'þam': 'þām', 'þære': 'þǣre',
+    'þara': 'þāra', 'þæra': 'þǣra', 'þy': 'þȳ', 'þeos': 'þēos', 'þas': 'þās', 'ure': 'ūre', 'min': 'mīn',
+    'þin': 'þīn', 'sin': 'sīn', 'si': 'sī', 'sie': 'sīe', 'swa': 'swā', 'na': 'nā', 'no': 'nō', 'nu': 'nū',
+    'to': 'tō', 'her': 'hēr', 'þær': 'þǣr', 'ær': 'ǣr', 'hu': 'hū', 'hwær': 'hwǣr', 'hwy': 'hwȳ', 'sona': 'sōna',
+    'næfre': 'nǣfre', 'nan': 'nān', 'nis': 'nis', 'eala': 'ēalā', 'gea': 'ġēa', 'þeah': 'þēah', 'butan': 'būtan',
+    'ymbe': 'ymbe', 'ðu': 'þū', 'hiora': 'hiora', 'heora': 'heora', 'hire': 'hire', 'his': 'his', 'him': 'him',
+}
 NUMBERS_JA = {'an': '一', 'twegen': '二', 'twa': '二', 'tu': '二', 'þrie': '三', 'þreo': '三', 'feower': '四',
               'fif': '五', 'siex': '六', 'six': '六', 'seofon': '七', 'eahta': '八', 'nigon': '九', 'tien': '十',
               'tyn': '十', 'hund': '百', 'hundred': '百', 'þusend': '千'}

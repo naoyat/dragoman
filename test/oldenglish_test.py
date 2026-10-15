@@ -29,6 +29,38 @@ class OrthographyTestCase(unittest.TestCase):
         self.assertIn('timbred', list(orthography.variants('getimbrod', depth=2)))
 
 
+class PhonologyTestCase(unittest.TestCase):
+    def ipa(self, word, lemma=None):
+        from dragoman.oldenglish import phonology
+        return phonology.ipa(word, lemma)
+
+    def test_consonants(self):
+        self.assertEqual(self.ipa('ċild'), 'tʃˈild')
+        self.assertEqual(self.ipa('cild'), 'tʃˈild')      # 点が無くても前舌母音の前は口蓋音
+        self.assertEqual(self.ipa('cyning'), 'kˈyniŋg')    # y の前は口蓋化しない
+        self.assertEqual(self.ipa('dæġ'), 'dˈæj')
+        self.assertEqual(self.ipa('scip'), 'ʃˈip')
+        self.assertEqual(self.ipa('ecg'), 'ˈedʒ')
+        self.assertEqual(self.ipa('niht'), 'nˈiçt')
+        self.assertEqual(self.ipa('dohtor'), 'dˈoxtor')
+        self.assertEqual(self.ipa('dagas'), 'dˈɑɣɑs')
+
+    def test_voicing_and_length(self):
+        self.assertEqual(self.ipa('ofer'), 'ˈover')
+        self.assertEqual(self.ipa('wesan'), 'wˈezɑn')
+        self.assertEqual(self.ipa('oþþe'), 'ˈoθːe')        # 重子音は無声のまま長く
+        self.assertEqual(self.ipa('stān'), 'stˈɑːn')
+        self.assertEqual(self.ipa('ġēar'), 'jˈæːɑr')
+
+    def test_prefixes(self):
+        self.assertEqual(self.ipa('ġesēon'), 'jesˈeːon')   # 接頭辞の後ろの s は無声、強勢はその次
+        self.assertEqual(self.ipa('beran'), 'bˈerɑn')
+
+    def test_espeak(self):
+        from dragoman.oldenglish import phonology
+        self.assertEqual(phonology.espeak_phonemes('Hwæt! Wē'), "[[hw'Et _: w'e:]]")
+
+
 @unittest.skipUnless(dictionary.available(), '古英語の辞書が無い')
 class AnalyzerTestCase(unittest.TestCase):
     def ja(self, text):
@@ -59,6 +91,13 @@ class AnalyzerTestCase(unittest.TestCase):
 
     def test_genitive_before_head(self):
         self.assertIn('王の栄光を', self.ja('Wē Gārdena in ġeārdagum þēodcyninga þrym ġefrūnon.'))
+
+    def test_spelled_restores_long_vowels(self):
+        from dragoman.oldenglish import analyzer
+        a = next(analyzer.analyze_text('He forlet þa burh.'))
+        self.assertEqual([s for s, _ in analyzer.spelled(a)], ['Hē', 'forlēt', 'þā', 'burh', '.'])
+        from dragoman.oldenglish import phonology
+        self.assertIn("fORl'e:t", phonology.espeak_words(analyzer.spelled(a)))   # 見出し forlǣtan の for- に強勢を置かない
 
     def test_guesses(self):
         from dragoman.oldenglish import analyzer

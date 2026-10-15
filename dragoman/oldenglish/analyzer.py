@@ -103,7 +103,10 @@ def _signature(item):
 
 def _item(info, feats, surface):
     pos = info['pos']
-    item = {'surface': surface, 'pos': pos, 'base': info['base'], 'lemma': info['base']}
+    item = {'surface': surface, 'pos': pos, 'base': info['base'], 'lemma': info['base'],
+            'spelling': feats.get('surface') or surface}   # 辞書の綴り (長音符付き。音読で母音の長さに)
+    if pos in ('adv', 'conj', 'indecl'):
+        item['compact'] = True
     if pos == 'verb':
         item.update(pres1sg=info['base'], voice='active', mood=feats.get('mood', 'indicative'),
                     tense=feats.get('tense', 'present'))
@@ -701,6 +704,8 @@ def lookup_all(surfaces, trace=None):
                 for k, s in enumerate(surfaces)]
     removed = fix_function_words(readings, surfaces)
     removed |= choose_relatives(readings, surfaces)
+    global _spellings
+    _spellings = [_spelling(r, s) for r, s in zip(readings, surfaces)]   # まとめる前の綴り (助動詞の綴りも)
     merged = merge_verbs(readings, trace)
     removed |= set(merged)
     kept = [(r, s, k) for k, (r, s) in enumerate(zip(readings, surfaces)) if k not in removed]
@@ -718,6 +723,49 @@ def lookup_all(surfaces, trace=None):
     return words
 
 
+_spellings = []
+
+
+def _spelling(items, surface):
+    """読みの辞書の綴り (長音符付き)。鍵が元の語と同じものだけ (綴りの揺れで引いた語は元のまま)"""
+    k = orthography.key(surface)
+    if k in morphology.LONG_SPELLINGS and k != 'þe':   # よく使う機能語 (辞書には長音符の無い異綴りもある: si)
+        long_ = morphology.LONG_SPELLINGS[k]
+        return long_[0].upper() + long_[1:] if surface[:1].isupper() else long_
+    for item in items or []:
+        spelling = item.get('spelling') if isinstance(item, dict) else item.attrib('spelling')
+        if spelling and orthography.key(spelling) == orthography.key(surface):
+            return spelling
+    first = (items or [None])[0]
+    if first is None:
+        return surface
+    pos = first.get('pos') if isinstance(first, dict) else first.pos
+    desc = first.get('desc') if isinstance(first, dict) else first.attrib('desc')
+    if desc == '関係代名詞' or ' ' in surface:
+        return surface   # 関係の þe は短母音
+    if k == 'þe' and pos == 'pronoun':
+        return surface[0] + 'ē'   # þē「君を・君に」
+    # 手で書いた表の語 (þǣm・þā・ūre・þū …): 辞書の同じ鍵の語形の綴り (同じ品詞のものを先に)
+    pairs = dictionary.forms(surface)
+    pairs = sorted(pairs, key=lambda p: (p[0]['pos'] != pos, -(p[0].get('senses') or 0)))
+    for info, feats in pairs:
+        spelling = feats.get('surface')
+        if spelling and orthography.key(spelling) == orthography.key(surface):
+            return spelling[0].upper() + spelling[1:] if surface[:1].isupper() else spelling
+    return surface
+
+
+def spelled(analysis):
+    """解析で選んだ読みの綴りで元の文を書き直す (音読で長母音を読むため: god (神) / gōd (良い))。
+    → [(綴り, 見出し語)] (見出し語は接頭辞の判定に。分からなければ None)"""
+    out = [(s, None) for s in (getattr(analysis, 'spellings', None) or analysis.original)]
+    for word in analysis.words:
+        k = getattr(word, 'token_ix', None)
+        if k is not None and k < len(out) and word.items and not getattr(word, 'merged_ixs', ()):
+            out[k] = (_spelling(word.items, analysis.original[k]), word.items[0].attrib('base'))
+    return out
+
+
 def analyze_sentence(surfaces):
     trace = []
     words = lookup_all(surfaces, trace)
@@ -729,6 +777,7 @@ def analyze_sentence(surfaces):
     with language.using(OLD_ENGLISH):
         analysis = common.analyze_words([w.surface for w in words], words, word_details, trace)
     analysis.original = list(surfaces)
+    analysis.spellings = list(_spellings)
     return analysis
 
 
