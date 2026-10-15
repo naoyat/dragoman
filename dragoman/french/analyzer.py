@@ -660,10 +660,12 @@ def il_faut_que(words):
         if verb is None or _item(verb).attrib('mood') != 'subjunctive':
             continue
         v = _item(verb)
-        ja = ','.join(_attach(j, 'なければならない') for j in (v.ja or '').split(',')[:1]) \
+        past = item.attrib('tense') in ('imperfect', 'perfect', 'pluperfect')   # il fallait que「〜なければならなかった」
+        ja = ','.join(_attach(j, 'なければならない')[:-1] + ('かった' if past else 'い') for j in (v.ja or '').split(',')[:1]) \
             if v.attrib('gloss_lang') == 'ja' else v.ja
-        verb.items = [type(v)(dict(v.item, modal='falloir', main_ja=v.ja, ja=ja, mood='indicative',
-                                   tense=item.attrib('tense') or 'present', form='il faut que + 接続法'))]
+        # 法は接続法のまま (表示)。時制は faut の時制 (il fallait que je parte「出発しなければならなかった」)
+        verb.items = [type(v)(dict(v.item, modal='falloir', main_ja=v.ja, ja=ja, outer_tense=item.attrib('tense') or 'present',
+                                   form='il faut que + 接続法'))]
         word.merged_into = que.merged_into = True
         return [w for w in words if w is not word and w is not que]
     return words

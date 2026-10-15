@@ -751,6 +751,7 @@ def realize(clause, capitalize=True):
         inner = clause.infinitives[0]
         subject_np = inner.role('subject')[0]
         return realize(_replace(clause, verb=frame_lex('dēbeō', 'verb', ''), args=[('subject', subject_np)],
+                                tense='perfect' if clause.tense == 'imperfect' else clause.tense,   # had to
                                 infinitives=[_replace(inner, args=[(r, np) for r, np in inner.args
                                                                    if np is not subject_np])],
                                 person=None, number=None), capitalize)

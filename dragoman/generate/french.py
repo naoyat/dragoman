@@ -479,7 +479,9 @@ def _modal(clause, gap, antecedent, subjunctive):
         else:        # Il fait rire les enfants
             inner_words = inner_words + [noun_phrase(person_np, 'Acc')]
     if modal == 'falloir' and inner.role('subject'):   # Il faut que je parte (主語のある不定詞の節は que + 接続法)
-        return ['il', 'faut', 'que'] + realize(dataclasses.replace(inner, mood='indicative'), subjunctive=True)
+        tense = {'imperfect': 'imperfect', 'future': 'future'}.get(clause.tense, 'present')   # il fallait que
+        return ['il', finite('falloir', tense, 3, 'sg'), 'que'] + \
+            realize(dataclasses.replace(inner, mood='indicative'), subjunctive=True)
     if modal == 'falloir':
         outer = dataclasses.replace(outer, args=[(r, np) for r, np in outer.args if r != 'subject'], person=3, number='sg')
     words = realize(outer, gap, antecedent, subjunctive)

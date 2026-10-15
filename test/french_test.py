@@ -100,7 +100,8 @@ class AnalyzerTestCase(unittest.TestCase):
         def mood(text, surface):
             a = next(analyzer.analyze_text(text))
             return next(w.items[0].attrib('mood') for w in a.words if w.surface == surface)
-        self.assertEqual(mood('Il faut que je parte.', 'parte'), 'indicative')   # il faut que で話法の組にまとめる
+        self.assertEqual(mood('Il faut que je parte.', 'parte'), 'subjunctive')   # il faut que で話法の組にまとめても接続法
+        self.assertEqual(self.ja('Il fallait que je parte.'), '私が / 出発しなければならなかった')
         self.assertEqual(self.ja('Il faut que je parte.'), '私が / 出発しなければならない')
         self.assertEqual(self.ja("Il faut que je m'en aille."), '私が / 立ち去らなければならない')   # s'en aller
         self.assertEqual(mood('Je veux que tu viennes.', 'viennes'), 'subjunctive')
