@@ -72,9 +72,9 @@ y・i・ie（hyran = hieran）、eo・io、ea・a・e、o・a（鼻音の前。m
 
 ## 音読
 
-`./dragoman.py ang -s -e "…"` で読む。古英語の音声は無いので、espeak-ng のドイツ語の音声に音素の列（`[[…]]`）で渡す
-（oldenglish/phonology.py）。ドイツ語の音素表は基本の表の θ・ð・w・ɣ も持つので、そのまま出せる。
+`./dragoman.py ang -s -e "…"` で読む。古英語の音声は espeak-ng に無いので、音素の列（`[[…]]`。oldenglish/phonology.py）で渡す。
 
+* 古英語の音声 ang（`python3 tools/build_oldenglish_espeak.py`。下）があればそれで、無ければドイツ語の音声で読む。
 * 発音はウェストサクソン方言の古典期（およそ 1000年頃）の再建音: ċ [tʃ]・ġ [j]（点の無い綴りでは位置から推す: 前舌母音の前の語頭、
   前舌母音の後ろの語末）、sc [ʃ]、cg [dʒ]、ng [ŋg]、g は母音・l・r の後ろで [ɣ]、h は語頭以外で [x]（後舌母音の後ろ）・[ç]（前舌母音の後ろ）、
   f・s・þ は有声音に挟まれると [v]・[z]・[ð]、重子音は長く、二重母音 ea [æɑ]・eo [eo]・ie [iy]・io [io]。
@@ -82,8 +82,24 @@ y・i・ie（hyran = hieran）、eo・io、ea・a・e、o・a（鼻音の前。m
   forlǣtan ← lǣtan。beran・biscop は違う）の付いた語はその次。
 * 母音の長さ: 翻刻の本文には長音符が無いので、解析で選んだ読みの辞書の綴り（長音符付き）で読む（forlet → forlēt、god「神」/ gōd「良い」）。
   手で書いた表の機能語（hē・þā・þǣm・sī …）は長音符付きの綴りの表（morphology.LONG_SPELLINGS）から。
-* ドイツ語の音声で出せないもの: [æ]（ɛ で代える）。ドイツ語の音素表の語末の無声化（gōd の d が t に）も避けられない。
-  どちらも、古英語用の音素表（ドイツ語の表を土台に、英語の表の [æ] を借り、語末の無声化を外す）を作れば直せる（まだ作っていない）。
+
+### 古英語の音声 ang
+
+espeak-ng の音素はテキストの定義（ソースの `phsource/`）からコンパイルしたデータで、言語の表はほかの表を引き継げる。
+`tools/build_oldenglish_espeak.py` は、インストールしてある espeak-ng のデータの写し（`$DRAGOMAN_DATA/ang/espeak-ng-data`）に、
+次の古英語の表 ang と音声 ang を足してコンパイルし直す（インストールしてあるデータには触れない）。
+
+* ドイツ語の表（基本の表の θ・ð・w・ɣ も持つ）を引き継ぎ、b・d・g・v・z を語末で無声にしない定義に（基本の表の定義を呼ぶ）。
+* [æ]（&）・[æː]（&:）を足す（espeak-ng の母音のフォルマント vowel/& を使う）。
+* 音声の言語の設定は en（de・nl の設定は音素表とは別に語末の有声音を無声にする: gōd [goːt]）。
+
+ソースは espeak-ng と同じ版のもの（コンパイルしたデータの形式が版ごとに違う。https://github.com/espeak-ng/espeak-ng 、GPL-3.0）を
+`$DRAGOMAN_DATA/ang/espeak-src/espeak-ng-<版>/` に展開しておく（使うのは `phsource/` だけ）。表の定義はこのツールが書き出すので、
+リポジトリに espeak-ng の定義は入れない。作ったデータは espeak-ng-data 由来（GPL-3.0）。
+
+```
+espeak-ng --path=$HOME/.local/share/dragoman-data/ang -v ang "[[hw'&t w'e: g'A:Rdena]]"
+```
 
 ## 評価
 
@@ -104,4 +120,5 @@ python3 tools/ud_eval.py --lang=ang [--source=apt,chrona,or,wscp,æls]
 * 強変化・弱変化の形容詞の区別、形容詞の比較級、与格の独立構文。
 * 接続法の主文（祈願「〜ますように」: sī þīn nama ġehālgod）。
 * 生成（ほかの言語から古英語への訳）。
-* 古英語用の音素表（espeak-ng の音素データのソースから作る）。
+* 短母音の音色（いまはドイツ語の音素の [ɪ ʊ ɔ]）、二重母音を1つの音素として（いまは母音2つ）。
+* 見出しが辞書に無い語（Gār-Dene、語尾から推定した動詞）の長音符。

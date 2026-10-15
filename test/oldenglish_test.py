@@ -58,7 +58,8 @@ class PhonologyTestCase(unittest.TestCase):
 
     def test_espeak(self):
         from dragoman.oldenglish import phonology
-        self.assertEqual(phonology.espeak_phonemes('Hwæt! Wē'), "[[hw'Et _: w'e:]]")
+        self.assertEqual(phonology.espeak_phonemes('Hwæt! Wē', phonology.ESPEAK_DE), "[[hw'Et _: w'e:]]")
+        self.assertEqual(phonology.espeak_phonemes('Hwæt! Wē', phonology.ESPEAK_ANG), "[[hw'&t _: w'e:]]")   # 古英語の音声
 
 
 @unittest.skipUnless(dictionary.available(), '古英語の辞書が無い')

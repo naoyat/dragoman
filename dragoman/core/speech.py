@@ -227,7 +227,8 @@ def _plain_text(text):
         return phonology.espeak_phonemes(text, pron=pronunciation if pronunciation in ('lhasa', 'chant') else 'lhasa')
     if language == 'ang' and not text.startswith('[['):
         from dragoman.oldenglish import phonology
-        # 古英語の音声は無い: ドイツ語の音声に音素で (θ・ð・w・ɣ はドイツ語の音素表にもある。æ は ɛ で代える)
+        # 古英語の音声 ang (tools/build_oldenglish_espeak.py) があればその音素で、無ければドイツ語の音声に音素で
+        # (θ・ð・w・ɣ はドイツ語の音素表にもある。æ は ɛ で代え、語末の有声音は無声になる)
         return phonology.espeak_phonemes(text)
     if language == 'grc' and backend == 'say':
         return _monotonic(text)  # 現代ギリシア語の音声は多調符 (気息記号・曲アクセント) を読めない
@@ -269,6 +270,10 @@ def espeak(text, pause=False, wav_file=None, show_phonemes=False):
     text = _plain_text(text)
     if backend != 'espeak': return None
     args = ['espeak-ng', '-v', voice, '-s', str(ESPEAK_SPEED), '--stdin']
+    if language == 'ang' and voice == 'de':
+        from dragoman.oldenglish import phonology
+        if phonology.ang_voice():   # 古英語の音声 (tools/build_oldenglish_espeak.py。[æ] があり、語末の無声化が無い)
+            args = ['espeak-ng', '--path=%s' % phonology.ang_voice(), '-v', 'ang', '-s', str(ESPEAK_SPEED), '--stdin']
     if wav_file:
         args += ['-w', wav_file]
     if show_phonemes:

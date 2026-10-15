@@ -17,6 +17,7 @@
 #   - r は震え音 [r]
 #   - 強勢は最初の音節。ġe-・be-・bi-・for-・ā- の接頭辞の付いた語はその次 (ġesēon [jeˈseːon])
 #
+import os
 import re
 import unicodedata
 
@@ -211,6 +212,21 @@ ESPEAK_DE = {
 }
 
 
+# 古英語の音声 (tools/build_oldenglish_espeak.py で作る ang。ドイツ語の表 + [æ]、語末の無声化なし) の音素名
+ESPEAK_ANG = dict(ESPEAK_DE, **{'æ': '&', 'æː': '&:', 'æɑ': '&a', 'æːɑ': '&:a'})
+
+
+def ang_voice():
+    """古英語の音声 ang のデータの置き場所 (作ってなければ None)"""
+    from dragoman.core import paths
+    root = paths.data('ang')
+    return root if os.path.exists(os.path.join(root, 'espeak-ng-data', 'lang', 'gmw', 'ang')) else None
+
+
+def default_table():
+    return ESPEAK_ANG if ang_voice() else ESPEAK_DE
+
+
 def espeak_word(word, table=ESPEAK_DE, lemma=None):
     segs = segments(word, lemma)
     k = stress_index(word, segs, lemma)
@@ -226,8 +242,10 @@ def espeak_word(word, table=ESPEAK_DE, lemma=None):
 WORD = re.compile(r"[^\W\d_]+", re.UNICODE)
 
 
-def espeak_words(pairs, table=ESPEAK_DE):
-    """[(綴り, 見出し語)] (analyzer.spelled) → espeak-ng に渡す音素の列 ([[…]])"""
+def espeak_words(pairs, table=None):
+    """[(綴り, 見出し語)] (analyzer.spelled) → espeak-ng に渡す音素の列 ([[…]])。table を省くと、古英語の音声 ang が
+    あればその音素名、無ければドイツ語の音声の音素名"""
+    table = table or default_table()
     parts = []
     for spelling, lemma in pairs:
         if spelling in '.,;:!?·':
@@ -239,8 +257,9 @@ def espeak_words(pairs, table=ESPEAK_DE):
     return '[[%s]]' % ' '.join(parts)
 
 
-def espeak_phonemes(text, table=ESPEAK_DE):
+def espeak_phonemes(text, table=None):
     """文 → espeak-ng に渡す音素の列 ([[…]])。句読点は区切り (_:)"""
+    table = table or default_table()
     parts = []
     for token in re.findall(r"[^\W\d_]+|[.,;:!?·]", unicodedata.normalize('NFC', text)):
         if token in '.,;:!?·':
