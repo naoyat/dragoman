@@ -378,6 +378,9 @@ PREFERRED = {
 }
 
 
+# 英語の miss は「恋しく思う」(フランス語の manquer à を入れ替えた枠: Tu me manques → I miss you)。的を外す意味にしない
+for _lang, _lemma in (('de', 'vermissen'), ('fi', 'kaivata'), ('tr', 'özlemek'), ('ko', '그리워하다')):
+    PREFERRED.setdefault(_lang, {})[('miss', 'verb')] = (_lemma, '')
 PARTICLES = ('to', 'as', 'at', 'on', 'for', 'with', 'into', 'upon', 'in', 'from', 'of', 'out', 'up', 'away',
              'off', 'down', 'by')
 

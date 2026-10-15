@@ -27,9 +27,16 @@ python3 tools/samples.py --lang=fr              # サンプル (samples/french.t
   接語が2つ並ぶとき（me le・le lui）は le・la・les が対格、ほかが与格。3人称の代名詞は人にも物にも取れる訳
   （il「{彼,それ}が」、le「{彼,それ}を」、l'「{彼,彼女,それ}を」、lui「{彼,彼女}に」）。主語の代名詞の後ろの nous・vous は目的語、
   文頭・節の頭なら主語。動詞の人称は直前の主語の代名詞から（spaCy の読み誤りを直す）。
-  人を表す接語（me・te・se・nous・vous）の格は動詞の表から（`french/morphology.py`）: 間接他動詞（parler・répondre・plaire・obéir …。
-  Il me parle「私に話す」）と二重目的語の動詞（donner・dire・montrer・demander …。Il me montre「私に見せる」）は与格、ほか（voir・aimer …）
-  は対格。複合過去（Il m'a parlé）は本動詞で決める。
+  人を表す接語（me・te・se・nous・vous）の格は動詞から: 辞書の語義の印（à を取る「[with à]」・物を人に「something to someone」・
+  自動詞だけ）と手作りの表（`french/morphology.py`）で、間接他動詞（parler・répondre・obéir・ressembler …。Il me parle「私に話す」）と
+  二重目的語の動詞（donner・dire・montrer …。Il me montre「私に見せる」）は与格、ほか（voir・aimer …）は対格。
+  複合過去（Il m'a parlé）は本動詞で決める。
+* 代名動詞: 主語と同じ人称の再帰の接語（se・je me・nous nous …）+ 動詞は、辞書の「se + 動詞」の見出し（Wiktionary の reflexive の
+  語義から作る）で引き、接語は訳に出さない（Il se lève「起きる」、Je m'appelle Jean「ジャンと呼ばれている」）。再帰の接語 + être +
+  過去分詞は複合過去（Elle s'est levée「起きた」）。見出しが無ければ再帰の目的語のまま（Il se lave → se laver があれば「体を洗う」）。
+* manquer à は人を主題に（Tu me manques「私は / 君が / いなくて寂しい」、Tu manques à ta mère「君の母は / 君が / …」）。
+  文の枠では人を主語・相手を目的語にした「恋しく思う」（英語の miss を仲立ちに: I miss you・Ich vermisse dich・Tē dēsīderō）、
+  フランス語に戻すときは元の形。
 * 冠詞（le・un・des）は名詞に掛けて訳さない。所有形容詞・指示形容詞（mon・ce・tout …）は「私の」「この」「すべての」。
   前置詞と冠詞の縮約形（au・aux・du・des）は前置詞。動詞のすぐ後ろの du・des は部分冠詞（manger du pain「パンを食べる」）。
   de を取る動詞（parler de「〜について」、venir de「〜から」…）の後ろは前置詞のまま。
@@ -79,7 +86,7 @@ curl -sL https://kaikki.org/dictionary/French/kaikki.org-dictionary-French.jsonl
 
 Wiktionary のフランス語の抽出データ（CC BY-SA）は約 580MB あるので、標準入力から読んで必要なものだけを sqlite に残します
 （元のファイルは置かなくてよい。`~/.local/share/dragoman-data/fr/wiktionary.sqlite`、約 90MB。見出し語 8.6 万・語形 60 万）。
-見出し語ごとの品詞・英語の語義・名詞の性と、語形の表（動詞は単純時制の形だけ。複合時制は avoir / être + 過去分詞で作る）です。
+見出し語ごとの品詞・英語の語義・名詞の性・動詞の語義の印（他動・自動・再帰と à）、代名動詞の見出し（se lever …）と、語形の表（動詞は単純時制の形だけ。複合時制は avoir / être + 過去分詞で作る）です。
 
 評価用に UD French-GSD（CC BY-SA 4.0）の `fr_gsd-ud-test.conllu` を `~/.local/share/dragoman-data/fr/ud/` に置きます
 （spaCy のモデルの学習に使ったのは Sequoia なので、GSD とは重ならない）。
@@ -97,7 +104,5 @@ il y a + 名詞は訳では「〜がある」の主語なので、主語とし�
 
 * pour・sans + 不定詞「〜するために」「〜せずに」を不定詞の節の接続詞に（今は行き場の無い語句になる）。
 * 倒置の主語（a expliqué Véronique、Que dit l'Eglise ?）、疑問文の est-ce que。
-* 代名動詞（se lever「起きる」、s'appeler「〜という名前である」）を見出しに（今は Il se lève「自分を上げる」）。
-* 接語の格の動詞の表は手作り。Wiktionary の語義の印（transitive・intransitive と前置詞 à）から作れると広がる
-  （辞書を作り直すので抽出データの再ダウンロードが要る）。
+* 経験者が与格の構文は manquer だけ（plaire「〜の気に入る」も同じ形にできる）。ロシア語の出口の miss（скучать по + 与格）はまだ。
 * 出口: 否定の文の部分冠詞（ne mange pas de pain）、主語の倒置・疑問文、接続法（bien que・pour que の後ろ）。

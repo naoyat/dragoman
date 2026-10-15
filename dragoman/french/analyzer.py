@@ -40,6 +40,15 @@ def _root_items(lemma):
     return [{'pos': 'verb', 'ja': ja, 'gloss_lang': gloss_lang}] if ja else []
 
 
+def _particle(case, obj, predicate):
+    """manquer à の人は主題「は」(Tu me manques「私は 君が いなくて寂しい」)、s'appeler の名前は「と」(ジャンと呼ばれている)"""
+    if case == 'Dat' and predicate.first_item.attrib('experiencer'):
+        return 'は'
+    if case == 'Acc' and predicate.first_item.attrib('lemma') == 'se appeler':
+        return 'と'
+    return None
+
+
 FRENCH = language.Language(
     name='fr',
     and_words=('et',),
@@ -50,6 +59,8 @@ FRENCH = language.Language(
     case_particles={'Nom': 'が', 'Acc': 'を', 'Dat': 'に', 'Gen': 'の'},
     absolute_case=None,
     lookup=_root_items,
+    particle=_particle,
+    topic_first=True,   # 主題「は」の句を先頭に (私は / 君が / いなくて寂しい)
     dictionary=dictionary,
     pronoun_subject=True,
     genitive_follows_head=True,
@@ -127,7 +138,7 @@ def corrections(doc):
         clitic_det = t.i > 1 and words[t.i - 1].text.lower() in ('le', 'la', "l'", 'les') and \
             words[t.i - 2].text.lower() in SUBJECTS | {'ne', "n'"}   # 主語の代名詞の後ろの le・la・les は接語 (Je les vois)
         if t.pos_ in ('NOUN', 'PROPN') and t.i > 0 and words[t.i - 1].pos_ in ('DET', 'ADJ', 'ADP', 'NUM') and \
-                not clitic_det:
+                not clitic_det and words[t.i - 1].text.lower() not in SUBJECTS:   # Tu lis を冠詞 + 名詞と読む誤りは直す
             continue   # 冠詞・形容詞・前置詞の後ろの名詞はそのまま (la crise)
         if t.i == 0 and any('imperative' in tags for _, tags in _finite_forms(lower)) and len(words) > 1 and \
                 words[1].pos_ in ('DET', 'PRON', 'ADP'):
@@ -261,6 +272,11 @@ def item_of(token, doc, fixed):
         return {'surface': text, 'pos': 'pronoun', 'base': lower, 'ja': morphology.PRONOUNS[lower][0], 'gloss_lang': 'ja',
                 'person': morphology.PRONOUNS[lower][1], 'number': 'pl', '_': morphology.cngs(('Nom',), feats),
                 'compact': True}
+    after_prep = token.i > 0 and (doc[token.i - 1].pos_ == 'ADP' or doc[token.i - 1].text.lower() in morphology.PREPOSITIONS)
+    if lower in morphology.CLITICS and after_prep and lower in ('lui', 'nous', 'vous', 'elle', 'eux', 'elles'):
+        ja, person, number, _ = morphology.PRONOUNS[lower]   # 前置詞の後ろの強勢形 (de lui・avec nous) は接語でない
+        return {'surface': text, 'pos': 'pronoun', 'base': lower, 'ja': ja, 'gloss_lang': 'ja', 'person': person,
+                'number': number, '_': morphology.cngs(('Gen',), feats), 'compact': True}
     if fixed.get(token.i) == 'CLITIC' or (lower in morphology.CLITICS and pos == 'PRON'):
         ja, person, number, cases = morphology.PRONOUNS[lower]
         if lower in ('se', "s'"):
@@ -269,6 +285,10 @@ def item_of(token, doc, fixed):
             cases = ('Dat',)   # 接語の lui は与格だけ (le lui「それを彼に」)
         return {'surface': text, 'pos': 'pronoun', 'base': lower, 'ja': ja, 'gloss_lang': 'ja', 'person': person,
                 'number': number, '_': morphology.cngs(cases, feats), 'compact': True, 'clitic': True}
+    if lower in SUBJECTS and pos != 'PRON':   # 主語の代名詞を冠詞・名詞と読む誤り (Tu me manques の Tu を冠詞)
+        ja, person, number, cases = morphology.PRONOUNS[lower]
+        return {'surface': text, 'pos': 'pronoun', 'base': lower, 'ja': ja, 'gloss_lang': 'ja', 'person': person,
+                'number': number, '_': morphology.cngs(('Nom',), feats), 'compact': True}
     if lower in ('ne', "n'"):
         return {'surface': text, 'pos': 'adv', 'base': 'ne', 'ja': '〜ない', 'gloss_lang': 'ja', 'negation': True}
     after_verb = token.i > 0 and (doc[token.i - 1].pos_ in ('VERB', 'AUX') or fixed.get(token.i - 1) == 'VERB' or
@@ -409,7 +429,7 @@ def merge_verbs(words):
                 continue
             main = words[j]
             if lemma in ('avoir', 'être') and _participle(main):
-                _merge(word, main, lemma)
+                _merge(word, main, lemma, reflexive=_reflexive_before(words, i))
             elif lemma in morphology.MODALS and _infinitive(main):
                 _merge(word, main, lemma)
             else:
@@ -421,7 +441,47 @@ def merge_verbs(words):
     return words
 
 
-def _merge(aux_word, main_word, aux_lemma):
+def _reflexive_before(words, i):
+    """動詞の前の再帰の接語 (se・s'、主語と同じ人称の me・te・nous・vous: je me lève)。あればその語"""
+    k = i - 1
+    while k >= 0 and _item(words[k]) is not None and (_item(words[k]).attrib('clitic') or
+                                                       _item(words[k]).attrib('base') == 'ne'):
+        k -= 1
+    subject = words[k].surface.lower() if k >= 0 else ''
+    match = {'me': ('je', "j'"), "m'": ('je', "j'"), 'te': ('tu',), "t'": ('tu',), 'nous': ('nous',), 'vous': ('vous',)}
+    for w in words[k + 1:i]:
+        base = _item(w).attrib('base') if _item(w) is not None else ''
+        if base in ('se', "s'") or subject in match.get(base, ()):
+            return w
+    return None
+
+
+def pronominal_verbs(words):
+    """代名動詞: 再帰の接語 + 動詞を辞書の「se + 動詞」の見出しで引き、接語は訳に出さない (Il se lève「起きる」、
+    Je m'appelle Jean「〜という名前である」)。見出しが無ければ接語は再帰の目的語のまま (自分を)"""
+    out = list(words)
+    for i, word in enumerate(words):
+        item = _item(word)
+        if item is None or item.pos != 'verb' or item.attrib('mood') in ('infinitive', 'participle'):
+            continue
+        clitic = _reflexive_before(words, i)
+        if clitic is None:
+            continue
+        lemma = 'se ' + item.attrib('lemma')
+        ja, gloss_lang, _ = morphology.gloss(lemma, 'verb')
+        if not ja:
+            continue
+        if item.attrib('voice') == 'passive':   # se + être + 過去分詞は複合過去 (s'est levé)
+            item.item.update(voice='active')
+        word.items = [type(item)(dict(item.item, lemma=lemma, pres1sg=lemma, base=lemma, ja=ja,
+                                      gloss_lang=gloss_lang, pronominal=True,
+                                      form=(item.attrib('form') + '・' if item.attrib('form') else '') + '代名動詞'))]
+        clitic.merged_into = True
+        out = [w for w in out if w is not clitic]
+    return out
+
+
+def _merge(aux_word, main_word, aux_lemma, reflexive=None):
     a, m = _item(aux_word), _item(main_word)
     data = dict(m.item)
     data.update(person=a.attrib('person'), number=a.attrib('number'), mood=a.attrib('mood'),
@@ -441,10 +501,7 @@ def _merge(aux_word, main_word, aux_lemma):
                 'future-perfect' if tense == 'future' else 'perfect'
             form = '%s (avoir + 過去分詞)' % ('複合過去' if tense == 'present' else '大過去' if tense == 'imperfect' else '複合時制')
     elif aux_lemma == 'être' and m.attrib('mood') == 'participle':
-        reflexive = any(_item(w) is not None and _item(w).attrib('base') in ('se', "s'", 'me', "m'", 'te', "t'", 'nous',
-                                                                             'vous')
-                        for w in [aux_word])
-        if main_lemma in morphology.ETRE_VERBS or reflexive or a.attrib('reflexive'):
+        if main_lemma in morphology.ETRE_VERBS or reflexive is not None:   # 再帰の接語 + être は複合過去 (s'est levé)
             data['tense'] = 'perfect' if tense == 'present' else 'pluperfect' if tense == 'imperfect' else 'perfect'
             form = '複合過去 (être + 過去分詞)'
         elif main_lemma == 'être':
@@ -563,10 +620,23 @@ def clitic_valency(words):
             continue
         clitic = _item(personal[0])
         reflexive = clitic.attrib('base') in ('se', "s'")
-        dative = lemma in morphology.INDIRECT_VERBS or lemma in morphology.DITRANSITIVE_VERBS and not reflexive
+        tags = dictionary.valency(lemma)
+        # 辞書の語義の印: à を取る・物を人に (to grant something to someone)・自動詞だけの語義なら人は与格
+        dative = lemma in morphology.INDIRECT_VERBS or lemma in morphology.DITRANSITIVE_VERBS and not reflexive or \
+            not reflexive and ('à' in tags or 'to-someone' in tags or 'intransitive' in tags and 'transitive' not in tags)
+        if lemma == 'manquer' and dative:   # Tu me manques「私は 君が いなくて寂しい」(人を主題に)
+            word.items = [type(item)(dict(item.item, ja='いなくて寂しい', gloss_lang='ja', experiencer=True))]
         case = 'Dat' if dative else 'Acc'
         cases = [c for c in clitic._ if c[0] == case] or [(case,) + c[1:] for c in clitic._[:1]]
         personal[0].items = [type(clitic)(dict(clitic.item, _=cases))]
+    for i, word in enumerate(words):   # manquer à + 名詞 (Tu manques à ta mère「君の母は 君が いなくて寂しい」)
+        item = _item(word)
+        if item is None or item.pos != 'verb' or item.attrib('lemma') != 'manquer' or item.attrib('experiencer'):
+            continue
+        prep = next((w for w in words[i + 1:i + 3] if _pos(w) == 'preposition'), None)
+        if prep is not None and _item(prep).attrib('base') == 'à':
+            word.items = [type(item)(dict(item.item, ja='いなくて寂しい', gloss_lang='ja', experiencer=True))]
+            prep.items = [type(_item(prep))(dict(_item(prep).item, ja='〜は'))]
 
 
 def negation(words):
@@ -729,6 +799,7 @@ def lookup_all(surfaces):
     subject_persons(words)
     words = negation(words)
     words = merge_verbs(words)
+    words = pronominal_verbs(words)
     clitic_valency(words)   # 動詞の組をまとめてから (Il m'a parlé は parler で決める)
     existential = existential_il_y_a(words)
     words = [w for w in words if _pos(w) != 'particle']

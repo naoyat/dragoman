@@ -57,7 +57,7 @@ WORDS = {'semper': 'aina', 'saepe': 'usein', 'iam': 'jo', 'nunc': 'nyt', 'hodiē
          'heri': 'eilen', 'ibi': 'siellä', 'hīc': 'täällä', 'etiam': 'myös', 'quoque': 'myös', 'valdē': 'hyvin',
          'magnopere': 'hyvin', 'statim': 'heti', 'mox': 'pian', 'tandem': 'vihdoin', 'iterum': 'taas', 'numquam': 'ei koskaan',
          'bene': 'hyvin', 'posteā': 'myöhemmin', 'diū': 'kauan'}
-PARTITIVE_VERBS = {'rakastaa', 'odottaa', 'auttaa', 'ajatella', 'etsiä', 'kiittää', 'pelätä', 'kuunnella', 'katsoa',
+PARTITIVE_VERBS = {'rakastaa', 'kaivata', 'odottaa', 'auttaa', 'ajatella', 'etsiä', 'kiittää', 'pelätä', 'kuunnella', 'katsoa',
                    'kunnioittaa', 'vihata', 'koskettaa', 'palvella', 'seurata'}
 PERSON_TAGS = {(1, 'sg'): ('first-person', 'singular'), (2, 'sg'): ('second-person', 'singular'),
                (3, 'sg'): ('third-person', 'singular'), (1, 'pl'): ('first-person', 'plural'),

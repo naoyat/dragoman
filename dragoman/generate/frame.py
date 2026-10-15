@@ -12,6 +12,7 @@
 #
 import re
 import unicodedata
+import dataclasses
 from dataclasses import dataclass, field
 
 from dragoman.core.Word import Word
@@ -266,6 +267,7 @@ class Clause:
     source_mood: str = ''   # 間接疑問の元の法 (ギリシア語の直説法・希求法。枠では接続法に)
     gap: str = ''             # 関係節なら空所の役割: subject / object / recipient / means / possessor / place / prep
     gap_prep: object = None   # 空所が前置詞句なら前置詞 (Lex) と格: (Lex, 'Abl')  (locus in quō)
+    experiencer: str = ''     # 人と物の役割を入れ替えた構文の元の動詞 (フランス語の manquer à: Tu me manques → Ego tē dēsīderō)
     relative: object = None   # 関係節の関係詞 (Lex。ラテン語に戻すとき quī を変化させる。ubi なら副詞)
     adjuncts: list = field(default_factory=list)   # 独立奪格・述語的な分詞句 (Participial)
     connectives: list = field(default_factory=list)  # 文をつなぐ語 (et, autem, igitur, tum …。connectives.py の見出し)
@@ -637,7 +639,31 @@ def clause_of(predicate, lang=None):
         subjects = clause.role('subject')
         if subjects and (subjects[0].number == 'pl' or subjects[0].members):
             clause.number = 'pl'   # 数詞で複数にした主語 (kaksi kissaa → duo cattī) に繋辞を合わせる (sunt)
+    if _lang == 'fr' and predicate.first_item.attrib('experiencer'):
+        _swap_experiencer(clause)
     return clause
+
+
+def _swap_experiencer(clause):
+    """manquer à (Tu me manques「私は 君が いなくて寂しい」): 人を主語、物を目的語にして「恋しく思う」(英語の miss を仲立ちに。
+    ほかの言語は I miss you の形)。フランス語に戻すときは元の形に (generate/french.py)"""
+    subjects, recipients = clause.role('subject'), clause.role('recipient')
+    if not recipients:   # à + 名詞の前置詞句 (Tu manques à ta mère)
+        recipients = [dataclasses.replace(np, prep=None) for role, np in clause.args
+                      if role == 'prep' and np.prep is not None and (np.prep.surface or '') in ('à', 'au', 'aux')][:1]
+    if not subjects or not recipients:
+        return
+    args = [(role, np) for role, np in clause.args if role not in ('subject', 'recipient') and
+            not (role == 'prep' and np.prep is not None and (np.prep.surface or '') in ('à', 'au', 'aux'))]
+    clause.args = [('subject', dataclasses.replace(recipients[0], case='Nom')),
+                   ('object', dataclasses.replace(subjects[0], case='Acc'))] + args
+    clause.experiencer = clause.verb.lemma
+    clause.verb = Lex('miss', 'verb', '恋しく思う', en='miss', lang='en', surface=clause.verb.surface)
+    person = recipients[0].head
+    if person is not None and person.pos == 'pronoun' and person.lemma in ('ego', 'tū'):
+        clause.person, clause.number = {'ego': 1, 'tū': 2}[person.lemma], recipients[0].number or 'sg'
+    else:
+        clause.person, clause.number = 3, recipients[0].number or 'sg'
 
 
 # 移動の動詞: 町の名前・domum・rūs の対格は前置詞なしで方向 (Rōmam vēnit「ローマへ来た」)

@@ -3,11 +3,12 @@
 #
 # フランス語の辞書 (SQLite) を Wiktionary (kaikki.org の抽出データ) から作る
 #
-#   python3 tools/build_french_dic.py [FILE.jsonl | -]
+#   python3 tools/build_french_dic.py [FILE.jsonl | -] [OUT.sqlite]   (OUT を省くと $DRAGOMAN_DATA/fr/wiktionary.sqlite)
 #   curl -sL https://kaikki.org/dictionary/French/kaikki.org-dictionary-French.jsonl | python3 tools/build_french_dic.py -
 #
 # 元のデータは約 580MB あるので、標準入力から読んで必要なものだけを残せる (元のファイルを置かなくてよい)。
-# 見出し語ごとの品詞・訳語 (英語の語義。日本語には実行時に core/en_ja.py で直す)・名詞の性、
+# 見出し語ごとの品詞・訳語 (英語の語義。日本語には実行時に core/en_ja.py で直す)・名詞の性・動詞の語義の印 (他動・自動・
+# 再帰と à を取るか。人を表す接語の格を決めるのに使う)、
 # 語形の表 (見出し語・品詞 → 語形・印 (数・性・人称・法・時制))。動詞は単純時制の形だけ (複合時制は avoir / être + 過去分詞で作る)。
 # 「plural of 〜」「feminine of 〜」のような語義だけの項目は、語形の表に入れる。
 # 語形の表は見出し順に並べて持つ (WITHOUT ROWID。tools/shrink_dic.py と同じ形) + 語形の索引
@@ -62,16 +63,36 @@ def gender_of(entry):
     return None
 
 
+VALENCY_TAGS = ('transitive', 'intransitive', 'ambitransitive', 'reflexive', 'pronominal', 'impersonal', 'ditransitive')
+TO_SOMEONE = re.compile(r"\b(?:something|sth\.?|it|them|one's \w+) to (?:someone|somebody|sb\b|another)|\bto someone else", re.I)
+WITH_A = re.compile(r"\[with à|\(\+ à|with à\b|à qqn|à quelqu'un|indirect object", re.I)
+
+
+def valency_of(senses):
+    """動詞の語義の印 (最初の3つの語義): transitive・intransitive・reflexive … と、à を取るか ('à'。「[with à ‘to’]」)。
+    語義ごとに ';' で区切る (例: 'transitive,à;intransitive')"""
+    out = []
+    for sense in senses[:3]:
+        tags = [t for t in (sense.get('tags') or []) if t in VALENCY_TAGS]
+        raw = ' '.join(sense.get('raw_glosses') or sense.get('glosses') or [])
+        if WITH_A.search(raw):
+            tags.append('à')
+        if TO_SOMEONE.search(raw):
+            tags.append('to-someone')   # to grant (something to someone)、to give … to someone else
+        out.append(','.join(tags))
+    return ';'.join(out)
+
+
 def main():
     t0 = time.time()
     source = sys.argv[1] if len(sys.argv) > 1 else paths.data('fr', 'kaikki.org-dictionary-French.jsonl')
-    out = paths.data('fr', 'wiktionary.sqlite')
+    out = sys.argv[2] if len(sys.argv) > 2 else paths.data('fr', 'wiktionary.sqlite')   # 試すときは別の出力先に
     tmp = out + '.tmp'
     if os.path.exists(tmp):
         os.unlink(tmp)
     db = sqlite3.connect(tmp)
     db.executescript('''
-        CREATE TABLE lemmas (key TEXT, pos TEXT, en TEXT, gender TEXT, senses INTEGER, word TEXT);
+        CREATE TABLE lemmas (key TEXT, pos TEXT, en TEXT, gender TEXT, senses INTEGER, word TEXT, valency TEXT);
         CREATE TABLE forms (lemma TEXT, pos TEXT, form TEXT, tags TEXT, PRIMARY KEY (lemma, pos, form, tags)) WITHOUT ROWID;
     ''')
     lemmas, forms = [], set()
@@ -104,7 +125,17 @@ def main():
         if not senses:
             continue
         en = english_glosses(entry, senses=senses)
-        lemmas.append((word.lower(), pos, en, gender_of(entry) if pos in ('noun', 'name') else None, len(senses), word))
+        key = word.lower()
+        if pos == 'verb' and key.startswith(("s'", 'se ')):
+            key = 'se ' + key[2:].lstrip()   # 代名動詞の見出し (s'appeler → se appeler)
+        lemmas.append((key, pos, en, gender_of(entry) if pos in ('noun', 'name') else None, len(senses), word,
+                       valency_of(senses) if pos == 'verb' else None))
+        if pos == 'verb' and not key.startswith('se '):
+            # 再帰・代名動詞の語義 ((reflexive) to get up) は「se + 動詞」の見出しにも (se lever「起きる」)
+            reflexive = [sense for sense in senses if {'reflexive', 'pronominal'} & set(sense.get('tags') or [])]
+            if reflexive:
+                lemmas.append(('se ' + key, pos, english_glosses(entry, senses=reflexive), None, len(reflexive),
+                               'se ' + word, valency_of(reflexive)))
         for f in entry.get('forms', []):
             tags = set(f.get('tags') or [])
             form = f.get('form', '')
@@ -116,7 +147,7 @@ def main():
         if n % 200000 == 0:
             print('  %d lines, %d entries, %d forms (%.0fs)' % (n, len(lemmas), len(forms), time.time() - t0),
                   file=sys.stderr)
-    db.executemany('INSERT INTO lemmas VALUES (?, ?, ?, ?, ?, ?)', lemmas)
+    db.executemany('INSERT INTO lemmas VALUES (?, ?, ?, ?, ?, ?, ?)', lemmas)
     db.executemany('INSERT OR IGNORE INTO forms VALUES (?, ?, ?, ?)', sorted(forms))
     db.executescript('CREATE INDEX lemmas_key ON lemmas (key); CREATE INDEX forms_form ON forms (form);')
     db.commit()

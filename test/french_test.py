@@ -54,6 +54,13 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Il me donne le livre.'), '{彼,それ}が / 私に / 本を / 与える')
         self.assertEqual(self.ja('Il me voit.'), '{彼,それ}が / 私を / 見る')
 
+    def test_pronominal_and_experiencer(self):
+        self.assertEqual(self.ja('Il se lève.'), '{彼,それ}が / 起きる')                   # 代名動詞 (辞書の se lever)
+        self.assertEqual(self.ja("Elle s'est levée tôt."), '{彼女,それ}が / 早く / 起きた')  # 再帰 + être は複合過去
+        self.assertEqual(self.ja("Je m'appelle Jean."), '私が / ジャンと / 呼ばれている')
+        self.assertEqual(self.ja('Tu me manques.'), '私は / 君が / いなくて寂しい')          # manquer à
+        self.assertEqual(self.ja('Tu manques à ta mère.'), '君の母は / 君が / いなくて寂しい')
+
     def test_names(self):
         self.assertEqual(self.ja('Jean aime Marie.'), 'ジャンが / マリを / 愛する,好む')
 

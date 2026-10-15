@@ -391,6 +391,9 @@ def verb_group(clause, person, number, agree=('m', 'sg')):
     if not lemma or lemma.startswith('['):
         return lemma, []
     g, n = agree
+    pronominal = lemma.startswith('se ')
+    if pronominal:   # 代名動詞 (se lever): 動詞の部分で活用し、複合過去は être (再帰の代名詞は呼ぶ側で)
+        lemma = lemma[3:]
     if clause.voice == 'passive':
         tense = 'imperfect' if clause.tense == 'imperfect' else 'future' if clause.tense == 'future' else 'present'
         if clause.tense in ('perfect', 'past-perfect'):   # a été + 過去分詞
@@ -399,7 +402,7 @@ def verb_group(clause, person, number, agree=('m', 'sg')):
         return finite('être', tense, person, number), [participle_form(lemma, g, n)]
     if clause.tense in ('perfect', 'past-perfect', 'future-perfect'):
         tense = 'imperfect' if clause.tense == 'past-perfect' else 'future' if clause.tense == 'future-perfect' else 'present'
-        if lemma in ETRE_VERBS:
+        if lemma in ETRE_VERBS or pronominal:
             return finite('être', tense, person, number), [participle_form(lemma, g, n)]
         aux = AVOIR.get((tense, person, number)) or finite('avoir', tense, person, number)
         return aux, [participle_form(lemma)]
@@ -432,8 +435,16 @@ def _negate(verb_words, negated):
 
 
 def realize(clause, gap=None, antecedent=None):
-    from .frame import lexical_negation, periphrastic
+    from .frame import lexical_negation, periphrastic, Lex
     clause = lexical_negation(periphrastic(clause))
+    if clause.experiencer:   # 入れ替えた manquer à を元に (Ego tē dēsīderō の枠 → Tu me manques)
+        subject, obj = (clause.role('subject') or [None])[0], (clause.role('object') or [None])[0]
+        if subject is not None and obj is not None:
+            args = [(r, np) for r, np in clause.args if r not in ('subject', 'object')]
+            clause = dataclasses.replace(clause, args=[('subject', dataclasses.replace(obj, case='Nom')),
+                                                       ('recipient', dataclasses.replace(subject, case='Dat'))] + args,
+                                         experiencer='',
+                                         verb=Lex(clause.experiencer, 'verb', lang='fr'), person=None, number=None)
     person, number = _person(clause)
     subject = (clause.role('subject') or [None])[0]
     words = []
@@ -506,6 +517,8 @@ def realize(clause, gap=None, antecedent=None):
         else:
             objects.append(with_preposition('dans', noun_phrase(np, 'Str')))
     verb, tail = verb_group(clause, person, number, agree)
+    if word(clause.verb, 'verb').startswith('se '):   # 代名動詞の再帰の代名詞 (il se lève・je m'appelle)
+        clitics.insert(0, {(1, 'sg'): 'me', (2, 'sg'): 'te', (1, 'pl'): 'nous', (2, 'pl'): 'vous'}.get((person, number), 'se'))
     if clause.mood == 'imperative':
         lemma = word(clause.verb, 'verb')
         form = find_form(lemma, 'verb', ('imperative', 'second-person', 'plural' if number == 'pl' else 'singular')) or verb

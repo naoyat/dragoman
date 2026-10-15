@@ -10,7 +10,7 @@ import sqlite3
 from dragoman.core import paths
 
 DB_PATH = paths.data('fr', 'wiktionary.sqlite')
-FIELDS = ('key', 'pos', 'en', 'gender', 'senses', 'word')
+FIELDS = ('key', 'pos', 'en', 'gender', 'senses', 'word', 'valency')
 _db = None
 
 
@@ -30,8 +30,24 @@ def _rows(key):
     db = _connect()
     if db is None or not key:
         return ()
-    return tuple(dict(zip(FIELDS, row)) for row in
-                 db.execute('SELECT %s FROM lemmas WHERE key = ?' % ', '.join(FIELDS), (key.lower(),)).fetchall())
+    columns = [c for c in FIELDS if c in _columns()]   # 古い辞書には valency の列が無い
+    return tuple(dict(zip(columns, row)) for row in
+                 db.execute('SELECT %s FROM lemmas WHERE key = ?' % ', '.join(columns), (key.lower(),)).fetchall())
+
+
+@functools.lru_cache(maxsize=1)
+def _columns():
+    return {row[1] for row in _connect().execute('PRAGMA table_info(lemmas)')}
+
+
+def valency(lemma):
+    """動詞の語義の印 (最初の3つの語義の集まり: transitive・intransitive・reflexive・à・to-someone …)"""
+    rows = lemmas(lemma, 'verb')
+    tags = set()
+    for row in rows[:1]:
+        for sense in (row.get('valency') or '').split(';'):
+            tags |= {t for t in sense.split(',') if t}
+    return tags
 
 
 def lemmas(word, pos=None):
