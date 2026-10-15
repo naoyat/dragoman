@@ -12,7 +12,7 @@
 #   音声 ang の言語の設定は en (ドイツ語の設定は音素表とは別に語末の無声化をする)
 # 入力: espeak-ng のソース (https://github.com/espeak-ng/espeak-ng、GPL-3.0) の phsource/。インストールしてある
 #       espeak-ng と同じ版 (コンパイルしたデータの形式が版ごとに違う)。既定は
-#       $DRAGOMAN_DATA/ang/espeak-src/espeak-ng-<版>/phsource
+#       $DRAGOMAN_DATA/espeak-src/espeak-ng-<版>/phsource (ほかの言語の表を作るときも共用)
 # 出力: $DRAGOMAN_DATA/ang/espeak-ng-data (インストールしてある espeak-ng のデータの写しに、古英語の表と音声 ang を
 #       足してコンパイルし直したもの。espeak-ng-data 由来 (GPL-3.0)。インストールしてあるデータには触れない)
 #   使い方: espeak-ng --path=$DRAGOMAN_DATA/ang -v ang "[[hw'&t]]"
@@ -92,7 +92,7 @@ def espeak_version_and_data():
 def main():
     version, installed = espeak_version_and_data()
     root = paths.data('ang')
-    src = sys.argv[1] if len(sys.argv) > 1 else os.path.join(root, 'espeak-src', 'espeak-ng-%s' % version, 'phsource')
+    src = sys.argv[1] if len(sys.argv) > 1 else paths.data('espeak-src', 'espeak-ng-%s' % version, 'phsource')
     if not os.path.isdir(src):
         sys.exit('no phsource: %s (espeak-ng %s のソースを展開しておく)' % (src, version))
     data = os.path.join(root, 'espeak-ng-data')

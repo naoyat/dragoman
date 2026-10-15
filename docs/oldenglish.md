@@ -94,7 +94,7 @@ espeak-ng の音素はテキストの定義（ソースの `phsource/`）から�
 * 音声の言語の設定は en（de・nl の設定は音素表とは別に語末の有声音を無声にする: gōd [goːt]）。
 
 ソースは espeak-ng と同じ版のもの（コンパイルしたデータの形式が版ごとに違う。https://github.com/espeak-ng/espeak-ng 、GPL-3.0）を
-`$DRAGOMAN_DATA/ang/espeak-src/espeak-ng-<版>/` に展開しておく（使うのは `phsource/` だけ）。表の定義はこのツールが書き出すので、
+`$DRAGOMAN_DATA/espeak-src/espeak-ng-<版>/`（ほかの言語の表を作るときも共用） に展開しておく（使うのは `phsource/` だけ）。表の定義はこのツールが書き出すので、
 リポジトリに espeak-ng の定義は入れない。作ったデータは espeak-ng-data 由来（GPL-3.0）。
 
 ```
