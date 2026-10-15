@@ -107,6 +107,8 @@ class GermanTestCase(unittest.TestCase):
         self.assertEqual(german.finite('sehen', 'present', 3, 'sg'), ('sieht', ''))
         self.assertEqual(german.finite('sehen', 'past', 3, 'pl'), ('sahen', ''))
         self.assertEqual(german.finite('anrufen', 'present', 3, 'sg'), ('ruft', 'an'))   # 分離動詞
+        self.assertEqual([german.finite(v, 'present', 1, 'sg')[0] for v in ('bedauern', 'sammeln')],
+                         ['bedaure', 'sammle'])                                # 口語の bedauer・sammel より
         self.assertEqual(german.participle_form('lesen'), 'gelesen')
 
 

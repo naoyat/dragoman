@@ -304,6 +304,13 @@ def finite(lemma, tense, person, number, subordinate=False):
     wanted = ('indicative', 'preterite' if tense == 'past' else 'present') + tags
     form = find_form(lemma, 'verb', wanted, avoid=('dependent', 'subjunctive-i', 'subjunctive-ii'))
     form = form or find_form(lemma, 'verb', wanted, avoid=('subjunctive-i', 'subjunctive-ii'))
+    if (person, number) == (1, 'sg') and tense != 'past':
+        # 1人称単数の候補が複数 (bedauer・bedauere・bedaure、sammel・sammele・sammle) なら -e の付いた短いもの (口語の
+        # 語尾の無い形 bedauer より ich bedaure・ich sammle)
+        candidates = [f for f, tags in _forms(lemma, 'verb') if set(wanted) <= tags and ' ' not in f and
+                      not tags & {'subjunctive-i', 'subjunctive-ii'} and f.endswith('e')]
+        if candidates:
+            form = min(candidates, key=len)
     if form is None:
         form = _regular(lemma, tense, person, number)
     if subordinate:

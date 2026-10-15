@@ -382,6 +382,8 @@ PREFERRED = {
 # 英語の miss は「恋しく思う」(フランス語の manquer à を入れ替えた枠: Tu me manques → I miss you)。的を外す意味にしない
 for _lang, _lemma in (('de', 'vermissen'), ('fi', 'kaivata'), ('tr', 'özlemek'), ('ko', '그리워하다')):
     PREFERRED.setdefault(_lang, {})[('miss', 'verb')] = (_lemma, '')
+# フランス語の content「うれしい」は英語 glad (content より自然: I am glad that you come)
+FIRST_GLOSSES.setdefault('fr', {})['content'] = 'glad'
 # 英語の like は人を主語にした「好む」(plaire à を入れ替えた枠。gefallen・piacere のような物が主語の動詞にしない)
 for _lang, _lemma in (('de', 'mögen'), ('fi', 'pitää'), ('tr', 'sevmek'), ('ko', '좋아하다')):
     PREFERRED.setdefault(_lang, {})[('like', 'verb')] = (_lemma, '')
