@@ -953,7 +953,7 @@ class CompareTestCase(unittest.TestCase):
 
 
 
-class QuestionTestCase(unittest.TestCase):
+class DirectQuestionTestCase(unittest.TestCase):
     """直接の疑問文: 文末の ? を枠の印に、各言語の文末を ? (日本語は「か」) に"""
 
     def test_punctuate(self):
