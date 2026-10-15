@@ -324,11 +324,13 @@ def participle_form(lemma):
     return find_form(lemma, 'verb', ('participle', 'past')) or 'ge' + (lemma[:-2] if lemma.endswith('en') else lemma) + 't'
 
 
-def verb_parts(clause, person, number, subordinate=False):
+def verb_parts(clause, person, number, subordinate=False, infinitive=False):
     """(定形, 文末の語の列)。否定の nicht は呼ぶ側で"""
     lemma = word(clause.verb, 'verb')
     if not lemma or lemma.startswith('['):
         return lemma, []
+    if infinitive:   # 話法の助動詞の後ろの不定詞の節の動詞は不定詞 (文末に: Ich kann das Buch lesen)
+        return '', [lemma]
     key = (person, number)
     if clause.voice == 'passive':
         aux = 'werden_past' if clause.tense in ('perfect', 'imperfect', 'past-perfect') else 'werden'
@@ -362,9 +364,43 @@ def _copula_words(clause, person, number):
     return AUX['sein'][key]
 
 
-def realize(clause, gap=None, subordinate=False):
+# 不定詞を支配する話法の動詞 (ラテン語の見出し) → ドイツ語の話法の助動詞
+GERMAN_MODALS = {'possum': 'können', 'volō': 'wollen', 'dēbeō': 'müssen', 'oportet': 'müssen', 'faciō': 'lassen',
+                 'sinō': 'lassen'}
+
+
+def _modal(clause, gap, subordinate):
+    """話法の助動詞 + 不定詞 (Ich kann das Buch lesen、Man muss gehen、Er lässt mich lachen)。当てはまらなければ None"""
+    from .frame import Lex, NP
+    if clause.copula or len(clause.infinitives) != 1 or clause.verb is None:
+        return None
+    modal = GERMAN_MODALS.get(clause.verb.lemma) if clause.verb.lang in ('', 'la') else \
+        (clause.verb.lemma if clause.verb.lemma in GERMAN_MODALS.values() else None)
+    if modal is None:
+        return None
+    inner = clause.infinitives[0]
+    person_np = (inner.role('subject') or [None])[0] if modal == 'lassen' else None
+    inner_words = realize(dataclasses.replace(inner, mood='indicative', args=[(r, np) for r, np in inner.args
+                                                                             if r != 'subject']),
+                          gap='subject', subordinate=True, infinitive=True)
+    args = list(clause.args)
+    if modal == 'müssen' and clause.verb.lemma == 'oportet' and not clause.role('subject'):
+        args = [('subject', NP(Lex('man', 'pronoun', lang='de')))]   # Man muss gehen
+    if person_np is not None:
+        args.append(('object', person_np))   # Er lässt mich lachen
+    outer = dataclasses.replace(clause, verb=Lex(modal, 'verb', lang='de'), infinitives=[], args=args)
+    words = realize(outer, gap, subordinate)
+    if subordinate:   # 副文: … lesen kann (定動詞を最後に)
+        return words[:-1] + inner_words + words[-1:]
+    return words + inner_words
+
+
+def realize(clause, gap=None, subordinate=False, infinitive=False):
     from .frame import lexical_negation, periphrastic
     clause = lexical_negation(periphrastic(clause))
+    modal = _modal(clause, gap, subordinate)
+    if modal is not None:
+        return modal
     person, number = _person(clause)
     subject = (clause.role('subject') or [None])[0]
     head_words = []
@@ -416,7 +452,7 @@ def realize(clause, gap=None, subordinate=False):
                 middle.append(noun_phrase(np, 'Gen'))
             else:
                 middle.append(_contract('in', noun_phrase(np, 'Dat')))
-        verb, tail = verb_parts(clause, person, number, subordinate)
+        verb, tail = verb_parts(clause, person, number, subordinate, infinitive)
         if clause.negated:
             tail = ['nicht'] + tail
     if clause.mood == 'imperative' and not clause.copula:

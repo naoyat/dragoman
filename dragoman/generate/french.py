@@ -395,12 +395,14 @@ def _person(clause):
     return clause.person or 3, clause.number or 'sg'
 
 
-def verb_group(clause, person, number, agree=('m', 'sg'), subjunctive=False):
+def verb_group(clause, person, number, agree=('m', 'sg'), subjunctive=False, infinitive=False):
     """(定形, 定形の後ろの語の列 (過去分詞・不定詞))。否定の ne … pas・接語の代名詞は呼ぶ側で"""
     lemma = word(clause.verb, 'verb')
     if not lemma or lemma.startswith('['):
         return lemma, []
     g, n = agree
+    if infinitive:   # 話法の動詞の後ろの不定詞の節の動詞は不定詞のまま (je peux lire)
+        return (lemma[3:] if lemma.startswith('se ') else lemma), []
     pronominal = lemma.startswith('se ')
     if pronominal:   # 代名動詞 (se lever): 動詞の部分で活用し、複合過去は être (再帰の代名詞は呼ぶ側で)
         lemma = lemma[3:]
@@ -446,9 +448,45 @@ def _negate(verb_words, negated):
     return ['ne'] + verb_words[:1] + ['pas'] + verb_words[1:]
 
 
-def realize(clause, gap=None, antecedent=None, subjunctive=False):
+# 不定詞を支配する話法の動詞 (ラテン語の見出し) → フランス語の動詞
+FRENCH_MODALS = {'possum': 'pouvoir', 'volō': 'vouloir', 'dēbeō': 'devoir', 'oportet': 'falloir', 'faciō': 'faire',
+                 'sinō': 'laisser'}
+
+
+def _modal(clause, gap, antecedent, subjunctive):
+    """話法の動詞 + 不定詞の節 (Je peux le lire、Il faut partir、Il me fait rire)。当てはまらなければ None"""
+    from .frame import Lex
+    if clause.copula or len(clause.infinitives) != 1 or clause.verb is None:
+        return None
+    modal = FRENCH_MODALS.get(clause.verb.lemma) if clause.verb.lang in ('', 'la') else \
+        (clause.verb.lemma if clause.verb.lemma in FRENCH_MODALS.values() else None)
+    if modal is None:
+        return None
+    inner = clause.infinitives[0]
+    causative = modal in ('faire', 'laisser')
+    person_np = (inner.role('subject') or [None])[0] if causative else None
+    inner_words = realize(dataclasses.replace(inner, mood='indicative', args=[(r, np) for r, np in inner.args
+                                                                             if r != 'subject']), gap='subject',
+                          infinitive=True)
+    outer = dataclasses.replace(clause, verb=Lex(modal, 'verb', lang='fr'), infinitives=[])
+    if causative and person_np is not None:
+        clitic = _clitic(person_np, 'Acc')
+        if clitic:   # Il me fait rire (人の接語は faire の前)
+            outer = dataclasses.replace(outer, args=list(outer.args) + [('object', person_np)])
+        else:        # Il fait rire les enfants
+            inner_words = inner_words + [noun_phrase(person_np, 'Acc')]
+    if modal == 'falloir':
+        outer = dataclasses.replace(outer, args=[(r, np) for r, np in outer.args if r != 'subject'], person=3, number='sg')
+    words = realize(outer, gap, antecedent, subjunctive)
+    return words + inner_words
+
+
+def realize(clause, gap=None, antecedent=None, subjunctive=False, infinitive=False):
     from .frame import lexical_negation, periphrastic, Lex
     clause = lexical_negation(periphrastic(clause))
+    modal = _modal(clause, gap, antecedent, subjunctive)
+    if modal is not None:
+        return modal
     if clause.experiencer:   # 入れ替えた manquer à を元に (Ego tē dēsīderō の枠 → Tu me manques)
         subject, obj = (clause.role('subject') or [None])[0], (clause.role('object') or [None])[0]
         if subject is not None and obj is not None:
@@ -533,7 +571,7 @@ def realize(clause, gap=None, antecedent=None, subjunctive=False):
             objects.append(with_preposition('de', noun_phrase(np, 'Str')))
         else:
             objects.append(with_preposition('dans', noun_phrase(np, 'Str')))
-    verb, tail = verb_group(clause, person, number, agree, subjunctive)
+    verb, tail = verb_group(clause, person, number, agree, subjunctive, infinitive)
     if word(clause.verb, 'verb').startswith('se '):   # 代名動詞の再帰の代名詞 (il se lève・je m'appelle)
         clitics.insert(0, {(1, 'sg'): 'me', (2, 'sg'): 'te', (1, 'pl'): 'nous', (2, 'pl'): 'vous'}.get((person, number), 'se'))
     if clause.mood == 'imperative':

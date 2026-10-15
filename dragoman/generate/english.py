@@ -653,6 +653,11 @@ def frame_lex(lemma, pos, ja):
     return Lex(lemma, pos, ja)
 
 
+# 不定詞を支配する話法の動詞 (ラテン語の見出し) → 英語の動詞 (フランス語の devoir・il faut・faire + 不定詞から)
+MODAL_VERBS = {'dēbeō': 'have to', 'oportet': 'be necessary', 'faciō': 'make', 'sinō': 'let', 'volō': 'want to'}
+IMPERSONAL = {'oportet', 'licet', 'pluit', 'ningit'}   # 主語の無い動詞の主語は it (It is necessary to leave)
+
+
 def infinitive_phrase(inner, main_subject=None):
     """不定詞句: 言う・思う → that 節、見る・聞く → 目的語 + 原形、命じる → 目的語 + to 不定詞、補足 → to 不定詞"""
     kind = inner.infinitive_kind
@@ -666,8 +671,9 @@ def infinitive_phrase(inner, main_subject=None):
                 [(r, np) for r, np in finite.args if np is not subjects[0]]
         return 'that ' + realize(finite, capitalize=False)
     rest = realize(_replace(inner, args=[(r, np) for r, np in inner.args if r != 'subject']), capitalize=False)
-    subject = noun_phrase(subjects[0], objective=True) + ' ' if subjects and kind in ('perception', 'command') else ''
-    if kind == 'perception':
+    subject = noun_phrase(subjects[0], objective=True) + ' ' if subjects and \
+        kind in ('perception', 'command', 'causative') else ''
+    if kind in ('perception', 'causative'):   # make me laugh・let him go (原形)
         rest = rest[3:] if rest.startswith('to ') else rest   # I see the girl sing
     return subject + rest
 
@@ -740,6 +746,8 @@ def realize(clause, capitalize=True):
     verb = word(clause.verb) if not clause.copula else 'be'
     if not clause.copula and clause.verb.lemma in DATIVE_VERBS:
         verb = DATIVE_VERBS[clause.verb.lemma]
+    if clause.infinitives and not clause.copula and clause.verb.lemma in MODAL_VERBS:
+        verb = MODAL_VERBS[clause.verb.lemma]   # dēbeō + 不定詞 → have to、faciō → make (使役)
     if clause.infinitives:
         verb = re.sub(' to$', '', verb)   # be able to + to read → be able to read
     out = []
@@ -767,7 +775,8 @@ def realize(clause, capitalize=True):
         if p.kind == 'absolute':
             out.append(participial(p) + ',')
     if clause.mood not in ('imperative', 'infinitive') and not (subject is None and clause.gap == 'subject'):
-        out.append(noun_phrase(subject) if subject is not None else PRONOUNS.get((person, number), 'it'))
+        out.append(noun_phrase(subject) if subject is not None else
+                   'it' if clause.verb.lemma in IMPERSONAL else PRONOUNS.get((person, number), 'it'))
         for other in subjects[1:]:
             out[-1] += ', ' + noun_phrase(other) + ','   # 主語が2つ (並列でない): 同格として (this, the slave,)
     for p in clause.adjuncts:

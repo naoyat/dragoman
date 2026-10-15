@@ -672,6 +672,7 @@ def _merge(aux_word, main_word, aux_lemma, reflexive=None):
             else m.ja
         data['tense'] = tense
         form = '%s + 不定詞' % aux_lemma
+        data.update(modal=aux_lemma, main_ja=m.ja)   # 文の枠では話法の動詞 + 不定詞の節に (possum legere)
     data['mood'] = 'indicative' if data.get('mood') in ('participle', 'infinitive') else data.get('mood')
     data['form'] = form
     data['main'] = True

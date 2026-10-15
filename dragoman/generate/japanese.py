@@ -159,6 +159,8 @@ def predicate(clause, final=True):
         text = gloss(np.head) if adjective else noun_phrase(np)
         return copula_predicate(text, adjective, tense, clause.negated).split(',')[0]
     verb = collocation(clause, gloss(clause.verb))
+    if verb.endswith(('ない', 'たい')):   # 形容詞の活用の補助 (出発しなければならない・読みたい → ならなかった・読みたかった)
+        return copula_predicate(verb, True, tense, clause.negated).split(',')[0]
     if not re.search('[うくぐすつぬぶむる]$', verb):
         verb += 'する' if not verb.endswith('する') else ''
     try:
@@ -175,11 +177,41 @@ def _negative_pronoun(np):
     return np.head is not None and not np.members and np.head.lemma in NEGATIVE_PRONOUNS and np.head.pos != 'adj'
 
 
+# 不定詞を支配する話法の動詞 → 本動詞に付ける形 (possum legere「読むことができる」、dēbeō「〜なければならない」、
+# faciō + 不定詞「〜させる」)
+JA_MODALS = {'possum': 'ことができる', 'volō': 'たい', 'dēbeō': 'なければならない', 'oportet': 'なければならない',
+             'faciō': 'させる', 'sinō': 'させておく'}
+
+
+def _fold_modal(clause):
+    """話法の動詞 + 不定詞の節を1つの述語に (出発しなければならない、私を笑わせる)。当てはまらなければ元の節"""
+    import dataclasses
+    from dragoman.core.japanese import attach_auxiliary
+    from .frame import Lex
+    if clause.copula or clause.verb is None or clause.verb.lemma not in JA_MODALS or len(clause.infinitives) != 1:
+        return clause
+    inner = clause.infinitives[0]
+    if inner.copula or inner.infinitives:
+        return clause
+    causative = clause.verb.lemma in ('faciō', 'sinō')
+    args = []
+    for role, np in inner.args:
+        if role == 'subject':
+            if not causative:
+                continue   # 主節と同じ主語
+            role = 'object'   # 使役の人は「を」(私を笑わせる)
+        args.append((role, np))
+    ja = attach_auxiliary(gloss(inner.verb), JA_MODALS[clause.verb.lemma])
+    return dataclasses.replace(clause, verb=Lex(ja, 'verb', ja), infinitives=[], args=clause.args + args,
+                               adverbs=clause.adverbs + inner.adverbs)
+
+
 def clause_text(clause, final=True, attributive=False):
     """節 → 日本語 (述語まで)"""
     import dataclasses
     from .frame import dative_as_object, prohibition
     clause = dative_as_object(prohibition(clause), 'ja')   # miserēre nōbīs → 私たちを憐れめ、Nōlī timēre → 恐れるな
+    clause = _fold_modal(clause)
     if any(_negative_pronoun(np) for _, np in clause.args):
         clause = dataclasses.replace(clause, negated=True)
     parts = [_participial(p) for p in clause.adjuncts if p.kind == 'absolute']   # 独立奪格は節の頭 (王が死んで、…)

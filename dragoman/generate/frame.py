@@ -643,6 +643,12 @@ def clause_of(predicate, lang=None):
             clause.number = 'pl'   # 数詞で複数にした主語 (kaksi kissaa → duo cattī) に繋辞を合わせる (sunt)
     if _lang == 'fr' and predicate.first_item.attrib('experiencer'):
         _swap_experiencer(clause)
+    if verb_item.attrib('modal') in SOURCE_MODALS:
+        clause = _modal_clause(clause, verb_item)
+    if verb_item.attrib('recent_past'):   # 近い過去 venir de「〜したところだ」→ 完了 + modo「たった今」
+        clause.tense = 'perfect'
+        clause.verb = dataclasses.replace(clause.verb, ja=verb_item.attrib('recent_past'))
+        clause.adverbs.insert(0, Lex('modo', 'adv', 'たった今'))
     if _lang == 'fr' and clause.negated and any(np.head is not None and np.head.lemma in ('nēmō', 'nihil')
                                                 for _, np in clause.args):
         clause.negated = False   # ne は personne・rien との呼応 (Personne ne vient → Nēmō venit。二重否定にしない)
@@ -651,6 +657,32 @@ def clause_of(predicate, lang=None):
 
 # 人が与格・物が主語の動詞 → 人を主語にした英語の動詞と日本語の訳 (manquer à → miss、plaire à → like)
 EXPERIENCER_FRAMES = {'manquer': ('miss', '恋しく思う'), 'plaire': ('like', '好む,気に入る')}
+
+
+# まとめた動詞の組の話法の助動詞 (フランス語・ドイツ語) → ラテン語の話法の動詞と日本語の訳
+SOURCE_MODALS = {'pouvoir': ('possum', 'できる'), 'savoir': ('possum', 'できる'), 'vouloir': ('volō', '望む,欲しい'),
+                 'devoir': ('dēbeō', 'ねばならない'), 'falloir': ('oportet', 'ねばならない'), 'faire': ('faciō', 'させる'),
+                 'laisser': ('sinō', 'させておく'), 'können': ('possum', 'できる'), 'wollen': ('volō', '望む,欲しい'),
+                 'müssen': ('dēbeō', 'ねばならない'), 'sollen': ('dēbeō', 'ねばならない'), 'dürfen': ('possum', 'できる'),
+                 'mögen': ('volō', '望む,欲しい'), 'möchten': ('volō', '望む,欲しい'), 'lassen': ('sinō', 'させておく')}
+
+
+def _modal_clause(clause, verb_item):
+    """まとめた「話法の助動詞 + 不定詞」(peut lire・kann lesen・fait rire) を、ラテン語と同じ「話法の動詞 + 不定詞の節」
+    (potest legere) に。主語は外の節、目的語などは不定詞の節。使役 (faire rire) の人は不定詞の主語 (目的語の対格)"""
+    lemma, ja = SOURCE_MODALS[verb_item.attrib('modal')]
+    inner = dataclasses.replace(clause, verb=dataclasses.replace(clause.verb, ja=verb_item.attrib('main_ja') or clause.verb.ja),
+                                mood='infinitive', infinitive_kind='complement', tense='present', negated=False,
+                                args=[(r, np) for r, np in clause.args if r != 'subject'], adverbs=[], connectives=[],
+                                subordinator='', question=False, person=clause.person, number=clause.number)
+    if lemma in ('faciō', 'sinō'):   # 使役: 人 (Il me fait rire の me) は不定詞の主語
+        inner.infinitive_kind = 'causative'
+        people = [np for r, np in inner.args if r in ('object', 'recipient')]
+        if people:
+            inner.args = [('subject', people[0])] + [(r, np) for r, np in inner.args if np is not people[0]]
+    outer = dataclasses.replace(clause, verb=Lex(lemma, 'verb', ja, surface=clause.verb.surface),
+                                args=[(r, np) for r, np in clause.args if r == 'subject'], infinitives=[inner])
+    return outer
 
 
 def _swap_experiencer(clause):
