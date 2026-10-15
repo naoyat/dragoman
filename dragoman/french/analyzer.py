@@ -192,6 +192,22 @@ def corrections(doc):
         if prev.pos_ in ('NOUN', 'PROPN') or p in ('qui', 'je', "j'", 'tu', 'il', 'elle', 'on', 'nous', 'vous', 'ils',
                                                   'elles', 'ce', "c'", 'cela', 'ça') or k < t.i - 1:
             fixed[t.i] = 'VERB'   # 主語・関係代名詞 qui・接語の後ろの動詞の形 (Le garçon lit、qui chante)
+    for t in words:   # 助動詞の後ろの過去分詞・話法の動詞の後ろの不定詞を名詞と読む誤り (j'ai lu、il me fait rire)
+        if t.i in fixed or t.pos_ in ('VERB', 'AUX', 'PUNCT'):
+            continue
+        lower = t.text.lower()
+        k = t.i - 1
+        while k >= 0 and (words[k].pos_ == 'ADV' or words[k].text.lower() in morphology.CLITICS | {'ne', "n'", 'pas'}):
+            k -= 1
+        if k < 0:
+            continue
+        head = words[k].lemma_
+        if head in ('avoir', 'être') and (words[k].pos_ in ('AUX', 'VERB') or fixed.get(words[k].i) == 'VERB') and \
+                any('participle' in t2 and 'past' in t2 for _, t2 in morphology.verb_forms(lower)):
+            fixed[t.i] = 'PARTICIPLE'
+        elif head in morphology.MODALS and dictionary.lemmas(lower, 'verb') and \
+                re.search(r'(?:er|ir|re|oir)$', lower) and words[k].pos_ in ('VERB', 'AUX'):
+            fixed[t.i] = 'INFINITIVE'
     for t in words:
         lower = t.text.lower()
         if lower not in morphology.CLITICS or t.i in fixed:
@@ -221,11 +237,15 @@ def _verb_feats(feats, tags=None):
         # 語義からの印は複数の読みが混ざる (first/third-person singular present indicative/subjunctive): 直説法・3人称を先に
         mood = 'indicative' if 'indicative' in tags else 'imperative' if 'imperative' in tags else \
             'subjunctive' if 'subjunctive' in tags or 'conditional' in tags else 'indicative'
+        if 'conditional' in tags and 'indicative' not in tags:
+            tense = 'future'   # 条件法「〜だろう」
         person = 3 if 'third-person' in tags else next((k + 1 for k, p in enumerate(FINITE) if p in tags), 3)
         return tense, mood, person, 'pl' if 'plural' in tags else 'sg'
     tense = {'Pres': 'present', 'Imp': 'imperfect', 'Past': 'perfect', 'Fut': 'future'}.get(feats.get('Tense'), 'present')
-    mood = {'Ind': 'indicative', 'Sub': 'subjunctive', 'Cnd': 'subjunctive', 'Imp': 'imperative'}.get(
+    mood = {'Ind': 'indicative', 'Sub': 'subjunctive', 'Cnd': 'conditional', 'Imp': 'imperative'}.get(
         feats.get('Mood'), 'indicative')
+    if mood == 'conditional':   # 条件法「〜だろう」(現在は未来の形で訳す。枠では接続法)
+        mood, tense = 'subjunctive', 'future' if tense == 'present' else tense
     if feats.get('VerbForm') == 'Inf':
         mood = 'infinitive'
     elif feats.get('VerbForm') == 'Part':
@@ -303,6 +323,25 @@ def item_of(token, doc, fixed):
     lower = text.lower()
     if pos == 'PUNCT' or lower in PUNCTUATION:
         return None
+    if fixed.get(token.i) == 'PARTICIPLE':
+        lemma = next(l for l, t in morphology.verb_forms(lower) if 'participle' in t and 'past' in t)
+        return _verb_data(token, {'VerbForm': 'Part', 'Tense': 'Past'}, lemma, {'participle', 'past'})
+    if fixed.get(token.i) == 'INFINITIVE':
+        return _verb_data(token, {'VerbForm': 'Inf'}, lower)
+    if lower.endswith('ant') and token.i > 0 and doc[token.i - 1].text.lower() == 'en':
+        gerund = next((l for l, t in morphology.verb_forms(lower) if 'participle' in t and 'present' in t), None)
+        if gerund:   # ジェロンディフ en + 現在分詞「〜しながら」(en は落とす: gerund_en)
+            ja, gloss_lang, _ = morphology.gloss(gerund, 'verb')
+            from dragoman.core.japanese import japanese_form
+            first = (ja or gerund).split(',')[0]
+            return {'surface': text, 'pos': 'adv', 'base': gerund + ' (ジェロンディフ)', 'lemma': gerund,
+                    'ja': japanese_form(first, False, 'masu', 'present', False) + 'ながら' if gloss_lang == 'ja' else first,
+                    'gloss_lang': gloss_lang or 'en', 'gerund': True, 'form': 'ジェロンディフ (en + 現在分詞)'}
+    if lower in ('de', "d'") and token.i > 0 and doc[token.i - 1].text.lower() in ('pas', 'plus', 'jamais', 'point',
+                                                                                    'guère') and \
+            token.i + 1 < len(doc) and doc[token.i + 1].pos_ in ('NOUN', 'ADJ'):
+        return {'surface': text, 'pos': 'article', 'base': 'de', 'ja': '', 'gloss_lang': 'ja',
+                '_': morphology.cngs(morphology.CASES + ('Gen',), feats), 'compact': True}   # 否定の de (pas de pain)
     if fixed.get(token.i) == 'VERB':   # 3人称の読みを先に (qui chante・le garçon lit。je・tu の後ろは subject_persons で)
         forms = sorted(_finite_forms(lower), key=lambda f: 'third-person' not in f[1])
         return _verb_data(token, {}, forms[0][0], forms[0][1])
@@ -499,7 +538,24 @@ def merge_verbs(words):
             if j >= len(words):
                 continue
             main = words[j]
-            if lemma in ('avoir', 'être') and _participle(main):
+            if lemma == 'venir' and _pos(main) == 'preposition' and _item(main).attrib('base') == 'de' and \
+                    j + 1 < len(words) and _infinitive(words[j + 1]):
+                # 近い過去 venir de + 不定詞「〜したところだ」(de は落とす)
+                main.merged_into = True
+                del words[j]
+                main = words[j]
+                m = _item(main)
+                from dragoman.core.japanese import japanese_plain
+                first = (m.ja or '').split(',')[0]
+                ja = japanese_plain(first, False, 'perfect', False) + 'ところだ' if m.attrib('gloss_lang') == 'ja' else m.ja
+                data = dict(m.item, person=item.attrib('person'), number=item.attrib('number'), mood='indicative',
+                            tense='present', ja=ja, recent_past=m.ja, form='近い過去 (venir de + 不定詞)',
+                            surface=word.surface + ' de … ' + main.surface)
+                word.items = [type(m)(data)]
+                word.surface = data['surface']
+                word.token_ixs = (word.token_ix, main.token_ix)
+                word.token_ix = main.token_ix
+            elif lemma in ('avoir', 'être') and _participle(main):
                 _merge(word, main, lemma, reflexive=_reflexive_before(words, i))
             elif lemma in morphology.MODALS and _infinitive(main):
                 _merge(word, main, lemma)
@@ -811,6 +867,58 @@ def negation(words):
     return out
 
 
+IMPERSONAL_VERBS = {'falloir', 'pleuvoir', 'neiger', 'grêler', 'venter', 'sembler', 'agir', 'se agir'}
+
+
+def impersonal_il(words):
+    """非人称の il (il faut・il pleut・il s'agit de): il は主語でないので落とし、動詞の人称も無しに (主語を補わない)"""
+    out = []
+    for i, word in enumerate(words):
+        if word.surface.lower() == 'il':
+            k = i + 1
+            while k < len(words) and _item(words[k]) is not None and (_item(words[k]).attrib('clitic') or
+                                                                       _item(words[k]).attrib('base') == 'ne'):
+                k += 1
+            verb = _item(words[k]) if k < len(words) else None
+            if verb is not None and verb.pos == 'verb' and verb.attrib('lemma') in IMPERSONAL_VERBS:
+                words[k].items = [type(verb)(dict(verb.item, person=None, impersonal=True))]
+                word.merged_into = True
+                continue
+        out.append(word)
+    return out
+
+
+COMPARATIVES = {'plus': '〜より', 'aussi': '〜と同じくらい', 'moins': '〜ほど', 'autant': '〜と同じくらい'}
+
+
+def comparatives(words):
+    """比較 plus / aussi / moins + 形容詞・副詞 + que + 比べる相手: que を前置詞「〜より」に (Il est plus grand que moi
+    「彼は私より大きい」)。moins は「〜ほど…ない」"""
+    out = []
+    pending = None
+    for i, word in enumerate(words):
+        lower = word.surface.lower()
+        nxt = words[i + 1] if i + 1 < len(words) else None
+        if lower in COMPARATIVES and pending is None and nxt is not None and _pos(nxt) in ('adj', 'adv') and \
+                any(w.surface.lower() in ('que', "qu'") for w in words[i + 2:i + 6]):
+            pending = lower
+            word.merged_into = True
+            if lower == 'moins':   # 〜ほど大きくない
+                out.append(Word('(ne)', [{'surface': '(ne)', 'pos': 'adv', 'base': 'ne', 'ja': '〜ない', 'gloss_lang': 'ja',
+                                         'negation': True}]))
+            continue
+        if pending and lower in ('que', "qu'"):
+            word.items = [type(_item(word))({'surface': word.surface, 'pos': 'preposition', 'base': 'que',
+                                             'dominates': 'Gen', 'ja': COMPARATIVES[pending], 'gloss_lang': 'ja',
+                                             'comparison': pending})]
+            if nxt is not None and _item(nxt) is not None and _item(nxt).pos == 'pronoun' and \
+                    not _item(nxt).attrib('determiner'):   # que moi (sa mère の sa は名詞に掛ける)
+                nxt.items = [type(_item(nxt))(dict(_item(nxt).item, _=morphology.cngs(('Gen',))))]
+            pending = None
+        out.append(word)
+    return out
+
+
 def existential_il_y_a(words):
     """il y a + 名詞「〜がある」: il・y を除き、名詞を主語に"""
     for i, word in enumerate(words):
@@ -839,8 +947,8 @@ def assign_cases(words, doc, existential=False):
     for word in words:
         item = _item(word)
         lower = word.surface.lower()
-        if PUNCTUATION.get(word.surface) and word.surface != '(' or item is not None and (lower in BOUNDARY or
-                                                                                    item.pos == 'conj'):
+        if PUNCTUATION.get(word.surface) and word.surface != '(' or item is not None and item.pos != 'preposition' and \
+                (lower in BOUNDARY or item.pos == 'conj'):   # 比較の que は前置詞 (que sa mère)
             verb_before = None
             after_prep = False
             continue
@@ -973,10 +1081,15 @@ def lookup_all(surfaces):
         words.append(word)
     global _display
     _display = list(words)
+    words = [w for k, w in enumerate(words)   # ジェロンディフの前の en は落とす (En marchant「歩きながら」)
+             if not (w.surface.lower() == 'en' and k + 1 < len(words) and _item(words[k + 1]) is not None and
+                     _item(words[k + 1]).attrib('gerund'))]
     clitic_cases(words)
     subject_persons(words)
     imperatives(words)
+    words = comparatives(words)
     words = negation(words)
+    words = impersonal_il(words)   # 動詞の組をまとめる前に (il faut partir の falloir で決める)
     words = merge_verbs(words)
     words = pronominal_verbs(words)
     words = de_objects(words)

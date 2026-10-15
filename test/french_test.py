@@ -87,6 +87,15 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Parlons français.'), 'フランス語を / 話そう')         # 1人称の命令は「〜よう」
         self.assertEqual(self.ja("J'aime le vin français."), '私が / フランスのワインを / 愛する,好む')
 
+    def test_verb_constructions(self):
+        self.assertEqual(self.ja('Je viendrais si je pouvais.').split(' / ')[:2], ['私が', '来るだろう'])   # 条件法
+        self.assertEqual(self.ja('Je viens de manger.'), '私が / 食べたところだ')                # 近い過去
+        self.assertEqual(self.ja('Il me fait rire.'), '{彼,それ}が / 私を / 笑わせる')           # 使役 faire
+        self.assertEqual(self.ja('En marchant, il chante.'), '歩きながら / {彼,それ}が / 歌う')  # ジェロンディフ
+        self.assertEqual(self.ja('Il faut partir.'), '出発しなければならない')                   # 非人称の il
+        self.assertEqual(self.ja('Il est plus grand que moi.'), '{彼,それ}は / 私より / 大きい')  # 比較
+        self.assertEqual(self.ja("C'est le livre que j'ai lu."), '{私が 読んだ}本は / それである')
+
     def test_names(self):
         self.assertEqual(self.ja('Jean aime Marie.'), 'ジャンが / マリを / 愛する,好む')
 

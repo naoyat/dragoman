@@ -166,6 +166,7 @@ GLOSSES = {
     'appeler': '呼ぶ', 'construire': '建てる', 'détruire': '破壊する', 'raconter': '語る', 'enseigner': '教える',
     'nager': '泳ぐ', 'naviguer': '航海する', 'labourer': '耕す', 'cultiver': '耕す', 'préparer': '準備する',
     'garder': '守る', 'défendre': '守る', 'attaquer': '攻撃する', 'fuir': '逃げる', 'cacher': '隠す',
+    'malade': '病気な', 'falloir': '必要である', 'rire': '笑う', 'pleuvoir': '雨が降る', 'neiger': '雪が降る', 'juste': 'ちょうど',
     'bon': '良い', 'beau': '美しい', 'belle': '美しい', 'grand': '大きい', 'petit': '小さい', 'nouveau': '新しい',
     'vieux': '古い,年老いた', 'jeune': '若い', 'long': '長い', 'court': '短い', 'haut': '高い', 'rapide': '速い',
     'chaud': '暑い,熱い', 'froid': '寒い,冷たい', 'rouge': '赤い', 'bleu': '青い', 'blanc': '白い', 'noir': '黒い',
