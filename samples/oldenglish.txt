@@ -1,0 +1,35 @@
+# 古英語のサンプル (python3 tools/samples.py --lang=ang で表示する)
+#
+# 自作の文と、パブリックドメインの古い文の短い引用 (主の祈り、『ベーオウルフ』の冒頭、アングロサクソン年代記の
+# 書き出しの型)。長音符は付けても付けなくてもよく、ð と þ は同じに読む。「## 見出し」で節を分ける
+
+## 格と語順 (冠詞 sē・sēo・þæt は名詞に掛けて訳さない)
+Se cyning lufode þone ealdormann.
+God lufaþ þā men.
+Þā ġeseah hē hīe.
+Se cyning sealde þǣm biscope gold.
+
+## 前置詞 (後ろの語の格で訳を選ぶ)
+Hē wæs on þǣm hūse.
+Hē fērde tō þǣre byriġ mid his ġefērum.
+
+## 助動詞と本動詞 (話法の動詞 + 不定詞、habban + 過去分詞、bēon / weorþan + 過去分詞)
+Ic wille singan.
+Hē hæfde þone cyning ġesewen.
+Þæt hūs wæs ġetimbrod.
+
+## 否定 (ne、縮約形 nis = ne is)
+Nis hē on þǣm hūse.
+Hē ne mihte þone weg findan.
+
+## 関係節 (þe、se þe)
+Se cyning þe on Westseaxum rīcsode wæs wīs.
+
+## 年代記の書き出し (Hēr「この年に」、fōr = faran の過去)
+Hēr fōr se here tō Lundenbyriġ.
+
+## 主の祈り (冒頭)
+Fæder ūre, þū þe eart on heofonum, sī þīn nama ġehālgod.
+
+## 『ベーオウルフ』の冒頭 (属格は名詞の前から掛かる)
+Hwæt! Wē Gārdena in ġeārdagum þēodcyninga þrym ġefrūnon.

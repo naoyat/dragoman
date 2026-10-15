@@ -40,7 +40,7 @@ class Item:
         name = {
             # tense
             'present':'現在', 'imperfect':'未完了', 'future':'未来', # 'past':'過去',
-            'perfect':'完了', 'past-perfect': '過去完了', 'future-perfect': '未来完了',
+            'perfect':'完了', 'past-perfect': '過去完了', 'pluperfect': '過去完了', 'future-perfect': '未来完了',
             'aorist': 'アオリスト',  # ギリシア語
             # mode
             'indicative':'直説法', 'subjunctive':'接続法', 'imperative':'命令法', 'infinitive':'不定法',

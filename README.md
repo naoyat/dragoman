@@ -44,6 +44,7 @@ $ echo "लड़के ने किताब पढ़ी।" | python3 dragom
 | トルコ語 | `tr` | zeyrek (形態素解析) + Wiktionary。格・所有・時制・人称の接尾辞、分詞の関係節、副動詞。語順のままの訳も | UD Turkish-BOUN・Kenet: 主語 40%・目的語 37% | say (Yelda) | [docs/turkish.md](docs/turkish.md) |
 | モンゴル語 | `mn` | 辞書 (Wiktionary) と規則で格・時制・副動詞・分詞の接尾辞を分ける。語順のままの訳も。ラテン文字の転写も読む | UD Mongolian-GDUD (88文): 主語 73%・目的語 31% | — | [docs/mongolian.md](docs/mongolian.md) |
 | フィンランド語 | `fi` | spaCy (fi_core_news_sm。15格・依存関係) + Wiktionary。否定動詞 ei・完了・話法をまとめ、目的語の属格・分格を「を」に | UD Finnish-TDT: 主語 70%・目的語 48% | say (Satu) | [docs/finnish.md](docs/finnish.md) |
+| 古英語 | `ang` | Wiktionary の変化表 + 綴りの揺れの読み替え・語尾と複合語の推定。冠詞の掛け先・助動詞と本動詞・否定の縮約 | ISWOC: 主語 63%・目的語 52% | — | [docs/oldenglish.md](docs/oldenglish.md) |
 | 韓国語 | `ko` | kiwipiepy (形態素解析) + Wiktionary (漢字語の漢字も)。助詞から格、語尾から時制・接続、補助用言をまとめる | UD Korean-Kaist: 主語 69%・目的語 83% | say (Yuna) | [docs/korean.md](docs/korean.md) |
 | アイヌ語 | `ain` | 人称の接辞の分解 + 手作りの語彙表・Wiktionary。語順のまま日本語に | — | — | [docs/ainu.md](docs/ainu.md) |
 | 古文（平安の和文） | `kobun` | MeCab + 中古和文UniDic。品詞分解して現代語に組み立て直す | — | say (Kyoko) | [docs/kobun.md](docs/kobun.md) |
@@ -332,6 +333,8 @@ dragoman/                パッケージ
   mongolian/               モンゴル語 (辞書と規則による格・時制・副動詞・分詞の切り分け、不定の目的語、繋辞の補い、関係節、
                            語順のままの訳、ラテン文字の転写からの入力)
   finnish/                 フィンランド語 (spaCy の15格・依存関係による語の項目、目的語の格の読み替え、否定動詞・完了・話法のまとめ)
+  oldenglish/              古英語 (Wiktionary の変化表のすべての読み、綴りの鍵と揺れ、冠詞の掛け先、節ごとの動詞・主語の選択、
+                           助動詞と本動詞、否定の縮約、関係の þe、呼びかけ)
   korean/                  韓国語 (kiwipiepy による形態素の切り分け、助詞からの格・主題、語尾の時制・接続、補助用言、
                            連体形と関係節、二重主語、改訂ローマ字の簡略版)
   ainu/                    アイヌ語 (古いローマ字表記の正規化、人称の接辞の分解、後置詞・助詞から語順のままの日本語訳)
