@@ -87,7 +87,7 @@ GLOSSES = {
     'Himmel': '空', 'Meer': '海', 'Sonne': '太陽', 'Mond': '月', 'Stern': '星', 'Lied': '歌', 'Wort': '言葉',
     'Name': '名前', 'Leben': '生活,命', 'Arbeit': '仕事', 'Geld': 'お金', 'Auto': '車', 'Zug': '列車', 'Tisch': '机',
     'Tür': 'ドア', 'Fenster': '窓', 'Zimmer': '部屋', 'Straße': '通り', 'Mensch': '人間', 'Leute': '人々',
-    'gut': '良い', 'schön': '美しい', 'groß': '大きい', 'klein': '小さい', 'neu': '新しい', 'alt': '古い,年老いた',
+    'krank': '病気の', 'gut': '良い', 'schön': '美しい', 'groß': '大きい', 'klein': '小さい', 'neu': '新しい', 'alt': '古い,年老いた',
     'jung': '若い', 'lang': '長い', 'kurz': '短い', 'hoch': '高い', 'schnell': '速い', 'langsam': '遅い', 'viel': '多い',
     'wenig': '少ない', 'warm': '暖かい', 'kalt': '寒い,冷たい', 'heiß': '暑い,熱い', 'rot': '赤い', 'blau': '青い',
     'weiß': '白い', 'schwarz': '黒い', 'grün': '緑の', 'glücklich': '幸せな', 'traurig': '悲しい', 'müde': '疲れた',

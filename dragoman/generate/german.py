@@ -410,7 +410,7 @@ def realize(clause, gap=None, subordinate=False, infinitive=False):
     modal = _modal(clause, gap, subordinate)
     if modal is not None:
         return modal
-    complements = [inner for inner in clause.infinitives if inner.infinitive_kind in ('saying', 'command') and
+    complements = [inner for inner in clause.infinitives if inner.infinitive_kind in ('saying', 'command', 'emotion') and
                    inner.role('subject')]
     from .frame import reflexive_subject
     if complements:   # 補文は dass 節 (Ich weiß, dass du kommst。動詞は最後)

@@ -467,6 +467,12 @@ def item_of(token, doc, fixed):
     if lower in morphology.NEGATIONS and pos in ('ADV', 'PRON', 'NOUN', 'X'):
         return {'surface': text, 'pos': 'particle', 'base': lower, 'ja': morphology.NEGATIONS[lower], 'gloss_lang': 'ja',
                 'negative_word': True}
+    if pos in ('ADV', 'X', 'NOUN') and token.i > 0 and doc[token.i - 1].lemma_ in ('être', 'devenir', 'sembler', 'rester') \
+            and (dictionary.lemmas(lower, 'adj') or any(p == 'adj' for _, p, _ in dictionary.forms(lower))):
+        adj = lower if dictionary.lemmas(lower, 'adj') else next(l for l, p, _ in dictionary.forms(lower) if p == 'adj')
+        ja, gloss_lang, _ = morphology.gloss(adj, 'adj')   # 繋辞の後ろの形容詞を副詞・名詞と読む誤り (Je suis content)
+        return {'surface': text, 'pos': 'adj', 'base': adj, 'ja': ja or adj, 'gloss_lang': gloss_lang or 'en',
+                '_': morphology.cngs(morphology.CASES + ('Gen',), feats), 'main': True, 'predicative': True}
     if pos in ('CCONJ', 'SCONJ'):
         return {'surface': text, 'pos': 'conj', 'base': lower, 'ja': morphology.CONJUNCTIONS.get(lower, lemma),
                 'gloss_lang': 'ja'}

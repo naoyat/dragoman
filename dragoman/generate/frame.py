@@ -1122,6 +1122,10 @@ def punctuate(text, clauses, lang):
 # 補文の接続詞 (que 節・dass 節は主節の補文: 文の枠ではラテン語の対格不定詞と同じ不定詞の節)
 COMPLEMENTIZERS = {'fr': ('que', "qu'"), 'de': ('dass', 'daß')}
 # 補文を「望む・命じる」として取る動詞 (Je veux que tu viennes → Volō tē venīre・I want you to come)。ほかは「言う・思う」
+# 感情の動詞・形容詞 (que + 接続法: Je regrette que tu partes、Je suis content que tu viennes)
+EMOTION_VERBS = {'regretter', 'craindre', 'avoir peur', 'aimer', 'détester', 'se réjouir', 'bedauern', 'fürchten'}
+EMOTION_ADJECTIVES = {'content', 'heureux', 'triste', 'désolé', 'ravi', 'surpris', 'fier', 'fâché', 'étonné',
+                      'froh', 'traurig', 'glücklich'}
 COMMAND_VERBS = {'vouloir', 'souhaiter', 'désirer', 'exiger', 'demander', 'ordonner', 'préférer', 'permettre',
                  'interdire', 'empêcher', 'wollen', 'wünschen', 'verlangen', 'fordern', 'befehlen', 'bitten'}
 
@@ -1144,11 +1148,18 @@ def _attach_complements(clauses):
     """que 節・dass 節を直前の主節の補文 (不定詞の節) に: 望む・命じる動詞なら command、ほかは saying"""
     out = []
     for clause in clauses:
-        if clause.complementizer and out and not out[-1].copula:
+        if clause.complementizer and out:
             main = out[-1]
+            complement = (main.role('complement') or [None])[0]
+            emotion_adj = main.copula and complement is not None and complement.head is not None and \
+                complement.head.lemma in EMOTION_ADJECTIVES
+            if main.copula and not emotion_adj:
+                out.append(clause)
+                continue
+            kind = 'command' if main.verb.lemma in COMMAND_VERBS else \
+                'emotion' if main.verb.lemma in EMOTION_VERBS or emotion_adj else 'saying'
             inner = dataclasses.replace(clause, mood='infinitive', complementizer=False, subordinator='',
-                                        infinitive_kind='command' if main.verb.lemma in COMMAND_VERBS else 'saying',
-                                        source_mood=clause.mood)
+                                        infinitive_kind=kind, source_mood=clause.mood)
             main.infinitives.append(inner)
             continue
         out.append(clause)

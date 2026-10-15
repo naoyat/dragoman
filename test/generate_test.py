@@ -1013,6 +1013,10 @@ class ComplementTestCase(unittest.TestCase):
         self.assertEqual(self.generate('Je veux que tu viennes.', japanese), '私はあなたに来てほしい。')
         self.assertEqual(self.generate('Je sais que tu viens.', french), 'Je sais que tu viens.')
         self.assertEqual(self.generate('Je veux que tu viennes.', french), 'Je veux que tu viennes.')   # 接続法
+        self.assertEqual(self.generate('Il demande que tu viennes.', japanese), '彼はあなたが来るように頼む。')
+        self.assertEqual(self.generate('Je regrette que tu partes.', french), 'Je regrette que tu partes.')   # 感情も接続法
+        self.assertEqual(self.generate('Je suis content que tu viennes.', japanese), '私はあなたが来ることがうれしい。')
+        self.assertEqual(self.generate('Elle est triste que tu partes.', english), 'She is sad that you leave.')
 
     def test_latin_accusative_infinitive(self):
         from dragoman.generate import frame, french

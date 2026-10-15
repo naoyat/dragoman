@@ -662,7 +662,7 @@ def infinitive_phrase(inner, main_subject=None):
     """不定詞句: 言う・思う → that 節、見る・聞く → 目的語 + 原形、命じる → 目的語 + to 不定詞、補足 → to 不定詞"""
     kind = inner.infinitive_kind
     subjects = inner.role('subject')
-    if kind == 'saying' and subjects:
+    if kind in ('saying', 'emotion') and subjects:   # 感情の補文も that 節 (I am glad that you come)
         finite = _replace(inner, mood='indicative', infinitive_kind='')
         if subjects[0].head is not None and subjects[0].head.lemma in ('sē',):
             # 再帰代名詞は主節の主語を指す (Puella sē … dīcit「少女は自分が…と言う」→ she)

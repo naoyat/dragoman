@@ -204,6 +204,22 @@ def _fold_want(clause):
                                adverbs=clause.adverbs + inner.adverbs)
 
 
+# 補文を取るときの日本語の訳語 (demander que「頼む」。尋ねる ではない)
+COMPLEMENT_VERBS_JA = {'command': {'demander': '頼む', 'rogō': '頼む', 'ordonner': '命じる', 'iubeō': '命じる',
+                                   'exiger': '要求する', 'bitten': '頼む', 'befehlen': '命じる', 'fordern': '要求する'},
+                       'emotion': {'regretter': '残念に思う', 'craindre': '恐れる', 'bedauern': '残念に思う'}}
+
+
+def _complement_verb(clause):
+    """補文の種類で主節の動詞の訳語を選ぶ (Il demande que tu viennes「頼む」)"""
+    import dataclasses
+    for inner in clause.infinitives:
+        ja = COMPLEMENT_VERBS_JA.get(inner.infinitive_kind, {}).get(clause.verb.lemma if clause.verb else '')
+        if ja:
+            return dataclasses.replace(clause, verb=dataclasses.replace(clause.verb, ja=ja, lemma=clause.verb.lemma))
+    return clause
+
+
 def _fold_modal(clause):
     """話法の動詞 + 不定詞の節を1つの述語に (出発しなければならない、私を笑わせる)。当てはまらなければ元の節"""
     import dataclasses
@@ -235,7 +251,7 @@ def clause_text(clause, final=True, attributive=False):
     import dataclasses
     from .frame import dative_as_object, prohibition
     clause = dative_as_object(prohibition(clause), 'ja')   # miserēre nōbīs → 私たちを憐れめ、Nōlī timēre → 恐れるな
-    clause = _fold_want(_fold_modal(clause))
+    clause = _complement_verb(_fold_want(_fold_modal(clause)))
     if any(_negative_pronoun(np) for _, np in clause.args):
         clause = dataclasses.replace(clause, negated=True)
     parts = [_participial(p) for p in clause.adjuncts if p.kind == 'absolute']   # 独立奪格は節の頭 (王が死んで、…)
@@ -304,6 +320,8 @@ def infinitive(inner, governor):
         return text + 'ことが'
     if kind == 'command':   # 命じる・頼む (Il demande que tu viennes「君が来るように頼む」)
         return text + 'ように'
+    if kind == 'emotion':   # 感情 (Je regrette que tu partes「君が出発することを残念に思う」)
+        return text + ('ことが' if governor.copula else 'ことを')
     return text + 'ことを'
 
 

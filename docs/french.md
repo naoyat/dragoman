@@ -115,6 +115,8 @@ python3 tools/generate.py --from=fr "Je le lui ai donné hier."      # 入口か
   Tē venīre sciō・I know that you come・「君が来ると知っている」）、望む・命じる動詞（vouloir・demander …）は command（Je veux que tu
   viennes → Volō tē venīre・I want you to come・「君に来てほしい」）。フランス語に戻すと que 節（command は接続法）。ラテン語の対格不定詞
   からも que 節（Dīcit puerum venīre → Il dit que le garçon vient。補文の主語の sē は主節の主語を指す代名詞: qu'elle aime）。
+  感情の動詞・形容詞（regretter・craindre、être content・triste …）の que 節は emotion（接続法。Je suis content que tu viennes
+  「君が来ることがうれしい」・She is sad that you leave）。補文を取るときの主節の動詞の日本語は補文の種類で選ぶ（demander que「頼む」）。
 * 疑問文（倒置 Viens-tu・est-ce que・文末の ?）は文の枠の疑問の印に（生成の文末は ?、日本語は「〜か。」）。
 * 命令文（主語の無い文頭の動詞。Donne-moi の接語）、1人称の命令は「〜よう」（Parlons「話そう」）。
 * ジェロンディフ en + 現在分詞「〜しながら」、比較 plus / aussi / moins … que「〜より」「〜と同じくらい」「〜ほど…ない」、

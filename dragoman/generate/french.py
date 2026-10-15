@@ -496,7 +496,7 @@ def realize(clause, gap=None, antecedent=None, subjunctive=False, infinitive=Fal
     modal = _modal(clause, gap, antecedent, subjunctive)
     if modal is not None:
         return modal
-    complements = [inner for inner in clause.infinitives if inner.infinitive_kind in ('saying', 'command') and
+    complements = [inner for inner in clause.infinitives if inner.infinitive_kind in ('saying', 'command', 'emotion') and
                    inner.role('subject')]
     from .frame import reflexive_subject
     if complements:   # 補文は que 節 (Je sais que tu viens、Je veux que tu viennes。望む・命じる動詞なら接続法)
@@ -504,7 +504,7 @@ def realize(clause, gap=None, antecedent=None, subjunctive=False, infinitive=Fal
                        gap, antecedent, subjunctive, infinitive)
         for inner in complements:
             sub = realize(dataclasses.replace(reflexive_subject(inner, clause), mood='indicative', infinitive_kind=''),
-                          subjunctive=inner.infinitive_kind == 'command')
+                          subjunctive=inner.infinitive_kind in ('command', 'emotion'))   # 望む・命じる・感情は接続法
             main += ["qu'" + sub[0] if sub and _vowel(sub[0]) else 'que'] + (sub[1:] if sub and _vowel(sub[0]) else sub)
         return main
     if clause.experiencer:   # 入れ替えた manquer à を元に (Ego tē dēsīderō の枠 → Tu me manques)
