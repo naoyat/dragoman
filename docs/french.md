@@ -34,9 +34,10 @@ python3 tools/samples.py --lang=fr              # サンプル (samples/french.t
 * 代名動詞: 主語と同じ人称の再帰の接語（se・je me・nous nous …）+ 動詞は、辞書の「se + 動詞」の見出し（Wiktionary の reflexive の
   語義から作る）で引き、接語は訳に出さない（Il se lève「起きる」、Je m'appelle Jean「ジャンと呼ばれている」）。再帰の接語 + être +
   過去分詞は複合過去（Elle s'est levée「起きた」）。見出しが無ければ再帰の目的語のまま（Il se lave → se laver があれば「体を洗う」）。
-* manquer à は人を主題に（Tu me manques「私は / 君が / いなくて寂しい」、Tu manques à ta mère「君の母は / 君が / …」）。
-  文の枠では人を主語・相手を目的語にした「恋しく思う」（英語の miss を仲立ちに: I miss you・Ich vermisse dich・Tē dēsīderō）、
-  フランス語に戻すときは元の形。
+* 人が与格・物が主語の動詞（manquer à・plaire à。`french/morphology.py` の EXPERIENCER_VERBS）は人を主題に
+  （Tu me manques「私は / 君が / いなくて寂しい」、Ce livre me plaît「私は / この本が / 気に入っている」）。
+  文の枠では人を主語・相手を目的語にした英語の動詞を仲立ちに（manquer → miss: I miss you・Ich vermisse dich・Tē dēsīderō、
+  plaire → like: I like this book・Ich mag dieses Buch）、フランス語に戻すときは元の形。
 * 冠詞（le・un・des）は名詞に掛けて訳さない。所有形容詞・指示形容詞（mon・ce・tout …）は「私の」「この」「すべての」。
   前置詞と冠詞の縮約形（au・aux・du・des）は前置詞。動詞のすぐ後ろの du・des は部分冠詞（manger du pain「パンを食べる」）。
   de を取る動詞（parler de「〜について」、venir de「〜から」…）の後ろは前置詞のまま。
@@ -104,5 +105,6 @@ il y a + 名詞は訳では「〜がある」の主語なので、主語とし�
 
 * pour・sans + 不定詞「〜するために」「〜せずに」を不定詞の節の接続詞に（今は行き場の無い語句になる）。
 * 倒置の主語（a expliqué Véronique、Que dit l'Eglise ?）、疑問文の est-ce que。
-* 経験者が与格の構文は manquer だけ（plaire「〜の気に入る」も同じ形にできる）。ロシア語の出口の miss（скучать по + 与格）はまだ。
+* 人が与格の構文は manquer・plaire だけ（convenir・importer・falloir も同じ形にできる）。ロシア語の出口の miss（скучать по + 与格）・
+  like（нравиться + 与格）はまだ。
 * 出口: 否定の文の部分冠詞（ne mange pas de pain）、主語の倒置・疑問文、接続法（bien que・pour que の後ろ）。

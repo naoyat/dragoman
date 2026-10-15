@@ -644,6 +644,10 @@ def clause_of(predicate, lang=None):
     return clause
 
 
+# 人が与格・物が主語の動詞 → 人を主語にした英語の動詞と日本語の訳 (manquer à → miss、plaire à → like)
+EXPERIENCER_FRAMES = {'manquer': ('miss', '恋しく思う'), 'plaire': ('like', '好む,気に入る')}
+
+
 def _swap_experiencer(clause):
     """manquer à (Tu me manques「私は 君が いなくて寂しい」): 人を主語、物を目的語にして「恋しく思う」(英語の miss を仲立ちに。
     ほかの言語は I miss you の形)。フランス語に戻すときは元の形に (generate/french.py)"""
@@ -658,7 +662,8 @@ def _swap_experiencer(clause):
     clause.args = [('subject', dataclasses.replace(recipients[0], case='Nom')),
                    ('object', dataclasses.replace(subjects[0], case='Acc'))] + args
     clause.experiencer = clause.verb.lemma
-    clause.verb = Lex('miss', 'verb', '恋しく思う', en='miss', lang='en', surface=clause.verb.surface)
+    en, ja = EXPERIENCER_FRAMES.get(clause.verb.lemma, ('miss', '恋しく思う'))
+    clause.verb = Lex(en, 'verb', ja, en=en, lang='en', surface=clause.verb.surface)
     person = recipients[0].head
     if person is not None and person.pos == 'pronoun' and person.lemma in ('ego', 'tū'):
         clause.person, clause.number = {'ego': 1, 'tū': 2}[person.lemma], recipients[0].number or 'sg'

@@ -92,6 +92,9 @@ DITRANSITIVE_VERBS = {'donner', 'dire', 'envoyer', 'montrer', 'prêter', 'offrir
                       'adresser', 'accorder', 'remettre', 'transmettre', 'indiquer', 'décrire', 'reprocher', 'avouer',
                       'cacher', 'emprunter', 'voler', 'acheter', 'payer', 'ordonner', 'défendre', 'signaler', 'rappeler',
                       'garder', 'laisser', 'faire', 'écrire'}
+# 人が与格・物が主語の動詞 (経験者の構文): 日本語では人を主題「は」に (Tu me manques「私は 君が いなくて寂しい」、
+# Ce livre me plaît「私は この本が 気に入っている」)
+EXPERIENCER_VERBS = {'manquer': 'いなくて寂しい', 'plaire': '気に入っている'}
 # 複合過去で être を取る動詞 (移動・変化。代名動詞も être)
 ETRE_VERBS = {'aller', 'venir', 'arriver', 'partir', 'entrer', 'sortir', 'naître', 'mourir', 'monter', 'descendre',
               'tomber', 'rester', 'retourner', 'devenir', 'revenir', 'rentrer', 'passer', 'parvenir', 'survenir',

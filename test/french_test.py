@@ -60,6 +60,9 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja("Je m'appelle Jean."), '私が / ジャンと / 呼ばれている')
         self.assertEqual(self.ja('Tu me manques.'), '私は / 君が / いなくて寂しい')          # manquer à
         self.assertEqual(self.ja('Tu manques à ta mère.'), '君の母は / 君が / いなくて寂しい')
+        self.assertEqual(self.ja('Ce livre me plaît.'), '私は / この本が / 気に入っている')       # plaire à
+        self.assertEqual(self.ja('Cette ville plaît à mon père.'), '私の父は / この町が / 気に入っている')
+        self.assertEqual(self.ja('Tu me plais.'), '私は / 君が / 気に入っている')           # plais を過去分詞と読む誤り
 
     def test_names(self):
         self.assertEqual(self.ja('Jean aime Marie.'), 'ジャンが / マリを / 愛する,好む')

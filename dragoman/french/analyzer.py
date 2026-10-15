@@ -41,7 +41,7 @@ def _root_items(lemma):
 
 
 def _particle(case, obj, predicate):
-    """manquer à の人は主題「は」(Tu me manques「私は 君が いなくて寂しい」)、s'appeler の名前は「と」(ジャンと呼ばれている)"""
+    """manquer à・plaire à の人は主題「は」(Tu me manques「私は 君が いなくて寂しい」)、s'appeler の名前は「と」(ジャンと呼ばれている)"""
     if case == 'Dat' and predicate.first_item.attrib('experiencer'):
         return 'は'
     if case == 'Acc' and predicate.first_item.attrib('lemma') == 'se appeler':
@@ -214,6 +214,14 @@ def _verb_data(token, feats, lemma=None, tags=None):
                 ja, gloss_lang, row = morphology.gloss(lemma, 'verb')
                 break
     tense, mood, person, number = _verb_feats(feats, tags if tags and set(tags) & set(FINITE) else None)
+    if not tags and feats.get('VerbForm') in ('Part', 'Inf'):
+        # spaCy が分詞・不定詞と読んでも、語形の表に定形の読みしか無ければ定形 (Tu me plais の plais を過去分詞と読む)
+        readings = [t for l, t in morphology.verb_forms(token.text.lower()) if l == lemma]
+        if readings and not any({'participle', 'infinitive'} & t for t in readings) and \
+                any(t & set(FINITE) for t in readings):
+            best = sorted([t for t in readings if t & set(FINITE)], key=lambda t: ('present' not in t, 'indicative' not in t))[0]
+            tense, mood, person, number = _verb_feats({}, best)
+            feats = dict(feats, VerbForm='Fin')
     if not tags and feats.get('VerbForm') == 'Fin':
         # spaCy の時制が語形の表のどの読みにも無ければ表から (chantent を半過去と読む)。現在を先に
         readings = [t for l, t in morphology.verb_forms(token.text.lower()) if l == lemma and t & set(FINITE)]
@@ -250,7 +258,7 @@ def _noun_data(token, feats, proper=False):
         ja, gloss_lang = katakana(lemma, 'fr'), 'ja'   # 辞書に無い名前はカタカナ (Jean → ジャン)
     data = {'surface': text, 'pos': 'noun', 'base': _base(lemma, row), 'lemma': lemma, 'ja': ja or text,
             'gloss_lang': gloss_lang or 'en', 'main': True, 'feats': feats,
-            'gender': (row or {}).get('gender')}
+            'gender': dictionary.gender(lemma) or (row or {}).get('gender')}
     if proper:
         data['proper'] = True
     return data
@@ -624,18 +632,21 @@ def clitic_valency(words):
         # 辞書の語義の印: à を取る・物を人に (to grant something to someone)・自動詞だけの語義なら人は与格
         dative = lemma in morphology.INDIRECT_VERBS or lemma in morphology.DITRANSITIVE_VERBS and not reflexive or \
             not reflexive and ('à' in tags or 'to-someone' in tags or 'intransitive' in tags and 'transitive' not in tags)
-        if lemma == 'manquer' and dative:   # Tu me manques「私は 君が いなくて寂しい」(人を主題に)
-            word.items = [type(item)(dict(item.item, ja='いなくて寂しい', gloss_lang='ja', experiencer=True))]
+        if lemma in morphology.EXPERIENCER_VERBS and dative:   # Tu me manques「私は 君が いなくて寂しい」(人を主題に)
+            word.items = [type(item)(dict(item.item, ja=morphology.EXPERIENCER_VERBS[lemma], gloss_lang='ja',
+                                          experiencer=True))]
         case = 'Dat' if dative else 'Acc'
         cases = [c for c in clitic._ if c[0] == case] or [(case,) + c[1:] for c in clitic._[:1]]
         personal[0].items = [type(clitic)(dict(clitic.item, _=cases))]
     for i, word in enumerate(words):   # manquer à + 名詞 (Tu manques à ta mère「君の母は 君が いなくて寂しい」)
         item = _item(word)
-        if item is None or item.pos != 'verb' or item.attrib('lemma') != 'manquer' or item.attrib('experiencer'):
+        if item is None or item.pos != 'verb' or item.attrib('lemma') not in morphology.EXPERIENCER_VERBS or \
+                item.attrib('experiencer'):
             continue
         prep = next((w for w in words[i + 1:i + 3] if _pos(w) == 'preposition'), None)
         if prep is not None and _item(prep).attrib('base') == 'à':
-            word.items = [type(item)(dict(item.item, ja='いなくて寂しい', gloss_lang='ja', experiencer=True))]
+            word.items = [type(item)(dict(item.item, ja=morphology.EXPERIENCER_VERBS[item.attrib('lemma')],
+                                          gloss_lang='ja', experiencer=True))]
             prep.items = [type(_item(prep))(dict(_item(prep).item, ja='〜は'))]
 
 

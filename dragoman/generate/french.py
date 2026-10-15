@@ -106,10 +106,11 @@ def _forms(lemma, pos):
 def find_form(lemma, pos, wanted, avoid=()):
     """語形の表から、印 wanted をすべて持つ (avoid を持たない) 形。無ければ None"""
     wanted, avoid = set(wanted), set(avoid)
-    for form, tags in _forms(lemma, pos):
-        if wanted <= tags and not tags & avoid:
-            return form
-    return None
+    found = [form for form, tags in _forms(lemma, pos) if wanted <= tags and not tags & avoid]
+    if not found:
+        return None
+    # 1990年の新綴り (plait・connait) より従来の綴り (plaît・connaît): アクセント記号の多いほう
+    return max(found, key=lambda f: sum(c in 'îûâêô' for c in f))
 
 
 @functools.lru_cache(maxsize=50000)

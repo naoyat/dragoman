@@ -40,6 +40,17 @@ def _columns():
     return {row[1] for row in _connect().execute('PRAGMA table_info(lemmas)')}
 
 
+@functools.lru_cache(maxsize=50000)
+def gender(noun):
+    """名詞の性: 辞書の最初の項目 (Wiktionary で先に載る主な語義: livre「本」(男性) を livre「ポンド」(女性) より)"""
+    db = _connect()
+    if db is None:
+        return None
+    row = db.execute("SELECT gender FROM lemmas WHERE key = ? AND pos = 'noun' AND gender IN ('m', 'f') ORDER BY rowid "
+                     "LIMIT 1", (noun.lower(),)).fetchone()
+    return row[0] if row else None
+
+
 def valency(lemma):
     """動詞の語義の印 (最初の3つの語義の集まり: transitive・intransitive・reflexive・à・to-someone …)"""
     rows = lemmas(lemma, 'verb')
