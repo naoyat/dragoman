@@ -965,5 +965,28 @@ class QuestionTestCase(unittest.TestCase):
         self.assertEqual(frame.punctuate(english.sentence(clauses), clauses, 'en'), 'Who comes?')
 
 
+class ModalTestCase(unittest.TestCase):
+    """話法の動詞 + 不定詞の節 (フランス語の peut lire・il faut・faire rire も枠ではラテン語と同じ形)"""
+
+    def generate(self, text, module):
+        from dragoman.french import analyzer as fr, morphology
+        from dragoman.generate import frame
+        if not morphology.available():
+            self.skipTest('フランス語のモデルか辞書が無い')
+        analysis, = fr.analyze_text(text)
+        return module.sentence(frame.frames(analysis))
+
+    def test_modals(self):
+        from dragoman.generate import english, japanese, french, german
+        self.assertEqual(self.generate('Il faut partir.', english), 'It is necessary to leave.')
+        self.assertEqual(self.generate('Il me fait rire.', english), 'He makes me laugh.')
+        self.assertEqual(self.generate('Il faut partir.', japanese), '出発しなければならない。')
+        self.assertEqual(self.generate('Je voulais lire.', japanese), '私は読みたかった。')
+        self.assertEqual(self.generate('Je peux le lire.', french), 'Je peux le lire.')
+        self.assertEqual(self.generate('Il me fait rire.', french), 'Il me fait rire.')
+        if german._db() is not None:
+            self.assertEqual(self.generate('Je peux lire ce livre.', german), 'Ich kann dieses Buch lesen.')
+
+
 if __name__ == '__main__':
     unittest.main()
