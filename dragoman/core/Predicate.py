@@ -5,6 +5,7 @@ from dragoman.core.LatinObject import LatinObject
 from dragoman.core.Word import Word
 
 from dragoman.core.AndOr import AndOr
+from dragoman.core.PrepClause import PrepClause
 from dragoman.core import language
 from .japanese import JaVerb, copula_predicate, copula_conjunctive
 from . import verb_flags as Verb
@@ -149,10 +150,10 @@ class Predicate (LatinObject):
                 if not objs or not (isinstance(case, tuple) or case == 'Loc' or case in self.language.possessor_cases):
                     continue
                 for obj in objs:
-                    t, neg = obj.translate()
+                    t, neg = obj.translate(existential=True) if isinstance(obj, PrepClause) else obj.translate()
                     if neg: negated = True
                     if isinstance(case, tuple):
-                        place = _existential_place(t)
+                        place = t if isinstance(obj, PrepClause) else _existential_place(t)
                         tr.append(place + 'は' if negative and not place.endswith('には') else place)
                     else:
                         tr.append(t + ('に' if case == 'Loc' and not negative else 'には'))
@@ -244,15 +245,19 @@ class Predicate (LatinObject):
             else:
                 case_ja = cases_ja[case]
             trs = []
+            existential_place = is_existential == 'personal' and isinstance(case, tuple)
             for obj in objs:
-                t, neg = obj.translate()
+                t, neg = obj.translate(existential=True) if existential_place and isinstance(obj, PrepClause) else \
+                    obj.translate()
                 if neg: negated = True  # neque ... neque ... は主語以外の枠にも現れる
+                if existential_place and not isinstance(obj, PrepClause):
+                    t = _existential_place(t)
                 trs.append(t)
             particles = [self._particle(case, obj) for obj in objs] if not isinstance(case, tuple) else []
             if is_existential == 'personal' and (case == 'Loc' or case in self.language.possessor_cases):
                 particles = ['に'] * len(objs)
-            if is_existential == 'personal' and isinstance(case, tuple):
-                trs = [_existential_place(t).replace('〜には', '〜に') for t in trs]  # {劇場}〜に
+            if existential_place:
+                trs = [t[:-2] + 'に' if t.endswith('には') else t for t in trs]  # 私たちは劇場にいた
             if any(particles):
                 # 言語の設定で語ごとに助詞を決める (ギリシア語: ἀκούω + 属格「〜を」, 比較の属格「〜より」)
                 tr.append('='.join(t + (p or case_ja) for t, p in zip(trs, particles)))
@@ -373,7 +378,7 @@ def _animate(obj):
 
 
 def _existential_place(t):
-    """存在の文の場所の前置詞句: 最初の訳だけにして「〜に」に ({庭}〜で,〜の中で → {庭}〜に)。
+    """存在の文の場所の前置詞句 (前置詞句でない語の訳): 最初の訳だけにして「〜に」に ({庭}〜で,〜の中で → {庭}〜に)。
     所有の前置詞句 (ロシア語の у + 生格「〜には」) はそのまま"""
     brace = t.rfind('}')
     head, gloss = t[:brace + 1], t[brace + 1:]  # 中括弧の中 (前置詞の目的語の訳) の読点では切らない

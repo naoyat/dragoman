@@ -16,7 +16,7 @@ python3 dragoman.py --lang=ur samples/urdu.txt
 لڑکے نے کتاب پڑھی۔   (laṛke ne kitāb paṛhī.)
   →  少年,息子が / 本を / 読んだ,学んだ
 میرے پاس ایک نئی کتاب ہے۔   (mere pās ek naī kitāb hai.)
-  →  {私}〜のところに / {新しい}本が / ある
+  →  私のところに / {新しい}本が / ある
 ```
 
 * 引き当て（`urdu/dictionary.py`）: Wiktionary のウルドゥー語の項目（変化表の形）に「ヒンディー語の綴り」があればそれ、

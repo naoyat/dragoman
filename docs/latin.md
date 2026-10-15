@@ -29,7 +29,7 @@ Agricola in silvā magnam casam aedificat .
       casam
         magnam
 
-  →  農夫が / {森}〜で,〜の中で,〜の上で / {大きな}あばら屋を / 建てる
+  →  農夫が / 森[で,の中で,の上で] / {大きな}あばら屋を / 建てる
 ```
 
 
@@ -120,7 +120,7 @@ python3 tools/samples.py --lang=grc -r   # ラテン文字以外の文に転写�
 
 ```
 Hīs rēbus cognitīs agricola ad vīllam vēnit.
-  →  {{この,これ}物,事が 知られて} / 農夫が / {邸宅,別荘,農場,都市}〜の方へ,〜のところまで / 来た
+  →  {{この,これ}物,事が 知られて} / 農夫が / {邸宅,別荘,農場,都市}[の方へ,のところまで] / 来た
 ```
 
 例文を足すときは `samples/samples.txt` に書き足します（`## 見出し` で節を分け、見出しに `[auto-macron]` を

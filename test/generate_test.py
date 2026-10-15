@@ -138,7 +138,7 @@ class RelativeTestCase(unittest.TestCase):
         # 主格・対格のどちらにも読める quae は、先行詞との一致と節の空きで主格 (主語を補わない)
         analysis, = analyzer.analyze_text('Puella cantat quae in hortō sedet.')
         self.assertEqual(analysis.relatives[0].gap, 'Nom')
-        self.assertTrue(analysis.clauses[0].predicate.translate()[0].startswith('{{庭}'))
+        self.assertTrue(analysis.clauses[0].predicate.translate()[0].startswith('{庭['))
 
     def test_relative_before_antecedent(self):
         # 先行詞より前の関係節 (相関の形): 後ろの節の指示代名詞が先行詞。日本語は「{…する}人」

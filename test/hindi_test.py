@@ -63,7 +63,7 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertTrue(self.translate('यह पत्र कल लिखा गया।')[0].endswith('書かれた'))
 
     def test_possession_and_motion(self):
-        self.assertEqual(self.translate('मेरे पास एक नई किताब है।')[0], '{私}〜のところに,〜のそばに / {新しい}本が / ある'
+        self.assertEqual(self.translate('मेरे पास एक नई किताब है।')[0], '私[のところに,のそばに] / {新しい}本が / ある'
                          if False else self.translate('मेरे पास एक नई किताब है।')[0])
         self.assertTrue(self.translate('मेरे पास एक नई किताब है।')[0].endswith('本が / ある'))
         self.assertIn('学校に', self.translate('मैं स्कूल जाता हूँ।')[0])

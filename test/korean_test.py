@@ -30,7 +30,7 @@ class AnalyzerTestCase(unittest.TestCase):
         return ' / '.join(c.predicate.translate()[0] for c in a.clauses if c.predicate)
 
     def test_cases_and_tense(self):
-        self.assertEqual(self.ja('소년이 학교에서 책을 읽었다.'), '少年が / {学校}〜で,〜から / 本を / 読んだ')
+        self.assertEqual(self.ja('소년이 학교에서 책을 읽었다.'), '少年が / 学校[で,から] / 本を / 読んだ')
         self.assertEqual(self.ja('나는 어제 친구에게 편지를 보냈습니다.'), '私は / 昨日 / 友達に / 手紙を / 送った,派遣した')
 
     def test_copula_and_adjective(self):
@@ -49,7 +49,7 @@ class AnalyzerTestCase(unittest.TestCase):
     def test_attributive_and_coordination(self):
         self.assertEqual(self.ja('나는 어머니가 만든 음식을 먹었다.'), '私は / {母が 作った}食べ物を / 食べた')
         self.assertEqual(self.ja('예쁜 꽃이 피었다.'), '{美しい,かわいい}花が / 咲いた')
-        self.assertEqual(self.ja('고양이와 개가 마당에서 논다.'), '猫と犬が / {庭}〜で,〜から / 遊ぶ')
+        self.assertEqual(self.ja('고양이와 개가 마당에서 논다.'), '猫と犬が / 庭[で,から] / 遊ぶ')
 
     def test_literal(self):
         from dragoman.korean.literal import literal

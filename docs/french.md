@@ -6,7 +6,7 @@
 
 ```
 ./dragoman.py fr -e "Le garçon lit un livre à l'école."
-  →  少年が / {学校}〜に,〜で / 本を / 読む
+  →  少年が / 学校[に,で] / 本を / 読む
 ./dragoman.py fr -e "Je le lui ai donné hier."
   →  私が / 彼に / 彼を / 昨日 / 与えた
 ./dragoman.py fr -e "La fille qui chante est ma sœur."
