@@ -952,5 +952,18 @@ class CompareTestCase(unittest.TestCase):
         self.assertEqual(rows['前置詞句 (in + 奪格)']['he'][1].split('／')[0], 'בְּ (語に付く)')   # ／の後ろは語義の幅
 
 
+
+class QuestionTestCase(unittest.TestCase):
+    """直接の疑問文: 文末の ? を枠の印に、各言語の文末を ? (日本語は「か」) に"""
+
+    def test_punctuate(self):
+        from dragoman.generate import frame, japanese, english
+        analysis, = analyzer.analyze_text('Quis venit?')
+        clauses = frame.frames(analysis)
+        self.assertTrue(clauses[-1].question)
+        self.assertEqual(frame.punctuate(japanese.sentence(clauses), clauses, 'ja'), '誰が来るか。')
+        self.assertEqual(frame.punctuate(english.sentence(clauses), clauses, 'en'), 'Who comes?')
+
+
 if __name__ == '__main__':
     unittest.main()

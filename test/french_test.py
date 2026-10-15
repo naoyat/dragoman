@@ -78,6 +78,15 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Personne ne vient.'), '誰も / 来ない')
         self.assertEqual(self.ja('Il ne voit rien.'), '{彼,それ}が / 何も / 見ない')
 
+    def test_questions_and_imperatives(self):
+        self.assertEqual(self.ja('Viens-tu avec moi ?'), '君が / 私[と,で] / 来る')      # 倒置は主語を前に
+        self.assertEqual(self.ja('Est-ce que tu viens ?'), '君が / 来る')               # est-ce que は疑問の印
+        self.assertEqual(self.ja('A-t-il mangé ?'), '{彼,それ}が / 食べた')
+        self.assertEqual(self.ja('Mange ta soupe !'), '君のスープを / 食べろ')
+        self.assertEqual(self.ja('Ne pars pas !'), '出発するな')
+        self.assertEqual(self.ja('Parlons français.'), 'フランス語を / 話そう')         # 1人称の命令は「〜よう」
+        self.assertEqual(self.ja("J'aime le vin français."), '私が / フランスのワインを / 愛する,好む')
+
     def test_names(self):
         self.assertEqual(self.ja('Jean aime Marie.'), 'ジャンが / マリを / 愛する,好む')
 

@@ -65,11 +65,11 @@ def run(text):
             continue
         show_frame(clauses)
         if 'en' in TARGETS:
-            print('  英語:     ' + english.sentence(clauses))
+            print('  英語:     ' + frame.punctuate(english.sentence(clauses), clauses, 'en'))
         for lang, label, module in OTHERS:
             if lang in TARGETS:
                 try:
-                    print('  %s ' % label + module.sentence(clauses))
+                    print('  %s ' % label + frame.punctuate(module.sentence(clauses), clauses, lang))
                 except Exception as e:   # 1つの言語で作れなくても、ほかの言語は出す
                     print('  %s (作れない: %s: %s)' % (label, type(e).__name__, e))
         if 'la' not in TARGETS:
@@ -127,7 +127,7 @@ def run_japanese(text):
                                     ('en', '英語:    ', english)] + [o for o in OTHERS if o[0] != 'ja']:
             if lang in TARGETS:
                 try:
-                    print('  %s ' % label + module.sentence(clauses))
+                    print('  %s ' % label + frame.punctuate(module.sentence(clauses), clauses, lang))
                 except Exception as e:
                     print('  %s (作れない: %s: %s)' % (label, type(e).__name__, e))
         print()
@@ -162,7 +162,7 @@ def run_other(text, source):
                 continue
             label, module = modules[lang]
             try:
-                out = module.sentence(clauses)
+                out = frame.punctuate(module.sentence(clauses), clauses, lang)
             except Exception as e:
                 out = '(作れない: %s: %s)' % (type(e).__name__, e)
             mark = ''

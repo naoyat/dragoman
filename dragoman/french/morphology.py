@@ -176,6 +176,11 @@ GLOSSES = {
     'peu': '少し', 'trop': 'あまりに', 'ensemble': '一緒に', 'oui': 'はい', 'non': 'いいえ', 'peut-être': 'たぶん',
     'vraiment': '本当に', 'bientôt': 'まもなく', 'vite': '速く', 'tard': '遅く', 'tôt': '早く', 'là-bas': 'あそこで',
 }
+# 小文字の言語名の名詞は言語 (parler français「フランス語」。大文字の Français は人、形容詞は「フランスの」)
+LANGUAGE_NOUNS = {'français': 'フランス語', 'anglais': '英語', 'allemand': 'ドイツ語', 'japonais': '日本語',
+                  'espagnol': 'スペイン語', 'italien': 'イタリア語', 'latin': 'ラテン語', 'grec': 'ギリシア語',
+                  'chinois': '中国語', 'russe': 'ロシア語', 'arabe': 'アラビア語', 'portugais': 'ポルトガル語',
+                  'coréen': '韓国語', 'hébreu': 'ヘブライ語'}
 NUMBERS_JA = {'un': '一', 'une': '一', 'deux': '二', 'trois': '三', 'quatre': '四', 'cinq': '五', 'six': '六',
               'sept': '七', 'huit': '八', 'neuf': '九', 'dix': '十', 'onze': '十一', 'douze': '十二', 'vingt': '二十',
               'cent': '百', 'mille': '千'}

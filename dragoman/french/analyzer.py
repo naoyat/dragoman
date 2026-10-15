@@ -77,16 +77,29 @@ FRENCH = language.Language(
 )
 
 
+SUBJECT_CLITICS = ('je', 'tu', 'il', 'elle', 'on', 'nous', 'vous', 'ils', 'elles', 'ce')
+
+
 def tokens(text):
     out = []
-    for token in TOKEN.findall(text.replace('’', "'")):
+    raw = TOKEN.findall(text.replace('’', "'"))
+    for n, token in enumerate(raw):
         lower = token.lower()
         if lower in KEEP_APOSTROPHE:
             out.append(token)
             continue
+        if lower == 'est-ce' and n + 1 < len(raw) and raw[n + 1].lower() in ('que', "qu'"):
+            raw[n + 1] = ''   # est-ce que は疑問の印だけ (文末の ? で疑問文に): Est-ce que tu viens ?
+            continue
+        if not token:
+            continue
         m = INVERSION.match(token)
-        if m and not dictionary.lemmas(lower) and len(m.group(1)) > 1:   # 倒置 (dit-il → dit il、a-t-il → a il)
-            out += [m.group(1), m.group(3)]
+        if m and (not dictionary.lemmas(lower) or m.group(3).lower() in SUBJECT_CLITICS) and \
+                (len(m.group(1)) > 1 or m.group(2)):   # a-t-il も (辞書に a-t-il の見出しがあっても分ける)
+            if m.group(3).lower() in SUBJECT_CLITICS:   # 主語の倒置は主語を前に (Viens-tu → tu viens、a-t-il → il a)
+                out += [m.group(3), m.group(1)]
+            else:                                       # 命令形の目的語はそのまま (Donne-moi → donne moi)
+                out += [m.group(1), m.group(3)]
             continue
         elision = next((e for e in ELISIONS if lower.startswith(e) and len(lower) > len(e)), None)
         if elision:   # l'école → l' école、qu'il → qu' il
@@ -133,7 +146,14 @@ def corrections(doc):
     words = [t for t in doc]
     for t in words:
         lower = t.text.lower()
-        if t.pos_ in ('VERB', 'AUX', 'PUNCT', 'DET', 'CCONJ', 'SCONJ') or lower in morphology.ARTICLES:
+        if t.pos_ in ('VERB', 'AUX', 'PUNCT', 'CCONJ', 'SCONJ') or lower in morphology.ARTICLES or \
+                t.pos_ == 'DET' and lower in morphology.DETERMINERS:
+            continue
+        initial = all(w.text.lower() in ('ne', "n'") or w.text.lower() in morphology.CLITICS and w.pos_ != 'DET'
+                      for w in words[:t.i])
+        if initial and any('imperative' in tags for _, tags in _finite_forms(lower)) and \
+                not dictionary.lemmas(lower, 'noun') and not dictionary.lemmas(lower, 'adj'):
+            fixed[t.i] = 'VERB'   # 文頭の命令形 (Ne pars pas !、Regarde-moi.、Parlons français.)
             continue
         if t.pos_ == 'PRON' and (lower in morphology.PRONOUNS or lower in morphology.RELATIVES or
                                  lower in morphology.DETERMINERS):
@@ -166,6 +186,9 @@ def corrections(doc):
         if prev is None:
             continue
         p = prev.text.lower()
+        if prev.pos_ in ('NOUN', 'PROPN') and k == t.i - 1 and t.pos_ == 'ADJ' and \
+                any(pos == 'adj' for _, pos, _ in dictionary.forms(lower)) | bool(dictionary.lemmas(lower, 'adj')):
+            continue   # 名詞の後ろの形容詞の形 (la cuisine japonaise。japonaiser の活用形と読まない)
         if prev.pos_ in ('NOUN', 'PROPN') or p in ('qui', 'je', "j'", 'tu', 'il', 'elle', 'on', 'nous', 'vous', 'ils',
                                                   'elles', 'ce', "c'", 'cela', 'ça') or k < t.i - 1:
             fixed[t.i] = 'VERB'   # 主語・関係代名詞 qui・接語の後ろの動詞の形 (Le garçon lit、qui chante)
@@ -339,6 +362,12 @@ def item_of(token, doc, fixed):
         else:
             return {'surface': text, 'pos': 'article', 'base': lower, 'ja': '', 'gloss_lang': 'ja',
                     '_': morphology.cngs(morphology.CASES + ('Gen',), feats), 'compact': True}
+    if pos == 'PRON' and lower in morphology.DETERMINERS and lower not in morphology.PRONOUNS and \
+            token.i + 1 < len(doc) and doc[token.i + 1].pos_ in ('NOUN', 'ADJ', 'PROPN'):
+        ja = morphology.DETERMINERS[lower]   # 代名詞と読まれた限定詞 (Mange ta soupe の ta)
+        return {'surface': text, 'pos': 'pronoun', 'base': lower, 'ja': ja, 'gloss_lang': 'ja', 'desc': '不定形容詞',
+                '_': morphology.cngs(morphology.CASES + ('Gen',), dict(feats, Number=None), _determiner_gender(lower)),
+                'compact': True, 'determiner': True}
     if pos == 'PRON':
         if lower in morphology.RELATIVES and (feats.get('PronType') == 'Rel' or token.dep_ != 'ROOT' and
                                               token.head.dep_ == 'acl:relcl'):
@@ -355,6 +384,15 @@ def item_of(token, doc, fixed):
         return {'surface': text, 'pos': 'adj', 'base': text, 'ja': ja + 'つの' if lower in morphology.NUMBERS_JA and
                 len(ja) <= 2 else ja,
                 'gloss_lang': 'ja', '_': morphology.cngs(morphology.CASES + ('Gen',))}
+    if text in morphology.LANGUAGE_NOUNS:
+        if token.i > 0 and doc[token.i - 1].pos_ in ('NOUN', 'PROPN') and fixed.get(token.i - 1) != 'VERB':
+            # le vin français「フランスの」(形容詞)
+            ja, gloss_lang, _ = morphology.gloss(lower, 'adj')
+            return {'surface': text, 'pos': 'adj', 'base': lower, 'ja': ja or lower, 'gloss_lang': gloss_lang or 'en',
+                    '_': morphology.cngs(morphology.CASES + ('Gen',), feats), 'main': True}
+        data = _noun_data(token, feats)   # parler français「フランス語」
+        data.update(ja=morphology.LANGUAGE_NOUNS[text], gloss_lang='ja', lemma=text, base=text + ' (le)')
+        return data
     if lower in ('personne', 'rien') and (token.i == 0 or doc[token.i - 1].pos_ != 'DET') and \
             any(t.text.lower() in ('ne', "n'", 'sans') for t in doc):
         # ne … personne「誰も〜ない」、sans que personne「誰にも〜されずに」(冠詞の無い personne は否定の代名詞)
@@ -363,8 +401,11 @@ def item_of(token, doc, fixed):
     if pos in ('NOUN', 'PROPN') or pos == 'X' and text[:1].isupper():
         named = text[:1].isupper() and token.i > 0 and bool(dictionary.lemmas(text, 'name'))   # 文中の大文字の名前 (Marie)
         return _noun_data(token, feats, proper=pos in ('PROPN', 'X') or named)
-    if pos == 'ADJ' and token.dep_ in ('obj', 'nsubj', 'nsubj:pass', 'obl', 'obl:arg', 'obl:mod', 'nmod') and \
-            dictionary.lemmas(lower, 'noun'):
+    after_verb_adj = token.i > 0 and (doc[token.i - 1].pos_ == 'VERB' or fixed.get(token.i - 1) == 'VERB') and \
+        doc[token.i - 1].lemma_ not in ('être', 'devenir', 'sembler', 'rester') and \
+        (token.i + 1 >= len(doc) or doc[token.i + 1].pos_ in ('PUNCT', 'ADP', 'CCONJ'))
+    if pos == 'ADJ' and (token.dep_ in ('obj', 'nsubj', 'nsubj:pass', 'obl', 'obl:arg', 'obl:mod', 'nmod') or
+                         after_verb_adj) and dictionary.lemmas(lower, 'noun'):   # Parlons français「フランス語」
         return _noun_data(token, feats)   # 名詞として使った形容詞の形 (a trouvé preneur の preneur)
     if pos == 'ADJ':
         ja, gloss_lang, row = morphology.gloss(lemma, 'adj')
@@ -375,6 +416,13 @@ def item_of(token, doc, fixed):
         if token.dep_ == 'ROOT' or token.head.lemma_ == 'être' or any(c.dep_ == 'cop' for c in token.children):
             data['predicative'] = True   # 述語 (La maison est belle)
         return data
+    if pos == 'VERB' and not dictionary.lemmas(lemma, 'verb') and not morphology.verb_forms(lower):
+        adj = next((l for l, p, _ in dictionary.forms(lower) if p == 'adj'), None) or \
+            (lower if dictionary.lemmas(lower, 'adj') else None)
+        if adj:   # 動詞と読まれた形容詞の形 (la cuisine japonaise)
+            ja, gloss_lang, row = morphology.gloss(adj, 'adj')
+            return {'surface': text, 'pos': 'adj', 'base': adj, 'ja': ja or adj, 'gloss_lang': gloss_lang or 'en',
+                    '_': morphology.cngs(morphology.CASES + ('Gen',), feats), 'main': True}
     if pos in ('VERB', 'AUX'):
         return _verb_data(token, feats)
     if lower in morphology.NEGATIONS and pos in ('ADV', 'PRON', 'NOUN', 'X'):
@@ -606,6 +654,42 @@ SUBJECT_PERSONS = {'je': (1, 'sg'), "j'": (1, 'sg'), 'tu': (2, 'sg'), 'il': (3, 
                    'nous': (1, 'pl'), 'vous': (2, 'pl'), 'ils': (3, 'pl'), 'elles': (3, 'pl')}
 
 
+IMPERATIVE_OBJECTS = {'moi': 'Dat', 'toi': 'Dat', 'lui': 'Dat', 'leur': 'Dat', 'nous': 'Dat', 'vous': 'Dat',
+                      'le': 'Acc', 'la': 'Acc', 'les': 'Acc', "l'": 'Acc', 'en': 'Acc', 'y': 'Dat'}
+
+
+def imperatives(words):
+    """主語の無い文頭・節の頭の動詞で、命令形の読みがあれば命令形 (Mange ta soupe !、Ne pars pas !)。後ろの接語の代名詞
+    (Donne-moi le livre の moi) は目的語: le・la・les は対格、moi・toi・lui・leur は与格 (二重目的語の動詞でなければ対格)"""
+    for i, word in enumerate(words):
+        item = _item(word)
+        if item is None or item.pos != 'verb' or item.attrib('mood') in ('infinitive', 'participle'):
+            continue
+        k = i - 1
+        while k >= 0 and _item(words[k]) is not None and (_item(words[k]).attrib('clitic') or
+                                                           _item(words[k]).attrib('base') == 'ne'):
+            k -= 1
+        if k >= 0 and not (PUNCTUATION.get(words[k].surface) or _pos(words[k]) == 'conj'):
+            continue   # 前に主語などがある
+        if not any('imperative' in t for l, t in morphology.verb_forms(word.surface.lower())):
+            continue
+        reading = next(t for l, t in morphology.verb_forms(word.surface.lower()) if 'imperative' in t)
+        person = 1 if 'first-person' in reading else 2
+        word.items = [type(item)(dict(item.item, mood='imperative', person=person,
+                                      number='pl' if 'plural' in reading else 'sg'))]
+        lemma = item.attrib('lemma')
+        for after in words[i + 1:i + 3]:   # Donne-moi・Donne-le-moi
+            a = _item(after)
+            base = after.surface.lower()
+            if a is None or a.pos != 'pronoun' or base not in IMPERATIVE_OBJECTS:
+                break
+            case = IMPERATIVE_OBJECTS[base]
+            if case == 'Dat' and base in ('moi', 'toi', 'nous', 'vous') and \
+                    lemma not in morphology.DITRANSITIVE_VERBS | morphology.INDIRECT_VERBS:
+                case = 'Acc'   # Regarde-moi「私を見ろ」
+            after.items = [type(a)(dict(a.item, clitic=True, _=morphology.cngs((case,))))]
+
+
 def subject_persons(words):
     """動詞の人称・数を直前の主語の代名詞から (間は接語・ne だけ。spaCy は Je le lui ai の ai を3人称と読む)"""
     for i, word in enumerate(words):
@@ -785,7 +869,9 @@ def assign_cases(words, doc, existential=False):
         else:
             cases = ('Acc',)
         after_prep = False
-        item.item['_'] = morphology.cngs(cases, feats, item.attrib('gender'))
+        gender = item.attrib('gender') if item.attrib('gender') in ('m', 'f') else None
+        # 名詞の性は辞書 (Wiktionary) を spaCy の読みより先に (soupe を男性と読むと ta soupe の ta が掛からない)
+        item.item['_'] = morphology.cngs(cases, dict(feats, Gender=None) if gender else feats, gender)
         word.items = [type(item)(item.item)]
 
 
@@ -889,6 +975,7 @@ def lookup_all(surfaces):
     _display = list(words)
     clitic_cases(words)
     subject_persons(words)
+    imperatives(words)
     words = negation(words)
     words = merge_verbs(words)
     words = pronominal_verbs(words)

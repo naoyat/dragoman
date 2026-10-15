@@ -188,8 +188,9 @@ def clause_text(clause, final=True, attributive=False):
     for np in subjects:
         if attributive and clause.gap == 'subject':
             continue
+        wh = np.head is not None and np.head.lemma in ('quis', 'quid')   # 疑問詞の主語は「が」(誰が来るか)
         parts.append(NEGATIVE_PRONOUNS[np.head.lemma] if _negative_pronoun(np) else
-                     noun_phrase(np) + ('は' if topic else 'が'))
+                     noun_phrase(np) + ('は' if topic and not wh else 'が'))
     for p in clause.adjuncts:
         if p.kind != 'absolute':
             parts.append(_participial(p))

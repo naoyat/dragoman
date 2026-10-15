@@ -331,6 +331,10 @@ class Predicate (LatinObject):
         if verb.attrib('gloss_lang') == 'en':
             # 英語の訳語 (Wiktionary 由来) は活用させず、時制などを添える
             verb_tr = jas[0] + english_verb_label(verb, negated and not self.is_sum)
+        elif flag & Verb.IMPERATIVE and verb.attrib('person') == 1 and not negated:
+            # 1人称の命令 (Parlons「話そう」、ラテン語の接続法の勧奨 eāmus「行こう」)
+            from .japanese import japanese_form
+            verb_tr = ','.join(japanese_form(ja, False, 'volitional', 'present', False) for ja in jas)
         else:
             verb_tr = ','.join([JaVerb(ja).form(flag, negated and not self.is_sum) for ja in jas])
         if is_existential:

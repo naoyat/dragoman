@@ -262,6 +262,7 @@ class Clause:
     adverbs: list = field(default_factory=list)    # Lex
     infinitives: list = field(default_factory=list)  # 不定詞句 (Clause。mood='infinitive')
     infinitive_kind: str = ''   # 不定詞句なら、支配する動詞の種類 (saying / perception / command / complement)
+    question: bool = False   # 直接の疑問文 (文が ? で終わる: Quis venit?・Est-ce que tu viens ?)。文末の印は punctuate で
     questions: list = field(default_factory=list)  # 間接疑問 (Clause。question_word に疑問詞)
     question_word: str = ''   # 間接疑問の節なら疑問詞 (quid, cūr …。副詞の疑問詞は adverbs から除いてある)
     question_source: str = ''   # ほかの言語の疑問詞 (πῶς)。元の言語に戻すとき
@@ -1054,6 +1055,25 @@ def _converb_key(word):
     return CONVERB_KEYS[_lang].get(head, '')
 
 
+QUESTION_MARKS = {'ar': '؟', 'fa': '؟', 'ur': '؟', 'fr': ' ?'}   # フランス語は ? の前を空ける
+
+
+def punctuate(text, clauses, lang):
+    """疑問文の文末: ? (アラビア文字の言語は ؟)、日本語・古文は「〜か。」"""
+    if not text or not any(c.question for c in clauses):
+        return text
+    first, newline, rest = text.partition('\n')   # 転写の行 (2行目) も同じに
+    def mark(line):
+        line = line.rstrip()
+        if lang in ('ja', 'kobun'):
+            line = line.rstrip('。')
+            return line + ('。' if line.endswith('か') else 'か。')
+        if line[-1:] in '.。؟?!':
+            line = line[:-1]
+        return line + QUESTION_MARKS.get(lang, '?')
+    return mark(first) + (newline + mark(rest) if rest.strip() and lang not in ('ja', 'kobun') else newline + rest)
+
+
 def frames(analysis):
     """SentenceAnalysis → Clause の列"""
     _sentence_words[:] = analysis.words
@@ -1082,6 +1102,10 @@ def frames(analysis):
             _converb_clause(clauses[-1], clause)
         clauses.append(clause)
     _add_unknown_words(analysis, clauses)
+    if clauses and (analysis.text.rstrip().endswith(('?', '？', '؟', ';')) and _lang == 'grc' or
+                    analysis.text.rstrip().endswith(('?', '？', '؟'))):
+        main = [c for c in clauses if not c.subordinator] or clauses
+        main[-1].question = True   # 直接の疑問文 (ギリシア語の疑問符は ;)
     for clause in clauses:   # 辞書に無い語 (補った名詞句) にも
         if _lang == 'he':
             _hebrew_bare_object(clause)
