@@ -96,6 +96,17 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Il est plus grand que moi.'), '{彼,それ}は / 私より / 大きい')  # 比較
         self.assertEqual(self.ja("C'est le livre que j'ai lu."), '{私が 読んだ}本は / それである')
 
+    def test_subjunctive(self):
+        def mood(text, surface):
+            a = next(analyzer.analyze_text(text))
+            return next(w.items[0].attrib('mood') for w in a.words if w.surface == surface)
+        self.assertEqual(mood('Il faut que je parte.', 'parte'), 'indicative')   # il faut que で話法の組にまとめる
+        self.assertEqual(self.ja('Il faut que je parte.'), '私が / 出発しなければならない')
+        self.assertEqual(self.ja("Il faut que je m'en aille."), '私が / 立ち去らなければならない')   # s'en aller
+        self.assertEqual(mood('Je veux que tu viennes.', 'viennes'), 'subjunctive')
+        self.assertEqual(mood('Je sais que tu viens.', 'viens'), 'indicative')
+        self.assertEqual(mood("Bien qu'il pleuve, nous sortons.", 'pleuve'), 'subjunctive')
+
     def test_names(self):
         self.assertEqual(self.ja('Jean aime Marie.'), 'ジャンが / マリを / 愛する,好む')
 

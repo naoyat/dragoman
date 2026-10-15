@@ -609,6 +609,66 @@ def de_objects(words):
     return out
 
 
+def subjunctives(words):
+    """接続法: 語形の表でその人称に直説法の読みが無い形 (parte・viennes) か、接続法を求める que の後ろ
+    (il faut que・je veux que・sans que・bien que …) で接続法の読みのある形 (aille・parle) は接続法"""
+    trigger = False
+    for i, word in enumerate(words):
+        item = _item(word)
+        lower = word.surface.lower()
+        if item is None:
+            if PUNCTUATION.get(word.surface):
+                trigger = False
+            continue
+        if item.pos == 'conj':
+            base = item.attrib('base') or lower
+            prev_verb = next((_item(w) for w in reversed(words[:i]) if _item(w) is not None and _pos(w) == 'verb'), None)
+            trigger = base in morphology.SUBJUNCTIVE_CONJUNCTIONS or base in ('que', "qu'") and prev_verb is not None \
+                and prev_verb.attrib('lemma') in morphology.SUBJUNCTIVE_TRIGGERS
+            continue
+        if item.pos != 'verb' or item.attrib('mood') in ('infinitive', 'participle', 'imperative'):
+            continue
+        person, number = item.attrib('person'), item.attrib('number')
+        readings = morphology.verb_forms(lower)
+        same = [(l, t) for l, t in readings if l == item.attrib('lemma')] or readings
+        def fits(t):
+            p = next((k + 1 for k, n in enumerate(FINITE) if n in t), None)
+            return (p is None or p == person or person is None) and ('plural' in t) == (number == 'pl')
+        subj = [(l, t) for l, t in same if 'subjunctive' in t and fits(t)]
+        indicative = [(l, t) for l, t in same if 'indicative' in t and fits(t)]
+        if subj and (trigger or not indicative):
+            lemma = subj[0][0]
+            data = dict(item.item, mood='subjunctive', tense='present' if 'present' in subj[0][1] else 'imperfect')
+            if lemma != item.attrib('lemma'):
+                ja, gloss_lang, _ = morphology.gloss(lemma, 'verb')
+                data.update(lemma=lemma, pres1sg=lemma, base=lemma, ja=ja or lemma, gloss_lang=gloss_lang or 'en')
+            word.items = [type(item)(data)]
+        trigger = False
+
+
+def il_faut_que(words):
+    """il faut que + 接続法 (Il faut que je parte「私は出発しなければならない」): faut・que を落とし、従属節の動詞を
+    falloir の話法の組に (文の枠では oportet + 主語のある不定詞の節)"""
+    for i, word in enumerate(words):
+        item = _item(word)
+        if item is None or item.pos != 'verb' or item.attrib('lemma') != 'falloir' or i + 1 >= len(words):
+            continue
+        que = words[i + 1]
+        if _item(que) is None or _item(que).pos != 'conj' or que.surface.lower() not in ('que', "qu'"):
+            continue
+        verb = next((w for w in words[i + 2:] if _pos(w) == 'verb'), None)
+        if verb is None or _item(verb).attrib('mood') != 'subjunctive':
+            continue
+        v = _item(verb)
+        ja = ','.join(_attach(j, 'なければならない') for j in (v.ja or '').split(',')[:1]) \
+            if v.attrib('gloss_lang') == 'ja' else v.ja
+        verb.items = [type(v)(dict(v.item, modal='falloir', main_ja=v.ja, ja=ja, mood='indicative',
+                                   tense=item.attrib('tense') or 'present', form='il faut que + 接続法'))]
+        word.merged_into = que.merged_into = True
+        return [w for w in words if w is not word and w is not que]
+    return words
+
+
 def pronominal_verbs(words):
     """代名動詞: 再帰の接語 + 動詞を辞書の「se + 動詞」の見出しで引き、接語は訳に出さない (Il se lève「起きる」、
     Je m'appelle Jean「〜という名前である」)。見出しが無ければ接語は再帰の目的語のまま (自分を)"""
@@ -620,8 +680,19 @@ def pronominal_verbs(words):
         clitic = _reflexive_before(words, i)
         if clitic is None:
             continue
-        lemma = 'se ' + item.attrib('lemma')
-        ja, gloss_lang, _ = morphology.gloss(lemma, 'verb')
+        # en・y を含む代名動詞 (s'en aller「立ち去る」、s'y prendre) を先に
+        extra = [w for w in words[max(0, i - 3):i] if w.surface.lower() in ('en', 'y') and _item(w) is not None and
+                 _item(w).attrib('clitic')]
+        lemma = ja = None
+        for particle in ([extra[0].surface.lower()] if extra else []) + ['']:
+            candidate = 'se ' + (particle + ' ' if particle else '') + item.attrib('lemma')
+            ja, gloss_lang, _ = morphology.gloss(candidate, 'verb')
+            if ja:
+                lemma = candidate
+                if particle:
+                    extra[0].merged_into = True
+                    out = [w for w in out if w is not extra[0]]
+                break
         if not ja:
             continue
         if item.attrib('voice') == 'passive':   # se + être + 過去分詞は複合過去 (s'est levé)
@@ -1092,7 +1163,9 @@ def lookup_all(surfaces):
     words = negation(words)
     words = impersonal_il(words)   # 動詞の組をまとめる前に (il faut partir の falloir で決める)
     words = merge_verbs(words)
+    subjunctives(words)
     words = pronominal_verbs(words)
+    words = il_faut_que(words)
     words = de_objects(words)
     clitic_valency(words)   # 動詞の組をまとめてから (Il m'a parlé は parler で決める)
     existential = existential_il_y_a(words)

@@ -385,7 +385,14 @@ def _modal(clause, gap, subordinate):
                           gap='subject', subordinate=True, infinitive=True)
     args = list(clause.args)
     if modal == 'müssen' and clause.verb.lemma == 'oportet' and not clause.role('subject'):
-        args = [('subject', NP(Lex('man', 'pronoun', lang='de')))]   # Man muss gehen
+        inner_subject = (inner.role('subject') or [None])[0]
+        if inner_subject is not None:   # il faut que je parte → Ich muss abfahren
+            args = [('subject', inner_subject)]
+            inner_words = realize(dataclasses.replace(inner, mood='indicative', args=[(r, np) for r, np in inner.args
+                                                                                     if r != 'subject']),
+                                  gap='subject', subordinate=True, infinitive=True)
+        else:
+            args = [('subject', NP(Lex('man', 'pronoun', lang='de')))]   # Man muss gehen
     if person_np is not None:
         args.append(('object', person_np))   # Er lässt mich lachen
     outer = dataclasses.replace(clause, verb=Lex(modal, 'verb', lang='de'), infinitives=[], args=args)

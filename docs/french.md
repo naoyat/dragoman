@@ -103,17 +103,31 @@ python3 tools/generate.py --from=fr "Je le lui ai donné hier."      # 入口か
 * 新しい綴りで書いた語は従来の綴りの語義で訳す（cout → 代価,価格）。文の生成は従来の綴り（plaît）。
 * 連結符の改革（week-end → weekend、vingt et un → vingt-et-un）・二重子音の簡略化（ruisselle → ruissèle）は辞書の語義にある語だけ。
 
+## 法と動詞の組
+
+* 接続法: 語形の表でその人称に直説法の読みが無い形（parte・viennes）か、接続法を求める que の後ろ（主節が falloir・vouloir・
+  souhaiter …、sans que・pour que・bien que …）で接続法の読みのある形（aille・parle）は接続法。条件法は「〜だろう」。
+* il faut que + 接続法は1つの節に（Il faut que je parte「私が / 出発しなければならない」）。文の枠では oportet + 主語のある
+  不定詞の節（Mē abīre oportet・I have to leave・Ich muss abfahren）、フランス語に戻すと il faut que + 接続法。
+* 話法の助動詞・使役（pouvoir・vouloir・devoir・il faut・faire・laisser + 不定詞）は、文の枠ではラテン語と同じ「話法の動詞 +
+  不定詞の節」（possum legere）。近い過去 venir de は完了 + modo「たった今」。
+* 疑問文（倒置 Viens-tu・est-ce que・文末の ?）は文の枠の疑問の印に（生成の文末は ?、日本語は「〜か。」）。
+* 命令文（主語の無い文頭の動詞。Donne-moi の接語）、1人称の命令は「〜よう」（Parlons「話そう」）。
+* ジェロンディフ en + 現在分詞「〜しながら」、比較 plus / aussi / moins … que「〜より」「〜と同じくらい」「〜ほど…ない」、
+  非人称の il（il faut・il pleut）。
+
 ## 準備
 
 ```
 pip install spacy && python3 -m spacy download fr_core_news_sm      # 約16MB (LGPL-LR。UD French-Sequoia・WikiNER で学習)
 mkdir -p ~/.local/share/dragoman-data/fr/ud
-curl -sL https://kaikki.org/dictionary/French/kaikki.org-dictionary-French.jsonl | python3 tools/build_french_dic.py -
+curl -sL -o ~/.local/share/dragoman-data/fr/kaikki.org-dictionary-French.jsonl https://kaikki.org/dictionary/French/kaikki.org-dictionary-French.jsonl
+python3 tools/build_french_dic.py ~/.local/share/dragoman-data/fr/kaikki.org-dictionary-French.jsonl
 ```
 
-Wiktionary のフランス語の抽出データ（CC BY-SA）は約 580MB あるので、標準入力から読んで必要なものだけを sqlite に残します
-（元のファイルは置かなくてよい。`~/.local/share/dragoman-data/fr/wiktionary.sqlite`、約 90MB。見出し語 8.6 万・語形 60 万）。
-見出し語ごとの品詞・英語の語義・名詞の性・動詞の語義の印（他動・自動・再帰と à）、代名動詞の見出し（se lever …）と、語形の表（動詞は単純時制の形だけ。複合時制は avoir / être + 過去分詞で作る）です。
+Wiktionary のフランス語の抽出データ（CC BY-SA）は約 580MB（`~/.local/share/dragoman-data/fr/` に置いておくと作り直しが速い。
+標準入力から流すこともできる: `curl … | python3 tools/build_french_dic.py -`）。必要なものだけを sqlite に残します（`~/.local/share/dragoman-data/fr/wiktionary.sqlite`、約 90MB。見出し語 8.6 万・語形 60 万）。
+見出し語ごとの品詞・英語の語義（古い・まれな語義は後ろに、訳語は6つまで: partir は to share より to leave を先に）・名詞の性・動詞の語義の印（他動・自動・再帰と à）、代名動詞の見出し（se lever …）と、語形の表（動詞は単純時制の形だけ。複合時制は avoir / être + 過去分詞で作る）です。
 
 評価用に UD French-GSD（CC BY-SA 4.0）の `fr_gsd-ud-test.conllu` を `~/.local/share/dragoman-data/fr/ud/` に置きます
 （spaCy のモデルの学習に使ったのは Sequoia なので、GSD とは重ならない）。

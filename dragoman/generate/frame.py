@@ -680,6 +680,12 @@ def _modal_clause(clause, verb_item):
         people = [np for r, np in inner.args if r in ('object', 'recipient')]
         if people:
             inner.args = [('subject', people[0])] + [(r, np) for r, np in inner.args if np is not people[0]]
+    if lemma == 'oportet' and clause.role('subject'):
+        # il faut que je parte: 主語は不定詞の節の主語 (Mē abīre oportet。生成では I have to leave・私が出発しなければならない)
+        inner.args = [(r, np) for r, np in clause.args if r == 'subject'] + inner.args
+        outer = dataclasses.replace(clause, verb=Lex(lemma, 'verb', ja, surface=clause.verb.surface), args=[],
+                                    infinitives=[inner], person=3, number='sg')
+        return outer
     outer = dataclasses.replace(clause, verb=Lex(lemma, 'verb', ja, surface=clause.verb.surface),
                                 args=[(r, np) for r, np in clause.args if r == 'subject'], infinitives=[inner])
     return outer

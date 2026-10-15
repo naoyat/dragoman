@@ -984,8 +984,12 @@ class ModalTestCase(unittest.TestCase):
         self.assertEqual(self.generate('Je voulais lire.', japanese), '私は読みたかった。')
         self.assertEqual(self.generate('Je peux le lire.', french), 'Je peux le lire.')
         self.assertEqual(self.generate('Il me fait rire.', french), 'Il me fait rire.')
+        self.assertEqual(self.generate('Il faut que je parte.', english), 'I have to leave.')     # il faut que + 接続法
+        self.assertEqual(self.generate('Il faut que je parte.', french), 'Il faut que je parte.')
+        self.assertEqual(self.generate("Il faut que je m'en aille.", french), "Il faut que je m'en aille.")
         if german._db() is not None:
             self.assertEqual(self.generate('Je peux lire ce livre.', german), 'Ich kann dieses Buch lesen.')
+            self.assertEqual(self.generate('Il faut que je parte.', german), 'Ich muss abfahren.')
 
 
 if __name__ == '__main__':

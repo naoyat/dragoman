@@ -402,10 +402,13 @@ def verb_group(clause, person, number, agree=('m', 'sg'), subjunctive=False, inf
         return lemma, []
     g, n = agree
     if infinitive:   # 話法の動詞の後ろの不定詞の節の動詞は不定詞のまま (je peux lire)
-        return (lemma[3:] if lemma.startswith('se ') else lemma), []
+        base = lemma[3:] if lemma.startswith('se ') else lemma
+        return (base.split(' ', 1)[1] if base.startswith(('en ', 'y ')) else base), []
     pronominal = lemma.startswith('se ')
-    if pronominal:   # 代名動詞 (se lever): 動詞の部分で活用し、複合過去は être (再帰の代名詞は呼ぶ側で)
+    if pronominal:   # 代名動詞 (se lever・se en aller): 動詞の部分で活用し、複合過去は être (再帰の代名詞と en・y は呼ぶ側で)
         lemma = lemma[3:]
+        if lemma.startswith(('en ', 'y ')):
+            lemma = lemma.split(' ', 1)[1]
     if clause.voice == 'passive':
         tense = 'imperfect' if clause.tense == 'imperfect' else 'future' if clause.tense == 'future' else 'present'
         if clause.tense in ('perfect', 'past-perfect'):   # a été + 過去分詞
@@ -475,6 +478,8 @@ def _modal(clause, gap, antecedent, subjunctive):
             outer = dataclasses.replace(outer, args=list(outer.args) + [('object', person_np)])
         else:        # Il fait rire les enfants
             inner_words = inner_words + [noun_phrase(person_np, 'Acc')]
+    if modal == 'falloir' and inner.role('subject'):   # Il faut que je parte (主語のある不定詞の節は que + 接続法)
+        return ['il', 'faut', 'que'] + realize(dataclasses.replace(inner, mood='indicative'), subjunctive=True)
     if modal == 'falloir':
         outer = dataclasses.replace(outer, args=[(r, np) for r, np in outer.args if r != 'subject'], person=3, number='sg')
     words = realize(outer, gap, antecedent, subjunctive)
@@ -572,7 +577,11 @@ def realize(clause, gap=None, antecedent=None, subjunctive=False, infinitive=Fal
         else:
             objects.append(with_preposition('dans', noun_phrase(np, 'Str')))
     verb, tail = verb_group(clause, person, number, agree, subjunctive, infinitive)
-    if word(clause.verb, 'verb').startswith('se '):   # 代名動詞の再帰の代名詞 (il se lève・je m'appelle)
+    lemma_fr = word(clause.verb, 'verb')
+    if lemma_fr.startswith('se '):   # 代名動詞の再帰の代名詞 (il se lève・je m'appelle・je m'en vais)
+        particle = lemma_fr[3:].split(' ', 1)[0] if lemma_fr[3:].startswith(('en ', 'y ')) else None
+        if particle:
+            clitics.append(particle)
         clitics.insert(0, {(1, 'sg'): 'me', (2, 'sg'): 'te', (1, 'pl'): 'nous', (2, 'pl'): 'vous'}.get((person, number), 'se'))
     if clause.mood == 'imperative':
         lemma = word(clause.verb, 'verb')

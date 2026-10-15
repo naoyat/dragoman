@@ -112,6 +112,13 @@ def display_lemma(lemma):
     return lemma
 
 
+# que の後ろを接続法にする主節の動詞 (意志・必要・感情: il faut que je parte、je veux que tu viennes)
+SUBJUNCTIVE_TRIGGERS = {'falloir', 'vouloir', 'souhaiter', 'désirer', 'exiger', 'demander', 'ordonner', 'préférer',
+                        'aimer', 'attendre', 'craindre', 'regretter', 'douter', 'permettre', 'interdire', 'empêcher',
+                        'suffire', 'valoir', 'importer', 'convenir'}
+# 後ろを接続法にする接続詞 (前置詞・副詞 + que。解析で1語にした見出し)
+SUBJUNCTIVE_CONJUNCTIONS = {'sans que', 'pour que', 'afin que', 'avant que', 'bien que', 'quoique', 'à condition que',
+                            'de sorte que', 'jusqu\'à ce que'}
 # 人が与格・物が主語の動詞 (経験者の構文): 日本語では人を主題「は」に (Tu me manques「私は 君が いなくて寂しい」、
 # Ce livre me plaît「私は この本が 気に入っている」)
 EXPERIENCER_VERBS = {'manquer': 'いなくて寂しい', 'plaire': '気に入っている'}
@@ -131,7 +138,7 @@ GLOSSES = {
     'partir': '出発する', 'arriver': '着く', 'entrer': '入る', 'sortir': '出る', 'rester': 'とどまる', 'tomber': '落ちる',
     'mourir': '死ぬ', 'naître': '生まれる', 'devenir': '〜になる', 'comprendre': '理解する', 'commencer': '始める',
     'finir': '終える', 'mettre': '置く', 'porter': '運ぶ,身につける', 'montrer': '見せる', 'appeler': '呼ぶ',
-    'se appeler': '呼ばれている', 'téléphoner': '電話する', 'se lever': '起きる', 'se coucher': '寝る', 'se promener': '散歩する',
+    'se appeler': '呼ばれている', 'se en aller': '立ち去る', 'aller': '行く', 'téléphoner': '電話する', 'se lever': '起きる', 'se coucher': '寝る', 'se promener': '散歩する',
     'se souvenir': '思い出す,覚えている', 'se trouver': 'ある,いる', 'se sentir': '感じる', 'se laver': '体を洗う',
     'se dépêcher': '急ぐ', 'se reposer': '休む', 'se marier': '結婚する', 'se taire': '黙る', 'se tromper': '間違える',
     'se moquer': 'からかう', 'se demander': '自問する,〜かしらと思う', 'se rendre': '行く', 'se passer': '起こる',

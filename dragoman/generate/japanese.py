@@ -197,6 +197,9 @@ def _fold_modal(clause):
     args = []
     for role, np in inner.args:
         if role == 'subject':
+            if clause.verb.lemma == 'oportet':
+                args.append((role, np))   # il faut que je parte「私が出発しなければならない」
+                continue
             if not causative:
                 continue   # 主節と同じ主語
             role = 'object'   # 使役の人は「を」(私を笑わせる)

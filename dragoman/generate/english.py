@@ -746,6 +746,14 @@ def realize(clause, capitalize=True):
     verb = word(clause.verb) if not clause.copula else 'be'
     if not clause.copula and clause.verb.lemma in DATIVE_VERBS:
         verb = DATIVE_VERBS[clause.verb.lemma]
+    if clause.verb.lemma == 'oportet' and len(clause.infinitives) == 1 and clause.infinitives[0].role('subject'):
+        # il faut que je parte → I have to leave (不定詞の節の主語を主語に)
+        inner = clause.infinitives[0]
+        subject_np = inner.role('subject')[0]
+        return realize(_replace(clause, verb=frame_lex('dēbeō', 'verb', ''), args=[('subject', subject_np)],
+                                infinitives=[_replace(inner, args=[(r, np) for r, np in inner.args
+                                                                   if np is not subject_np])],
+                                person=None, number=None), capitalize)
     if clause.infinitives and not clause.copula and clause.verb.lemma in MODAL_VERBS:
         verb = MODAL_VERBS[clause.verb.lemma]   # dēbeō + 不定詞 → have to、faciō → make (使役)
     if clause.infinitives:

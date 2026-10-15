@@ -5,6 +5,7 @@
 #
 #   python3 tools/build_french_dic.py [FILE.jsonl | -] [OUT.sqlite]   (OUT を省くと $DRAGOMAN_DATA/fr/wiktionary.sqlite)
 #   curl -sL https://kaikki.org/dictionary/French/kaikki.org-dictionary-French.jsonl | python3 tools/build_french_dic.py -
+#   python3 tools/build_french_dic.py ~/.local/share/dragoman-data/fr/kaikki.org-dictionary-French.jsonl   (置いたファイルから)
 #
 # 元のデータは約 580MB あるので、標準入力から読んで必要なものだけを残せる (元のファイルを置かなくてよい)。
 # 見出し語ごとの品詞・訳語 (英語の語義。日本語には実行時に core/en_ja.py で直す)・名詞の性・動詞の語義の印 (他動・自動・
@@ -63,6 +64,7 @@ def gender_of(entry):
     return None
 
 
+RARE_SENSE_TAGS = {'obsolete', 'archaic', 'dated', 'rare', 'historical', 'literary', 'nonstandard', 'slang'}
 VALENCY_TAGS = ('transitive', 'intransitive', 'ambitransitive', 'reflexive', 'pronominal', 'impersonal', 'ditransitive')
 TO_SOMEONE = re.compile(r"\b(?:something|sth\.?|it|them|one's \w+) to (?:someone|somebody|sb\b|another)|\bto someone else", re.I)
 WITH_A = re.compile(r"\[with à|\(\+ à|with à\b|à qqn|à quelqu'un|indirect object", re.I)
@@ -124,7 +126,9 @@ def main():
                 senses.append(sense)
         if not senses:
             continue
-        en = english_glosses(entry, senses=senses)
+        # 古い・まれな語義は後ろに (partir の最初の語義は (obsolete) to share。よく使う to leave を先に)、訳語は6つまで
+        senses = sorted(senses, key=lambda sense: bool(set(sense.get('tags') or []) & RARE_SENSE_TAGS))
+        en = english_glosses(entry, senses=senses, limit=6)
         key = word.lower()
         if pos == 'verb' and key.startswith(("s'", 'se ')):
             key = 'se ' + key[2:].lstrip()   # 代名動詞の見出し (s'appeler → se appeler)
