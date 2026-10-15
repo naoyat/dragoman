@@ -71,6 +71,13 @@ class AnalyzerTestCase(unittest.TestCase):
                          [('new', 'plait'), ('old', 'connaît'), ('new', 'évènement'), None])
         self.assertEqual(morphology.gloss('cout', 'noun')[0], morphology.gloss('coût', 'noun')[0])   # 新しい綴りも同じ訳
 
+    def test_en_clitic_and_negative_pronouns(self):
+        a = next(analyzer.analyze_text("Il est parti sans que personne ne s'en aperçoive."))
+        self.assertEqual([c.predicate.translate()[0] for c in a.clauses][-1],
+                         '〜することなく / 誰も / それを / 実感しない,気づかない')   # s'en aperçoive (en は接語)・sans que
+        self.assertEqual(self.ja('Personne ne vient.'), '誰も / 来ない')
+        self.assertEqual(self.ja('Il ne voit rien.'), '{彼,それ}が / 何も / 見ない')
+
     def test_names(self):
         self.assertEqual(self.ja('Jean aime Marie.'), 'ジャンが / マリを / 愛する,好む')
 

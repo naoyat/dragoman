@@ -46,6 +46,9 @@ def _particle(case, obj, predicate):
         return 'は'
     if case == 'Acc' and predicate.first_item.attrib('lemma') == 'se appeler':
         return 'と'
+    if isinstance(obj, Word) and obj.items and obj.items[0].pos == 'pronoun' and \
+            obj.items[0].attrib('base') in ('rien', 'personne'):
+        return 'も'   # ne … rien「何も〜ない」、personne ne …「誰も〜ない」
     return None
 
 
@@ -137,8 +140,10 @@ def corrections(doc):
             continue
         clitic_det = t.i > 1 and words[t.i - 1].text.lower() in ('le', 'la', "l'", 'les') and \
             words[t.i - 2].text.lower() in SUBJECTS | {'ne', "n'"}   # 主語の代名詞の後ろの le・la・les は接語 (Je les vois)
+        clitic_en = t.i > 1 and words[t.i - 1].text.lower() in ('en', 'y') and \
+            words[t.i - 2].text.lower() in morphology.CLITICS | SUBJECTS | {'ne', "n'"}   # s'en・n'en・m'y は接語
         if t.pos_ in ('NOUN', 'PROPN') and t.i > 0 and words[t.i - 1].pos_ in ('DET', 'ADJ', 'ADP', 'NUM') and \
-                not clitic_det and words[t.i - 1].text.lower() not in SUBJECTS:   # Tu lis を冠詞 + 名詞と読む誤りは直す
+                not clitic_det and not clitic_en and words[t.i - 1].text.lower() not in SUBJECTS:   # Tu lis を冠詞 + 名詞と読む誤りは直す
             continue   # 冠詞・形容詞・前置詞の後ろの名詞はそのまま (la crise)
         if t.i == 0 and any('imperative' in tags for _, tags in _finite_forms(lower)) and len(words) > 1 and \
                 words[1].pos_ in ('DET', 'PRON', 'ADP'):
@@ -346,6 +351,11 @@ def item_of(token, doc, fixed):
         return {'surface': text, 'pos': 'adj', 'base': text, 'ja': ja + 'つの' if lower in morphology.NUMBERS_JA and
                 len(ja) <= 2 else ja,
                 'gloss_lang': 'ja', '_': morphology.cngs(morphology.CASES + ('Gen',))}
+    if lower in ('personne', 'rien') and (token.i == 0 or doc[token.i - 1].pos_ != 'DET') and \
+            any(t.text.lower() in ('ne', "n'", 'sans') for t in doc):
+        # ne … personne「誰も〜ない」、sans que personne「誰にも〜されずに」(冠詞の無い personne は否定の代名詞)
+        return {'surface': text, 'pos': 'particle', 'base': lower, 'ja': morphology.NEGATIONS[lower], 'gloss_lang': 'ja',
+                'negative_word': True}
     if pos in ('NOUN', 'PROPN') or pos == 'X' and text[:1].isupper():
         named = text[:1].isupper() and token.i > 0 and bool(dictionary.lemmas(text, 'name'))   # 文中の大文字の名前 (Marie)
         return _noun_data(token, feats, proper=pos in ('PROPN', 'X') or named)
@@ -654,8 +664,17 @@ def negation(words):
     """ne … pas: ne を否定の副詞に、pas は落とす (jamais・plus・rien は意味を残す)。ne の無い pas も否定"""
     has_ne = any(_item(w) is not None and _item(w).attrib('base') == 'ne' for w in words)
     out = []
+    verb_seen = False   # 同じ節の前に動詞があるか (Personne ne vient は主語、Il ne voit personne は目的語)
     for w in words:
         item = _item(w)
+        if item is not None and item.pos == 'verb':
+            verb_seen = True
+        elif item is not None and item.pos == 'conj' or PUNCTUATION.get(w.surface):
+            verb_seen = False
+        if item is not None and item.pos == 'pronoun' and item.attrib('base') in ('rien', 'personne'):
+            w.items = [type(item)(dict(item.item, _=morphology.cngs(('Acc',) if verb_seen else ('Nom',))))]
+            out.append(w)
+            continue
         if item is not None and item.attrib('negative_word'):
             base = item.attrib('base')
             if base in ('pas', 'point'):
@@ -664,9 +683,9 @@ def negation(words):
                     out.append(w)
                 continue
             if base in ('rien', 'personne'):
-                ja = '何も' if base == 'rien' else '誰も'
+                ja = '何' if base == 'rien' else '誰'   # 助詞は「も」(_particle)
                 w.items = [type(item)(dict(item.item, pos='pronoun', ja=ja, person=3, number='sg',
-                                           _=morphology.cngs(('Acc', 'Nom'))))]
+                                           _=morphology.cngs(('Acc',) if verb_seen else ('Nom',))))]
             else:
                 ja = {'jamais': '決して', 'plus': 'もう', 'guère': 'ほとんど'}.get(base, '')
                 w.items = [type(item)(dict(item.item, pos='adv', ja=ja))]
@@ -784,6 +803,32 @@ def infinitive_prepositions(words):
     return out
 
 
+# 前置詞・副詞 + que の接続詞 (sans que「〜することなく」、avant que「〜する前に」…)
+COMPOUND_CONJUNCTIONS = {'sans': '〜することなく', 'avant': '〜する前に', 'pour': '〜するように', 'afin': '〜するように',
+                         'bien': '〜にもかかわらず', 'parce': '〜なので', 'après': '〜した後で', 'alors': '〜である一方',
+                         'pendant': '〜する間', 'dès': '〜するとすぐ', 'depuis': '〜して以来', 'tandis': '〜する一方',
+                         'malgré': '〜にもかかわらず', 'à condition': '〜という条件で', 'de sorte': '〜するように'}
+
+
+def compound_conjunctions(words):
+    """sans que・bien que … を1つの接続詞に (que は落とす)"""
+    out = []
+    for i, word in enumerate(words):
+        nxt = words[i + 1] if i + 1 < len(words) else None
+        if out and _item(word) is not None and word.surface.lower() in ('que', "qu'") and \
+                getattr(out[-1], 'compound_que', False):
+            word.merged_into = True
+            continue
+        if nxt is not None and nxt.surface.lower() in ('que', "qu'") and word.surface.lower() in COMPOUND_CONJUNCTIONS \
+                and _item(word) is not None:
+            item = _item(word)
+            word.items = [type(item)(dict(item.item, pos='conj', ja=COMPOUND_CONJUNCTIONS[word.surface.lower()],
+                                          base=word.surface.lower() + ' que', _=None))]
+            word.compound_que = True
+        out.append(word)
+    return out
+
+
 def passive_agents(words):
     """受動の文の par + 名詞は動作主「〜によって」"""
     if not any(_pos(w) == 'verb' and _item(w).attrib('voice') == 'passive' for w in words):
@@ -818,6 +863,7 @@ def lookup_all(surfaces):
     clitic_valency(words)   # 動詞の組をまとめてから (Il m'a parlé は parler で決める)
     existential = existential_il_y_a(words)
     words = [w for w in words if _pos(w) != 'particle']
+    words = compound_conjunctions(words)
     words = infinitive_prepositions(words)
     words = genitive_de(words)
     assign_cases(words, doc, existential)

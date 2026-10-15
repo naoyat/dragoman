@@ -31,8 +31,8 @@ PRONOUNS = {
     'moi': ('私', 1, 'sg', ('Acc', 'Nom')), 'toi': ('君', 2, 'sg', ('Acc', 'Nom')), 'eux': ('彼ら', 3, 'pl', ('Acc', 'Nom')),
     'soi': ('自分', 3, 'sg', ('Acc',)), 'ce': ('それ', 3, 'sg', ('Nom',)), "c'": ('それ', 3, 'sg', ('Nom',)),
     'cela': ('それ', 3, 'sg', ('Nom', 'Acc')), 'ça': ('それ', 3, 'sg', ('Nom', 'Acc')), 'ceci': ('これ', 3, 'sg', ('Nom', 'Acc')),
-    'qui': ('誰', 3, 'sg', ('Nom', 'Acc')), 'quoi': ('何', 3, 'sg', ('Acc',)), 'rien': ('何も〜ない', 3, 'sg', ('Acc', 'Nom')),
-    'personne': ('誰も〜ない', 3, 'sg', ('Nom', 'Acc')), 'tout': ('すべて', 3, 'sg', ('Nom', 'Acc')),
+    'qui': ('誰', 3, 'sg', ('Nom', 'Acc')), 'quoi': ('何', 3, 'sg', ('Acc',)), 'rien': ('何', 3, 'sg', ('Acc', 'Nom')),
+    'personne': ('誰', 3, 'sg', ('Nom', 'Acc')), 'tout': ('すべて', 3, 'sg', ('Nom', 'Acc')),
     'quelqu\'un': ('誰か', 3, 'sg', ('Nom', 'Acc')), 'quelque chose': ('何か', 3, 'sg', ('Nom', 'Acc')),
     'y': ('そこ', 3, 'sg', ('Dat',)), 'en': ('それ', 3, 'sg', ('Acc',)),
 }

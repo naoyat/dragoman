@@ -46,7 +46,10 @@ python3 tools/samples.py --lang=fr              # サンプル (samples/french.t
   être + 過去分詞 → 移動・変化の動詞（aller・venir・partir …）なら複合過去、ほかは受動（par + 名詞は「〜によって」）、
   話法の助動詞 + 不定詞（pouvoir「〜できる」・vouloir「〜したい」・devoir「〜なければならない」）、aller + 不定詞 → 近い未来。
   不定詞の目的語は不定詞の後ろ（言語の設定 `infinitive_objects_follow`: Nous voulons lire un livre「本を読みたい」）。
-* 否定 ne … pas（ne の無い pas も）、ne … jamais「決して」・ne … rien「何も」、il y a + 名詞「〜がある」。
+* 否定 ne … pas（ne の無い pas も）、ne … jamais「決して」、ne … rien「何も」・personne ne …「誰も」（冠詞の無い personne・rien は
+  否定の代名詞。動詞の前なら主語、後ろなら目的語。助詞は「も」）、il y a + 名詞「〜がある」。
+* 前置詞・副詞 + que の接続詞（sans que「〜することなく」、avant que・bien que・pour que・parce que・pendant que …）は1語に。
+  s'en・n'en・m'y の en・y は接語（spaCy が前置詞と読むのを直す: s'en aperçoive「それに気づく」）。
 * 関係代名詞 qui・que は共通の解析器の関係節に。que・si・quand … の従属節。
 * spaCy の小さいモデルの読み誤りを辞書の語形の表で直す: 主語・関係代名詞 qui の後ろの動詞の形（Le garçon lit … の lit を
   前置詞と、qui chante の chante を形容詞と読む）、動詞の前の接語の代名詞（le lui を冠詞と名詞と読む）、文頭の命令形、
