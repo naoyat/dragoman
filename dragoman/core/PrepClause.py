@@ -40,8 +40,9 @@ def existential_gloss(gloss):
 
 def prep_text(noun, glosses):
     """名詞句の訳と前置詞の訳を並べる: 学校 + [〜に] → 学校に、学校 + [〜に, 〜で] → 学校[に,で]"""
+    from dragoman.core.AndOr import needs_braces
     noun = noun.strip()
-    if (' ' in noun or ',' in noun) and not (noun.startswith('{') and noun.endswith('}') and _balanced(noun[1:-1])):
+    if needs_braces(noun) and not (noun.startswith('{') and noun.endswith('}') and _balanced(noun[1:-1])):
         noun = '{' + noun + '}'   # 複数の語の名詞句・訳語の候補 (邸宅,別荘) はまとめる (助詞が最後の語だけに掛からないように)
     parts = [g[1:] if g.startswith(('〜', '～')) else g for g in glosses]
     if not parts:

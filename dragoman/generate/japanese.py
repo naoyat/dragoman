@@ -33,7 +33,7 @@ ROLE_PARTICLES = {'object': 'を', 'recipient': 'に', 'means': 'で', 'place': 
 SUBORDINATORS = {'ubi': 'とき', 'cum': 'とき', 'postquam': '後で', 'quod': 'ので', 'quia': 'ので', 'sī': 'なら',
                  'dum': 'あいだ', 'nisi': 'のでなければ', 'antequam': '前に', 'quamquam': 'けれども',
                  'etsī': 'けれども', 'ut': 'ように', 'nē': 'ないように', 'simul': 'とすぐに', 'quoniam': 'ので',
-                 'dōnec': 'まで', 'priusquam': '前に'}
+                 'dōnec': 'まで', 'priusquam': '前に', 'quīn': 'ことなく'}
 WH = {'quis': '誰', 'quid': '何', 'cūr': 'なぜ', 'quārē': 'なぜ', 'ubi': 'どこで', 'quō': 'どこへ', 'unde': 'どこから',
       'quandō': 'いつ', 'quōmodo': 'どのように', 'num': '', 'utrum': ''}
 
@@ -49,7 +49,8 @@ def gloss(lex):
     """ラテン語の語 → 日本語の訳語 (最初のもの。注記・〜を除く)"""
     from . import transfer
     first = transfer.FIRST_GLOSSES.get(lex.lang, {}).get(lex.lemma)
-    if first:   # 先に使う英語の訳語の決まっている語 (βασιλεύς: king → 王)
+    if first and lex.lemma not in transfer.hand_glosses(lex.lang):
+        # 先に使う英語の訳語の決まっている語 (βασιλεύς: king → 王)。解析器の手作りの日本語の訳語があればそちら (partir「出発する」)
         from dragoman.core import en_ja
         ja = en_ja.translate(first, lex.pos if lex.pos in ('noun', 'verb', 'adj', 'adv') else 'noun')
         if ja:
@@ -166,17 +167,29 @@ def predicate(clause, final=True):
         return verb
 
 
+# 否定の代名詞: 「誰も」「何も」+ 述語の否定 (nēmō venit「誰も来ない」、nihil videt「何も見ない」)。助詞は付けない
+NEGATIVE_PRONOUNS = {'nēmō': '誰も', 'nihil': '何も', 'nūllus': '誰も'}
+
+
+def _negative_pronoun(np):
+    return np.head is not None and not np.members and np.head.lemma in NEGATIVE_PRONOUNS and np.head.pos != 'adj'
+
+
 def clause_text(clause, final=True, attributive=False):
     """節 → 日本語 (述語まで)"""
+    import dataclasses
     from .frame import dative_as_object, prohibition
     clause = dative_as_object(prohibition(clause), 'ja')   # miserēre nōbīs → 私たちを憐れめ、Nōlī timēre → 恐れるな
+    if any(_negative_pronoun(np) for _, np in clause.args):
+        clause = dataclasses.replace(clause, negated=True)
     parts = [_participial(p) for p in clause.adjuncts if p.kind == 'absolute']   # 独立奪格は節の頭 (王が死んで、…)
     subjects = clause.role('subject')
     topic = final and not attributive and not clause.subordinator
     for np in subjects:
         if attributive and clause.gap == 'subject':
             continue
-        parts.append(noun_phrase(np) + ('は' if topic else 'が'))
+        parts.append(NEGATIVE_PRONOUNS[np.head.lemma] if _negative_pronoun(np) else
+                     noun_phrase(np) + ('は' if topic else 'が'))
     for p in clause.adjuncts:
         if p.kind != 'absolute':
             parts.append(_participial(p))
@@ -184,7 +197,8 @@ def clause_text(clause, final=True, attributive=False):
         for np in clause.role(role):
             if attributive and clause.gap == role:
                 continue
-            parts.append(noun_phrase(np) + ROLE_PARTICLES[role])
+            parts.append(NEGATIVE_PRONOUNS[np.head.lemma] if _negative_pronoun(np) else
+                         noun_phrase(np) + ROLE_PARTICLES[role])
     for role, np in clause.args:
         if role in ('subject', 'object', 'recipient', 'complement'):
             continue

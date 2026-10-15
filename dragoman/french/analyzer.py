@@ -49,6 +49,10 @@ def _particle(case, obj, predicate):
     if isinstance(obj, Word) and obj.items and obj.items[0].pos == 'pronoun' and \
             obj.items[0].attrib('base') in ('rien', 'personne'):
         return 'も'   # ne … rien「何も〜ない」、personne ne …「誰も〜ない」
+    if case == 'Acc' and predicate.first_item.attrib('lemma') in morphology.DE_OBJECT_VERBS:
+        return morphology.DE_OBJECT_VERBS[predicate.first_item.attrib('lemma')]   # 誤りに気づく (s'apercevoir de)
+    if isinstance(obj, Word) and obj.items and obj.items[0].attrib('base') == 'en' and case in ('Acc', 'Dat'):
+        return morphology.EN_PARTICLES.get(predicate.first_item.attrib('lemma'))   # s'en apercevoir「それに」
     return None
 
 
@@ -396,7 +400,8 @@ def _determiner_gender(word):
 
 
 # de を取る動詞 → de の訳 (parler de「〜について話す」、avoir besoin de は名詞の後ろなので属格に)
-DE_VERBS = {'parler': '〜について', 'rêver': '〜を', 'souvenir': '〜を', 'occuper': '〜を', 'discuter': '〜について',
+DE_VERBS = {'parler': '〜について', 'apercevoir': '〜に', 'méfier': '〜に', 'moquer': '〜を', 'servir': '〜を',
+            'plaindre': '〜について', 'rêver': '〜を', 'souvenir': '〜を', 'occuper': '〜を', 'discuter': '〜について',
             'douter': '〜を', 'profiter': '〜を', 'manquer': '〜が', 'dépendre': '〜に', 'changer': '〜を',
             'sortir': '〜から', 'venir': '〜から', 'partir': '〜から', 'revenir': '〜から', 'arriver': '〜から'}
 
@@ -474,6 +479,32 @@ def _reflexive_before(words, i):
     return None
 
 
+def de_objects(words):
+    """de を取る動詞 (s'apercevoir de・se souvenir de …) の de + 名詞は目的語に: de を外す (du・des は冠詞に)"""
+    out = []
+    verb = None
+    for word in words:
+        item = _item(word)
+        if item is not None and item.pos == 'verb':
+            verb = item.attrib('lemma')
+            out.append(word)
+            continue
+        if item is not None and item.pos == 'preposition' and item.attrib('base') == 'de' and \
+                verb in morphology.DE_OBJECT_VERBS:
+            if word.surface.lower() in ('du', 'des'):   # du / des = de + 定冠詞 (je me souviens du film「その映画を」)
+                word.items = [type(item)(dict(item.item, pos='article', ja='', base='le' if word.surface.lower() == 'du'
+                                              else 'les', _=morphology.cngs(morphology.CASES)))]
+                out.append(word)
+            else:
+                word.merged_into = True
+            verb = None
+            continue
+        if item is None or item.pos in ('conj', 'preposition') or PUNCTUATION.get(word.surface):
+            verb = None if item is None or item.pos != 'preposition' else verb
+        out.append(word)
+    return out
+
+
 def pronominal_verbs(words):
     """代名動詞: 再帰の接語 + 動詞を辞書の「se + 動詞」の見出しで引き、接語は訳に出さない (Il se lève「起きる」、
     Je m'appelle Jean「〜という名前である」)。見出しが無ければ接語は再帰の目的語のまま (自分を)"""
@@ -491,7 +522,8 @@ def pronominal_verbs(words):
             continue
         if item.attrib('voice') == 'passive':   # se + être + 過去分詞は複合過去 (s'est levé)
             item.item.update(voice='active')
-        word.items = [type(item)(dict(item.item, lemma=lemma, pres1sg=lemma, base=lemma, ja=ja,
+        shown = morphology.display_lemma(lemma)   # 表示は s'apercevoir (辞書の鍵は se apercevoir)
+        word.items = [type(item)(dict(item.item, lemma=lemma, pres1sg=shown, base=shown, ja=ja,
                                       gloss_lang=gloss_lang, pronominal=True,
                                       form=(item.attrib('form') + '・' if item.attrib('form') else '') + '代名動詞'))]
         clitic.merged_into = True
@@ -860,6 +892,7 @@ def lookup_all(surfaces):
     words = negation(words)
     words = merge_verbs(words)
     words = pronominal_verbs(words)
+    words = de_objects(words)
     clitic_valency(words)   # 動詞の組をまとめてから (Il m'a parlé は parler で決める)
     existential = existential_il_y_a(words)
     words = [w for w in words if _pos(w) != 'particle']

@@ -92,6 +92,26 @@ DITRANSITIVE_VERBS = {'donner', 'dire', 'envoyer', 'montrer', 'prêter', 'offrir
                       'adresser', 'accorder', 'remettre', 'transmettre', 'indiquer', 'décrire', 'reprocher', 'avouer',
                       'cacher', 'emprunter', 'voler', 'acheter', 'payer', 'ordonner', 'défendre', 'signaler', 'rappeler',
                       'garder', 'laisser', 'faire', 'écrire'}
+# 中性代名詞 en (de + それ) の助詞: de を取る動詞なら de の意味で (s'en apercevoir「それに気づく」)。ほかは「それを」(J'en mange)
+EN_PARTICLES = {'se apercevoir': 'に', 'se méfier': 'に', 'se rendre compte': 'に', 'parler': 'について',
+                'se plaindre': 'について', 'discuter': 'について', 'se souvenir': 'を', 'se moquer': 'を', 'se occuper': 'を',
+                'se servir': 'を', 'profiter': 'を', 'rêver': 'を', 'douter': 'を', 'avoir besoin': 'が', 'venir': 'から',
+                'revenir': 'から', 'sortir': 'から', 'partir': 'から', 'se éloigner': 'から', 'dépendre': 'に'}
+
+
+# de + 名詞が目的語にあたる動詞 (s'apercevoir de son erreur「誤りに気づく」= notice his error) → 日本語の助詞。
+# 解析では de を外して目的語に、フランス語に戻すときは de を付ける (generate/french.py)
+DE_OBJECT_VERBS = {'se apercevoir': 'に', 'se méfier': 'を', 'se souvenir': 'を', 'se moquer': 'を', 'se servir': 'を',
+                   'se occuper': 'を', 'profiter': 'を', 'douter': 'を', 'se rendre compte': 'に', 'avoir besoin': 'が'}
+
+
+def display_lemma(lemma):
+    """見出しの表示 (辞書の鍵 se apercevoir → s'apercevoir。母音・無音の h の前はエリジオン)"""
+    if lemma.startswith('se ') and lemma[3:4] in 'aeiouyhàâéèêîôû':
+        return "s'" + lemma[3:]
+    return lemma
+
+
 # 人が与格・物が主語の動詞 (経験者の構文): 日本語では人を主題「は」に (Tu me manques「私は 君が いなくて寂しい」、
 # Ce livre me plaît「私は この本が 気に入っている」)
 EXPERIENCER_VERBS = {'manquer': 'いなくて寂しい', 'plaire': '気に入っている'}
@@ -203,6 +223,8 @@ def cngs(cases, feats=None, default_gender=None):
 def gloss(lemma, pos):
     """見出し語 → (訳, 'ja' / 'en', 辞書の項目)"""
     from dragoman.core import en_ja
+    if lemma.startswith("s'"):
+        lemma = 'se ' + lemma[2:]   # 表示の形 (s'apercevoir) → 辞書の鍵 (se apercevoir)
     poses = {'noun': ('noun', 'name'), 'name': ('name', 'noun'), 'verb': ('verb',), 'adj': ('adj',),
              'adv': ('adv', 'adj')}.get(pos, (pos,))
     rows = dictionary.lemmas(lemma, poses)

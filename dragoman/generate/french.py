@@ -63,8 +63,12 @@ CONNECTIVES = {'et': 'et', 'que': 'et', 'atque': 'et', 'ac': 'et', 'sed': 'mais'
 SUBORDINATORS = {'cum': 'quand', 'ubi': 'quand', 'sī': 'si', 'quod': 'parce que', 'quia': 'parce que',
                  'quoniam': 'puisque', 'dum': 'pendant que', 'postquam': 'après que', 'ut': 'pour que',
                  'quamquam': 'bien que', 'etsī': 'bien que', 'priusquam': 'avant que', 'antequam': 'avant que',
-                 'dōnec': "jusqu'à ce que", 'simul': 'dès que', 'nisi': 'si … ne … pas'}
-WORDS = {'semper': 'toujours', 'saepe': 'souvent', 'iam': 'déjà', 'nunc': 'maintenant', 'hodiē': "aujourd'hui",
+                 'dōnec': "jusqu'à ce que", 'simul': 'dès que', 'nisi': 'si … ne … pas', 'quīn': 'sans que'}
+# 後ろの動詞を接続法にする接続詞 (sans que personne ne s'en aperçoive、bien qu'il pleuve)
+SUBJUNCTIVE_AFTER = {'quīn', 'quamquam', 'etsī', 'priusquam', 'antequam', 'ut', 'nē', 'dōnec'}
+# 否定の代名詞 (ne … personne・ne … rien は pas を付けない)
+NEGATIVE_PRONOUNS = {'nēmō', 'nihil', 'nūllus'}
+WORDS = {'nēmō': 'personne', 'nihil': 'rien', 'nūllus': 'personne', 'semper': 'toujours', 'saepe': 'souvent', 'iam': 'déjà', 'nunc': 'maintenant', 'hodiē': "aujourd'hui",
          'crās': 'demain', 'heri': 'hier', 'ibi': 'là', 'hīc': 'ici', 'etiam': 'aussi', 'quoque': 'aussi',
          'valdē': 'très', 'magnopere': 'beaucoup', 'statim': 'immédiatement', 'mox': 'bientôt', 'tandem': 'enfin',
          'iterum': 'de nouveau', 'numquam': 'jamais', 'bene': 'bien', 'male': 'mal', 'posteā': 'ensuite', 'diū': 'longtemps'}
@@ -81,6 +85,9 @@ ETRE = {('present', 1, 'sg'): 'suis', ('present', 2, 'sg'): 'es', ('present', 3,
         ('imperfect', 2, 'pl'): 'étiez', ('imperfect', 3, 'pl'): 'étaient', ('future', 1, 'sg'): 'serai',
         ('future', 2, 'sg'): 'seras', ('future', 3, 'sg'): 'sera', ('future', 1, 'pl'): 'serons',
         ('future', 2, 'pl'): 'serez', ('future', 3, 'pl'): 'seront'}
+# de + 名詞を目的語にした動詞 (解析の french/morphology.DE_OBJECT_VERBS と同じ)。フランス語に戻すとき de を付ける
+DE_OBJECT_VERBS = {'se apercevoir', 'se méfier', 'se souvenir', 'se moquer', 'se servir', 'se occuper', 'profiter',
+                   'douter', 'se rendre compte', 'avoir besoin'}
 # 複合過去で être を取る動詞 (移動・変化)
 ETRE_VERBS = {'aller', 'venir', 'arriver', 'partir', 'entrer', 'sortir', 'naître', 'mourir', 'monter', 'descendre',
               'tomber', 'rester', 'retourner', 'devenir', 'revenir', 'rentrer', 'parvenir'}
@@ -349,8 +356,10 @@ def finite(lemma, tense, person, number):
         return AVOIR[(tense, person, number)]
     tags = PERSON_TAGS.get((person, number), PERSON_TAGS[(3, 'sg')])
     tense_tags = {'present': ('indicative', 'present'), 'imperfect': ('imperfect', 'indicative'),
-                  'future': ('future', 'indicative'), 'historic': ('historic', 'indicative', 'past')}[tense]
-    form = find_form(lemma, 'verb', tense_tags + tags, avoid=('subjunctive', 'conditional'))
+                  'future': ('future', 'indicative'), 'historic': ('historic', 'indicative', 'past'),
+                  'subjunctive': ('present', 'subjunctive')}[tense]
+    form = find_form(lemma, 'verb', tense_tags + tags, avoid=('conditional',) if tense == 'subjunctive' else
+                     ('subjunctive', 'conditional'))
     return form or _regular(lemma, tense, person, number)
 
 
@@ -386,7 +395,7 @@ def _person(clause):
     return clause.person or 3, clause.number or 'sg'
 
 
-def verb_group(clause, person, number, agree=('m', 'sg')):
+def verb_group(clause, person, number, agree=('m', 'sg'), subjunctive=False):
     """(定形, 定形の後ろの語の列 (過去分詞・不定詞))。否定の ne … pas・接語の代名詞は呼ぶ側で"""
     lemma = word(clause.verb, 'verb')
     if not lemma or lemma.startswith('['):
@@ -408,6 +417,8 @@ def verb_group(clause, person, number, agree=('m', 'sg')):
         aux = AVOIR.get((tense, person, number)) or finite('avoir', tense, person, number)
         return aux, [participle_form(lemma)]
     tense = {'imperfect': 'imperfect', 'future': 'future'}.get(clause.tense, 'present')
+    if subjunctive and tense == 'present':
+        tense = 'subjunctive'   # 接続法現在 (sans qu'il le sache)
     return finite(lemma, tense, person, number), []
 
 
@@ -435,7 +446,7 @@ def _negate(verb_words, negated):
     return ['ne'] + verb_words[:1] + ['pas'] + verb_words[1:]
 
 
-def realize(clause, gap=None, antecedent=None):
+def realize(clause, gap=None, antecedent=None, subjunctive=False):
     from .frame import lexical_negation, periphrastic, Lex
     clause = lexical_negation(periphrastic(clause))
     if clause.experiencer:   # 入れ替えた manquer à を元に (Ego tē dēsīderō の枠 → Tu me manques)
@@ -489,10 +500,15 @@ def realize(clause, gap=None, antecedent=None):
         return [w for w in words + verb_words + adverbs + tail + preps if w]
     clitics, objects = [], []
     obj = (clause.role('object') or [None])[0]
+    de_object = clause.verb is not None and clause.verb.lang == 'fr' and clause.verb.lemma in DE_OBJECT_VERBS
     if obj is not None and gap != 'object':
         clitic = _clitic(obj, 'Acc')
-        if clitic:
+        if clitic and de_object:
+            clitics.append('en' if obj.head.lemma in ('is', 'ille') else clitic)   # s'en apercevoir
+        elif clitic:
             clitics.append(clitic)
+        elif de_object:   # s'apercevoir de son erreur (目的語にした de 句を戻す)
+            objects.append(with_preposition('de', noun_phrase(obj, 'Acc')))
         else:
             objects.append(noun_phrase(obj, 'Acc'))
     for np in clause.role('recipient'):
@@ -517,7 +533,7 @@ def realize(clause, gap=None, antecedent=None):
             objects.append(with_preposition('de', noun_phrase(np, 'Str')))
         else:
             objects.append(with_preposition('dans', noun_phrase(np, 'Str')))
-    verb, tail = verb_group(clause, person, number, agree)
+    verb, tail = verb_group(clause, person, number, agree, subjunctive)
     if word(clause.verb, 'verb').startswith('se '):   # 代名動詞の再帰の代名詞 (il se lève・je m'appelle)
         clitics.insert(0, {(1, 'sg'): 'me', (2, 'sg'): 'te', (1, 'pl'): 'nous', (2, 'pl'): 'vous'}.get((person, number), 'se'))
     if clause.mood == 'imperative':
@@ -526,8 +542,9 @@ def realize(clause, gap=None, antecedent=None):
         out = _elided(_negate([form], clause.negated)) if clause.negated else [form]
         return [w for w in out + objects + adverbs if w]
     verb_words = _elided(clitics + [verb])
-    if clause.negated:
-        verb_words = _elided(['ne'] + clitics + [verb]) + ['pas']
+    negative_pronoun = any(np.head is not None and np.head.lemma in NEGATIVE_PRONOUNS for _, np in clause.args)
+    if clause.negated or negative_pronoun:   # ne … pas (否定の代名詞 personne・rien なら pas を付けない)
+        verb_words = _elided(['ne'] + clitics + [verb]) + ([] if negative_pronoun else ['pas'])
     return [w for w in _elided(words + verb_words) + tail + adverbs + objects if w]
 
 
@@ -546,9 +563,11 @@ def sentence(clauses):
         for key in rest.connectives:
             if key in CONNECTIVES and k > 0:
                 words.append(CONNECTIVES[key])
-        if rest.subordinator in SUBORDINATORS and k + 1 < len(clauses) and rest.subordinator != 'nisi':
+        subordinate = rest.subordinator in SUBORDINATORS and rest.subordinator != 'nisi' and \
+            (k + 1 < len(clauses) or rest.subordinator == 'quīn')
+        if subordinate:
             words.append(SUBORDINATORS[rest.subordinator])
-        words += realize(rest)
+        words += realize(rest, subjunctive=subordinate and rest.subordinator in SUBJUNCTIVE_AFTER)
         parts.append(join(_elided([w for w in words if w])))
     text = ', '.join(parts).replace(' ,', ',').replace(',,', ',').rstrip(',')
     return text[:1].upper() + text[1:] + '.'

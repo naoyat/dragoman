@@ -289,6 +289,9 @@ class JaVerb:
 
     def negative_form(self, flag):
         """否定形: 恐れない / 恐れなかった / 恐れていない / 恐れられないだろう / 恐れるな (命令)"""
+        if self.stop_form.endswith('知っている') and not flag & (Verb.PASSIVE | Verb.IMPERATIVE):
+            # 「知っている」の否定は「知らない」(知っていない とは言わない)
+            return JaVerb(self.stop_form[:-len('知っている')] + '知る', self.use_mecab).negative_form(flag)
         if flag & Verb.IMPERATIVE:
             if flag & Verb.PASSIVE:
                 return self.passive_stem() + 'るな'

@@ -50,6 +50,10 @@ python3 tools/samples.py --lang=fr              # サンプル (samples/french.t
   否定の代名詞。動詞の前なら主語、後ろなら目的語。助詞は「も」）、il y a + 名詞「〜がある」。
 * 前置詞・副詞 + que の接続詞（sans que「〜することなく」、avant que・bien que・pour que・parce que・pendant que …）は1語に。
   s'en・n'en・m'y の en・y は接語（spaCy が前置詞と読むのを直す: s'en aperçoive「それに気づく」）。
+  en（de + それ）の助詞は動詞から（s'en apercevoir「それに」、parler「それについて」、ほかは「それを」）。
+* de + 名詞が目的語にあたる動詞（s'apercevoir de・se souvenir de・se moquer de …）は de を外して目的語に（日本語は動詞ごとの助詞:
+  Il s'aperçoit de son erreur「誤りに気づく」= He realizes his error）。フランス語に戻すときは de を付ける。
+* 代名動詞の見出しの表示は省略形（s'apercevoir・s'appeler。辞書の鍵は se apercevoir）。
 * 関係代名詞 qui・que は共通の解析器の関係節に。que・si・quand … の従属節。
 * spaCy の小さいモデルの読み誤りを辞書の語形の表で直す: 主語・関係代名詞 qui の後ろの動詞の形（Le garçon lit … の lit を
   前置詞と、qui chante の chante を形容詞と読む）、動詞の前の接語の代名詞（le lui を冠詞と名詞と読む）、文頭の命令形、
@@ -129,4 +133,5 @@ il y a + 名詞は訳では「〜がある」の主語なので、主語とし�
 * 倒置の主語（a expliqué Véronique、Que dit l'Eglise ?）、疑問文の est-ce que。
 * 人が与格の構文は manquer・plaire だけ（convenir・importer・falloir も同じ形にできる）。ロシア語の出口の miss（скучать по + 与格）・
   like（нравиться + 与格）はまだ。
-* 出口: 否定の文の部分冠詞（ne mange pas de pain）、主語の倒置・疑問文、接続法（bien que・pour que の後ろ）。
+* 出口: 否定の文の部分冠詞（ne mange pas de pain）、主語の倒置・疑問文。接続法は sans que・bien que・pour que・avant que の後ろの
+  現在だけ。ne … personne・ne … rien は枠では否定の代名詞（nēmō・nihil）で、節の否定にしない（二重否定にしない）。

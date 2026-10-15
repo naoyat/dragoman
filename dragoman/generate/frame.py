@@ -67,7 +67,8 @@ SOURCE_PRONOUNS.update({
            'ta': ('tuus', ''), 'tes': ('tuus', ''), 'son': ('suus', ''), 'sa': ('suus', ''), 'ses': ('suus', ''),
            'notre': ('noster', ''), 'nos': ('noster', ''), 'votre': ('vester', ''), 'vos': ('vester', ''),
            'leurs': ('suus', ''), 'tout': ('omnis', ''), 'toute': ('omnis', ''), 'tous': ('omnis', ''),
-           'toutes': ('omnis', ''), 'chaque': ('omnis', '')},
+           'toutes': ('omnis', ''), 'chaque': ('omnis', ''), 'en': ('is', 'sg'), 'personne': ('nēmō', ''),
+           'rien': ('nihil', '')},
     'tr': {'(関係節の空所)': ('quī', ''), 'ben': ('ego', 'sg'), 'sen': ('tū', 'sg'), 'o': ('is', 'sg'), 'biz': ('ego', 'pl'), 'siz': ('tū', 'pl'),
            'onlar': ('is', 'pl'), 'bu': ('hic', ''), 'şu': ('iste', ''), 'kendi': ('sē', ''), 'kim': ('quis', ''),
            'ne': ('quid', '')},
@@ -641,6 +642,9 @@ def clause_of(predicate, lang=None):
             clause.number = 'pl'   # 数詞で複数にした主語 (kaksi kissaa → duo cattī) に繋辞を合わせる (sunt)
     if _lang == 'fr' and predicate.first_item.attrib('experiencer'):
         _swap_experiencer(clause)
+    if _lang == 'fr' and clause.negated and any(np.head is not None and np.head.lemma in ('nēmō', 'nihil')
+                                                for _, np in clause.args):
+        clause.negated = False   # ne は personne・rien との呼応 (Personne ne vient → Nēmō venit。二重否定にしない)
     return clause
 
 

@@ -173,7 +173,8 @@ def english_glosses(lang, lemma, pos):
 
 FORM_OF = re.compile(r'\bform of ([^\sA-Za-z,]+)')   # 説明の語義 (… form of + 元の言語の語)
 # 表の最初の訳語が教科書の意味でない語 (βασιλεύς: chief, emperor, … king): 先に使う訳語
-FIRST_GLOSSES = {'grc': {'βασιλεύς': 'king', 'ὁράω': 'see', 'λόγος': 'word', 'ἀνήρ': 'man', 'κόρη': 'girl',
+FIRST_GLOSSES = {'fr': {'partir': 'leave'},   # 辞書に古い語源 (share) の項目しか無い
+                 'grc': {'βασιλεύς': 'king', 'ὁράω': 'see', 'λόγος': 'word', 'ἀνήρ': 'man', 'κόρη': 'girl',
                          'λέγω': 'say', 'γράφω': 'write', 'παῖς': 'child', 'πόλις': 'city', 'ἔχω': 'have'}}
 
 

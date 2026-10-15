@@ -209,7 +209,7 @@ def needs_braces(text):
             depth += 1
         elif c in '})]':
             depth -= 1
-        elif depth == 0 and c in ', &' and not (c == ' ' and text[k + 1:k + 2] == '('):
+        elif depth == 0 and c in ', &' and not (c == ' ' and text[k + 1:k + 2] == '(' and text[k + 2:k + 3] != '?'):
             return True   # 注記の括弧の前の空白 (主 (ヤハウェ)) は語の切れ目でない
     return False
 

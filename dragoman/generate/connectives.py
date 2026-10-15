@@ -53,9 +53,14 @@ CONNECTIVES = {
     'priusquam': ('sub', 'before', 'прежде чем', ('prAk', '')),
     'quamquam': ('sub', 'although', 'хотя', ('yadyapi', 'taTApi')),
     'simul': ('sub', 'as soon as', 'как только', ('yadA eva', 'tadA')),   # simul atque「〜するとすぐに」
+    'quīn': ('sub', 'without', 'без того чтобы', ('yena na', '')),   # 〜することなく (フランス語の sans que)
 }
 # ほかの言語の接続詞 → この表の見出し (文の枠に入れるときに)
 SOURCE_CONNECTIVES = {
+    # フランス語: 前置詞・副詞 + que の接続詞は解析で1語 (sans que の語は sans)
+    'fr': {'quand': 'cum', 'lorsque': 'cum', "lorsqu'": 'cum', 'si': 'sī', "s'": 'sī', 'parce': 'quia', 'puisque': 'quoniam',
+           'bien': 'quamquam', 'avant': 'priusquam', 'pour': 'ut', 'afin': 'ut', 'pendant': 'dum', 'après': 'postquam',
+           'dès': 'simul', 'sans': 'quīn', 'et': 'et', 'mais': 'sed', 'ou': 'aut', 'donc': 'igitur', 'car': 'enim'},
     'ru': {'когда': 'ubi', 'если': 'sī', 'потому': 'quod', 'пока': 'dum', 'хотя': 'quamquam', 'чтобы': 'ut',
            'и': 'et', 'но': 'sed', 'однако': 'tamen', 'поэтому': 'itaque', 'тогда': 'tum', 'ведь': 'enim',
            'же': 'autem', 'после': 'postquam', 'прежде': 'antequam', 'как': 'ubi'},

@@ -198,7 +198,8 @@ def candidates(lex):
                 found += [e for e in transfer._ja_english(ja.strip()) if e not in found]
             found = found[:6]
         if lex.lemma in transfer.FIRST_GLOSSES.get(lex.lang, {}):
-            return found   # 先に使う訳語の決まっている語 (βασιλεύς: 日本語の訳語「長」より king)
+            first = transfer.FIRST_GLOSSES[lex.lang][lex.lemma]   # 先に使う訳語の決まっている語 (βασιλεύς: 「長」より king)
+            return [first] + [g for g in found if g != first]   # 辞書に無い訳語でも (partir: 古い語源の share より leave)
         first = (lex.ja or '').split(',')[0].strip()
         match = next((g for g in found if first and first in en_ja.lookup(g, pos)), None) if lex.ja and \
             not lex.ja.isascii() else None
