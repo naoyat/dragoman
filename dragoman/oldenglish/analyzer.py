@@ -734,8 +734,14 @@ def _spelling(items, surface):
         return long_[0].upper() + long_[1:] if surface[:1].isupper() else long_
     for item in items or []:
         spelling = item.get('spelling') if isinstance(item, dict) else item.attrib('spelling')
-        if spelling and orthography.key(spelling) == orthography.key(surface):
-            return spelling
+        if spelling and orthography.key(spelling).replace('-', '') == orthography.key(surface):
+            base = item.get('base') if isinstance(item, dict) else item.attrib('base')
+            return _keep_case(_overlay_prefix(spelling.replace('-', ''), base or ''), surface)
+    for item in items or []:   # 綴りの揺れで引いた語 (gefrunon → ġefrūnen): 同じ字の長音符・点だけを写す
+        spelling = item.get('spelling') if isinstance(item, dict) else item.attrib('spelling')
+        transferred = _transfer_marks(surface, spelling) if spelling else None
+        if transferred:
+            return transferred
     first = (items or [None])[0]
     if first is None:
         return surface
@@ -753,6 +759,46 @@ def _spelling(items, surface):
         if spelling and orthography.key(spelling) == orthography.key(surface):
             return spelling[0].upper() + spelling[1:] if surface[:1].isupper() else spelling
     return surface
+
+
+def _keep_case(spelling, surface):
+    return spelling[0].upper() + spelling[1:] if surface[:1].isupper() else spelling[0].lower() + spelling[1:]
+
+
+def _letters(text):
+    """字ごとの (鍵の字, 元の字 (長音符・点を含む))"""
+    out = []
+    for c in unicodedata.normalize('NFC', text):
+        k = orthography.key(c)
+        if unicodedata.category(c) == 'Mn' and out:
+            out[-1] = (out[-1][0], unicodedata.normalize('NFC', out[-1][1] + c))
+        elif k:
+            out.append((k, c))
+    return out
+
+
+def _overlay_prefix(spelling, base):
+    """長音符の無い語形の綴り (変化形だけの項目の Gardena) に、見出し語 (Gārdene) と頭から同じ字の長音符・点を写す"""
+    a, b = _letters(spelling), _letters(base.replace('-', ''))
+    if any(unicodedata.normalize('NFD', ch) != ch for _, ch in a):
+        return spelling   # 長音符・点があればそのまま
+    out = []
+    for k, (x, ch) in enumerate(a):
+        same_prefix = k < len(b) and all(a[j][0] == b[j][0] for j in range(k + 1))
+        out.append(b[k][1] if same_prefix else ch)
+    return ''.join(out)
+
+
+def _transfer_marks(surface, spelling):
+    """辞書の綴りの長音符・点を、字数の同じ元の語の同じ字に写す (違う字はそのまま)。3/4 以上の字が同じときだけ"""
+    a, b = _letters(surface), _letters(spelling.replace('-', ''))
+    if len(a) != len(b) or not a:
+        return None
+    same = sum(x[0] == y[0] for x, y in zip(a, b))
+    if same * 4 < len(a) * 3:
+        return None
+    out = ''.join(y[1] if x[0] == y[0] else x[1] for x, y in zip(a, b))
+    return _keep_case(out, surface)
 
 
 def spelled(analysis):

@@ -216,6 +216,8 @@ def main():
     rows = {}
     for f, lemma_id, x in forms:
         rows.setdefault((key(f), lemma_id, json.dumps(x, ensure_ascii=False, sort_keys=True)), f)
+        if '-' in f:   # ハイフンの入った見出し (Gār-Dene) は、ハイフンを除いた綴り (Gārdena) でも引けるように
+            rows.setdefault((key(f).replace('-', ''), lemma_id, json.dumps(x, ensure_ascii=False, sort_keys=True)), f)
     by_form = {}
     for (k, lemma_id, x) in rows:
         by_form.setdefault(k, []).append((lemma_id, x))

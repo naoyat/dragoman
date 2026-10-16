@@ -60,6 +60,7 @@ class PhonologyTestCase(unittest.TestCase):
         from dragoman.oldenglish import phonology
         self.assertEqual(phonology.espeak_phonemes('Hwæt! Wē', phonology.ESPEAK_DE), "[[hw'Et _: w'e:]]")
         self.assertEqual(phonology.espeak_phonemes('Hwæt! Wē', phonology.ESPEAK_ANG), "[[hw'&t _: w'e:]]")   # 古英語の音声
+        self.assertEqual(phonology.espeak_phonemes('eald lufu', phonology.ESPEAK_ANG), "[['eald l'uvu]]")   # 二重母音・緊張した短母音
 
 
 @unittest.skipUnless(dictionary.available(), '古英語の辞書が無い')
@@ -98,7 +99,7 @@ class AnalyzerTestCase(unittest.TestCase):
         a = next(analyzer.analyze_text('He forlet þa burh.'))
         self.assertEqual([s for s, _ in analyzer.spelled(a)], ['Hē', 'forlēt', 'þā', 'burh', '.'])
         from dragoman.oldenglish import phonology
-        self.assertIn("fORl'e:t", phonology.espeak_words(analyzer.spelled(a)))   # 見出し forlǣtan の for- に強勢を置かない
+        self.assertIn("Rl'e:t", phonology.espeak_words(analyzer.spelled(a)))   # 見出し forlǣtan の for- に強勢を置かない
 
     def test_guesses(self):
         from dragoman.oldenglish import analyzer

@@ -106,7 +106,7 @@ def segments(word, lemma=None):
             out.append(('dʒ', False))
             i += 2
             continue
-        if two == 'sc':
+        if two in ('sc', 'sċ'):
             out.append(('ʃ', False))
             i += 2
             continue
@@ -213,7 +213,9 @@ ESPEAK_DE = {
 
 
 # 古英語の音声 (tools/build_oldenglish_espeak.py で作る ang。ドイツ語の表 + [æ]、語末の無声化なし) の音素名
-ESPEAK_ANG = dict(ESPEAK_DE, **{'æ': '&', 'æː': '&:', 'æɑ': '&a', 'æːɑ': '&:a'})
+ESPEAK_ANG = dict(ESPEAK_DE, **{'æ': '&', 'æː': '&:', 'ɑ': 'A', 'i': 'i', 'u': 'u', 'o': 'o', 'y': 'y',
+                                 'æɑ': 'ea', 'æːɑ': 'e:a', 'eo': 'eo', 'eːo': 'e:o', 'iy': 'iy', 'iːy': 'i:y',
+                                 'io': 'io', 'iːo': 'i:o'})
 
 
 def ang_voice():
