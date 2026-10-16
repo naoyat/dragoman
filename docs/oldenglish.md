@@ -42,7 +42,8 @@ python3 tools/samples.py --lang=ang              # サンプル (samples/oldengl
 y・i・ie（hyran = hieran）、eo・io、ea・a・e、o・a（鼻音の前。mon = man）、ur・yr → eor（wurþan = weorþan）、重子音、
 後期の語尾の弱まり（lufodan = lufodon）、弱変化の過去 -od = -ed（getimbrod = getimbred）、過去分詞の ge-（i-・y-）。
 
-それでも無い語は推定する: 動詞の語尾（-ode・-de・-don・-aþ・-ian …）を外して不定詞（〜an・〜ian）を引く（gyrnde → ġeornan の過去）、
+それでも無い語は推定する: 動詞の語尾（-ode・-de・-don・-aþ・-ian・接続法の -e …）を外して不定詞（〜an・〜ian）を引く
+（gyrnde → ġeornan の過去。接頭辞 tō-・be-・for-・of- … を外しても引く: tōbecume → tō + becuman）、
 複合語は後ろの要素の格・数・性を使う（leorningcnihtas → leorning + cniht）、ローマ数字（dccc・xl）は数詞。大文字の語は固有名詞
 （辞書に無い名前はカタカナ）。
 
@@ -68,6 +69,7 @@ y・i・ie（hyran = hieran）、eo・io、ea・a・e、o・a（鼻音の前。m
 * 関係節: 関係の小辞 þe（名詞・代名詞の後ろ）と se þe「〜する人」。
 * 補文の þæt「〜ということ」: þæt þæt（補文の þæt + 冠詞）、主語の代名詞の後ろの þæt は代名詞「それを」、定動詞の前の þæt は「それ」。
   þā þā「〜した時」。
+* 祈願: 従属節でない節の、読みがすべて現在の接続法の動詞は「〜ように」（sī þīn nama ġehālgod「君の名前が神聖にされるように」）。
 * 呼びかけ: 2人称の代名詞か命令法のある文の、文頭からコンマまでの名詞句を呼格に（Fæder ūre, þū þe eart on heofonum「天にいる私たちの父よ」）。
 
 ## 音読
@@ -122,6 +124,5 @@ python3 tools/ud_eval.py --lang=ang [--source=apt,chrona,or,wscp,æls]
 
 * 語順の違い（主節の動詞2番目・従属節の動詞が最後）を節ごとに使い分けること（今は全体で「2つの動詞の間の語は前の動詞に」）。
 * 強変化・弱変化の形容詞の区別、形容詞の比較級、与格の独立構文。
-* 接続法の主文（祈願「〜ますように」: sī þīn nama ġehālgod）。
 * 生成（ほかの言語から古英語への訳）。
 * 強変化動詞の過去の語幹の長音符（ġefrūnon は辞書の語形にも見出しにも無い）。

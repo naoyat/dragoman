@@ -91,6 +91,10 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertIn('私たちの父', self.ja('Fæder ūre, þū þe eart on heofonum, sī þīn nama ġehālgod.'))
         self.assertIn('君の名前が', self.ja('Fæder ūre, þū þe eart on heofonum, sī þīn nama ġehālgod.'))
 
+    def test_wish(self):
+        self.assertIn('神聖にされるように', self.ja('Fæder ūre, þū þe eart on heofonum, sī þīn nama ġehālgod.'))
+        self.assertEqual(self.ja('Tōbecume þīn rīċe.'), '君の国が / 来るように,起こるように')   # tō- を外して becuman
+
     def test_genitive_before_head(self):
         self.assertIn('王の栄光を', self.ja('Wē Gārdena in ġeārdagum þēodcyninga þrym ġefrūnon.'))
 

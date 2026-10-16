@@ -195,6 +195,7 @@ VERB_ENDINGS = (
     ('eþ', ('an',), 'indicative', 'present', 3, 'sg'), ('þ', ('an',), 'indicative', 'present', 3, 'sg'),
     ('ian', ('ian',), 'infinitive', 'present', None, None), ('an', ('an',), 'infinitive', 'present', None, None),
     ('od', ('ian',), 'participle', 'past', None, None), ('ed', ('an',), 'participle', 'past', None, None),
+    ('e', ('an',), 'subjunctive', 'present', None, 'sg'),   # 接続法単数 (tōbecume「来ますように」)
 )
 
 
@@ -215,6 +216,11 @@ def guess_compound(surface):
     return []
 
 
+# 動詞の接頭辞 (辞書に無い動詞を、接頭辞を外して引き直す: tōbecuman → becuman)
+VERB_PREFIXES = ('to', 'be', 'bi', 'a', 'for', 'of', 'on', 'ofer', 'under', 'wiþ', 'ymb', 'ut', 'up', 'forþ', 'æt',
+                 'geond', 'þurh', 'mis', 'oþ', 'ed', 'ge')
+
+
 def guess_verb(surface):
     """辞書に無い語を動詞の形と推定する (gyrnde → girnan の過去、oferhogodon → oferhogian の過去複数)。
     語尾を外し、不定詞 (〜an・〜ian) を辞書で (綴りの揺れも) 引く。ge- の有無も試す"""
@@ -223,7 +229,10 @@ def guess_verb(surface):
         if not k.endswith(ending) or len(k) - len(ending) < 2:
             continue
         stem = k[:-len(ending)]
-        for st in dict.fromkeys([stem, stem[2:] if stem.startswith('ge') else 'ge' + stem]):
+        stems = [stem, stem[2:] if stem.startswith('ge') else 'ge' + stem]
+        stems += [stem[len(p):] for p in VERB_PREFIXES if stem.startswith(p) and len(stem) - len(p) >= 3]
+        for st in dict.fromkeys(stems):
+            prefix = stem[:len(stem) - len(st)] if stem.endswith(st) and st != stem else ''
             for inf in infinitives:
                 rows = dictionary.lemmas(st + inf, 'verb')
                 if not rows:
@@ -237,8 +246,12 @@ def guess_verb(surface):
                 items = []
                 for p in persons:
                     f = dict(feats, person=p, number=number) if number else feats
-                    items.append(dict(_item(info, f, surface), guessed='%s の %s' % (info['base'], ending)))
-                return items
+                    item = dict(_item(info, f, surface), guessed='%s の %s' % (info['base'], ending))
+                    if prefix and not prefix.startswith('ge'):   # 接頭辞を外して引いた語 (tō + becuman): 訳は外した語の
+                        item.update(base=prefix + '-' + info['base'], lemma=prefix + '-' + info['base'],
+                                    pres1sg=prefix + '-' + info['base'])
+                    items.append(item)
+                return sorted(items, key=_reading_order)
     return []
 
 
@@ -677,6 +690,19 @@ def mark_vocatives(words):
                 item._ = [('Voc',) + x[1:] for x in item._ if x[0] == 'Nom'] or item._
 
 
+def mark_wishes(words):
+    """祈願の接続法: 従属節でない節の、読みがすべて現在の接続法の動詞は「〜ように」(sī þīn nama ġehālgod
+    「君の名前が神聖にされますように」)。共通の訳 (core/Predicate.py) が印 wish を見て付ける"""
+    for subordinate, segment in _segments(words):
+        if subordinate:
+            continue
+        for w in segment:
+            if w.items and all(i.pos == 'verb' and i.attrib('mood') == 'subjunctive' and i.attrib('tense') == 'present'
+                               for i in w.items):
+                for i in w.items:
+                    i.item['wish'] = True
+
+
 def _drop_negation(readings, surfaces, origins):
     """否定の縮約 (nis) は否定の副詞を前に足す (共通の解析器は ne を述語の否定に読む)"""
     out_r, out_s, out_o = [], [], []
@@ -819,6 +845,7 @@ def analyze_sentence(surfaces):
     attach_articles(words, trace)
     choose_verbs(words)
     mark_vocatives(words)
+    mark_wishes(words)
     assign_subjects(words)
     with language.using(OLD_ENGLISH):
         analysis = common.analyze_words([w.surface for w in words], words, word_details, trace)

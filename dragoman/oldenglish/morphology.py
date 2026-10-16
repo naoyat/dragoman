@@ -161,7 +161,7 @@ GLOSSES = {
     'gelȳfan': '信じる', 'biddan': '頼む,祈る', 'þancian': '感謝する', 'helpan': '助ける', 'andswarian': '答える',
     'fōn': '捕らえる', 'onfōn': '受け取る', 'forlǣtan': '去る,許す', 'flēon': '逃げる', 'wēnan': '思う',
     'þenċan': '考える', 'þencan': '考える', 'þynċan': '思われる', 'leornian': '学ぶ', 'tǣċan': '教える',
-    'timbran': '建てる', 'getimbran': '建てる', 'rīcsian': '支配する', 'gefrignan': '聞き知る', 'frignan': '尋ねる',
+    'becuman': '来る,起こる', 'tōbecuman': '来る', 'cuman#verb': '来る', 'timbran': '建てる', 'getimbran': '建てる', 'rīcsian': '支配する', 'gefrignan': '聞き知る', 'frignan': '尋ねる',
     'cyning': '王', 'cyng': '王', 'god': '神', 'drihten': '主', 'dryhten': '主', 'hlāford': '主人', 'mann': '人',
     'wer': '男', 'wīf': '女', 'ċild': '子供', 'cild': '子供', 'sunu': '息子', 'dohtor': '娘', 'fæder': '父',
     'mōdor': '母', 'brōþor': '兄弟', 'sweostor': '姉妹', 'eorþe': '大地', 'heofon': '天', 'heofonrīċe': '天の国',
