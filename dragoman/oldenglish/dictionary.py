@@ -76,6 +76,28 @@ def lemmas(word, pos=None):
     return sorted(rows, key=lambda r: -(r.get('senses') or 0))
 
 
+@functools.lru_cache(maxsize=20000)
+def lemma_forms(word, pos, english=()):
+    """見出し → その語形の表 [(語形 (長音符付き), 語形の情報)] (生成で使う)。同じ綴りの見出しが複数あれば、英語の
+    訳語 english と合うもの (sēon「見る」と「漉す」)、無ければ語義の多いもの"""
+    rows = lemmas(word, pos)
+    db = _connect()
+    if not rows or db is None:
+        return ()
+    if not _has_lemma_index():
+        db.execute('CREATE INDEX IF NOT EXISTS forms_lemma ON forms (lemma_id)')
+    wanted = {e.lower() for e in english}
+    exact = [r for r in rows if r['base'] == word] or rows   # 綴りの同じ見出し (God「神」を gōd より)
+    row = next((r for r in exact if wanted & {e.strip().lower() for e in (r.get('en') or '').split(',')}), exact[0])
+    return tuple((surface, json.loads(features)) for surface, features in
+                 db.execute('SELECT surface, features FROM forms WHERE lemma_id = ?', (row['id'],)))
+
+
+@functools.lru_cache(maxsize=1)
+def _has_lemma_index():
+    return bool(_connect().execute("SELECT 1 FROM sqlite_master WHERE name = 'forms_lemma'").fetchone())
+
+
 def lookup(word, langs=None):
     return []
 

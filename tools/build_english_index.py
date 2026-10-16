@@ -96,7 +96,7 @@ def entries(lang):
 
 # 抽出データを置いていない言語 (ドイツ語・トルコ語・フィンランド語は標準入力から読んで辞書だけ残した) と、韓国語・モンゴル語:
 # 辞書 ($DRAGOMAN_DATA/<lang>/wiktionary.sqlite。tools/build_<言語>_dic.py) の見出し・品詞・英語の訳語 (多くて3つ)・性から
-DB_LANGS = {'ko': 'key', 'de': 'word', 'fr': 'word', 'tr': 'word', 'mn': 'key', 'fi': 'word'}
+DB_LANGS = {'ko': 'key', 'de': 'word', 'fr': 'word', 'tr': 'word', 'mn': 'key', 'fi': 'word', 'ang': 'key'}
 DB_POS = {'noun': 'noun', 'name': 'noun', 'adj': 'adj', 'verb': 'verb', 'adv': 'adv', 'pronoun': 'pronoun',
           'det': 'pronoun', 'preposition': 'preposition', 'postposition': 'preposition', 'conj': 'conj', 'num': 'num'}
 
@@ -104,6 +104,17 @@ DB_POS = {'noun': 'noun', 'name': 'noun', 'adj': 'adj', 'verb': 'verb', 'adv': '
 def db_entries(lang):
     import sqlite3
     db = sqlite3.connect(paths.data(lang, 'wiktionary.sqlite'))
+    if lang == 'ang':   # 古英語の辞書は見出しの情報を JSON で (tools/build_oldenglish_dic.py)
+        import json
+        for pos, info in db.execute('SELECT pos, info FROM lemmas'):
+            info = json.loads(info)
+            pos = DB_POS.get(pos)
+            en = ','.join(e for e in (info.get('en') or '').split(',') if e and len(e) < 60)
+            if pos is None or not en or info.get('rank'):
+                continue
+            gender = (info.get('gender') or '').split(',')[0]
+            yield info['base'], pos, en, gender if gender in ('m', 'f', 'n') else '', '', info.get('senses') or 1
+        return
     columns = [row[1] for row in db.execute('PRAGMA table_info(lemmas)')]
     gender = 'gender' if 'gender' in columns else "''"
     for lemma, pos, en, g, senses in db.execute('SELECT %s, pos, en, %s, senses FROM lemmas WHERE en != ""'

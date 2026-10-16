@@ -12,19 +12,19 @@
 import dataclasses
 
 from . import latin, english, russian, sanskrit, greek, indonesian, tagalog, arabic, hebrew, persian, hindi, ainu, tibetan, \
-    japanese, kobun, korean, turkish, mongolian, german, finnish, french
+    japanese, kobun, korean, turkish, mongolian, german, finnish, french, oldenglish
 
-LANGS = ('la', 'grc', 'sa', 'ru', 'de', 'fr', 'fi', 'en', 'id', 'tl', 'ar', 'he', 'fa', 'hi', 'ur', 'tr', 'mn', 'ko', 'ain', 'bo', 'ja', 'kobun')
-NAMES = {'la': 'ラテン語', 'grc': 'ギリシア語', 'sa': 'サンスクリット', 'ru': 'ロシア語', 'de': 'ドイツ語', 'fr': 'フランス語', 'fi': 'フィンランド語', 'en': '英語', 'id': 'インドネシア語',
+LANGS = ('la', 'grc', 'sa', 'ru', 'de', 'fr', 'fi', 'ang', 'en', 'id', 'tl', 'ar', 'he', 'fa', 'hi', 'ur', 'tr', 'mn', 'ko', 'ain', 'bo', 'ja', 'kobun')
+NAMES = {'la': 'ラテン語', 'grc': 'ギリシア語', 'sa': 'サンスクリット', 'ru': 'ロシア語', 'de': 'ドイツ語', 'fr': 'フランス語', 'fi': 'フィンランド語', 'ang': '古英語', 'en': '英語', 'id': 'インドネシア語',
          'tl': 'タガログ語', 'ar': 'アラビア語', 'he': 'ヘブライ語', 'fa': 'ペルシア語', 'hi': 'ヒンディー語',
          'ur': 'ウルドゥー語', 'tr': 'トルコ語', 'mn': 'モンゴル語', 'ko': '韓国語', 'ain': 'アイヌ語', 'bo': 'チベット語',
          'ja': '日本語', 'kobun': '古文'}
-MODULES = {'la': latin, 'grc': greek, 'sa': sanskrit, 'ru': russian, 'de': german, 'fr': french, 'fi': finnish, 'en': english, 'id': indonesian, 'tl': tagalog,
+MODULES = {'la': latin, 'grc': greek, 'sa': sanskrit, 'ru': russian, 'de': german, 'fr': french, 'fi': finnish, 'ang': oldenglish, 'en': english, 'id': indonesian, 'tl': tagalog,
            'ar': arabic, 'he': hebrew, 'fa': persian, 'hi': hindi, 'ur': hindi, 'tr': turkish, 'mn': mongolian, 'ko': korean, 'ain': ainu,
            'bo': tibetan, 'ja': japanese,
            'kobun': kobun}
 # 比較の表の口 (compare_np・compare_predicate と説明の文字列) を持つ生成器の言語 (言語ごとの分岐を書かない)
-GENERIC = ('ko', 'tr', 'mn', 'de', 'fi', 'fr')
+GENERIC = ('ko', 'tr', 'mn', 'de', 'fi', 'fr', 'ang')
 ROLE_NAMES = {'subject': '主語', 'object': '目的語', 'recipient': '受け手', 'means': '手段', 'possessor': '所有者',
               'complement': '補語', 'place': '場所', 'source': '起点', 'prep': '前置詞句', 'address': '呼びかけ'}
 CASE_NAMES = {'Nom': '主格', 'Acc': '対格', 'Gen': '属格', 'Dat': '与格', 'Abl': '奪格', 'Loc': '処格', 'Ins': '具格',

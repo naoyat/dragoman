@@ -27,7 +27,7 @@ from collections import Counter
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dragoman.latin import analyzer, latindic
-from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, arabic, hebrew, persian, hindi, urdu, ainu, tibetan, japanese, kobun, korean, turkish, mongolian, german, finnish, french
+from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, arabic, hebrew, persian, hindi, urdu, ainu, tibetan, japanese, kobun, korean, turkish, mongolian, german, finnish, french, oldenglish
 
 
 def _word_list(text):
@@ -103,7 +103,7 @@ def show_frame(clauses):
         from dragoman.generate import compare
         print('  要素ごとの比較:')
         print(compare.text_table(clauses, [lang for lang in compare.LANGS if lang in COMPARE]))
-OTHERS = [('ru', 'ロシア語:', russian), ('de', 'ドイツ語:', german), ('fr', 'フランス語:', french), ('fi', 'フィンランド語:', finnish), ('sa', '梵語:    ', sanskrit), ('grc', 'ギリシア語:', greek),
+OTHERS = [('ru', 'ロシア語:', russian), ('de', 'ドイツ語:', german), ('fr', 'フランス語:', french), ('fi', 'フィンランド語:', finnish), ('ang', '古英語:  ', oldenglish), ('sa', '梵語:    ', sanskrit), ('grc', 'ギリシア語:', greek),
           ('id', 'インドネシア語:', indonesian), ('tl', 'タガログ語:', tagalog), ('ar', 'アラビア語:', arabic),
           ('he', 'ヘブライ語:', hebrew), ('fa', 'ペルシア語:', persian), ('hi', 'ヒンディー語:', hindi),
           ('ur', 'ウルドゥー語:', urdu), ('ain', 'アイヌ語:', ainu), ('tr', 'トルコ語: ', turkish), ('mn', 'モンゴル語:', mongolian), ('ko', '韓国語:  ', korean),
@@ -136,7 +136,7 @@ def run_japanese(text):
 # --from の言語 → 解析器のパッケージ
 SOURCE_ANALYZERS = {'ru': 'russian', 'sa': 'sanskrit', 'grc': 'greek', 'ar': 'arabic', 'he': 'hebrew', 'fa': 'persian',
                     'hi': 'hindi', 'ur': 'urdu', 'id': 'indonesian', 'tl': 'tagalog', 'ko': 'korean', 'de': 'german', 'fr': 'french',
-                    'tr': 'turkish', 'mn': 'mongolian', 'fi': 'finnish'}
+                    'tr': 'turkish', 'mn': 'mongolian', 'fi': 'finnish', 'ang': 'oldenglish'}
 # (チベット語・アイヌ語の解析器は節の構造 (述語と格の枠) を作らないので、文の枠に写せない)
 
 
@@ -149,7 +149,7 @@ def run_other(text, source):
                'tl': ('タガログ語:', tagalog), 'ar': ('アラビア語:', arabic), 'he': ('ヘブライ語:', hebrew), 'fa': ('ペルシア語:', persian), 'hi': ('ヒンディー語:', hindi),
                'ur': ('ウルドゥー語:', urdu), 'ain': ('アイヌ語:', ainu), 'bo': ('チベット語:', tibetan), 'ja': ('日本語:  ', japanese),
                'ko': ('韓国語:  ', korean), 'tr': ('トルコ語: ', turkish), 'mn': ('モンゴル語:', mongolian), 'de': ('ドイツ語:', german), 'fr': ('フランス語:', french), 'fi': ('フィンランド語:', finnish),
-               'kobun': ('古文:    ', kobun)}
+               'ang': ('古英語:  ', oldenglish), 'kobun': ('古文:    ', kobun)}
     for analysis in analyzer_module.analyze_text(text):
         print(analysis.text)
         clauses = frame.frames(analysis)
@@ -157,7 +157,7 @@ def run_other(text, source):
             print('  (述語が見つからない)\n')
             continue
         show_frame(clauses)
-        for lang in ['ja', 'kobun', 'la', 'en', 'ru', 'de', 'fr', 'fi', 'sa', 'grc', 'id', 'tl', 'ar', 'he', 'fa', 'hi', 'ur', 'tr', 'mn', 'ko', 'ain', 'bo']:
+        for lang in ['ja', 'kobun', 'la', 'en', 'ru', 'de', 'fr', 'fi', 'ang', 'sa', 'grc', 'id', 'tl', 'ar', 'he', 'fa', 'hi', 'ur', 'tr', 'mn', 'ko', 'ain', 'bo']:
             if lang not in TARGETS and lang != source:
                 continue
             label, module = modules[lang]
@@ -196,6 +196,9 @@ def _source_words(text, lang):
         words = [''.join(c for c in unicodedata.normalize('NFD', w) if not unicodedata.combining(c)).strip('،۔')
                  for w in words]
         return Counter(w for w in words if w)
+    if lang == 'ang':   # 長音符・点の有無、ð と þ は問わない (翻刻の綴り = 標準の綴り)
+        from dragoman.oldenglish import orthography
+        return Counter(orthography.key(w) for w in words)
     return Counter(w.lower().replace('ё', 'е') for w in words)
 
 

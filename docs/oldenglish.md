@@ -111,6 +111,31 @@ espeak-ng の音素はテキストの定義（ソースの `phsource/`）から�
 espeak-ng --path=$HOME/.local/share/dragoman-data/ang -v ang "[[hw'&t w'e: g'A:Rdena]]"
 ```
 
+## 生成（ほかの言語から古英語へ）
+
+`python3 tools/generate.py --to=ang "Puella rosam amat."` で、文の枠（generate/frame.py）から古英語を作る（generate/oldenglish.py）。
+古英語の文から文の枠を作ってほかの言語にも訳せる（`--from=ang`）。
+
+```
+Puella rosam amat.            → Sēo mæġeþ lufaþ þā rōsan.
+Mīlitēs rēgem bonum laudant.  → Þā cempan lofiaþ þone gōdan cyning.
+Urbs ā mīlitibus capta est.   → Sēo burg wæs fram þǣm cempum ġefangen.
+Puer librum legere potest.    → Sē magu mæġ þā bōc rǣdan.
+Fēmina quae cantat est bona.  → Þæt wīf, þe singþ, is gōd.
+--from=ang: Hē ne mihte þone weg findan. → Is viam reperīre nōn potuit. / He was not able to find the way.
+```
+
+* 語: 英語を仲立ちにした置き換え（`python3 tools/build_english_index.py --lang=ang` で辞書から英語 → 見出しの索引
+  `$DRAGOMAN_DATA/ang/en-index.tsv` を作る。手で決めた訳語の表を先に）。同じ綴りの見出しが複数あれば、英語の訳語の合うものの変化表
+  （sēon「見る」の seah。「漉す」の sāh でなく）。
+* 語形: 辞書の語形の表から。見出しの変化表と変化形だけの項目の両方にある形（標準の siehþ・bireþ）、次に変化表の形、見出しに近い形を先に
+  （異綴り・方言の形は後に）。長音符の無い語形（変化形だけの項目の godan）は見出し語の頭から同じ字の長音符を写す（名詞・形容詞だけ）。
+* 名詞句: 冠詞 sē・sēo・þæt（格・性・数）+ 形容詞（冠詞の後ろは弱変化、冠詞が無ければ強変化）+ 名詞。属格は名詞の前で冠詞の代わり
+  （þæs flotan mæġeþ）。古英語の文の冠詞の無い名詞には冠詞を付けない（文の枠では冠詞があれば「定」、無ければ「分からない」）。
+* 動詞: 人称・数・時制の形。過去完了 hæfde（移動・変化の動詞は wæs）+ 過去分詞、受動 wæs / is + 過去分詞、話法の動詞 mæġ・wile・sceal
+  + 不定詞、否定は ne（縮約 nis・næs・nolde …）。主語の代名詞は省かない（関係節でも: þe þū sīehst）。
+* 語順: 主文は動詞が2番目、関係節（þe）・従属節（þæt）は動詞を最後に。
+
 ## 評価
 
 ISWOC Treebank（古英語の部分: アポロニウス物語・アングロサクソン年代記・オロシウス・ウェスト・サクソン福音書・エルフリックの聖人伝。
@@ -130,5 +155,5 @@ python3 tools/ud_eval.py --lang=ang [--source=apt,chrona,or,wscp,æls]
   切れるので動詞が最後でもその節に入る）。
 * 与格の独立構文（まれで、与格は多いので誤って読む害が大きい）。
 * 強変化・弱変化の区別を格の候補の絞り込みに使うこと（今は説明だけ）。
-* 生成（ほかの言語から古英語への訳）。
+* 生成: 不定冠詞（ān）、動形容詞（Carthāgō dēlenda est）、名前の古英語の形。
 * 強変化動詞の過去の語幹の長音符（ġefrūnon は辞書の語形にも見出しにも無い）。

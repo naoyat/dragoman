@@ -131,7 +131,21 @@ def _in_hand_dictionary(lemma):
 
 # 解析器の手作りの訳語の表 (基本の語の日本語。Wiktionary の語義の順だけでは 계집・tappo のような語が先に来る) を、
 # ラテン語の手作りの辞書と同じく語の選択に使う言語
-HAND_GLOSSES = {'ko': 'korean', 'de': 'german', 'fr': 'french', 'tr': 'turkish', 'mn': 'mongolian', 'fi': 'finnish'}
+HAND_GLOSSES = {'ko': 'korean', 'de': 'german', 'fr': 'french', 'tr': 'turkish', 'mn': 'mongolian', 'fi': 'finnish',
+                'ang': 'oldenglish'}
+
+
+class _KeyedTable(dict):
+    """見出しを鍵の形にして引く表 (古英語: 手の表は口蓋音の点を除いた形、辞書の見出しは ġiefan)"""
+    def __init__(self, table, key):
+        super().__init__(table)
+        self.key = key
+
+    def get(self, lemma, default=None):
+        return super().get(self.key(lemma), default)
+
+    def __contains__(self, lemma):
+        return super().__contains__(self.key(lemma))
 
 
 @functools.lru_cache(maxsize=None)
@@ -144,7 +158,11 @@ def hand_glosses(lang):
         table = importlib.import_module('dragoman.%s.morphology' % HAND_GLOSSES[lang]).GLOSSES
     except ImportError:
         return {}
-    return {lemma: frozenset(j.strip() for j in ja.split(',')) for lemma, ja in table.items()}
+    table = {lemma: frozenset(j.strip() for j in ja.split(',')) for lemma, ja in table.items() if '#' not in lemma}
+    if lang == 'ang':
+        from dragoman.oldenglish import orthography
+        return _KeyedTable(table, orthography.lemma_key)
+    return table
 
 
 def source_key(lang, lemma):
@@ -174,6 +192,7 @@ def english_glosses(lang, lemma, pos):
 FORM_OF = re.compile(r'\bform of ([^\sA-Za-z,]+)')   # 説明の語義 (… form of + 元の言語の語)
 # 表の最初の訳語が教科書の意味でない語 (βασιλεύς: chief, emperor, … king): 先に使う訳語
 FIRST_GLOSSES = {'fr': {'partir': 'leave'},   # 辞書に古い語源 (share) の項目しか無い
+                 'ang': {'mann': 'man', 'weġ': 'road', 'here': 'army'},
                  'grc': {'βασιλεύς': 'king', 'ὁράω': 'see', 'λόγος': 'word', 'ἀνήρ': 'man', 'κόρη': 'girl',
                          'λέγω': 'say', 'γράφω': 'write', 'παῖς': 'child', 'πόλις': 'city', 'ἔχω': 'have'}}
 

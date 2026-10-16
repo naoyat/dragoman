@@ -182,6 +182,8 @@ def dictionary_items(surface):
             items.append(item)
     if surface[:1].isupper():   # 大文字の語は固有名詞の読みを先に (God「神」を gōd「良い・財産」より)
         items.sort(key=lambda i: not i.get('proper'))
+    else:   # 小文字の語は固有名詞の読みを後に (gold「金」を Gold より)
+        items.sort(key=lambda i: bool(i.get('proper')))
     return sorted(items, key=_reading_order)
 
 
@@ -268,9 +270,14 @@ def guess_verb(surface):
     return []
 
 
+# 人称代名詞の主格の鍵 (文の枠の見出し: frame.SOURCE_PRONOUNS['ang'])
+NOMINATIVE = {'私': 'ic', '君': 'þu', '彼': 'he', '彼女': 'heo', 'それ': 'hit', '私たち': 'we', '君たち': 'ge', '彼ら': 'hie',
+              '誰': 'hwa', '何': 'hwæt'}
+
+
 def _pronoun_items(k, surface):
-    return [{'surface': surface, 'pos': 'pronoun', 'base': surface, 'ja': ja, 'gloss_lang': 'ja', 'person': person,
-             'number': number, '_': list(cng), 'compact': True}
+    return [{'surface': surface, 'pos': 'pronoun', 'base': surface, 'lemma': NOMINATIVE.get(ja, k), 'ja': ja,
+             'gloss_lang': 'ja', 'person': person, 'number': number, '_': list(cng), 'compact': True}
             for ja, person, number, cng in morphology.PRONOUNS[k]]
 
 
@@ -301,6 +308,9 @@ VERB_FUNCTION_WORDS = {'for'}
 COMMON_VERBS = {'wesan', 'beon', 'habban', 'weorþan', 'cweþan', 'secgan', 'don', 'gan', 'cuman'} | set(morphology.MODALS)
 
 
+LATE_ENDINGS = re.compile('(?:ie|ien|iende)$')
+
+
 def word_items(surface, first=False, following=None):
     """表層形 → 項目のリスト"""
     k = orthography.key(surface)
@@ -321,12 +331,12 @@ def word_items(surface, first=False, following=None):
     if k in morphology.PRONOUNS:
         items += _pronoun_items(k, surface)
     if k in morphology.POSSESSIVE_GENITIVES:
-        items.append({'surface': surface, 'pos': 'adj', 'base': surface, 'ja': morphology.POSSESSIVE_GENITIVES[k],
+        items.append({'surface': surface, 'pos': 'adj', 'base': surface, 'lemma': k, 'ja': morphology.POSSESSIVE_GENITIVES[k],
                       'gloss_lang': 'ja', '_': [(c, n, g) for c in ('Nom', 'Acc', 'Gen', 'Dat', 'Ins')
                                                  for n in ('sg', 'pl') for g in morphology.ALL_GENDERS],
                       'possessive': True})
     if k in morphology.POSSESSIVES:   # 所有の形容詞の基本の形 (ūre・þīn。変化した形は辞書から)
-        items.append({'surface': surface, 'pos': 'adj', 'base': surface, 'ja': morphology.POSSESSIVES[k],
+        items.append({'surface': surface, 'pos': 'adj', 'base': surface, 'lemma': k, 'ja': morphology.POSSESSIVES[k],
                       'gloss_lang': 'ja', '_': [(c, n, g) for c in ('Nom', 'Acc') for n in ('sg', 'pl')
                                                  for g in morphology.ALL_GENDERS], 'possessive': True})
     if k in morphology.SE_FORMS or k in morphology.THES_FORMS:
@@ -349,6 +359,11 @@ def word_items(surface, first=False, following=None):
         return [{'surface': surface, 'pos': 'adj', 'base': surface, 'ja': surface.upper() if not k.isdigit() else k,
                  'gloss_lang': 'ja', '_': [(c, n, g) for c in ('Nom', 'Acc', 'Gen', 'Dat') for n in ('pl',)
                                             for g in morphology.ALL_GENDERS], 'numeral': True}]
+    late = LATE_ENDINGS.sub(lambda m: {'ie': 'ige', 'ien': 'igen', 'iende': 'igende'}[m.group(0)], k)
+    if late != k:   # 後期の綴り -ie = -iġe (lufie = lufiġe「私は愛する」。lufu「愛」の形でもある)
+        extra = [i for i in dictionary_items(late) if i['pos'] == 'verb']
+        if extra:
+            return sorted(dictionary_items(surface) + [dict(i, surface=surface) for i in extra], key=_reading_order)
     items = dictionary_items(surface) or guess_verb(surface) or \
         (guess_compound(surface) if not surface[:1].isupper() else [])
     if k in morphology.SPELLINGS:
@@ -799,11 +814,18 @@ def _spelling(items, surface):
     if k in morphology.LONG_SPELLINGS and k != 'þe':   # よく使う機能語 (辞書には長音符の無い異綴りもある: si)
         long_ = morphology.LONG_SPELLINGS[k]
         return long_[0].upper() + long_[1:] if surface[:1].isupper() else long_
+    matching = []
     for item in items or []:
         spelling = item.get('spelling') if isinstance(item, dict) else item.attrib('spelling')
         if spelling and orthography.key(spelling).replace('-', '') == orthography.key(surface):
             base = item.get('base') if isinstance(item, dict) else item.attrib('base')
-            return _keep_case(_overlay_prefix(spelling.replace('-', ''), base or ''), surface)
+            pos = item.get('pos') if isinstance(item, dict) else item.pos
+            spelling = spelling.replace('-', '')
+            # 見出し語の長音符を写すのは名詞・形容詞だけ (動詞は語幹の母音が変わる: sēon の seah)
+            matching.append(_overlay_prefix(spelling, base or '') if pos in ('noun', 'adj') else spelling)
+    if matching:   # 長音符・点の付いた綴りを先に (変化形だけの項目の forlet より変化表の forlēt)
+        marked = [m for m in matching if unicodedata.normalize('NFD', m) != m]
+        return _keep_case((marked or matching)[0], surface)
     for item in items or []:   # 綴りの揺れで引いた語 (gefrunon → ġefrūnen): 同じ字の長音符・点だけを写す
         spelling = item.get('spelling') if isinstance(item, dict) else item.attrib('spelling')
         transferred = _transfer_marks(surface, spelling) if spelling else None

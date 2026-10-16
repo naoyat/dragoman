@@ -120,5 +120,35 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertTrue(noun and noun[0]['pos'] == 'noun' and ('Nom', 'pl', 'm') in noun[0]['_'])
 
 
+@unittest.skipUnless(dictionary.available(), '古英語の辞書が無い')
+class GenerateTestCase(unittest.TestCase):
+    """ほかの言語 (ラテン語) の文の枠から古英語を作る (generate/oldenglish.py)。訳語の索引が無ければ飛ばす"""
+
+    def setUp(self):
+        from dragoman.generate import oldenglish
+        if not oldenglish.available():
+            self.skipTest('古英語の訳語の索引が無い (python3 tools/build_english_index.py --lang=ang)')
+
+    def generate(self, text):
+        from dragoman.latin import latindic, analyzer as latin_analyzer
+        from dragoman.generate import frame, oldenglish
+        latindic.load()
+        analysis = next(latin_analyzer.analyze_text(text))
+        return oldenglish.sentence(frame.frames(analysis))
+
+    def test_noun_phrases_and_verbs(self):
+        self.assertEqual(self.generate('Puella rosam amat.'), 'Sēo mæġeþ lufaþ þā rōsan.')
+        self.assertEqual(self.generate('Mīlitēs rēgem bonum laudant.'), 'Þā cempan lofiaþ þone gōdan cyning.')   # 弱変化
+        self.assertEqual(self.generate('Puer equum vīdit.'), 'Sē magu seah þone mearh.')   # 「見る」の sēon の過去
+
+    def test_negation_passive_modal(self):
+        self.assertEqual(self.generate('Nōn videō rēgem.'), 'Iċ ne sēo þone cyning.')
+        self.assertEqual(self.generate('Urbs ā mīlitibus capta est.'), 'Sēo burg wæs fram þǣm cempum ġefangen.')
+        self.assertEqual(self.generate('Puer librum legere potest.'), 'Sē magu mæġ þā bōc rǣdan.')
+
+    def test_relative_clause(self):
+        self.assertEqual(self.generate('Fēmina quae cantat est bona.'), 'Þæt wīf, þe singþ, is gōd.')
+
+
 if __name__ == '__main__':
     unittest.main()

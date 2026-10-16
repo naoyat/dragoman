@@ -57,6 +57,12 @@ CONNECTIVES = {
 }
 # ほかの言語の接続詞 → この表の見出し (文の枠に入れるときに)
 SOURCE_CONNECTIVES = {
+    # 古英語 (長音符の無い綴りも)
+    'ang': {'and': 'et', 'ond': 'et', 'ac': 'sed', 'oþþe': 'aut', 'gif': 'sī', 'þēah': 'quamquam', 'þeah': 'quamquam',
+            'forþām': 'quod', 'forþam': 'quod', 'forþǣm': 'quod', 'forþæm': 'quod', 'forþon': 'quod', 'siþþan': 'postquam',
+            'syþþan': 'postquam', 'ǣr': 'antequam', 'ær': 'antequam', 'þā': 'ubi', 'þa': 'ubi', 'þā þā': 'ubi',
+            'þa þa': 'ubi', 'þenden': 'dum', 'oþ': 'dum', 'hwæþer': 'num', 'swā': 'ut', 'swa': 'ut', 'ēac': 'etiam',
+            'eac': 'etiam', 'nū': 'nunc', 'nu': 'nunc', 'sōþlīċe': 'autem', 'soþlice': 'autem'},
     # フランス語: 前置詞・副詞 + que の接続詞は解析で1語 (sans que の語は sans)
     'fr': {'quand': 'cum', 'lorsque': 'cum', "lorsqu'": 'cum', 'si': 'sī', "s'": 'sī', 'parce': 'quia', 'puisque': 'quoniam',
            'bien': 'quamquam', 'avant': 'priusquam', 'pour': 'ut', 'afin': 'ut', 'pendant': 'dum', 'après': 'postquam',

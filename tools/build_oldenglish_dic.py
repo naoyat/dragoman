@@ -163,16 +163,19 @@ def merge(rows, lemmas):
             continue
         gender = lemmas[lemma_id - 1][2].get('gender')
         genders = gender.split(',') if gender else [None]
-        cng, decls = nominal.setdefault((k, lemma_id, surface, features.get('rank')), ([], set()))
+        cng, decls = nominal.setdefault((k, lemma_id, surface, features.get('rank'), bool(features.get('alt'))),
+                                        ([], set()))
         for c, n, g in features['_']:
             for g2 in ([g] if g else genders):
                 if (c, n, g2) not in cng:
                     cng.append((c, n, g2))
         decls.update(d for d in (features.get('decl') or '').split(',') if d)
-    for (k, lemma_id, surface, rank), (cng, decls) in nominal.items():
+    for (k, lemma_id, surface, rank, alt), (cng, decls) in nominal.items():
         if any(g for c, n, g in cng):
             cng = [x for x in cng if x[2] or not any(y[:2] == x[:2] and y[2] for y in cng)]
         merged = {'_': cng}
+        if alt:
+            merged['alt'] = True
         if rank:
             merged['rank'] = rank
         if decls:
@@ -275,9 +278,9 @@ def main():
                 alt_of.append((f['form'], base, pos))
     print('%d lemmas, %d table forms, %d form-of, %d alt-of (%.0fs)' %
           (len(lemmas), len(forms), len(form_of), len(alt_of), time.time() - t0), file=sys.stderr)
-    for word, target, pos, x in form_of:
+    for word, target, pos, x in form_of:   # 変化形だけの項目の形 (方言の seh・sæh も) は、生成では見出しの表の形の後に
         for lemma_id in by_key.get((key(target), pos), ()):
-            forms.append((word, lemma_id, x))
+            forms.append((word, lemma_id, dict(x, alt=True)))
     rows = {}
     for f, lemma_id, x in forms:
         rows.setdefault((key(f), lemma_id, json.dumps(x, ensure_ascii=False, sort_keys=True)), f)
@@ -289,8 +292,9 @@ def main():
     for word, target, pos in alt_of:   # 異綴りは元の語の同じ形の読みを写す (別の項目のある語は除く)
         k = key(word)
         for lemma_id, x in by_form.get(key(target), ()):
-            if lemmas[lemma_id - 1][1] == pos and (k, lemma_id, x) not in rows:
-                rows[(k, lemma_id, x)] = word
+            alt = json.dumps(dict(json.loads(x), alt=True), ensure_ascii=False, sort_keys=True)   # 生成では後に
+            if lemmas[lemma_id - 1][1] == pos and (k, lemma_id, x) not in rows and (k, lemma_id, alt) not in rows:
+                rows[(k, lemma_id, alt)] = word
     rows = merge(rows, lemmas)
     tmp = out + '.tmp'
     if os.path.exists(tmp):
@@ -304,7 +308,8 @@ def main():
                    [(i + 1, k, p, json.dumps(info, ensure_ascii=False)) for i, (k, p, info) in enumerate(lemmas)])
     db.executemany('INSERT INTO forms VALUES (?, ?, ?, ?)',
                    sorted((k, surface, lemma_id, x) for (k, lemma_id, x), surface in rows.items()))
-    db.executescript('CREATE INDEX lemmas_key ON lemmas (key); CREATE INDEX forms_key ON forms (key);')
+    db.executescript('CREATE INDEX lemmas_key ON lemmas (key); CREATE INDEX forms_key ON forms (key); '
+                     'CREATE INDEX forms_lemma ON forms (lemma_id);')   # 見出し → 語形 (生成で)
     db.commit()
     db.close()
     os.replace(tmp, out)

@@ -78,6 +78,28 @@ SOURCE_PRONOUNS.update({
            'he': ('is', 'pl'), 'tämä': ('hic', ''), 'tuo': ('ille', ''), 'se': ('is', 'sg'), 'itse': ('sē', ''),
            'kuka': ('quis', ''), 'mikä': ('quid', '')},
 })
+# 古英語: 人称代名詞は見出し (解析器が主格の鍵 he・heo・ic … を lemma に)、sē・þes は指示代名詞
+SOURCE_PRONOUNS['ang'] = {'ic': ('ego', 'sg'), 'þu': ('tū', 'sg'), 'he': ('is', 'sg'), 'heo': ('is', 'sg'),
+                          'hit': ('is', 'sg'), 'we': ('ego', 'pl'), 'ge': ('tū', 'pl'), 'hie': ('is', 'pl'),
+                          'sē': ('is', 'sg'), 'se': ('is', 'sg'), 'þes': ('hic', ''), 'hwa': ('quis', ''),
+                          'hwæt': ('quid', ''), 'self': ('ipse', ''), 'sylf': ('ipse', ''),
+                          'mīn': ('meus', ''), 'min': ('meus', ''), 'þīn': ('tuus', ''), 'þin': ('tuus', ''),
+                          'sīn': ('suus', ''), 'sin': ('suus', ''), 'ūre': ('noster', ''), 'ure': ('noster', ''),
+                          'ēower': ('vester', ''), 'eower': ('vester', ''), 'his': ('suus', ''), 'hire': ('suus', ''),
+                          'hiera': ('suus', ''), 'heora': ('suus', ''), 'hira': ('suus', ''), 'hyra': ('suus', ''),
+                          'eall': ('omnis', ''), 'ǣlċ': ('omnis', ''), 'ælc': ('omnis', '')}
+
+
+def _with_plain(table):
+    """古英語の表: 長音符の無い綴り (翻刻: to = tō) でも引けるように"""
+    from dragoman.oldenglish.orthography import key
+    out = dict(table)
+    for k, v in table.items():
+        plain = (key(k[0]),) + k[1:] if isinstance(k, tuple) else key(k)
+        out.setdefault(plain, v)
+    return out
+
+
 # ロシア語の前置詞 + 格 → ラテン語の前置詞 + 格
 SOURCE_PREPOSITIONS = {
     'grc': {('ἐν', 'Dat'): ('in', 'Abl'), ('εἰς', 'Acc'): ('in', 'Acc'), ('ἐς', 'Acc'): ('in', 'Acc'),
@@ -99,6 +121,17 @@ SOURCE_PREPOSITIONS = {
            ('за', 'Ins'): ('post', 'Acc'), ('между', 'Ins'): ('inter', 'Acc'), ('около', 'Gen'): ('prope', 'Acc'),
            ('против', 'Gen'): ('contrā', 'Acc'), ('вокруг', 'Gen'): ('circum', 'Acc')},
 }
+SOURCE_PREPOSITIONS['ang'] = _with_plain({
+    ('on', 'Dat'): ('in', 'Abl'), ('on', 'Acc'): ('in', 'Acc'), ('in', 'Dat'): ('in', 'Abl'), ('in', 'Acc'): ('in', 'Acc'),
+    ('tō', 'Dat'): ('ad', 'Acc'), ('of', 'Dat'): ('ex', 'Abl'), ('fram', 'Dat'): ('ab', 'Abl'), ('from', 'Dat'): ('ab', 'Abl'),
+    ('mid', 'Dat'): ('cum', 'Abl'), ('mid', 'Acc'): ('cum', 'Abl'), ('mid', 'Ins'): ('cum', 'Abl'), ('be', 'Dat'): ('dē', 'Abl'),
+    ('būtan', 'Dat'): ('sine', 'Abl'), ('þurh', 'Acc'): ('per', 'Acc'), ('for', 'Dat'): ('propter', 'Acc'),
+    ('for', 'Acc'): ('prō', 'Abl'), ('æfter', 'Dat'): ('post', 'Acc'), ('beforan', 'Dat'): ('ante', 'Acc'),
+    ('under', 'Dat'): ('sub', 'Abl'), ('under', 'Acc'): ('sub', 'Acc'), ('ofer', 'Acc'): ('super', 'Acc'),
+    ('ofer', 'Dat'): ('super', 'Acc'), ('wiþ', 'Acc'): ('contrā', 'Acc'), ('wiþ', 'Dat'): ('contrā', 'Acc'),
+    ('betwux', 'Dat'): ('inter', 'Acc'), ('betweox', 'Dat'): ('inter', 'Acc'), ('nēah', 'Dat'): ('prope', 'Acc'),
+    ('æt', 'Dat'): ('apud', 'Acc'), ('ymb', 'Acc'): ('circum', 'Acc'), ('ymbe', 'Acc'): ('circum', 'Acc'),
+    ('oþ', 'Acc'): ('usque', 'Acc'), ('ġeond', 'Acc'): ('per', 'Acc')})
 # ヘブライ語の前置詞 (母音の違う形も。解析器は格を対格に)
 for _surfaces, _latin in ((('בְּ', 'בַּ', 'בָּ', 'בִּ', 'בְ', 'בַ', 'בָ'), ('in', 'Abl')),
                           (('לְ', 'לַ', 'לָ', 'לִ', 'לֵ'), ('ad', 'Acc')), (('אֶל', 'אֶל־'), ('ad', 'Acc')),
@@ -347,7 +380,7 @@ def lex_of(word, item=None):
         lemma = item.attrib('lemma')
         if item.pos == 'verb' and item.attrib('stem'):
             focus = 'stem:' + item.attrib('stem')
-    if lang in ('ko', 'de', 'tr', 'mn', 'fi', 'fr') and item.attrib('lemma'):
+    if lang in ('ko', 'de', 'tr', 'mn', 'fi', 'fr', 'ang') and item.attrib('lemma'):
         lemma = item.attrib('lemma')   # 表示の形 (학교 (學校) hakgyo) でなく見出し (辞書・生成器の見出しと同じ)
     if lang == 'ar' and item.attrib('lex'):
         lemma = item.attrib('lex')   # 表示の形 (bint ⁧بِنْت⁩) でなく CAMeL の見出しの鍵 (بِنْت。生成器の見出しと同じ)
@@ -435,6 +468,9 @@ def np_of(node, case=None):
         np.gender = name_gender(lang, word, np.head.lemma) or np.gender
     if _lang in ('grc', 'he'):   # 冠詞のある言語なら、定かかどうか (冠詞の有無)。冠詞の無い言語 (ロシア語 …) は分からない
         np.definite = any(isinstance(m, Word) and m.items and m.items[0].pos == 'article' for m in node.modifiers)
+    elif _lang == 'ang':   # 古英語: 冠詞 (sē) があれば定。無くても不定とは限らない (不定冠詞がほぼ無い)
+        if any(isinstance(m, Word) and m.items and m.items[0].pos == 'article' for m in node.modifiers):
+            np.definite = True
     elif _lang == 'fr':   # 定冠詞 (le・la・les) か不定冠詞・部分冠詞 (un・une・des・du)
         articles = [m.items[0].attrib('base') for m in node.modifiers
                     if isinstance(m, Word) and m.items and m.items[0].pos == 'article']
@@ -668,7 +704,10 @@ SOURCE_MODALS = {'pouvoir': ('possum', 'できる'), 'savoir': ('possum', 'で�
                  'devoir': ('dēbeō', 'ねばならない'), 'falloir': ('oportet', 'ねばならない'), 'faire': ('faciō', 'させる'),
                  'laisser': ('sinō', 'させておく'), 'können': ('possum', 'できる'), 'wollen': ('volō', '望む,欲しい'),
                  'müssen': ('dēbeō', 'ねばならない'), 'sollen': ('dēbeō', 'ねばならない'), 'dürfen': ('possum', 'できる'),
-                 'mögen': ('volō', '望む,欲しい'), 'möchten': ('volō', '望む,欲しい'), 'lassen': ('sinō', 'させておく')}
+                 'mögen': ('volō', '望む,欲しい'), 'möchten': ('volō', '望む,欲しい'), 'lassen': ('sinō', 'させておく'),
+                 # 古英語の話法の動詞 (過去現在動詞)
+                 'magan': ('possum', 'できる'), 'cunnan': ('possum', 'できる'), 'willan': ('volō', '望む,欲しい'),
+                 'sculan': ('dēbeō', 'ねばならない'), 'mōtan': ('possum', 'できる'), 'þurfan': ('dēbeō', 'ねばならない')}
 
 
 def _modal_clause(clause, verb_item):
@@ -787,7 +826,7 @@ SOURCE_NUMERALS = {lang: dict(zip(words, _LATIN_NUMERALS)) for lang, words in {
 POSSESSIVE_SUFFIXES = {'P1sg': 'meus', 'P2sg': 'tuus', 'P3sg': 'suus', 'P1pl': 'noster', 'P2pl': 'vester', 'P3pl': 'suus'}
 OWNER_JA = {'meus': '私の', 'tuus': '君の', 'noster': '私たちの', 'vester': '君たちの', 'suus': ''}
 # 繋辞を中立の sum にする言語
-NEUTRAL_COPULA = ('ko', 'de', 'tr', 'mn', 'fi', 'fr')
+NEUTRAL_COPULA = ('ko', 'de', 'tr', 'mn', 'fi', 'fr', 'ang')
 # 動詞が人称で変わらない言語 (人称は主語の代名詞から)
 PERSONLESS = ('ko', 'mn', 'ja')
 

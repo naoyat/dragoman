@@ -44,7 +44,7 @@ $ echo "लड़के ने किताब पढ़ी।" | python3 dragom
 | トルコ語 | `tr` | zeyrek (形態素解析) + Wiktionary。格・所有・時制・人称の接尾辞、分詞の関係節、副動詞。語順のままの訳も | UD Turkish-BOUN・Kenet: 主語 40%・目的語 37% | say (Yelda) | [docs/turkish.md](docs/turkish.md) |
 | モンゴル語 | `mn` | 辞書 (Wiktionary) と規則で格・時制・副動詞・分詞の接尾辞を分ける。語順のままの訳も。ラテン文字の転写も読む | UD Mongolian-GDUD (88文): 主語 73%・目的語 31% | — | [docs/mongolian.md](docs/mongolian.md) |
 | フィンランド語 | `fi` | spaCy (fi_core_news_sm。15格・依存関係) + Wiktionary。否定動詞 ei・完了・話法をまとめ、目的語の属格・分格を「を」に | UD Finnish-TDT: 主語 70%・目的語 48% | say (Satu) | [docs/finnish.md](docs/finnish.md) |
-| 古英語 | `ang` | Wiktionary の変化表 + 綴りの揺れの読み替え・語尾と複合語の推定。冠詞の掛け先・助動詞と本動詞・否定の縮約 | ISWOC: 主語 63%・目的語 52% | espeak-ng (再建音の音素で。ドイツ語の表を土台にした古英語の音素表) | [docs/oldenglish.md](docs/oldenglish.md) |
+| 古英語 | `ang` | Wiktionary の変化表 + 綴りの揺れの読み替え・語尾と複合語の推定。冠詞の掛け先・助動詞と本動詞・否定の縮約。生成も | ISWOC: 主語 63%・目的語 52% | espeak-ng (再建音の音素で。ドイツ語の表を土台にした古英語の音素表) | [docs/oldenglish.md](docs/oldenglish.md) |
 | 韓国語 | `ko` | kiwipiepy (形態素解析) + Wiktionary (漢字語の漢字も)。助詞から格、語尾から時制・接続、補助用言をまとめる | UD Korean-Kaist: 主語 69%・目的語 83% | say (Yuna) | [docs/korean.md](docs/korean.md) |
 | アイヌ語 | `ain` | 人称の接辞の分解 + 手作りの語彙表・Wiktionary。語順のまま日本語に | — | — | [docs/ainu.md](docs/ainu.md) |
 | 古文（平安の和文） | `kobun` | MeCab + 中古和文UniDic。品詞分解して現代語に組み立て直す | — | say (Kyoko) | [docs/kobun.md](docs/kobun.md) |
@@ -214,7 +214,7 @@ python3 tools/generate.py --gaps FILE   # 言語ごとに訳語の見つから�
 
 ```
 python3 tools/build_latin_english.py               # la-en.tsv (ラテン語 → 英語。kaikki-Latin.jsonl.gz から)
-python3 tools/build_english_index.py --lang=ru     # ru/en-index.tsv (英語 → ロシア語。sa・grc・id・tl も)
+python3 tools/build_english_index.py --lang=ru     # ru/en-index.tsv (英語 → ロシア語。sa・grc・id・tl・ang (古英語) も)
 python3 tools/build_sanskrit_apte.py               # sa/en-index-apte.tsv (Apte の英梵辞典。任意)
 python3 tools/build_ja_transitivity.py             # ja-transitivity.tsv (日本語の動詞の自他。日本語の入口で)
 python3 tools/build_ja_en.py                       # ja-en.tsv (和英。JMdict から。手作りの辞書の日本語に合う英語を先に)
