@@ -91,6 +91,13 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertIn('私たちの父', self.ja('Fæder ūre, þū þe eart on heofonum, sī þīn nama ġehālgod.'))
         self.assertIn('君の名前が', self.ja('Fæder ūre, þū þe eart on heofonum, sī þīn nama ġehālgod.'))
 
+    def test_adjectives(self):
+        self.assertEqual(self.ja('Se strengra cyning feaht.'), 'より強い王が / 戦った')       # 比較級 (strang)
+        self.assertEqual(self.ja('Hē is betera þonne his brōþor.'), '彼は / 彼の兄弟より / 良い')   # betera ← gōd、þonne
+        self.assertEqual(self.ja('Se gōda cyning lufode þone strengestan here.'), '良い王が / 最も強い軍を / 愛した')
+        self.assertEqual(self.ja('Þā hē þæt hīerde, þā fērde hē tō þǣre byriġ.'),
+                         '〜した時 / 彼が / それを / 聞いた / その時 / 彼が / 町[へ,に] / 行った')   # 相関の þā … þā
+
     def test_wish(self):
         self.assertIn('神聖にされるように', self.ja('Fæder ūre, þū þe eart on heofonum, sī þīn nama ġehālgod.'))
         self.assertEqual(self.ja('Tōbecume þīn rīċe.'), '君の国が / 来るように,起こるように')   # tō- を外して becuman

@@ -126,6 +126,19 @@ def _item(info, feats, surface):
             return item
     elif pos == 'preposition':
         return None   # 前置詞は手で書いた表 (morphology.PREPOSITIONS) から
+    rank = feats.get('rank') or info.get('rank')
+    if pos == 'adj' and rank:
+        # 比較級・最上級「より〜・最も〜」(strengra ← strang、betera ← gōd)。訳は原級の訳から
+        positive = info.get('positive')
+        source = (dictionary.lemmas(positive, 'adj') or [info])[0] if positive else info
+        ja, gloss_lang = _gloss(source, 'adj')
+        if gloss_lang == 'ja':
+            ja = ','.join(('より' if rank == '+' else '最も') + j for j in ja.split(',')[:2])
+        item.update(ja=ja, gloss_lang=gloss_lang, rank=rank,
+                    form='%s (%s)' % ('比較級' if rank == '+' else '最上級', source['base']))
+        return item
+    if pos == 'adj' and feats.get('decl'):
+        item['form'] = '・'.join({'strong': '強変化', 'weak': '弱変化'}[d] for d in feats['decl'].split(','))
     ja, gloss_lang = _gloss(info, 'verb' if pos in ('verb', 'participle') else pos)
     item.update(ja=ja, gloss_lang=gloss_lang)
     if item['pos'] == 'participle':
@@ -448,10 +461,33 @@ SUBJECT_PRONOUNS = {'he', 'heo', 'hie', 'hi', 'hy', 'we', 'ic', 'þu', 'ge', 'hi
 ROMAN_NUMERAL = re.compile('^[mdclxvi]+$')
 
 
+def comparisons(readings, surfaces):
+    """比較の þonne「〜より」: 比較級の後ろ (4語まで) の þonne は、後ろの語を比べる相手にする前置詞のように
+    (Hē is betera þonne his brōþor「彼は兄弟より良い」)。比較級の訳の「より」は外す"""
+    for i, s in enumerate(surfaces):
+        if orthography.key(s) != 'þonne':
+            continue
+        for j in range(max(0, i - 4), i):
+            comparative = [r for r in readings[j] or [] if r.get('rank') == '+']
+            if comparative:
+                readings[i] = [{'surface': s, 'pos': 'preposition', 'base': 'þonne', 'dominates': c, 'ja': '〜より',
+                                'gloss_lang': 'ja'} for c in ('Nom', 'Acc', 'Dat')]
+                for r in comparative:
+                    r['ja'] = ','.join(x[2:] if x.startswith('より') else x for x in r['ja'].split(','))
+                break
+
+
 def fix_function_words(readings, surfaces):
     """þā þā / þā ðā「〜した時」、þæt þæt (補文の þæt + 冠詞)、þæt + 定動詞 (þæt is「それは〜」) の読み分け"""
     keys = [orthography.key(s) for s in surfaces]
     removed = set()
+    # 相関の þā … þā (Þā hē þæt hīerde, þā fērde hē「彼がそれを聞いた時、その時彼は行った」): 文頭の þā の後ろに、
+    # 動詞の読みのある語を挟んでもう一度 þā があれば、最初の þā は「〜した時」
+    if keys and keys[0] == 'þa' and (len(keys) < 2 or keys[1] != 'þa'):
+        later = [j for j in range(2, len(keys)) if keys[j] == 'þa' and
+                 any(r['pos'] == 'verb' for k2 in range(1, j) for r in readings[k2] or [])]
+        if later:
+            readings[0] = [{'surface': surfaces[0], 'pos': 'conj', 'base': 'þā', 'ja': '〜した時', 'gloss_lang': 'ja'}]
     for i, k in enumerate(keys):
         nxt = keys[i + 1] if i + 1 < len(keys) else None
         if k == 'þa' and nxt == 'þa':
@@ -542,6 +578,10 @@ def attach_articles(words, trace):
             or head.items   # 冠詞の掛かる語は名詞類 (sē sang「その歌」の動詞の読みを除く)
         head.add_modifier(word)
         trace.append('// ART#%d (%s) -> #%d (%s)' % (i, word.surface, head.index, head.surface))
+        for w in words[i + 1:words.index(head)]:   # 冠詞と名詞の間の語は形容詞 (se gōda cyning の gōda を「財産」と読まない)
+            adjs = [item for item in w.items or [] if item.pos in ('adj', 'participle') and _agree(article, item._ or [])]
+            if adjs:
+                w.items = adjs
 
 
 SUBORDINATORS = {'þæt', 'gif', 'þeah', 'forþam', 'forþæm', 'forþon', 'siþþan', 'syþþan', 'oþ', 'ær', 'hwæþer',
@@ -728,6 +768,7 @@ def lookup_all(surfaces, trace=None):
                 word_items(s, first=(k == 0 or surfaces[k - 1] in PUNCTUATION),
                            following=surfaces[k + 1] if k + 1 < len(surfaces) else None)
                 for k, s in enumerate(surfaces)]
+    comparisons(readings, surfaces)
     removed = fix_function_words(readings, surfaces)
     removed |= choose_relatives(readings, surfaces)
     global _spellings
