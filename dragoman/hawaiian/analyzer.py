@@ -113,8 +113,18 @@ def _gloss(word, pos, en):
 def content(token):
     """内容語の読み: [(品詞, 見出し, 訳, 訳の言語, 複数)]。複数形 (kānaka) は見出し (kanaka) の複数"""
     out = []
-    plural = [(lemma, pos) for form, lemma, pos, tags in dictionary.forms(token) if 'plural' in tags]
-    for lemma, pos in plural:
+    spelled = orthography.normalize(token).lower()
+    # 複数形 (kānaka ← kanaka): 綴りが複数形と同じときだけ。長音符の無い綴り (kanaka) は単数を先に、複数は後ろの候補に
+    # (表の鍵は長音符を除くので、単数の kanaka も複数形 kānaka に当たる)
+    exact_plural, unmarked_plural = [], []
+    for form, lemma, pos, tags in dictionary.forms(token):
+        if 'plural' not in tags or orthography.normalize(lemma).lower() == spelled:
+            continue
+        if orthography.normalize(form).lower() == spelled:
+            exact_plural.append((lemma, pos))
+        elif not orthography.marked(token):
+            unmarked_plural.append((lemma, pos))
+    for lemma, pos in exact_plural:
         for row in dictionary.lemmas(lemma, pos):
             ja, lang = _gloss(row['word'], row['pos'], row['en'])
             out.append((row['pos'], row['word'], ja, lang, True))
@@ -131,6 +141,10 @@ def content(token):
             from dragoman.core.katakana_names import latin
             ja, lang = latin(orthography.key(row['word'])), 'ja'
         out.append((pos, row['word'], ja, lang, False, row['pos'] == 'name'))
+    for lemma, pos in unmarked_plural:   # 長音符の無い綴りの複数の読み (冠詞 nā の後ろで選ぶ)
+        for row in dictionary.lemmas(lemma, pos):
+            ja, lang = _gloss(row['word'], row['pos'], row['en'])
+            out.append((row['pos'], row['word'], ja, lang, True))
     out = [x if len(x) == 6 else x + (False,) for x in out]
     if token[:1].isupper():   # 大文字の語は名前を先に
         out.sort(key=lambda x: not x[5])
@@ -245,6 +259,8 @@ def parse_np(c, case, start_ix):
     else:
         entries = [e for e in content(tok) if e[0] in ('noun', 'verb', 'adj')] or _guess(tok)
         nouns = [e for e in entries if e[0] == 'noun'] or entries
+        # 冠詞の数で単数・複数の読みを選ぶ (nā kanaka → 複数、ke kanaka → 単数)
+        nouns = sorted(nouns, key=lambda e: e[4] != (number == 'pl'))
         if not nouns or _function_word(tok):
             c.i -= len(pre)
             return []

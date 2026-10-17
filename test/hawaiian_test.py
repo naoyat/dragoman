@@ -57,6 +57,17 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Mai hele!'), '行くな')
         self.assertEqual(self.ja('Ua ʻai ʻia ka iʻa e ka pōpoki.'), '魚が / 猫によって / 食べられた')
 
+    def test_number(self):
+        from dragoman.hawaiian import analyzer
+
+        def number(text, ix=1):
+            a = next(analyzer.analyze_text(text))
+            word = next(w for w in a.words if getattr(w, 'token_ix', None) == ix)
+            return word.items[0]._[0][1]
+        self.assertEqual(number('Ua hele ke kanaka i ke kula.', 2), 'sg')   # 単数 (複数形 kānaka と鍵が同じでも)
+        self.assertEqual(number('Ua hele nā kanaka i ke kula.', 2), 'pl')   # 冠詞 nā
+        self.assertEqual(number('Ua hele nā kānaka i ke kula.', 2), 'pl')
+
     def test_unmarked_spelling(self):
         from dragoman.hawaiian import analyzer
         self.assertEqual(self.ja('Ua ai ke keiki i ka poi.'), '子供が / ポイを / 食べた')
