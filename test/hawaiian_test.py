@@ -68,6 +68,16 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(number('Ua hele nā kanaka i ke kula.', 3), 'pl')   # 冠詞 nā
         self.assertEqual(number('Ua hele nā kānaka i ke kula.', 3), 'pl')
 
+    def test_token_rows(self):
+        """語の一覧には、語の列から外した小辞 (ua・ʻia) と名詞に掛けた冠詞も出す"""
+        from dragoman.hawaiian import analyzer, command
+        a = next(analyzer.analyze_text('Ua ʻai ʻia ka iʻa e ka pōpoki.'))
+        rows = command.token_rows(a)
+        self.assertEqual([r[0] for r in rows], a.original)
+        self.assertIn('完了', rows[0][2][0])         # ua
+        self.assertIn('受け身', rows[2][2][0])       # ʻia
+        self.assertIn('冠詞', rows[3][2][0])         # ka
+
     def test_unmarked_spelling(self):
         from dragoman.hawaiian import analyzer
         self.assertEqual(self.ja('Ua ai ke keiki i ka poi.'), '子供が / ポイを / 食べた')

@@ -201,6 +201,13 @@ def _spelled(token):
     return orthography.normalize(token or '').lower()
 
 
+_notes = {}   # 元の語の位置 → (見出し, 働き)。解析で語の列から外した小辞 (ua・ʻia・mai …) の説明 (語の一覧に出す)
+
+
+def _note(ix, base, text):
+    _notes[ix] = (base, text)
+
+
 def _word(surface, item, ix):
     w = Word(surface, None if item is None else [item])
     w.token_ix = ix
@@ -295,6 +302,8 @@ def parse_np(c, case, start_ix):
     # 所有: o / a + 名詞句
     while c.peek() is not None and morphology.candidates(morphology.GENITIVES, c.peek()) and c.peek(1) is not None:
         save = c.i
+        kind = morphology.candidates(morphology.GENITIVES, c.peek())[0][1][1]
+        _note(start_ix + c.i, kind, '所有の印「〜の」(%s 類)' % kind)
         c.i += 1
         genitive = parse_np(c, 'Gen', start_ix)
         if not genitive:
@@ -341,6 +350,7 @@ def parse_clause(tokens, start_ix):
             c.i += 1
             if _key(c.peek()) == 'i':   # ʻaʻole i + 動詞「〜しなかった」
                 tense = 'perfect'
+                _note(start_ix + c.i, 'i', '過去の印 (ʻaʻole i + 動詞「〜しなかった」)')
                 c.i += 1
             continue
         if _key(tok) == 'mai' and c.i == 0 and c.peek(1) is not None and \
@@ -349,6 +359,7 @@ def parse_clause(tokens, start_ix):
             mood = 'imperative'
             out.append(_word('(mai)', {'surface': '(mai)', 'pos': 'adv', 'base': 'mai', 'ja': '〜ない', 'gloss_lang': 'ja',
                                        'negation': True}, None))
+            _note(start_ix + c.i, 'mai', '禁止 (mai + 動詞「〜するな」)')
             c.i += 1
             continue
         tam = morphology.candidates(morphology.TAM, tok)
@@ -360,6 +371,7 @@ def parse_clause(tokens, start_ix):
             else:
                 tense = t
             closing = close
+            _note(start_ix + c.i, base, TAM_NOTES[base] if mood != 'imperative' else '命令・勧めの小辞 (e + 動詞「〜せよ」)')
             c.i += 1
             continue
         break
@@ -377,6 +389,7 @@ def parse_clause(tokens, start_ix):
         copula = _word('(he)', dict(COPULA), None)
         return out + complement + [copula] + _arguments(c, start_ix, None)
     if first == morphology.TOPIC or _key(c.peek()) == 'o' and not orthography.marked(c.peek() or '') and c.i == 0:
+        _note(start_ix + c.i, 'ʻo', '同定の印 (文頭の ʻo + 名詞句が述語「〜である」)')
         c.i += 1   # ʻO Kimo koʻu inoa「私の名前はキモだ」: 文頭の ʻo の句が述語 (同定)、後ろの名詞句が主語
         predicate = parse_np(c, 'Nom', start_ix)
         rest = _arguments(c, start_ix, None)
@@ -402,13 +415,17 @@ def parse_clause(tokens, start_ix):
             if _spelled(nxt) == morphology.PASSIVE or _key(nxt) == 'ia' and not orthography.marked(nxt) and \
                     _key(c.peek(1)) == 'e':
                 verb['voice'] = 'passive'
+                _note(start_ix + c.i, 'ʻia', '受け身の印「〜される」')
                 c.i += 1
                 continue
             if morphology.candidates(morphology.DIRECTIONALS, nxt) and not (_key(nxt) == 'mai' and c.peek(1) is not None
                                                                            and _key(c.peek(1)) in ('ka', 'ke')):
+                d = morphology.candidates(morphology.DIRECTIONALS, nxt)[0][0]
+                _note(start_ix + c.i, d, '方向の小辞「%s」(訳さない)' % DIRECTIONAL_NOTES.get(d, ''))
                 c.i += 1
                 continue
             if closing and _key(nxt) == closing:
+                _note(start_ix + c.i, closing, '時制・相の小辞の閉じ (%s)' % {'ana': 'e … ana', 'nei': 'ke … nei'}[closing])
                 c.i += 1
                 continue
             if _key(nxt) in ('loa', 'nō', 'no', 'hou', 'pū', 'koke', 'wale', 'paha') and \
@@ -442,6 +459,7 @@ def _arguments(c, start_ix, verb):
             continue
         spelled, k = _spelled(tok), _key(tok)
         if spelled == morphology.TOPIC or k == 'o' and not orthography.marked(tok) and not subject_done:
+            _note(start_ix + c.i, 'ʻo', '主語・主題の印 (ʻo + 名詞句)')
             c.i += 1
             np = parse_np(c, 'Nom', start_ix)
             for w in np:
@@ -459,6 +477,8 @@ def _arguments(c, start_ix, verb):
             # 場所の名詞 (ma luna o「〜の上に」)
             loc = morphology.LOCATIVES.get(_key(c.peek()))
             if loc and _key(c.peek(1)) == 'o':
+                _note(start_ix + c.i, c.peek(), '場所の名詞 (%s %s o「%s」)' % (spelled_p, c.peek(), loc))
+                _note(start_ix + c.i + 1, 'o', '所有の印「〜の」(場所の名詞の後ろ)')
                 c.i += 2
                 np = parse_np(c, 'Dat', start_ix)
                 if np:
@@ -503,8 +523,14 @@ def _arguments(c, start_ix, verb):
     return out
 
 
+TAM_NOTES = {'ua': '時制・相の小辞: 完了「〜した」', 'e': '時制・相の小辞: e … ana 未完了・未来「〜する (だろう)」',
+             'ke': '時制・相の小辞: ke … nei 進行「〜している」'}
+DIRECTIONAL_NOTES = {'mai': 'こちらへ', 'aku': 'あちらへ', 'iho': '下へ・自分で', 'aʻe': '上へ・次の'}
+
+
 def lookup_all(surfaces):
     """文 → 語の列 (節ごとに読む)"""
+    _notes.clear()
     words = []
     clause, start = [], 0
     for ix, tok in enumerate(surfaces + [None]):
@@ -560,6 +586,7 @@ def analyze_sentence(surfaces):
     with language.using(HAWAIIAN):
         analysis = common.analyze_words([w.surface for w in words], words, word_details, [])
     analysis.original = list(surfaces)
+    analysis.notes = dict(_notes)
     return analysis
 
 
