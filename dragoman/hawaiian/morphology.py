@@ -100,7 +100,7 @@ def candidates(table, token):
     return [(w, v) for w, v in table.items() if orthography.key(w) == k]
 # 訳語を決めておく語 (見出しの鍵 → 訳)
 GLOSSES = {
-    'hele': '行く', 'ʻai': '食べる', 'inu': '飲む', 'ʻike': '見る,知る', 'aloha': '愛する', 'hana': 'する,働く',
+    'hele': '行く', 'hana#verb': '作る,する', 'ʻai': '食べる', 'inu': '飲む', 'ʻike': '見る,知る', 'aloha': '愛する', 'hana': 'する,働く',
     'noho': '住む,座る', 'heluhelu': '読む', 'kākau': '書く', 'ʻōlelo': '言う,話す', 'hīmeni': '歌う', 'mele': '歌う',
     'hula': '踊る', 'ʻauʻau': '泳ぐ', 'honi': 'キスする', 'hoʻi': '帰る', 'holo': '走る', 'lele': '飛ぶ', 'moe': '眠る',
     'ala': '起きる', 'kū': '立つ', 'nānā': '見る', 'lohe': '聞く', 'aʻo': '教える,学ぶ', 'hoʻomaka': '始める',
@@ -118,9 +118,22 @@ GLOSSES = {
     'nui': '大きい', 'liʻiliʻi': '小さい', 'nani': '美しい', 'maikaʻi': '良い', 'hauʻoli': 'うれしい', 'kaumaha': '悲しい',
     'wela': '暑い', 'anuanu': '寒い', 'hou#adj': '新しい', 'kahiko': '古い', 'lōʻihi': '長い', 'pōkole': '短い',
     'ikaika': '強い', 'akamai': '賢い', 'ʻono': 'おいしい', 'uliuli': '青い', 'ʻulaʻula': '赤い', 'keʻokeʻo': '白い',
-    'ʻeleʻele': '黒い', 'ʻōmaʻomaʻo': '緑の', 'melemele': '黄色い', 'wikiwiki': '速い',
+    'ʻeleʻele': '黒い', 'mālamalama#noun': '光', 'mālamalama': '明るい', 'pōmaikaʻi': '幸いな', 'haʻahaʻa': '低い,へりくだった', 'aupuni': '国,政府',
+    'honua': '大地,世界', 'kinohi': '初め', 'ao': '世界,昼', 'poʻe': '人々', 'ʻōmaʻomaʻo': '緑の', 'melemele': '黄色い', 'wikiwiki': '速い',
 }
 def gloss(word, pos):
     """手で決めた訳語 (品詞ごとの鍵 'ʻōlelo#noun' を先に)。辞書の見出しの綴りで引く"""
     w = orthography.normalize(word).lower()
-    return GLOSSES.get('%s#%s' % (w, pos)) or GLOSSES.get(w)
+    found = GLOSSES.get('%s#%s' % (w, pos)) or GLOSSES.get(w)
+    if found or orthography.marked(word):
+        return found
+    # 印の無い綴り (Andrews の見出し pomaikai): 鍵の同じ手の表の見出しが1つだけならそれ (pōmaikaʻi「幸いな」)
+    same = _BY_KEY.get(orthography.key(w), [])
+    return GLOSSES.get('%s#%s' % (same[0], pos)) or GLOSSES.get(same[0]) if len(same) == 1 else None
+
+
+_BY_KEY = {}
+for _w in GLOSSES:
+    _base = _w.split('#')[0]
+    if _base not in _BY_KEY.setdefault(orthography.key(_base), []):
+        _BY_KEY[orthography.key(_base)].append(_base)

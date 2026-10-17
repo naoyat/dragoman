@@ -30,7 +30,15 @@ python3 tools/samples.py --lang=haw              # サンプル (samples/hawaiia
 
 `python3 tools/build_hawaiian_dic.py` で、kaikki.org の Wiktionary の抽出データ
 （`$DRAGOMAN_DATA/haw/kaikki.org-dictionary-Hawaiian.jsonl`、約 6MB、CC BY-SA）から `$DRAGOMAN_DATA/haw/wiktionary.sqlite` を作る。
-見出し語約 4,000（品詞・英語の語義）と、複数形（kānaka ← kanaka・wāhine ← wahine）・異綴り（wau = au）。語数は少ないので、
+見出し語約 4,000（品詞・英語の語義）と、複数形（kānaka ← kanaka・wāhine ← wahine）・異綴り（wau = au）。
+
+語数を補うのに、Andrews『A Dictionary of the Hawaiian Language』（Parker の改訂版、1922年。パブリックドメイン）の OCR のテキスト
+（[Internet Archive](https://archive.org/details/ofhawadictionary00andrrich) の ofhawadictionary00andrrich_djvu.txt、2.9MB。
+`$DRAGOMAN_DATA/haw/andrews-parker-1922_djvu.txt`）から、`python3 tools/build_hawaiian_andrews.py` で見出し語・品詞・英語の語義
+約 12,800 を取り出す（`$DRAGOMAN_DATA/haw/andrews.sqlite`）。項目「Ahonui (a-h6-nu'-i), adj. Patient; enduring; …」の、見出しの行から
+次の見出しまでを1項目にし、行末のハイフンで切れた語をつなぎ、語源の [ … ] とハワイ語の用例（: の後ろ）を除いて、; で区切った語義の
+最初の3つを訳語にする。19世紀の綴りなので ʻokina・長音符は無く、Wiktionary にその品詞の見出しが無いときだけ使う。
+Andrews の印の無い見出し（pomaikai）も、鍵の同じ手の表の見出しが1つだけなら手の訳（pōmaikaʻi「幸いな」）を使う。
 よく使う語は手で書いた訳語の表（hawaiian/morphology.py）で補う。
 
 ## 綴り
@@ -63,6 +71,11 @@ python3 tools/samples.py --lang=haw              # サンプル (samples/hawaiia
 * 疑問: wai「誰」（名前 inoa を尋ねるときは「何」）・aha「何」・hea「どこ」（i hea「どこへ」・ma hea「どこで」）・pehea「どう」・
   no ke aha「なぜ」・ʻehia「いくつ」。名詞の付かない kēia「これ」
 * 数詞: ʻekahi … ʻumi は名詞の前（ʻelua ʻīlio「2匹の犬」）
+* 19世紀の本文（1868年の聖書）で多いもの: 文頭の前置詞句（I kinohi hana ke Akua「初めに神が造った」）、名詞句の並列 a me
+  （ka lani a me ka honua「天と地」）、動詞の後ろの語りの lā（ʻōlelo mai la「言った」: 小辞の無い動詞を過去に）、動詞の直後の
+  nui・pono（aloha nui「とても愛する」）、主語の無い状態の動詞の述語（ua maikaʻi「良かった」: 訳が日本語の形容詞なら補語の形容詞 +
+  見えない繋辞）、ko / kā + 名詞句「〜のもの」（ko ke ao nei「この世のもの」）、no / na + 代名詞の述語（no lākou ke aupuni
+  「御国は彼らのもの」）、名詞の後ろの冠詞の無い名詞の修飾（ka poʻe naʻau haʻahaʻa「へりくだった心の人々」）
 * 辞書に無い語: 使役の hoʻo- を外して「〜させる」、重ね（wikiwiki → wiki）、大文字の語は名前（カタカナ）
 
 ## 音読
@@ -81,6 +94,6 @@ Universal Dependencies にハワイ語のツリーバンクは無いので、自
 
 ## まだ扱わないもの
 
-* 語数の少なさ（Wiktionary 約 4,000語）: パブリックドメインの辞書（Andrews『A Dictionary of the Hawaiian Language』1865年）で補えるか
+* Andrews の語義の質（OCR の誤り、19世紀の英語の語義）と、印の無い見出しの ʻokina・長音符（音読で長母音を補えない）
 * 補文（ʻōlelo mai ʻo ia, ua hele …「彼は…と言った」）、条件・理由の節の中の語順、数詞の助数詞（「二つの人」→「2人の」）
 * 生成（ほかの言語からハワイ語へ）

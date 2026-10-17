@@ -73,6 +73,17 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Ua hele ʻoe i hea?'), '君が / どこ[に,へ] / 行った')
         self.assertEqual(self.ja('No ke aha ʻoe i hele ai?'), 'なぜ / 君が / 行った')
 
+    def test_bible_1868(self):
+        """1868年の聖書 (パブリックドメイン。ʻokina・長音符の無い綴り) の節"""
+        self.assertEqual(self.ja('I kinohi hana ke Akua i ka lani a me ka honua.'),
+                         '神が / 初め[に,へ] / 天と{大地,世界}を / 作る,する')   # 文頭の前置詞句、a me
+        self.assertIn('神が / 言った', self.ja('Olelo mai la ke Akua, I malamalama, a ua malamalama.'))   # 語りの lā
+        self.assertIn('良かった', self.ja('Ike mai la ke Akua i ka malamalama, ua maikai.'))   # 状態の動詞の述語
+        self.assertIn('とても / 愛した', self.ja('No ka mea, ua aloha nui mai ke Akua i ko ke ao nei.'))
+        out = self.ja('Pomaikai ka poe naau haahaa, no ka mea, no lakou ke aupuni o ka lani.')
+        self.assertIn('低い心の人々は / 幸いである', out)   # 名詞の修飾の名詞、Andrews の見出しの手の訳
+        self.assertIn('彼らのものである', out)              # no + 代名詞の述語
+
     def test_number(self):
         from dragoman.hawaiian import analyzer
 

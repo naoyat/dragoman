@@ -14,7 +14,16 @@ from dragoman.core import paths
 from . import orthography
 
 DB_PATH = paths.data('haw', 'wiktionary.sqlite')
+ANDREWS_PATH = paths.data('haw', 'andrews.sqlite')   # Andrews (Parker の改訂版、1922年) の補い (tools/build_hawaiian_andrews.py)
 _db = None
+_andrews = None
+
+
+def _connect_andrews():
+    global _andrews
+    if _andrews is None and os.path.exists(ANDREWS_PATH):
+        _andrews = sqlite3.connect(ANDREWS_PATH, check_same_thread=False)
+    return _andrews
 
 
 def _connect():
@@ -30,11 +39,21 @@ def available():
 
 @functools.lru_cache(maxsize=50000)
 def _lemmas(k):
+    """鍵 → 見出し。Wiktionary の見出し (ʻokina・長音符付き) を先に、Wiktionary にその品詞の見出しが無いときだけ
+    Andrews の見出し (source: andrews。19世紀の綴りなので印は無い)"""
     db = _connect()
     if db is None or not k:
         return ()
-    return tuple(dict(zip(('word', 'pos', 'en', 'senses'), row)) for row in
-                 db.execute('SELECT word, pos, en, senses FROM lemmas WHERE key = ?', (k,)))
+    rows = [dict(zip(('word', 'pos', 'en', 'senses'), row)) for row in
+            db.execute('SELECT word, pos, en, senses FROM lemmas WHERE key = ?', (k,))]
+    andrews = _connect_andrews()
+    if andrews is not None:
+        poses = {r['pos'] for r in rows}
+        for row in andrews.execute('SELECT word, pos, en, senses FROM lemmas WHERE key = ?', (k,)):
+            entry = dict(zip(('word', 'pos', 'en', 'senses'), row), source='andrews')
+            if entry['pos'] not in poses:
+                rows.append(entry)
+    return tuple(rows)
 
 
 def lemmas(word, pos=None):

@@ -1,6 +1,7 @@
 # ハワイ語のサンプル (python3 tools/samples.py --lang=haw で表示する)
 #
-# 自作の文。ʻokina・長音符は書いても書かなくてもよい (書かなければ辞書の綴りで補って読む)。「## 見出し」で節を分ける
+# 自作の文と、1868年のハワイ語聖書 (パブリックドメイン) の短い節。ʻokina・長音符は書いても書かなくてもよい
+# (書かなければ辞書の綴りで補って読む)。「## 見出し」で節を分ける
 
 ## 語順 (動詞 - 主語 - 目的語) と時制・相の小辞 (ua・e … ana・ke … nei)
 Ua hele ke kanaka i ke kula.
@@ -49,3 +50,10 @@ No ke aha ʻoe i hele ai?
 
 ## ʻokina・長音符を書かない綴り (19世紀の本文の書き方)
 Ua ai ke keiki i ka poi.
+
+## 1868年の聖書 (ʻokina・長音符の無い19世紀の綴り: 創世記 1:1・1:3・1:4、ヨハネ 3:16、マタイ 5:3)
+I kinohi hana ke Akua i ka lani a me ka honua.
+Olelo mai la ke Akua, I malamalama, a ua malamalama.
+Ike mai la ke Akua i ka malamalama, ua maikai.
+No ka mea, ua aloha nui mai ke Akua i ko ke ao nei.
+Pomaikai ka poe naau haahaa, no ka mea, no lakou ke aupuni o ka lani.
