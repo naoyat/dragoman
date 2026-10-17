@@ -174,6 +174,10 @@ class Predicate (LatinObject):
 
             # 繋辞の文で冠詞の付いた主格があれば、それが主語 (ギリシア語: θεὸς ἦν ὁ λόγος「ことばは神であった」)
             articled = [o for o in nom_objs if self.is_sum and _has_article(o)]
+            focused = [o for o in nom_objs if self.is_sum and self._particle('Nom', o)]
+            if focused and len(focused) < len(nom_objs):
+                # 言語の設定で主題「は」になる句 (タガログ語の ang、ハワイ語の ʻo) を主語に (He kumu ʻo ia「彼は先生である」)
+                articled = focused
             for obj in nom_objs:
                 nom, neg = obj.translate()
                 if neg: negated = True

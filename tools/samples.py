@@ -31,8 +31,9 @@
 #   python3 tools/samples.py --lang=mn       # モンゴル語 (samples/mongolian.txt)。語順のままの訳 (≒) も
 #   python3 tools/samples.py --lang=fi       # フィンランド語 (samples/finnish.txt)
 #   python3 tools/samples.py --lang=ang      # 古英語 (samples/oldenglish.txt)
+#   python3 tools/samples.py --lang=haw      # ハワイ語 (samples/hawaiian.txt)
 #
-#   --lang=la|grc|sa|ru|he|ar|fa|hi|ur|bo|id|ms|tl|ain|kobun|ko|de|fr|tr|mn|fi|ang 言語 (既定は la。ラテン語)
+#   --lang=la|grc|sa|ru|he|ar|fa|hi|ur|bo|id|ms|tl|ain|kobun|ko|de|fr|tr|mn|fi|ang|haw 言語 (既定は la。ラテン語)
 #   -f, --file=FILE     例文のファイル (既定は言語ごとの samples/*.txt)
 #   -r, --romanize      ラテン文字以外の文に転写を添える (-d なら語ごとにも)
 #   -l, --list          節の見出しの一覧を表示する
@@ -64,10 +65,11 @@ LANG_FILES = {'la': DEFAULT_FILE, 'grc': os.path.join(ROOT, 'samples', 'greek.tx
               'ko': os.path.join(ROOT, 'samples', 'korean.txt'), 'de': os.path.join(ROOT, 'samples', 'german.txt'),
               'tr': os.path.join(ROOT, 'samples', 'turkish.txt'), 'mn': os.path.join(ROOT, 'samples', 'mongolian.txt'),
               'fi': os.path.join(ROOT, 'samples', 'finnish.txt'), 'fr': os.path.join(ROOT, 'samples', 'french.txt'),
-              'ang': os.path.join(ROOT, 'samples', 'oldenglish.txt')}
+              'ang': os.path.join(ROOT, 'samples', 'oldenglish.txt'),
+              'haw': os.path.join(ROOT, 'samples', 'hawaiian.txt')}
 # 解析器のモジュール名 (dragoman.<名前>.analyzer の analyze_text をそのまま使う言語)
 ANALYZER_MODULES = {'ko': 'korean', 'de': 'german', 'fr': 'french', 'tr': 'turkish', 'mn': 'mongolian', 'fi': 'finnish',
-                    'ang': 'oldenglish'}
+                    'ang': 'oldenglish', 'haw': 'hawaiian'}
 
 
 def analyzer_for(lang):

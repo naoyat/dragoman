@@ -1,0 +1,30 @@
+# ハワイ語のサンプル (python3 tools/samples.py --lang=haw で表示する)
+#
+# 自作の文。ʻokina・長音符は書いても書かなくてもよい (書かなければ辞書の綴りで補って読む)。「## 見出し」で節を分ける
+
+## 語順 (動詞 - 主語 - 目的語) と時制・相の小辞 (ua・e … ana・ke … nei)
+Ua hele ke kanaka i ke kula.
+Ua ʻai ke keiki i ka poi.
+E heluhelu ana ka haumāna i ka puke.
+Ke hīmeni nei ka wahine.
+
+## 状態の動詞 (形容詞の働き) と、名詞の後ろの修飾
+Nani ka wahine.
+Ua ʻike au i ka hale nui o ke aliʻi.
+
+## 動詞の無い文 (He …・ʻO …・Aia …)
+He kumu ʻo ia.
+ʻO Kimo koʻu inoa.
+Aia ka puke ma luna o ka papa.
+
+## 否定・禁止・受け身
+ʻAʻole i hele ke kanaka.
+Mai hele!
+Ua ʻai ʻia ka iʻa e ka pōpoki.
+
+## 代名詞・所有 (a 類・o 類)
+Aloha au iā ʻoe.
+Ua hele ke kanaka me kāna wahine.
+
+## ʻokina・長音符を書かない綴り (19世紀の本文の書き方)
+Ua ai ke keiki i ka poi.
