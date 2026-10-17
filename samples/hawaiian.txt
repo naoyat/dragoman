@@ -26,5 +26,26 @@ Ua ʻai ʻia ka iʻa e ka pōpoki.
 Aloha au iā ʻoe.
 Ua hele ke kanaka me kāna wahine.
 
+## 関係節 (名詞 + i / e … ana + 動詞。ai は目的語の空所)
+Ua ʻike au i ka wahine i hīmeni.
+Ua ʻike au i ka wahine e hīmeni ana.
+Ua hele mai ke kanaka i ʻike ai au.
+
+## 名詞句を前に出した文、方向の小辞 (hele mai「来る」)
+ʻElua kanaka i hele mai.
+Ua hele mai ke keiki mai ka hale mai.
+
+## 所有の文
+He kaʻa koʻu.
+Naʻu kēia puke.
+Loaʻa iaʻu ke kaʻa.
+
+## 疑問
+He aha kēia?
+ʻO wai kou inoa?
+Pehea ʻoe?
+Ua hele ʻoe i hea?
+No ke aha ʻoe i hele ai?
+
 ## ʻokina・長音符を書かない綴り (19世紀の本文の書き方)
 Ua ai ke keiki i ka poi.

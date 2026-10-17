@@ -54,6 +54,15 @@ python3 tools/samples.py --lang=haw              # サンプル (samples/hawaiia
   動詞の後ろでは「〜へ・〜に」）、ma・mai・me・no・na は前置詞「〜で・〜から・〜と・〜のために」、受け身の e + 名詞句は動作主「〜によって」
 * 動詞の無い文: He kumu ʻo ia「彼は先生である」（he の名詞が述語、ʻo の句が主語）、ʻO Kimo koʻu inoa「私の名前はキモだ」（文頭の ʻo の句が
   述語）には見えない繋辞を補う。Aia ka puke ma luna o ka papa「本はテーブルの上にある」の aia は「ある・いる」
+* 関係節: 名詞 + i（過去）/ e … ana（進行・未来）+ 動詞は名詞に掛ける連体節（ka wahine i hīmeni「歌った女」、
+  ka wahine e hīmeni ana「歌っている女」）。動詞の後ろの ai は目的語・場所の空所（ke kanaka i ʻike ai au「私が見た人」）
+* 名詞句を前に出した文: 節の頭の名詞句 + i / e + 動詞は、その名詞句が主語（ʻElua kanaka i hele mai「2人が来た」）。
+  hele mai「来る」・hele aku「行く」（方向の小辞）。mai ka hale mai「家から」の後ろの mai は訳さない
+* 所有の文: He kaʻa koʻu「私には車がある」（he + 名詞 + 所有の語）、Naʻu kēia puke「この本は私のものだ」（na / no の所有の語の述語）、
+  Loaʻa iaʻu ke kaʻa「私に車がある」（loaʻa + i / iā は「〜に」、iaʻu は目的語の形の代名詞）
+* 疑問: wai「誰」（名前 inoa を尋ねるときは「何」）・aha「何」・hea「どこ」（i hea「どこへ」・ma hea「どこで」）・pehea「どう」・
+  no ke aha「なぜ」・ʻehia「いくつ」。名詞の付かない kēia「これ」
+* 数詞: ʻekahi … ʻumi は名詞の前（ʻelua ʻīlio「2匹の犬」）
 * 辞書に無い語: 使役の hoʻo- を外して「〜させる」、重ね（wikiwiki → wiki）、大文字の語は名前（カタカナ）
 
 ## 音読
@@ -73,6 +82,5 @@ Universal Dependencies にハワイ語のツリーバンクは無いので、自
 ## まだ扱わないもの
 
 * 語数の少なさ（Wiktionary 約 4,000語）: パブリックドメインの辞書（Andrews『A Dictionary of the Hawaiian Language』1865年）で補えるか
-* 関係節（ka wahine i hīmeni「歌った女」・ka wahine e hīmeni ana「歌っている女」）、補文、疑問（ʻo wai・he aha）
-* 所有の文（He kaʻa koʻu「私は車を持っている」）、数詞（ʻelua kanaka「2人」）
+* 補文（ʻōlelo mai ʻo ia, ua hele …「彼は…と言った」）、条件・理由の節の中の語順、数詞の助数詞（「二つの人」→「2人の」）
 * 生成（ほかの言語からハワイ語へ）

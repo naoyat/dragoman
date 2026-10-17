@@ -55,6 +55,14 @@ def token_rows(analysis):
             rows.append((surface, '(%s) 小辞' % base, [text]))
             continue
         word = by_ix.get(k)
+        relative = getattr(analysis, 'relative_words', {}).get(k)
+        if word is None and relative is not None:   # 関係節の語
+            w, head = relative
+            item = w.items[0]
+            rows.append((surface, '(%s) %s%s' % (item.attrib('base') or surface, 'v.' if item.pos == 'verb' else '',
+                                                (item.ja or '').split(',')[0]),
+                         ['関係節の語 (%s に掛かる)' % head.surface]))
+            continue
         if word is None or not word.items:
             rows.append((surface, '(?)', []))
             continue

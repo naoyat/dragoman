@@ -57,6 +57,22 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Mai hele!'), '行くな')
         self.assertEqual(self.ja('Ua ʻai ʻia ka iʻa e ka pōpoki.'), '魚が / 猫によって / 食べられた')
 
+    def test_relative_and_fronted(self):
+        self.assertEqual(self.ja('Ua ʻike au i ka wahine i hīmeni.'), '私が / 歌った女を / 見た,知った')
+        self.assertEqual(self.ja('Ua ʻike au i ka wahine e hīmeni ana.'), '私が / 歌っている女を / 見た,知った')
+        self.assertEqual(self.ja('Ua hele mai ke kanaka i ʻike ai au.'), '私が見た人が / 来た')   # ai: 目的語の空所
+        self.assertEqual(self.ja('ʻElua kanaka i hele mai.'), '二つの人が / 来た')   # 前に出した名詞句、hele mai
+        self.assertEqual(self.ja('Ua hele mai ke keiki mai ka hale mai.'), '子供が / 家から / 来た')
+
+    def test_possession_and_questions(self):
+        self.assertEqual(self.ja('He kaʻa koʻu.'), '私には / 車が / ある,いる')
+        self.assertEqual(self.ja('Naʻu kēia puke.'), 'この本は / 私のものである')
+        self.assertEqual(self.ja('Loaʻa iaʻu ke kaʻa.'), '車が / 私に / ある,手に入る')
+        self.assertEqual(self.ja('He aha kēia?'), 'これは / 何である')
+        self.assertEqual(self.ja('ʻO wai kou inoa?'), '君の名前は / 何である')
+        self.assertEqual(self.ja('Ua hele ʻoe i hea?'), '君が / どこ[に,へ] / 行った')
+        self.assertEqual(self.ja('No ke aha ʻoe i hele ai?'), 'なぜ / 君が / 行った')
+
     def test_number(self):
         from dragoman.hawaiian import analyzer
 

@@ -31,6 +31,28 @@ POSSESSIVES = {
     'kāna': ('kāna', '彼の', 'a'), 'kona': ('kona', '彼の', 'o'), 'kuʻu': ('kuʻu', '私の', 'o'),
     'kā': ('kā', 'の', 'a'), 'ko': ('ko', 'の', 'o'),   # kā mākou「私たちの」・ko lākou「彼らの」(代名詞が後ろに続く)
 }
+# na / no の所有の語 (述語: Naʻu kēia「これは私のものだ」、Noʻu ka hale「その家は私のものだ」): 綴り → (訳, 類)
+PREDICATE_POSSESSIVES = {
+    'naʻu': ('私のもの', 'a'), 'noʻu': ('私のもの', 'o'), 'nāu': ('君のもの', 'a'), 'nou': ('君のもの', 'o'),
+    'nāna': ('彼のもの', 'a'), 'nona': ('彼のもの', 'o'),
+}
+# 数詞 (名詞の前: ʻelua kanaka「2人の人」): 綴り → (見出し, 訳)
+NUMERALS = {
+    'ʻekahi': ('ʻekahi', '一つの'), 'ʻakahi': ('ʻakahi', '一つの'), 'ʻelua': ('ʻelua', '二つの'),
+    'ʻekolu': ('ʻekolu', '三つの'), 'ʻehā': ('ʻehā', '四つの'), 'ʻelima': ('ʻelima', '五つの'), 'ʻeono': ('ʻeono', '六つの'),
+    'ʻehiku': ('ʻehiku', '七つの'), 'ʻewalu': ('ʻewalu', '八つの'), 'ʻeiwa': ('ʻeiwa', '九つの'), 'ʻumi': ('ʻumi', '十の'),
+    'ʻehia': ('ʻehia', 'いくつの'),
+}
+# 疑問詞: 綴り → (見出し, 訳, 品詞)。hea「どこ」は前置詞の後ろ (i hea「どこへ」・ma hea「どこで」・mai hea「どこから」)
+QUESTION_WORDS = {
+    'wai': ('wai', '誰', 'pronoun'), 'aha': ('aha', '何', 'pronoun'), 'hea': ('hea', 'どこ', 'pronoun'),
+    'pehea': ('pehea', 'どう', 'adv'), 'ināhea': ('ināhea', 'いつ', 'adv'), 'āhea': ('āhea', 'いつ', 'adv'),
+    'no ke aha': ('no ke aha', 'なぜ', 'adv'),
+}
+# 名詞の付かない指示詞 (代名詞: He aha kēia?「これは何か」)
+DEMONSTRATIVE_PRONOUNS = {'kēia': 'これ', 'kēlā': 'あれ', 'kēnā': 'それ'}
+# 関係節・前に出した名詞句の後ろの空所の印 ai (ke kanaka i ʻike ai au「私が見た人」)
+RESUMPTIVE = 'ai'
 # 時制・相の小辞 (動詞の前): 鍵 → (見出し, 時制, 後ろの小辞)
 TAM = {'ua': ('ua', 'perfect', None), 'e': ('e', 'future', 'ana'), 'ke': ('ke', 'progressive', 'nei')}
 # 否定: ʻaʻole (+ i で過去)、mai (禁止「〜するな」)、ʻaʻohe (「〜が無い」)
@@ -58,12 +80,13 @@ TOPIC = 'ʻo'
 EXISTENTIAL = 'aia'
 # 2語以上の機能語 (先に1語にまとめる): 綴り → 1語の綴り
 MULTIWORD = {('no', 'ka', 'mea'): 'no ka mea', ('a', 'i', 'ʻole'): 'a i ʻole', ('a', 'me'): 'a me',
-             ('i', 'mea', 'e'): 'i mea e'}
+             ('i', 'mea', 'e'): 'i mea e', ('no', 'ke', 'aha'): 'no ke aha'}
 CONJUNCTIONS.update({'no ka mea': ('no ka mea', '〜なので'), 'a i ʻole': ('a i ʻole', 'または'), 'a me': ('a me', 'と'),
                      'i mea e': ('i mea e', '〜するために')})
 ADVERBS = {'paha': 'たぶん', 'nō': 'まさに', 'loa': 'とても', 'wale': 'ただ', 'pū': '一緒に', 'mau': 'いつも',
            'hou': '再び', 'koke': 'すぐに', 'nehinei': '昨日', 'ʻapōpō': '明日', 'ʻānō': '今', 'eia': 'ここに',
-           'pēlā': 'そのように', 'pēnei': 'このように', 'ʻaneʻi': 'ここで', 'laila': 'そこで'}
+           'pēlā': 'そのように', 'pēnei': 'このように', 'ʻaneʻi': 'ここで', 'laila': 'そこで', 'no ke aha': 'なぜ',
+           'anei': '(〜か)'}
 
 
 def candidates(table, token):
@@ -81,9 +104,10 @@ GLOSSES = {
     'noho': '住む,座る', 'heluhelu': '読む', 'kākau': '書く', 'ʻōlelo': '言う,話す', 'hīmeni': '歌う', 'mele': '歌う',
     'hula': '踊る', 'ʻauʻau': '泳ぐ', 'honi': 'キスする', 'hoʻi': '帰る', 'holo': '走る', 'lele': '飛ぶ', 'moe': '眠る',
     'ala': '起きる', 'kū': '立つ', 'nānā': '見る', 'lohe': '聞く', 'aʻo': '教える,学ぶ', 'hoʻomaka': '始める',
-    'pau': '終わる', 'make': '死ぬ', 'ola': '生きる', 'loaʻa': '得る', 'kūʻai': '売る,買う', 'hāʻawi': '与える',
+    'pau': '終わる', 'make': '死ぬ', 'ola': '生きる', 'kūʻai': '売る,買う', 'hāʻawi': '与える',
     'lawe': '持って行く', 'hānau': '生まれる', 'manaʻo': '思う', 'makemake': '欲しい,望む', 'kāhea': '呼ぶ',
     'nīnau': '尋ねる', 'pane': '答える', 'kōkua': '手伝う', 'mahalo': '感謝する', 'hoʻomaikaʻi': '祝福する',
+    'loaʻa': 'ある,手に入る',
     'kula': '学校', 'kumu': '先生', 'haumāna': '生徒', 'kāne': '男,夫', 'wahine': '女,妻', 'keiki': '子供',
     'kanaka': '人', 'hale': '家', 'wai': '水', 'ʻāina': '土地', 'moana': '海', 'kai': '海', 'lani': '天',
     'aliʻi': '首長', 'ʻohana': '家族', 'makua': '親', 'makuahine': '母', 'makuakāne': '父', 'inoa': '名前',

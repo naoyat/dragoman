@@ -32,7 +32,9 @@ TOKEN = re.compile(r"[%s]+(?:-[%s]+)*|[0-9]+|[.!?,;:\"“”()—–]" % (LETTER
 CASES = ('Nom', 'Acc', 'Gen', 'Dat')
 GENDER = None
 # i + 名詞句を「〜へ・〜に」(場所・方向) と読む移動・所在の動詞 (ほかの動詞の i は目的語「を」)
-MOTION = {'hele', 'hoʻi', 'holo', 'lele', 'kū', 'noho', 'hiki', 'piʻi', 'iho', 'komo', 'puka', 'haʻalele', 'mai'}
+MOTION = {'hele', 'hoʻi', 'holo', 'lele', 'kū', 'noho', 'hiki', 'piʻi', 'iho', 'komo', 'puka', 'haʻalele', 'mai', 'loaʻa'}
+# i + 名詞句を「〜に」と読み、主語を「ある」の主語にする所有・獲得の動詞 (Loaʻa iaʻu ke kaʻa「私に車がある」)
+POSSESSION = {'loaʻa'}
 
 
 def _root_items(lemma):
@@ -223,7 +225,7 @@ def _noun_item(surface, entry, case, number):
     return item
 
 
-def parse_np(c, case, start_ix):
+def parse_np(c, case, start_ix, relative=False):
     """名詞句: [冠詞・指示詞・所有の語] 名詞・代名詞 [状態の動詞 (形容詞)] [nei・lā] [o / a + 名詞句 (所有)]。
     → 語のリスト (頭の語と修飾語)。名詞句が無ければ []"""
     words = []
@@ -232,7 +234,7 @@ def parse_np(c, case, start_ix):
     while c.peek() is not None:
         tok = c.peek()
         art = morphology.candidates(morphology.ARTICLES, tok)
-        dem = morphology.candidates(morphology.DEMONSTRATIVES, tok)
+        dem = morphology.candidates(morphology.DEMONSTRATIVES, tok) or morphology.candidates(morphology.NUMERALS, tok)
         pos_ = morphology.candidates(morphology.POSSESSIVES, tok)
         nxt_content = c.peek(1) is not None and c.peek(1) not in PUNCTUATION
         if art and nxt_content and not (_key(tok) == 'ke' and _is_tam_ke(c)):
@@ -242,6 +244,8 @@ def parse_np(c, case, start_ix):
                                    'compact': True, 'definite': definite}, start_ix + c.i))
             c.i += 1
             continue
+        if dem and not nxt_content and orthography.normalize(tok).lower() in morphology.DEMONSTRATIVE_PRONOUNS and not pre:
+            break   # 名詞の付かない指示詞は代名詞 (下で)
         if (dem or pos_) and nxt_content:
             spelled, (base, ja, *rest) = (dem or pos_)[0]
             if len(pos_) > 1 and not orthography.marked(tok):   # kau: kaʻu「私の」/ kāu「君の」は決められない
@@ -256,9 +260,30 @@ def parse_np(c, case, start_ix):
     if tok is None or tok in PUNCTUATION:
         c.i -= len(pre)
         return []
+    standalone = orthography.normalize(tok).lower()
+    if standalone in morphology.DEMONSTRATIVE_PRONOUNS and not pre:   # kēia「これ」
+        word = _word(tok, {'surface': tok, 'pos': 'pronoun', 'base': standalone, 'lemma': standalone,
+                           'ja': morphology.DEMONSTRATIVE_PRONOUNS[standalone], 'gloss_lang': 'ja', 'person': 3,
+                           'number': 'sg', '_': [(case, 'sg', GENDER)], 'compact': True, 'desc': '指示代名詞'},
+                     start_ix + c.i)
+        c.i += 1
+        return [word]
+    question = morphology.candidates(morphology.QUESTION_WORDS, tok)
+    if question and question[0][1][2] == 'pronoun':   # 疑問詞 wai「誰」・aha「何」・hea「どこ」
+        spelled, (base, ja, _) = question[0]
+        word = _word(tok, {'surface': tok, 'pos': 'pronoun', 'base': base, 'lemma': base, 'ja': ja, 'gloss_lang': 'ja',
+                           'person': 3, 'number': 'sg', '_': [(case, 'sg', GENDER)], 'compact': True,
+                           'desc': '疑問代名詞'}, start_ix + c.i)
+        c.i += 1
+        for p in pre:
+            word.add_modifier(p) if p.items[0].pos == 'article' else None
+        return [word]
     pron = morphology.candidates(morphology.PRONOUNS, tok)
     if pron and not pre:
         spelled, (base, ja, person, n) = pron[0]
+        if base == 'iaʻu':   # i + au は目的語の形 (所有・移動の動詞の後ろでは「私に」)
+            verb_base = orthography.normalize((getattr(c, 'verb', None) or {}).get('base', ''))
+            case = 'Dat' if verb_base in MOTION else 'Acc'
         words.append(_word(tok, {'surface': tok, 'pos': 'pronoun', 'base': base, 'lemma': orthography.key(base),
                                  'ja': ja, 'gloss_lang': 'ja', 'person': person, 'number': 'pl' if n == 'du' else n,
                                  '_': [(case, 'pl' if n == 'du' else n, GENDER)], 'compact': True}, start_ix + c.i))
@@ -299,6 +324,12 @@ def parse_np(c, case, start_ix):
                                      'gloss_lang': lang, '_': [(case, n, GENDER) for n in ('sg', 'pl')]},
                                start_ix + c.i))
             c.i += 1
+    # 関係節: 名詞 + i (過去) / e (… ana) + 動詞 (ka wahine i hīmeni「歌った女」・ke kanaka i ʻike ai au「私が見た人」)
+    head = next((w for w in words if w.items and w.items[0].pos == 'noun'), None)   # 代名詞には付けない (ʻoe i hea)
+    if relative and head is not None and _key(c.peek()) in ('i', 'e') and c.peek(1) is not None and \
+            any(e[0] == 'verb' for e in content(c.peek(1))) and not _function_word(c.peek(1)) and \
+            not morphology.candidates(morphology.QUESTION_WORDS, c.peek(1)):
+        _relative_clause(c, head, start_ix)
     # 所有: o / a + 名詞句
     while c.peek() is not None and morphology.candidates(morphology.GENITIVES, c.peek()) and c.peek(1) is not None:
         save = c.i
@@ -311,6 +342,58 @@ def parse_np(c, case, start_ix):
             break
         words += genitive
     return words
+
+
+def _relative_clause(c, head, start_ix):
+    """関係節を読み、日本語の連体節にして頭の名詞の訳に付ける (タガログ語の関係節と同じ: 節の語は除く)。
+    ai があれば頭の名詞は目的語・場所の空所 (私が見た人)、無ければ主語の空所 (歌った女)"""
+    from dragoman.kobun.modernize import Modern
+    particle = _key(c.peek())
+    _note(start_ix + c.i, particle, '関係節の時制の小辞 (%s)' % ('i: 過去' if particle == 'i' else 'e: 未来・未完了'))
+    c.i += 1
+    first = c.i
+    tense = 'perfect' if particle == 'i' else ('progressive' if any(_key(t) == 'ana' for t in c.tokens[c.i:]) else 'future')
+    tokens = list(c.tokens[c.i:])
+    ana = next((j for j, t in enumerate(tokens) if _key(t) == 'ana'), None) if particle == 'e' else None
+    if ana is not None:   # e … ana の閉じ (関係節の中)
+        _note(start_ix + c.i + ana, 'ana', '時制・相の小辞の閉じ (e … ana)')
+        tokens[ana] = ','   # 語の位置を保つため句読点に (読み飛ばされる)
+    inner = parse_clause(tokens, start_ix + c.i, tense=tense, preset_subject=[])
+    c.i = len(c.tokens)   # 関係節は節の終わりまで
+    verb = next((w.items[0] for w in inner if w.items and w.items[0].pos == 'verb'), None)
+    if verb is None:
+        return
+    ja = (verb.ja or '').split(',')[0]
+    try:
+        ja = Modern.past_form(ja) if tense == 'perfect' else Modern.te(ja) + 'いる' if tense == 'progressive' else ja
+    except Exception:
+        pass
+    parts = []
+    pending = ''
+    for w in inner:
+        if not w.items or w.items[0].pos in ('verb', 'article', 'adv'):
+            continue
+        item = w.items[0]
+        if item.pos == 'preposition':
+            pending = (item.ja or '').split(',')[0].lstrip('〜')
+            continue
+        if item.pos not in ('noun', 'pronoun'):
+            continue
+        case = (item._ or [('Nom',)])[0][0]
+        noun = (item.ja or '').split(',')[0]
+        parts.append(noun + (pending or {'Nom': 'が', 'Acc': 'を', 'Dat': 'に', 'Gen': 'の'}.get(case, '')))
+        pending = ''
+    item = head.items[0]
+    relative = ''.join(parts) + ja
+    head.items = [type(item)(dict(item.item, ja=relative + (item.ja or '').split(',')[0], gloss_lang='ja',
+                                  relative=' '.join(c.tokens[first - 1:])))]
+    for w in inner:   # 語の一覧には関係節の語も (頭の名詞に掛かる)
+        k = getattr(w, 'token_ix', None)
+        if k is not None and w.items:
+            _relative_words[k] = (w, head)
+
+
+_relative_words = {}   # 関係節の語 (元の語の位置 → (語, 頭の名詞))。語の列からは外し、一覧に出す
 
 
 def _is_tam_ke(c):
@@ -334,11 +417,12 @@ def _function_word(tok):
         not orthography.marked(tok) and any(morphology.candidates(t, tok) for t in FUNCTION_TABLES)
 
 
-def parse_clause(tokens, start_ix):
-    """節 (句読点・接続詞の間) → 語の列 (共通の解析器に渡す Word。格の決まった項目)"""
+def parse_clause(tokens, start_ix, tense='present', mood='indicative', preset_subject=None):
+    """節 (句読点・接続詞の間) → 語の列 (共通の解析器に渡す Word。格の決まった項目)。preset_subject は前に出した
+    名詞句 (主語として、動詞の後ろの印の無い句より先に)"""
     c = Clause(tokens)
-    out = []
-    tense, mood, voice, negated, prohibitive = 'present', 'indicative', 'active', False, False
+    out = list(preset_subject or [])
+    voice, negated, prohibitive = 'active', False, False
     closing = None
     # 否定・時制と相の小辞
     while c.peek() is not None:
@@ -384,10 +468,39 @@ def parse_clause(tokens, start_ix):
                          start_ix + c.i))
         c.i += 1
         return out + _arguments(c, start_ix, None)
+    pred_pos = morphology.candidates(morphology.PREDICATE_POSSESSIVES, c.peek() or '')
+    if pred_pos and c.peek(1) is not None:   # Naʻu kēia「これは私のものだ」(na / no の所有の語の述語)
+        spelled, (ja, kind) = pred_pos[0]
+        _note(start_ix + c.i, spelled, '所有の述語 (%s 類「%s」)' % (kind, ja))
+        predicate = _word(c.peek(), {'surface': c.peek(), 'pos': 'noun', 'base': spelled, 'ja': ja, 'gloss_lang': 'ja',
+                                     '_': [('Nom', 'sg', GENDER)]}, None)
+        c.i += 1
+        rest = _arguments(c, start_ix, None)
+        for w in rest:
+            w.focus = getattr(w, 'focus', False) or bool(w.items and w.items[0].pos in ('noun', 'pronoun'))
+        return out + [predicate, _word('(he)', dict(COPULA), None)] + rest
     if _key(c.peek()) == 'he' and c.peek(1) is not None:   # He kumu ʻo ia「彼は先生である」
         complement = parse_np(c, 'Nom', start_ix)
+        owner = morphology.candidates(morphology.POSSESSIVES, c.peek() or '')
+        if complement and owner and c.peek(1) is None or complement and owner and c.peek(1) in PUNCTUATION:
+            # He kaʻa koʻu「私には車がある」: he + 名詞 + 所有の語は所有の文
+            spelled, (base, ja, kind) = owner[0]
+            owner_ja = {'私の': '私', '君の': '君', '彼の': '彼'}.get(ja, ja.rstrip('の'))
+            _note(start_ix + c.i, spelled, '所有の文の持ち主 (%s 類「%s」)' % (kind, ja))
+            c.i += 1
+            verb = _word('(he)', {'surface': '(he)', 'pos': 'verb', 'pres1sg': 'he', 'lemma': 'he', 'base': 'he',
+                                  'ja': 'ある,いる', 'gloss_lang': 'ja', 'voice': 'active', 'mood': 'indicative',
+                                  'tense': 'present', 'person': None, 'number': None, 'existential': True}, None)
+            holder = _word(spelled, {'surface': spelled, 'pos': 'pronoun', 'base': spelled, 'ja': owner_ja,
+                                     'gloss_lang': 'ja', '_': [('Dat', 'sg', GENDER)], 'compact': True}, None)
+            prep = _word('(i)', {'surface': '(i)', 'pos': 'preposition', 'base': 'i', 'dominates': 'Dat', 'ja': '〜には',
+                                 'gloss_lang': 'ja'}, None)
+            return out + [verb, prep, holder] + complement
         copula = _word('(he)', dict(COPULA), None)
-        return out + complement + [copula] + _arguments(c, start_ix, None)
+        rest = _arguments(c, start_ix, None)
+        for w in rest:   # he の名詞が述語、後ろの名詞句・代名詞が主語 (He aha kēia?「これは何か」)
+            w.focus = getattr(w, 'focus', False) or bool(w.items and w.items[0].pos in ('noun', 'pronoun'))
+        return out + complement + [copula] + rest
     if first == morphology.TOPIC or _key(c.peek()) == 'o' and not orthography.marked(c.peek() or '') and c.i == 0:
         _note(start_ix + c.i, 'ʻo', '同定の印 (文頭の ʻo + 名詞句が述語「〜である」)')
         c.i += 1   # ʻO Kimo koʻu inoa「私の名前はキモだ」: 文頭の ʻo の句が述語 (同定)、後ろの名詞句が主語
@@ -396,8 +509,28 @@ def parse_clause(tokens, start_ix):
         if not any(w.items and w.items[0].pos == 'verb' for w in rest):
             for w in rest:
                 w.focus = getattr(w, 'focus', False) or bool(w.items and w.items[0].pos in ('noun', 'pronoun'))
+            if predicate and predicate[0].items and predicate[0].items[0].attrib('base') == 'wai' and \
+                    any(w.items and orthography.key(w.items[0].attrib('base') or '') == 'inoa' for w in rest):
+                item = predicate[0].items[0]   # ʻO wai kou inoa?「君の名前は何か」(名前を尋ねる wai は「何」)
+                predicate[0].items = [type(item)(dict(item.item, ja='何'))]
             return out + predicate + [_word('(he)', dict(COPULA), None)] + rest
         return out + predicate + rest
+    question = morphology.candidates(morphology.QUESTION_WORDS, c.peek() or '')
+    if question and question[0][1][2] == 'adv':   # Pehea ʻoe?「君はどうですか」・Ināhea ʻoe i hele ai?
+        spelled, (base, ja, _) = question[0]
+        adv = _word(c.peek(), {'surface': c.peek(), 'pos': 'noun', 'base': base, 'ja': ja, 'gloss_lang': 'ja',
+                               '_': [('Nom', 'sg', GENDER)], 'question': True}, start_ix + c.i)
+        c.i += 1
+        rest_tokens = c.tokens[c.i:]
+        if any(_key(t) in ('i', 'e') for t in rest_tokens[1:3]):   # No ke aha ʻoe i hele ai?「なぜ君は行ったのか」
+            adv.items = [type(adv.items[0])(dict(adv.items[0].item, pos='adv', _=None))]
+            return out + [adv] + parse_clause(rest_tokens, start_ix + c.i, mood=mood)
+        rest = _arguments(c, start_ix, None)
+        if not any(w.items and w.items[0].pos == 'verb' for w in rest):
+            for w in rest:
+                w.focus = getattr(w, 'focus', False) or bool(w.items and w.items[0].pos in ('noun', 'pronoun'))
+            return out + [adv, _word('(he)', dict(COPULA), None)] + rest
+        return out + [adv] + rest
     # 動詞
     tok = c.peek()
     verbs = [e for e in content(tok)] if tok is not None else []
@@ -408,6 +541,9 @@ def parse_clause(tokens, start_ix):
         pos, base, ja, lang, plural, proper = verb_entries[0]
         verb = {'surface': tok, 'pos': 'verb', 'pres1sg': base, 'lemma': base, 'base': base, 'ja': ja, 'gloss_lang': lang,
                 'voice': voice, 'mood': mood, 'tense': tense, 'person': None, 'number': None}
+        if orthography.normalize(base) in POSSESSION:
+            verb.update(existential=True, ja='ある,手に入る')
+        c.verb = verb
         vword = _word(tok, verb, start_ix + c.i)
         c.i += 1
         while c.peek() is not None:   # 動詞の後ろ: ʻia (受け身)・方向の小辞・ana / nei (時制の閉じ)
@@ -418,11 +554,20 @@ def parse_clause(tokens, start_ix):
                 _note(start_ix + c.i, 'ʻia', '受け身の印「〜される」')
                 c.i += 1
                 continue
-            if morphology.candidates(morphology.DIRECTIONALS, nxt) and not (_key(nxt) == 'mai' and c.peek(1) is not None
-                                                                           and _key(c.peek(1)) in ('ka', 'ke')):
+            if morphology.candidates(morphology.DIRECTIONALS, nxt):   # 動詞の直後の mai は方向「こちらへ」(〜から ではない)
                 d = morphology.candidates(morphology.DIRECTIONALS, nxt)[0][0]
                 _note(start_ix + c.i, d, '方向の小辞「%s」(訳さない)' % DIRECTIONAL_NOTES.get(d, ''))
+                if orthography.normalize(verb['base']) == 'hele' and d in ('mai', 'aku'):   # hele mai「来る」・hele aku「行く」
+                    verb['ja'] = '来る' if d == 'mai' else '行く'
+                    _note(start_ix + c.i, d, '方向の小辞「%s」(hele %s「%s」)' % (DIRECTIONAL_NOTES[d], d, verb['ja']))
                 c.i += 1
+                continue
+            if _spelled(nxt) == morphology.RESUMPTIVE or _key(nxt) == 'ai' and not orthography.marked(nxt) and \
+                    preset_subject is not None:
+                _note(start_ix + c.i, 'ai', '空所の印 ai (前の名詞句・疑問詞が主語でない: 目的語・場所・理由)')
+                c.i += 1
+                if preset_subject:   # 前に出した句は主語でない (No ke aha ʻoe i hele ai: ʻoe が主語)
+                    pass
                 continue
             if closing and _key(nxt) == closing:
                 _note(start_ix + c.i, closing, '時制・相の小辞の閉じ (%s)' % {'ana': 'e … ana', 'nei': 'ke … nei'}[closing])
@@ -436,22 +581,35 @@ def parse_clause(tokens, start_ix):
                 c.i += 1
                 continue
             break
+        vword.items = [type(vword.items[0])(verb)]   # 動詞の後ろの小辞で変えた訳・態 (hele mai「来る」) を項目に
         out.append(vword)
     elif tok is not None:
+        # 名詞句を前に出した文: 名詞句 + i (過去) / e (… ana) + 動詞 (ʻElua kanaka i hele mai「2人が来た」・
+        # ʻO wai i hele?「誰が行ったか」・No ke aha ʻoe i hele ai?)。名詞句が主語 (ai があれば主語でない空所)
+        save = c.i
+        fronted = parse_np(c, 'Nom', start_ix)
+        if fronted and _key(c.peek()) in ('i', 'e') and c.peek(1) is not None and \
+                any(e[0] == 'verb' for e in content(c.peek(1))):
+            particle = _key(c.peek())
+            _note(start_ix + c.i, particle, '前に出した名詞句の後ろの時制の小辞 (%s)' % ('i: 過去' if particle == 'i' else 'e: 未来・未完了'))
+            c.i += 1
+            inner = parse_clause(c.tokens[c.i:], start_ix + c.i, tense='perfect' if particle == 'i' else 'future',
+                                 mood=mood, preset_subject=fronted)
+            return out + inner
+        c.i = save
         # 動詞の読みの無い語で始まる節: 名詞の述語 (Kumu ʻo ia「彼は先生だ」) か、主語だけ
         predicate = parse_np(c, 'Nom', start_ix)
         rest = _arguments(c, start_ix, None)
         if predicate and any(getattr(w, 'focus', False) for w in rest):
             return out + predicate + [_word('(he)', dict(COPULA), None)] + rest
         return out + predicate + rest
-    return out + _arguments(c, start_ix, verb)
+    return out + _arguments(c, start_ix, verb, subject_done=bool(preset_subject))
 
 
-def _arguments(c, start_ix, verb):
+def _arguments(c, start_ix, verb, subject_done=False):
     """動詞の後ろの名詞句: 印の無い最初の句は主語、ʻo の句は主語 (主題)、i / iā は目的語 (移動の動詞では「〜へ」)、
     前置詞の句。受け身の動詞では印の無い句が主語 (受け手)、e + 句が動作主"""
     out = []
-    subject_done = False
     while c.peek() is not None:
         tok = c.peek()
         if tok in PUNCTUATION:
@@ -491,7 +649,7 @@ def _arguments(c, start_ix, verb):
                 if orthography.normalize(verb['base']) in MOTION or verb.get('voice') == 'passive':
                     base, case, ja = ('i', 'Dat', '〜に,〜へ')
                 else:
-                    np = parse_np(c, 'Acc', start_ix)   # 目的語「を」(i は訳さない。名詞に掛けて綴りを音読に残す)
+                    np = parse_np(c, 'Acc', start_ix, relative=True)   # 目的語「を」(i は訳さない。名詞に掛けて綴りを音読に残す)
                     head = next((w for w in np if w.items and w.items[0].pos in ('noun', 'pronoun')), None)
                     if head is not None:
                         head.add_modifier(_word(tok, {'surface': tok, 'pos': 'article', 'base': base, 'ja': '',
@@ -500,11 +658,16 @@ def _arguments(c, start_ix, verb):
                     continue
             if base == 'e' and verb is not None and verb.get('voice') == 'passive':
                 ja = '〜によって'
-            np = parse_np(c, 'Dat', start_ix)
+            np = parse_np(c, 'Dat', start_ix, relative=True)
             if np:
                 out.append(_word(tok, {'surface': tok, 'pos': 'preposition', 'base': base, 'dominates': 'Dat',
                                        'ja': ja or '〜に', 'gloss_lang': 'ja'}, prep_ix))
                 out += np
+            continue
+        direction = morphology.candidates(morphology.DIRECTIONALS, tok)
+        if direction and (c.peek(1) is None or c.peek(1) in PUNCTUATION or _function_word(c.peek(1))):
+            _note(start_ix + c.i, direction[0][0], '方向の小辞「%s」(訳さない)' % DIRECTIONAL_NOTES.get(direction[0][0], ''))
+            c.i += 1   # mai ka hale mai「家から」の後ろの mai
             continue
         adv = morphology.candidates(morphology.ADVERBS, tok)
         if adv and not content(tok):
@@ -512,10 +675,11 @@ def _arguments(c, start_ix, verb):
                              start_ix + c.i))
             c.i += 1
             continue
-        np = parse_np(c, 'Nom' if not subject_done else 'Acc', start_ix)
+        np = parse_np(c, 'Nom' if not subject_done else 'Acc', start_ix, relative=True)
         if np:
             out += np
-            subject_done = True
+            if not (np[0].items and np[0].items[0].attrib('base') == 'iaʻu'):   # iaʻu は目的語の形 (主語ではない)
+                subject_done = True
             continue
         out.append(_word(tok, {'surface': tok, 'pos': 'adv', 'base': tok, 'ja': tok, 'gloss_lang': 'en'},
                          start_ix + c.i))   # 読めない語 (訳に出す)
@@ -531,6 +695,7 @@ DIRECTIONAL_NOTES = {'mai': 'こちらへ', 'aku': 'あちらへ', 'iho': '下�
 def lookup_all(surfaces):
     """文 → 語の列 (節ごとに読む)"""
     _notes.clear()
+    _relative_words.clear()
     words = []
     clause, start = [], 0
     for ix, tok in enumerate(surfaces + [None]):
@@ -587,6 +752,7 @@ def analyze_sentence(surfaces):
         analysis = common.analyze_words([w.surface for w in words], words, word_details, [])
     analysis.original = list(surfaces)
     analysis.notes = dict(_notes)
+    analysis.relative_words = dict(_relative_words)
     return analysis
 
 
