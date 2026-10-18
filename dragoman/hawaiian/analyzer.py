@@ -656,10 +656,15 @@ def parse_clause(tokens, start_ix, tense='present', mood='indicative', preset_su
                 c.i += 1
                 continue
             adverbial = ADVERBIAL_STATIVES.get(_key(nxt))
-            if adverbial and c.peek(1) is not None and (_function_word(c.peek(1)) or c.peek(1) in PUNCTUATION):
+            nxt2 = c.peek(1)
+            if adverbial and (nxt2 is None or nxt2 in PUNCTUATION or _function_word(nxt2) or
+                              _key(nxt2) in ADVERBIAL_STATIVES or morphology.candidates(morphology.PRONOUNS, nxt2)):
+                # aloha nui loa au「私はとても愛する」(nui loa と重ねても、後ろが代名詞でも)
                 _note(start_ix + c.i, nxt, '動詞を修飾する状態の動詞「%s」' % adverbial)
-                out.append(_word(nxt, {'surface': nxt, 'pos': 'adv', 'base': nxt, 'ja': adverbial, 'gloss_lang': 'ja'},
-                                 None))
+                previous = out[-1].items[0] if out and out[-1].items else None
+                if not (previous is not None and previous.pos == 'adv' and previous.ja == adverbial):   # nui loa は1つの「とても」
+                    out.append(_word(nxt, {'surface': nxt, 'pos': 'adv', 'base': nxt, 'ja': adverbial, 'gloss_lang': 'ja'},
+                                     None))
                 c.i += 1   # aloha nui「とても愛する」
                 continue
             if closing and _key(nxt) == closing:

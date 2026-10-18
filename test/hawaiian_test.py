@@ -90,6 +90,7 @@ class AnalyzerTestCase(unittest.TestCase):
         a = next(analyzer.analyze_text('mauna kea'))
         self.assertEqual([w.items[0].ja.split(',')[0] for w in a.words if w.items], ['山', '白い'])
         self.assertEqual(self.ja('Ua hele au i Mauna Kea.'), '私が / 白い山[に,へ] / 行った')
+        self.assertEqual(self.ja('Ua aloha nui loa au iā ʻoe.'), 'とても / 私が / 君を / 愛した')   # nui loa は1つの「とても」
 
     def test_number(self):
         from dragoman.hawaiian import analyzer
