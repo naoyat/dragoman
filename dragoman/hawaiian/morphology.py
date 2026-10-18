@@ -118,7 +118,7 @@ GLOSSES = {
     'nui': '大きい', 'liʻiliʻi': '小さい', 'nani': '美しい', 'maikaʻi': '良い', 'hauʻoli': 'うれしい', 'kaumaha': '悲しい',
     'wela': '暑い', 'anuanu': '寒い', 'hou#adj': '新しい', 'kahiko': '古い', 'lōʻihi': '長い', 'pōkole': '短い',
     'ikaika': '強い', 'akamai': '賢い', 'ʻono': 'おいしい', 'uliuli': '青い', 'ʻulaʻula': '赤い', 'keʻokeʻo': '白い',
-    'ʻeleʻele': '黒い', 'mālamalama#noun': '光', 'mālamalama': '明るい', 'pōmaikaʻi': '幸いな', 'haʻahaʻa': '低い,へりくだった', 'aupuni': '国,政府',
+    'kea': '白い', 'loa': '長い,遠い', 'ʻeleʻele': '黒い', 'mālamalama#noun': '光', 'mālamalama': '明るい', 'pōmaikaʻi': '幸いな', 'haʻahaʻa': '低い,へりくだった', 'aupuni': '国,政府',
     'honua': '大地,世界', 'kinohi': '初め', 'ao': '世界,昼', 'poʻe': '人々', 'ʻōmaʻomaʻo': '緑の', 'melemele': '黄色い', 'wikiwiki': '速い',
 }
 def gloss(word, pos):

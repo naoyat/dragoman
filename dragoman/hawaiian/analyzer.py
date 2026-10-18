@@ -144,6 +144,8 @@ def content(token):
     for lemma, pos in alternatives:   # 異綴り (wau = au)
         rows += [r for r in dictionary.lemmas(lemma, pos) if r not in rows]
     for row in rows:
+        if row.get('source') == 'andrews':
+            _ANDREWS.add((row['word'], {'name': 'noun', 'det': 'adj', 'num': 'adj'}.get(row['pos'], row['pos'])))
         pos = {'name': 'noun', 'det': 'adj', 'num': 'adj'}.get(row['pos'], row['pos'])
         if pos not in ('noun', 'verb', 'adj', 'adv'):
             continue
@@ -157,11 +159,23 @@ def content(token):
             ja, lang = _gloss(row['word'], row['pos'], row['en'])
             out.append((row['pos'], row['word'], ja, lang, True))
     out = [x if len(x) == 6 else x + (False,) for x in out]
-    if token[:1].isupper():   # 大文字の語は名前を先に
-        out.sort(key=lambda x: not x[5])
+    # 綴りがそのまま合う見出しを先に (印の無い mauna は mauna「山」を māuna「無駄にする」より、kea「白い」を keʻa「十字」より)。
+    # 大文字の語は名前を先に
+    exact = lambda x: orthography.normalize(x[1]).lower() != spelled or (x[1], x[0]) in _ANDREWS
+    if token[:1].isupper():
+        out.sort(key=lambda x: (not x[5], exact(x)))
     else:
-        out.sort(key=lambda x: x[5])
+        out.sort(key=lambda x: (x[5], exact(x)))
     return out
+
+
+_ANDREWS = set()   # Andrews の辞書の見出し (語, 品詞): 印を書かない綴りなので、綴りの一致は根拠にしない
+
+
+def exact_entries(token):
+    """綴りがそのまま合う見出しの読み (Wiktionary の見出しだけ。Andrews の見出しは印を書かないので数えない)"""
+    spelled = orthography.normalize(token).lower()
+    return [e for e in content(token) if orthography.normalize(e[1]).lower() == spelled and (e[1], e[0]) not in _ANDREWS]
 
 
 def _guess(token):
@@ -596,6 +610,11 @@ def parse_clause(tokens, start_ix, tense='present', mood='indicative', preset_su
     verbs = [e for e in content(tok)] if tok is not None else []
     verb_entries = [e for e in verbs if e[0] == 'verb'] or (_guess(tok) if tok is not None and not verbs else [])
     verb_entries = [e for e in verb_entries if e[0] == 'verb']
+    exact = exact_entries(tok) if tok is not None else []
+    marked_clause = tense != 'present' or mood != 'indicative' or closing or negated or preset_subject
+    if exact and not any(e[0] == 'verb' for e in exact) and not marked_clause:
+        # 時制・相の小辞の無い節の頭: 綴りの合う見出しが名詞なら、綴りの違う見出しの動詞 (māuna) は使わない (mauna kea「白い山」)
+        verb_entries = []
     verb = None
     if verb_entries and not _function_word(tok) and not morphology.candidates(morphology.PRONOUNS, tok):
         # 代名詞は動詞にしない (ʻoe「君」: Andrews の辞書には動詞「唸る」の見出しもある)

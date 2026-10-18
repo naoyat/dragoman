@@ -84,6 +84,13 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertIn('低い心の人々は / 幸いである', out)   # 名詞の修飾の名詞、Andrews の見出しの手の訳
         self.assertIn('彼らのものである', out)              # no + 代名詞の述語
 
+    def test_exact_spelling_first(self):
+        """印の無い綴りは、綴りのそのまま合う見出しを先に (mauna「山」を māuna「無駄にする」より、kea「白い」を keʻa「十字」より)"""
+        from dragoman.hawaiian import analyzer
+        a = next(analyzer.analyze_text('mauna kea'))
+        self.assertEqual([w.items[0].ja.split(',')[0] for w in a.words if w.items], ['山', '白い'])
+        self.assertEqual(self.ja('Ua hele au i Mauna Kea.'), '私が / 白い山[に,へ] / 行った')
+
     def test_number(self):
         from dragoman.hawaiian import analyzer
 
