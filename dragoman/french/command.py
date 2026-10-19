@@ -41,10 +41,9 @@ def original(analysis):
 
 
 def katakana(analysis, kana_options):
-    """カタカナ読み (--kana): 元の文の語ごとに espeak-ng の発音から (french/katakana.py。l'allocution は1語で)"""
-    from .katakana import katakana as kana
-    words = getattr(analysis, 'original', None) or analysis.surfaces
-    return [kana(w, **kana_options) for w in words if any(c.isalpha() for c in w)]
+    """カタカナ読み (--kana): 文全体の espeak-ng の発音から語ごとに (french/katakana.sentence。y → i、m'aimes → mɛm)"""
+    from .katakana import sentence
+    return sentence(original(analysis), **kana_options)
 
 
 def available():

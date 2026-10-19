@@ -105,6 +105,20 @@ class SentenceKanaTestCase(unittest.TestCase):
             a = next(ang.analyze_text('He forlet þa burh.'))
             self.assertEqual(' '.join(ang_command.katakana(a, {})), 'ヘー フォルレート サー ブルフ')
 
+    def test_french_sentence(self):
+        from dragoman.french import katakana as fr
+        if not fr.available():
+            self.skipTest('espeak-ng が無い')
+        cases = {
+            'Il y a un chat dans le jardin.': 'イリヤ アン シャ ダン ル ジャルダン',   # il y a は1語、ə はウ段
+            "Je sais que tu m'aimes.": 'ジュ セ ク テュ メム',                       # 文の中の読み (m'aimes)
+            'Les enfants sont arrivés.': 'レ ザンファン ソン タリヴェ',               # リエゾンは次の語の頭に
+            'Il y avait une femme.': 'イリヤヴェ テュヌ ファム',
+            'Antoine et Étienne.': 'アントワーヌ エ エティエンヌ',                   # 綴りでも読む語末の子音は動かさない
+        }
+        for text, expected in cases.items():
+            self.assertEqual(' '.join(fr.sentence(text)), expected, text)
+
 
 if __name__ == '__main__':
     unittest.main()
