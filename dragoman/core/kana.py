@@ -12,7 +12,8 @@
 #   - 長さ: ː (音素として長い母音) は「ー」。ˑ (実際に長く発音される母音: 強勢のある開音節など) は long='phonetic' のときだけ
 #   - 子音: v → ヴ行、ʃ → シャ行、ʒ・dʒ → ジャ行、tʃ → チャ行、ts → ツァ行、θ → サ行、ð → ザ行、x・ç → ハ行、ɲ → ニャ行、
 #     ɣ → ガ行、ʁ・ʀ・ɾ・r・l → ラ行 (区別しない)、ʔ は書かない
-#   - 子音 + j + 母音は拗音 (キャ・シュ)。子音 + w + 母音は「クァ」
+#   - [si]・[zi] は「スィ」「ズィ」([ʃi]・[ʒi] の「シ」「ジ」と分ける。si='シ' で慣用の「シ」「ジ」)、s・z + j は「スャ」「ズョ」
+#   - 子音 + j + 母音は拗音 (キャ・ピュ)。子音 + w + 母音は「クァ」
 #   - [wa] は「ワ」(wa='ウァ' で西洋古典学の慣習の「ウァ」: Minerva → ミネルワ / ミネルウァ)
 #   - 重子音 (ː か同じ子音を2つ): 閉鎖音・摩擦音は「ッ」、n・m は「ン」、ほかは1つに
 #   - 母音の続かない子音はウ段 (t・d は「ト・ド」、x・h は「フ」、ʃ は「シュ」、tʃ は「チ」、ʒ・dʒ は「ジ」)。n・ŋ・m (p・b の前) は「ン」
@@ -27,8 +28,8 @@ ROWS = {
     '':  {'a': 'ア', 'i': 'イ', 'u': 'ウ', 'e': 'エ', 'o': 'オ', 'y': 'ユ'},
     'k': {'a': 'カ', 'i': 'キ', 'u': 'ク', 'e': 'ケ', 'o': 'コ', 'y': 'キュ'},
     'g': {'a': 'ガ', 'i': 'ギ', 'u': 'グ', 'e': 'ゲ', 'o': 'ゴ', 'y': 'ギュ'},
-    's': {'a': 'サ', 'i': 'シ', 'u': 'ス', 'e': 'セ', 'o': 'ソ', 'y': 'シュ'},
-    'z': {'a': 'ザ', 'i': 'ジ', 'u': 'ズ', 'e': 'ゼ', 'o': 'ゾ', 'y': 'ジュ'},
+    's': {'a': 'サ', 'i': 'スィ', 'u': 'ス', 'e': 'セ', 'o': 'ソ', 'y': 'シュ'},
+    'z': {'a': 'ザ', 'i': 'ズィ', 'u': 'ズ', 'e': 'ゼ', 'o': 'ゾ', 'y': 'ジュ'},
     't': {'a': 'タ', 'i': 'ティ', 'u': 'トゥ', 'e': 'テ', 'o': 'ト', 'y': 'テュ'},
     'd': {'a': 'ダ', 'i': 'ディ', 'u': 'ドゥ', 'e': 'デ', 'o': 'ド', 'y': 'デュ'},
     'n': {'a': 'ナ', 'i': 'ニ', 'u': 'ヌ', 'e': 'ネ', 'o': 'ノ', 'y': 'ニュ'},
@@ -129,19 +130,21 @@ def _consonant(ph):
     return CONSONANTS.get(base, base), ph.endswith(LONG)
 
 
-def kana(phonemes, long='phonemic', wa='ワ', final_sokuon=False):
+def kana(phonemes, long='phonemic', wa='ワ', final_sokuon=False, si='スィ'):
     """IPA の音素の列 (または IPA の文字列) → カタカナ。long='phonemic' なら ː だけ「ー」、'phonetic' なら ˑ も「ー」。
-    wa は [wa] の書き方 (「ワ」か「ウァ」)。final_sokuon なら、短い母音の後ろの語末の無声閉鎖音の前に「ッ」
+    wa は [wa] の書き方 (「ワ」か「ウァ」)。si は [si]・[zi] の書き方 (「スィ」「ズィ」か、慣用の「シ」「ジ」)。final_sokuon なら、短い母音の後ろの語末の無声閉鎖音の前に「ッ」
     (Juliette → ジュリエット。日本語の耳に近い書き方。ラテン語の amat は「アマト」のまま)"""
     if isinstance(phonemes, str):
         phonemes = split_ipa(phonemes)
     rows = ROWS if wa == 'ウァ' else dict(ROWS, w=dict(ROWS['w'], a=wa))
+    if si == 'シ':
+        rows = dict(rows, s=dict(rows['s'], i='シ'), z=dict(rows['z'], i='ジ'))
     if WORD_BREAK in phonemes:   # 語ごとに書いてつなぐ (Pāx Jūlia の s + j を「シュ」にしない)
         words, current = [], []
         for p in list(phonemes) + [WORD_BREAK]:
             if p == WORD_BREAK:
                 if current:
-                    words.append(kana(current, long, wa, final_sokuon))
+                    words.append(kana(current, long, wa, final_sokuon, si))
                 current = []
             else:
                 current.append(p)
@@ -184,6 +187,8 @@ def kana(phonemes, long='phonemic', wa='ワ', final_sokuon=False):
                 _vowel(phs[i + 2]) is not None:
             dan, length = _vowel(phs[i + 2])
             stem = rows[consonant]['i']
+            if len(stem) == 2 and dan in ('a', 'u', 'o', 'y'):
+                stem = stem[0]   # スィ・ヴィ・フィ・ティ + j は「スャ」「ヴョ」「フュ」「テュ」(シャ・ショは [ʃ])
             sokuon = final_sokuon and not length and i + 4 == len(phs) and _consonant(phs[i + 3])[0] in ('p', 't', 'k')
             out.append((stem + YOON[dan] if dan in YOON else stem) + lengthen(length) + _nasal(phs[i + 2]) +
                        ('ッ' if sokuon else ''))

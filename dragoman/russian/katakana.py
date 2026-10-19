@@ -9,7 +9,8 @@
 # 発音どおりに (綴りには寄せない):
 #   - 強勢の無い о・а は「ア」、е・я は「イ」(語末の я は「ア」): Москва́ → マスクヴァー、тебя́ → チビャー
 #   - 強勢のある母音は開音節 (語末か、次の母音までの子音が1つか、子音 + r・l・n・m・v・j) なら長く (ˑ。既定 long='phonetic'): Ната́ша → ナターシャ、Ива́н → イヴァン
-#   - 軟子音: т・д は「チ」「ジ」の行 (Пу́тин → プーチン、дя́дя → ジャージャ)、ほかは子音 + j (ня → ニャ)、e・и の前はそのまま。
+#   - 軟子音: т・д は「チ」「ジ」の行 (Пу́тин → プーチン、дя́дя → ジャージャ)、ほかは子音 + j (ня → ニャ、всё → フスョー)、
+#     e・и の前はそのまま (си・зи は「シ」「ジ」: сы の「スィ」と分ける)。
 #     ь の後ろに母音の続かない軟子音は「イ段」(мать → マチ、Игорь → イーガリ)、ь + 母音は「イ」+ j (Татья́на → タチヤーナ)
 #   - 語末と無声子音の前の有声子音は無声に (Че́хов → チェーハフ、во́дка → ヴォートカ)、有声子音 (в を除く) の前の無声子音は有声に
 #     (вокза́л → ヴァグザール)
@@ -115,28 +116,32 @@ def phonemes(word):
         else:
             following = None   # в・鳴音は同化させない
     # 母音の弱まりと強勢の長さ
-    result = []
-    n = len(out)
+    vowels = {}
     for k, (ph, kind, idx) in enumerate(out):
-        if kind == 'V':
-            if stress is not None and idx is not None and idx != stress and 'ː' not in ph:
-                letter = plain[idx]
-                if letter in ('о', 'а'):
-                    ph = 'a'
-                elif letter in ('е', 'я'):
-                    final = idx == len(plain) - 1
-                    ph = 'a' if letter == 'я' and final else 'i'
-            elif idx is not None and idx == stress:
-                if _open(out[k + 1:]):
-                    ph += 'ˑ'                      # 開音節の強勢のある母音
-            result.append(ph)
+        if kind != 'V':
             continue
+        if stress is not None and idx is not None and idx != stress and 'ː' not in ph:
+            letter = plain[idx]
+            if letter in ('о', 'а'):
+                ph = 'a'
+            elif letter in ('е', 'я'):
+                ph = 'a' if letter == 'я' and idx == len(plain) - 1 else 'i'
+        elif idx is not None and idx == stress and _open(out[k + 1:]):
+            ph += 'ˑ'                              # 開音節の強勢のある母音
+        vowels[k] = ph
+    out = [(vowels.get(k, ph), kind, idx) for k, (ph, kind, idx) in enumerate(out)]
+    # 軟子音
+    result = []
+    for k, (ph, kind, idx) in enumerate(out):
+        nxt = out[k + 1] if k + 1 < len(out) else None
         if kind == 'Cs':
-            nxt = out[k + 1] if k + 1 < n else None
             if ph in ('t', 'd'):
-                ph = 'tʃ' if ph == 't' else 'dʒ'   # Путин → プーチン
-                result.append(ph)
+                result.append('tʃ' if ph == 't' else 'dʒ')   # Путин → プーチン
                 continue
+            if ph in ('s', 'z') and nxt is not None and nxt[1] == 'V' and nxt[0][:1] == 'i':
+                ph = 'ɕ' if ph == 's' else 'ʑ'     # си・зи は「シ」「ジ」(сы の「スィ」と分ける)
+            if result and result[-1] == {'ɕ': 's', 'ʑ': 'z'}.get(ph):
+                result[-1] = ph                     # сси → ッシ (Росси́я → ラッシーヤ)
             result.append(ph)
             if nxt is not None and nxt[1] == 'V' and nxt[0][:1] in ('a', 'o', 'u'):
                 result.append('j')                  # ня → ニャ

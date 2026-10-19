@@ -8,9 +8,10 @@
 # 音素としての長さがあるので、既定は long='phonemic' (ː だけ「ー」)。日本語の耳に合わせる所だけ手を入れる:
 #   - 語末などの -er の [ɐ] は「アー」(Müller → ミュラー、Schubert → シューバート)。母音の後ろの [ɐ] (母音になった r) は「ル」
 #     (Hamburg → ハンブルク)
-#   - 二重母音 eu・äu [ɔø] は「オイ」(Freud → フロイト)
+#   - 二重母音 eu・äu [ɔø] は「オイ」(Freud → フロイト)。語末の強勢の無い -a は短く (espeak-ng の ɑː: Anna → アンナ)
 #   - 母音の続かない ç は「ヒ」(Heinrich → ハインリヒ)、x は前の母音の段 (Bach → バッハ、Koch → コッホ、Buch → ブーフ)
-#   - 短い母音の後ろの閉鎖音・摩擦音 + 母音は「ッ」(Mutter → ムッター、Wasser → ヴァッサー)。語末の閉鎖音も (mit → ミット)
+#   - 短い母音の後ろの閉鎖音・摩擦音 + 母音は「ッ」(Mutter → ムッター、Wasser → ヴァッサー)。語末の閉鎖音も (mit → ミット)。
+#     綴りの nn・mm は「ン」(Anna → アンナ)
 #   - 語末の [ŋ] は「ング」(Wolfgang → ヴォルフガング)、pf は「プフ」、tsch は「チュ」(Deutschland → ドイチュラント)
 # espeak-ng が無ければ綴りの規則 (core/katakana_names.latin(…, 'de')) で
 #
@@ -75,11 +76,17 @@ def phonemes(word):
             out += ['x', X_VOWELS[_base(prev)]]
         elif p == 'ŋ' and not _is_vowel(nxt) and nxt not in ('k', 'ɡ', 'g'):
             out += ['ŋ', 'ɡ']                   # 語末の ŋ は「ング」
+        elif p in ('n', 'm') and p * 2 in word.lower() and _base(prev) in SHORT_VOWELS and 'ː' not in prev and \
+                _is_vowel(nxt):
+            out += [p, p]                       # 綴りの nn・mm は「ンナ」「ンマ」(Anna → アンナ、Sonne → ゾンネ)
         elif p in GEMINATING and _base(prev) in SHORT_VOWELS and 'ː' not in prev and _is_vowel(nxt) and \
                 not nxt.startswith('ɐ'):
             out += [p, p]                       # 短い母音の後ろの子音 + 母音は「ッ」(Mutter → ムッター)
         else:
             out.append(p)
+    # 語末の強勢の無い -a は短い (espeak-ng は ɑː と書く: Anna → アンナ、Lisa → リーザ)
+    if out and out[-1] == 'ɑː' and sum(1 for p in out if _is_vowel(p)) > 1:
+        out[-1] = 'a'
     return out
 
 

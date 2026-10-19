@@ -17,7 +17,10 @@ class KanaTestCase(unittest.TestCase):
 
     def test_consonants(self):
         self.assertEqual(kana(['v', 'a', 'n', 's', 'a', 'n']), 'ヴァンサン')              # v はヴ行
-        self.assertEqual(kana(['θ', 'ɪ', 'ŋ', 'k']), 'シンク')                             # θ はサ行、ŋ は「ン」
+        self.assertEqual(kana(['θ', 'ɪ', 'ŋ', 'k']), 'スィンク')                           # θ はサ行、ŋ は「ン」
+        self.assertEqual([kana('si'), kana('ʃi'), kana('zi'), kana('ʒi')], ['スィ', 'シ', 'ズィ', 'ジ'])   # [si] と [ʃi] を分ける
+        self.assertEqual([kana('si', si='シ'), kana('zi', si='シ')], ['シ', 'ジ'])                       # 慣用の「シ」「ジ」
+        self.assertEqual([kana('sja'), kana('vjo'), kana('fju'), kana('ʃa')], ['スャ', 'ヴョ', 'フュ', 'シャ'])
         self.assertEqual(kana(['ʃ', 'a', 'r', 'l']), 'シャルル')
         self.assertEqual(kana(['tʃ', 'a', 'o']), 'チャオ')
         self.assertEqual(kana(['ts', 'a', 'r']), 'ツァル')
@@ -82,6 +85,7 @@ class LanguageKatakanaTestCase(unittest.TestCase):
                                                    'Nietzsche', 'Deutschland', 'Wolfgang', 'Mutter', 'Buch')],
                          ['ハインリヒ', 'ミュラー', 'モーツァルト', 'バッハ', 'ツューリヒ', 'フロイト', 'ハンブルク',
                           'ニーチェ', 'ドイチュラント', 'ヴォルフガング', 'ムッター', 'ブーフ'])
+        self.assertEqual([de.katakana(w) for w in ('Anna', 'Lisa', 'Sie')], ['アンナ', 'リーザ', 'ズィー'])
 
     def test_russian(self):
         from dragoman.russian.katakana import katakana
@@ -91,7 +95,9 @@ class LanguageKatakanaTestCase(unittest.TestCase):
                           'シヴォードニャ', 'ナホージッツァ', 'ドミートリー', 'チェーハフ', 'アンナ'])
         self.assertEqual(katakana('Москва́', long='phonemic'), 'マスクヴァ')
         self.assertEqual([katakana(w) for w in ('сча́стья', 'кры́лья', 'мно́го', 'того́', 'всё', 'маши́ны')],
-                         ['シャスチヤ', 'クルィリヤ', 'ムノーガ', 'タヴォー', 'フショー', 'マシーヌィ'])   # сч → щ、ы → ウ段 + ィ
+                         ['シャスチヤ', 'クルィリヤ', 'ムノーガ', 'タヴォー', 'フスョー', 'マシーヌィ'])   # сч → щ、ы → ウ段 + ィ
+        self.assertEqual([katakana(w) for w in ('си́ла', 'сы́р', 'Росси́я', 'звёздной')],
+                         ['シーラ', 'スィル', 'ラッシーヤ', 'ズヴョーズナイ'])   # си は「シ」、сы は「スィ」、軟らかい с・з・в + ё は「スョ」「ヴョ」
 
     def test_russian_yo(self):
         from dragoman.russian import morphology
