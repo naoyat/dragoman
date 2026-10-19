@@ -116,6 +116,11 @@ class KatakanaTestCase(unittest.TestCase):
     def test_french_names(self):
         self.assertEqual([latin(n, 'fr') for n in ('Jean', 'Paris', 'Rousseau', 'Michel', 'Camus', 'Claude', 'Vincent')],
                          ['ジャン', 'パリ', 'ルソー', 'ミシェル', 'カミュ', 'クロード', 'ヴァンサン'])
+        # 後ろに m・n が続く em・en は鼻母音にしない、語末の -nne は「ンヌ」、語末の「母音 + r・n・m・z … + e」は長音
+        self.assertEqual([latin(n, 'fr') for n in ('Emmanuel', 'Anne', 'Étienne', 'Céline', 'Pierre', 'Antoine',
+                                                    'Rose', 'Isabelle', 'Nicole', 'Alice')],
+                         ['エマニュエル', 'アンヌ', 'エティエンヌ', 'セリーヌ', 'ピエール', 'アントワーヌ', 'ローズ',
+                          'イザベル', 'ニコル', 'アリス'])
 
 
 if __name__ == '__main__':

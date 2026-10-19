@@ -177,11 +177,18 @@ def _french(word):
     word = word.replace('eaü', 'oo').replace('aü', 'oo')
     for a, b in FRENCH_RULES:
         word = word.replace(a, b)
-    word = re.sub(r'(?:[ae]n|[ae]m)(?=[^aeiouüyn]|$)', 'aN', word)   # 鼻母音 (Jean → ジャン、Antoine → アントワーヌ)
-    word = re.sub(r'(?:on|om)(?=[^aeiouüyn]|$)', 'oN', word)
-    word = re.sub(r'(?:in|im|ün|yn)(?=[^aeiouüyn]|$)', 'aN', word)
+    # 語末の -nne・-mme は「ンヌ」「ンム」(Anne → アンヌ、Étienne → エティエンヌ): 区切り - で重子音を2つの子音に
+    word = re.sub(r'(?<=[aeiouüyE])(n|m)\1e$', lambda m: m.group(1) + '-' + m.group(1) + 'e', word)
+    # 鼻母音 (Jean → ジャン、Antoine → アントワーヌ)。後ろに n・m が続くときは鼻母音にしない (Emmanuel → エマニュエル)
+    word = re.sub(r'(?:[ae]n|[ae]m)(?=[^aeiouüynm-]|$)', 'aN', word)
+    word = re.sub(r'(?:on|om)(?=[^aeiouüynm-]|$)', 'oN', word)
+    word = re.sub(r'(?:in|im|ün|yn)(?=[^aeiouüynm-]|$)', 'aN', word)
     word = word.replace('iN', 'aN')
     word = re.sub(r'(?<=[aeiouüyE])s(?=[aeiouüyE])', 'z', word)  # 母音の間の s (Rose → ローズ)
+    # 語末の「母音 + 子音1つ (r・n・m・z・v・ʒ。rr も) + 読まない e」の母音は長音 (Céline → セリーヌ、Pierre → ピエール、
+    # Antoine → アントワーヌ)。l (Michèle → ミシェル・Nicole → ニコル)・重子音 (Isabelle → イザベル)・無声の子音
+    # (Alice → アリス) は日本語の表記の慣習で長音にしない
+    word = re.sub(r'([aeiouüE])(rr|[rnmzvʒ])e$', lambda m: m.group(1) * 2 + m.group(2) + 'e', word)
     if len(word) > 3:
         word = re.sub(r'(?:e?s|t|d|x|p)$', '', word)          # 読まない語末の子音字 (Paris → パリ、Louis → ルイ)
         word = re.sub(r'(?<=[aiouüy])e$', '', word)           # 母音の後ろの e (Marie → マリ)
