@@ -20,6 +20,7 @@ class KanaTestCase(unittest.TestCase):
         self.assertEqual(kana(['θ', 'ɪ', 'ŋ', 'k']), 'スィンク')                           # θ はサ行、ŋ は「ン」
         self.assertEqual([kana('si'), kana('ʃi'), kana('zi'), kana('ʒi')], ['スィ', 'シ', 'ズィ', 'ジ'])   # [si] と [ʃi] を分ける
         self.assertEqual([kana('si', si='シ'), kana('zi', si='シ')], ['シ', 'ジ'])                       # 慣用の「シ」「ジ」
+        self.assertEqual([kana('kœln'), kana('kœln', oe='オ'), kana('nøː', oe='オ')], ['ケルン', 'コルン', 'ノー'])   # [ø]・[œ] の段
         self.assertEqual([kana('sja'), kana('vjo'), kana('fju'), kana('ʃa')], ['スャ', 'ヴョ', 'フュ', 'シャ'])
         self.assertEqual(kana(['ʃ', 'a', 'r', 'l']), 'シャルル')
         self.assertEqual(kana(['tʃ', 'a', 'o']), 'チャオ')

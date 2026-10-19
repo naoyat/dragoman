@@ -128,6 +128,8 @@ def parse(command, argv):
             options.kana_options['wa'] = arg
         elif option == '--kana-si':
             options.kana_options['si'] = arg
+        elif option == '--kana-oe':
+            options.kana_options['oe'] = arg
         elif option == '--no-explain':
             options.explain = False
         elif option == '--sentence-per-line':

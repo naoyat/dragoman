@@ -278,6 +278,8 @@ class Options:
                 self.kana_options['wa'] = arg
             elif option == '--kana-si':
                 self.kana_options['si'] = arg
+            elif option == '--kana-oe':
+                self.kana_options['oe'] = arg
             elif option in ('-q', '--no-translation'):
                 self.show_translation = False
             elif option in ('-m', '--capital-to-macron'):
