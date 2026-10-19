@@ -54,7 +54,7 @@ CONSONANTS = {'dʒ': 'ʒ', 'dz': 'z', 'θ': 's', 'ð': 'z', 'x': 'h', 'ç': 'h',
               'ɡ': 'g', 'q': 'k', 'ɕ': 'ʃ', 'ʂ': 'ʃ', 'ʑ': 'ʒ', 'ʐ': 'ʒ', 'tɕ': 'tʃ', 'ʈʂ': 'tʃ', 'c': 'k', 'ɟ': 'g',
               'ʋ': 'v', 'ɥ': 'j'}
 # 拗音にする行 (子音 + j + 母音): 行の「イ段」+ 小さいャュェョ
-YOON = {'a': 'ャ', 'u': 'ュ', 'o': 'ョ', 'e': 'ェ', 'y': 'ュ'}
+YOON = {'a': 'ャ', 'u': 'ュ', 'o': 'ョ', 'e': 'エ', 'y': 'ュ'}   # e は小書きにしない (ピエール・ジュリエット)
 # 母音の続かない子音
 CODA = {'k': 'ク', 'g': 'グ', 's': 'ス', 'z': 'ズ', 't': 'ト', 'd': 'ド', 'n': 'ン', 'N': 'ン', 'h': 'フ', 'f': 'フ',
         'v': 'ヴ', 'p': 'プ', 'b': 'ブ', 'm': 'ム', 'r': 'ル', 'j': 'イ', 'w': 'ウ', 'ʃ': 'シュ', 'ʒ': 'ジ', 'tʃ': 'チ',
@@ -66,12 +66,54 @@ IGNORE = {'ˈ', 'ˌ', '.', 'ʔ', '-', '‿', 'ʰ'}
 WORD_BREAK = ' '   # 語の区切り (拗音・重子音をまたがない)
 
 
+AFFRICATES = ('tʃ', 'dʒ', 'ts', 'dz', 'tɕ', 'dʑ', 'ʈʂ', 'ɖʐ', 'pf')
+COMBINING = '\u0303\u032a\u0329\u032f\u0325\u0324\u031e\u031d\u0308\u0361'   # 鼻母音・歯音・音節・非音節 …
+MODIFIERS = 'ʰʲʷʱˠˤ'
+
+
+def split_ipa(text):
+    """IPA の文字列 → 音素の列 (ɛmanyˈɛl → ['ɛ', 'm', 'a', 'n', 'y', 'ˈ', 'ɛ', 'l'])。結合文字・長さ ː ˑ・ʰ などは前の音素に、
+    破擦音 (tʃ・dʒ・ts …) は1つに、空白は語の区切り"""
+    import unicodedata
+    text = unicodedata.normalize('NFD', text).replace('\u0361', '')
+    out = []
+    i = 0
+    while i < len(text):
+        ch = text[i]
+        if ch.isspace():
+            if out and out[-1] != WORD_BREAK:
+                out.append(WORD_BREAK)
+            i += 1
+            continue
+        if (ch in COMBINING or ch in MODIFIERS or ch in (LONG, HALF_LONG)) and out and out[-1] != WORD_BREAK:
+            out[-1] += ch
+            i += 1
+            continue
+        two = text[i:i + 2]
+        if two in AFFRICATES:
+            out.append(two)
+            i += 2
+            continue
+        out.append(ch)
+        i += 1
+    import unicodedata as u
+    return [u.normalize('NFC', p) for p in out]
+
+
 def _vowel(ph):
     """母音の音素 → (段, 長さの印) / None"""
-    base = ph.rstrip(LONG + HALF_LONG).replace('̃', '')   # 鼻母音の印は外す (言語ごとの音素の列で「ン」を足す)
+    import unicodedata
+    ph = unicodedata.normalize('NFD', ph)   # 合成済みの鼻母音 (ã) も母音 + 鼻音の印に
+    base = ph.rstrip(LONG + HALF_LONG).replace('\u0303', '')   # 鼻母音の印は外す (後ろに「ン」)
     if base in VOWELS:
         return VOWELS[base], ph[len(base):] if ph.startswith(base) else ''
     return None
+
+
+def _nasal(ph):
+    """鼻母音 (ɑ̃・ɛ̃) は母音の後ろに「ン」"""
+    import unicodedata
+    return 'ン' if ph and '\u0303' in unicodedata.normalize('NFD', ph) else ''
 
 
 def _raw(ph):
@@ -84,16 +126,19 @@ def _consonant(ph):
     return CONSONANTS.get(base, base), ph.endswith(LONG)
 
 
-def kana(phonemes, long='phonemic', wa='ワ'):
-    """IPA の音素の列 → カタカナ。long='phonemic' なら ː だけ「ー」、'phonetic' なら ˑ も「ー」。wa は [wa] の書き方
-    (「ワ」か「ウァ」)"""
+def kana(phonemes, long='phonemic', wa='ワ', final_sokuon=False):
+    """IPA の音素の列 (または IPA の文字列) → カタカナ。long='phonemic' なら ː だけ「ー」、'phonetic' なら ˑ も「ー」。
+    wa は [wa] の書き方 (「ワ」か「ウァ」)。final_sokuon なら、短い母音の後ろの語末の無声閉鎖音の前に「ッ」
+    (Juliette → ジュリエット。日本語の耳に近い書き方。ラテン語の amat は「アマト」のまま)"""
+    if isinstance(phonemes, str):
+        phonemes = split_ipa(phonemes)
     rows = ROWS if wa == 'ウァ' else dict(ROWS, w=dict(ROWS['w'], a=wa))
     if WORD_BREAK in phonemes:   # 語ごとに書いてつなぐ (Pāx Jūlia の s + j を「シュ」にしない)
         words, current = [], []
         for p in list(phonemes) + [WORD_BREAK]:
             if p == WORD_BREAK:
                 if current:
-                    words.append(kana(current, long, wa))
+                    words.append(kana(current, long, wa, final_sokuon))
                 current = []
             else:
                 current.append(p)
@@ -111,7 +156,7 @@ def kana(phonemes, long='phonemic', wa='ワ'):
         v = _vowel(ph)
         if v is not None:
             dan, length = v
-            out.append(rows[''][dan] + lengthen(length))
+            out.append(rows[''][dan] + lengthen(length) + _nasal(ph))
             i += 1
             continue
         consonant, geminate = _consonant(ph)
@@ -136,13 +181,18 @@ def kana(phonemes, long='phonemic', wa='ワ'):
                 _vowel(phs[i + 2]) is not None:
             dan, length = _vowel(phs[i + 2])
             stem = rows[consonant]['i']
-            out.append(stem + YOON[dan] + lengthen(length) if dan in YOON else stem + lengthen(length))
+            sokuon = final_sokuon and not length and i + 4 == len(phs) and _consonant(phs[i + 3])[0] in ('p', 't', 'k')
+            out.append((stem + YOON[dan] if dan in YOON else stem) + lengthen(length) + _nasal(phs[i + 2]) +
+                       ('ッ' if sokuon else ''))
             i += 3
             continue
         v = _vowel(nxt) if nxt is not None else None
         if v is not None and consonant in rows:
             dan, length = v
-            out.append(rows[consonant][dan] + lengthen(length))
+            # 語末の無声閉鎖音の前の短い母音の後ろに「ッ」(final_sokuon: Juliette → ジュリエット)
+            sokuon = final_sokuon and not length and not _nasal(nxt) and i + 3 == len(phs) and \
+                _consonant(phs[i + 2])[0] in ('p', 't', 'k')
+            out.append(rows[consonant][dan] + lengthen(length) + _nasal(nxt) + ('ッ' if sokuon else ''))
             i += 2
         elif v is not None and consonant == 'N':
             out.append('ン' + rows['g'][v[0]] + lengthen(v[1]))   # 音節の頭の ŋ はガ行 (ンガ)

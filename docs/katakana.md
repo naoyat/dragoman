@@ -55,4 +55,9 @@ dragoman に頼めるよう、外から呼びやすい口を用意する。
    * ハワイ語 `hawaiian/phonology.katakana`: Kalākaua → カラーカウア（前の綴りの規則ではカラカウア）。ʻokina は書かない
 3. espeak-ng の IPA を使う言語（フランス語・ドイツ語・ロシア語 …）を移し、今の専用の規則の結果と比べる
    （名前の試験の表: `test/katakana_names_test.py`・`test/french_test.py`）。
+   * （済 2026-10-19）フランス語 `french/katakana.py`: espeak-ng の IPA から。読まない字・鼻母音は espeak-ng に任せ、
+     日本語の耳に合わせる所だけ手を入れる: ɛ̃ はアン（ヴァンサン）、子音 + w + a は「オワ」（フランソワ）、長さは実際の発音
+     （既定 long='phonetic'。語末の o・ø・ɑ、r・z・ʒ・v の前: ルソー・ピエール）、語末の [n]・[m] は「ヌ」「ム」（綴りの -nne は
+     「ンヌ」: アンヌ。ほかは前を長く: セリーヌ）、語末の閉鎖音の前の「ッ」（ジュリエット）。共通の規則には IPA の文字列の
+     分け方（`split_ipa`）・鼻母音の「ン」・`final_sokuon` の設定を足した
 4. 外から呼ぶ口（関数・コマンド）。

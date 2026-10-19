@@ -306,8 +306,8 @@ def _noun_data(token, feats, proper=False):
     given = proper and row is not None and re.search(r'given name|surname', row.get('en') or '')
     if proper and (ja is None or given or gloss_lang == 'en' and ja.split(',')[0] in (lemma, text)):
         # 人名はフランス語の読みのカタカナ (Jean → ジャン。英語の名前 John の訳にしない)。地名は辞書の訳 (Londres → ロンドン)
-        from dragoman.core.katakana_names import latin as katakana
-        ja, gloss_lang = katakana(lemma, 'fr'), 'ja'   # 辞書に無い名前はカタカナ (Jean → ジャン)
+        from .katakana import katakana   # 発音 (espeak-ng) から (Emmanuel → エマニュエル)
+        ja, gloss_lang = katakana(lemma), 'ja'   # 辞書に無い名前はカタカナ (Jean → ジャン)
     data = {'surface': text, 'pos': 'noun', 'base': _base(lemma, row), 'lemma': lemma, 'ja': ja or text,
             'gloss_lang': gloss_lang or 'en', 'main': True, 'feats': feats,
             'gender': dictionary.gender(lemma) or (row or {}).get('gender')}

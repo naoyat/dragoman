@@ -61,6 +61,19 @@ class LanguageKatakanaTestCase(unittest.TestCase):
         self.assertEqual([katakana(w) for w in ('Æþelstān', 'Bēowulf', 'Ēadweard')],
                          ['エゼルスターン', 'ベーオウルフ', 'エーアドウェアルド'])   # æ はエ段
 
+    def test_ipa_string_and_nasal(self):
+        self.assertEqual(kana('ʒˈɑ̃'), 'ジャン')                       # IPA の文字列も。鼻母音は「ン」
+        self.assertEqual(kana('ʒyljˈɛt', final_sokuon=True), 'ジュリエット')   # 語末の閉鎖音の前の「ッ」、j + e は「エ」
+
+    def test_french(self):
+        from dragoman.french import katakana as fr
+        if not fr.available():
+            self.skipTest('espeak-ng が無い')
+        self.assertEqual([fr.katakana(w) for w in ('Emmanuel', 'Vincent', 'François', 'Juliette', 'Pierre', 'Céline',
+                                                   'Anne', 'Rousseau', 'Jean', 'Hugues')],
+                         ['エマニュエル', 'ヴァンサン', 'フランソワ', 'ジュリエット', 'ピエール', 'セリーヌ', 'アンヌ',
+                          'ルソー', 'ジャン', 'ユグ'])
+
     def test_hawaiian(self):
         from dragoman.hawaiian.phonology import katakana
         self.assertEqual([katakana(w) for w in ('Hawaiʻi', 'Kalākaua', 'Kamehameha')],
