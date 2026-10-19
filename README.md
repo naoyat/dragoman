@@ -152,6 +152,20 @@ PDF に載せるものはオプションで選びます。
 右から左の文字（ヘブライ語・アラビア語など）は逐語訳を右から並べ、図A を左右反転します。PDF は HTML を Chrome で
 印刷したもの（A4）。古文のように独自の表示の言語は、表示をそのまま載せます。
 
+## macOS の右クリックのメニューから (サービス)
+
+どのアプリでも、テキストを選んで右クリックのメニュー（「サービス」の下）の「dragoman で解析」から、解析結果のノート（HTML）を
+ブラウザで開けます。言語は文字から推定します（短い選択では取り違えることがある）。
+
+```
+python3 tools/macos/install_service.py     # ~/Library/Services/dragoman で解析.workflow を作る
+```
+
+クイックアクション（Automator）が `tools/macos/dragoman-service.sh` を呼び、選択したテキストを `$TMPDIR/dragoman-service/` に書いて
+`dragoman.py --html` で清書します。サービスはログインシェルの PATH を引き継がないので、`install_service.py` を実行した Python
+（conda の環境など）をそのまま書き込みます（`--python=PATH` で変えられる）。キーボードショートカットはシステム設定の
+「キーボード → キーボードショートカット → サービス」で割り当てます。
+
 ## 訳語
 
 訳語は、各言語の辞書の日本語の訳語（日本語版 Wiktionary、その訳語の表を逆に引いたもの、手で決めた基本語）を使い、
