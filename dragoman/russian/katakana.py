@@ -13,7 +13,8 @@
 #     ь の後ろに母音の続かない軟子音は「イ段」(мать → マチ、Игорь → イーガリ)、ь + 母音は「イ」+ j (Татья́на → タチヤーナ)
 #   - 語末と無声子音の前の有声子音は無声に (Че́хов → チェーハフ、во́дка → ヴォートカ)、有声子音 (в を除く) の前の無声子音は有声に
 #     (вокза́л → ヴァグザール)
-#   - -ого・-его の г は [v] (сего́дня → シヴォードニャ)、-тся・-ться は「ッツァ」、語末の -ий・-ый は「イー」
+#   - сч・зч は щ (сча́стья → シャスチヤ)、ы はウ段 + ィ (кры́лья → クルィリヤ)、-ого・-его の г は [v] (сего́дня → シヴォードニャ。
+#     мно́го・стро́го などは г のまま)、-тся・-ться は「ッツァ」、語末の -ий・-ый は「イー」
 # 強勢が分からない語 (辞書に無い語) は、母音が1つならそれに、2つ以上なら弱める・長くするをしない
 #
 import unicodedata
@@ -30,7 +31,8 @@ ALWAYS_HARD = ('ж', 'ш', 'ц')
 VOICELESS = {'b': 'p', 'v': 'f', 'g': 'k', 'd': 't', 'z': 's', 'ʒ': 'ʃ'}
 VOICED = {v: k for k, v in VOICELESS.items()}
 # 綴りどおりに読まない語・つづり (強勢記号を除いた形で)
-SPELLING = (('вств', 'ств'), ('лнц', 'нц'), ('рдц', 'рц'), ('стн', 'сн'), ('здн', 'зн'))
+SPELLING = (('сч', 'щ'), ('зч', 'щ'), ('вств', 'ств'), ('лнц', 'нц'), ('рдц', 'рц'), ('стн', 'сн'), ('здн', 'зн'))
+G_WORDS = ('много', 'немного', 'строго', 'дорого', 'недорого', 'убого', 'полого', 'отлого', 'нестрого')   # -ого の г を読む語
 WORDS = {'что': 'што', 'чтобы': 'штобы', 'конечно': 'конешно', 'скучно': 'скушно', 'его': 'ево', 'сегодня': 'севодня'}
 
 
@@ -41,11 +43,12 @@ def _segments(word):
         prev = word[k - 1] if k else ''
         nxt = word[k + 1] if k + 1 < len(word) else ''
         if c in HARD_VOWELS:
-            out.append((HARD_VOWELS[c], 'V', k))
+            hard = HARD_VOWELS[c]
+            out.append(('i' if hard == 'ɨ' and prev in ALWAYS_HARD else hard, 'V', k))
         elif c in SOFT_VOWELS:
             if prev in CONSONANTS and prev != 'й':
                 if prev in ALWAYS_HARD and c == 'и':
-                    out.append(('ɨ', 'V', k))
+                    out.append(('i', 'V', k))     # жи・ши・ци は「ジ」「シ」「ツィ」
                 else:
                     out.append((SOFT_VOWELS[c], 'V', k))
             else:
@@ -75,7 +78,7 @@ def phonemes(word):
             if stress is not None and stress > k:
                 stress -= len(old) - len(new)
             plain = plain.replace(old, new, 1)
-    if plain.endswith(('ого', 'его')) and len(plain) > 3:
+    if plain.endswith(('ого', 'его')) and len(plain) > 3 and plain not in G_WORDS:
         plain = plain[:-2] + 'во'
     tsa = plain.endswith(('ться', 'тся'))
     if tsa:

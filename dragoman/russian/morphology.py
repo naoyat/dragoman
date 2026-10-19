@@ -314,8 +314,13 @@ def stressed(word):
     forms = dictionary.stressed_forms(word)
     if not forms:
         return word
-    form = forms[0]
-    # 大文字・ё を元の表記に合わせる
+    # ё と е・大文字と小文字が元の表記と同じ候補を先に (всё → всё、все → все́、сча́стья は小文字の形)
+    plain = script.strip_stress(word)
+    form = min(forms, key=lambda f: (('ё' in script.strip_stress(f).lower()) != ('ё' in plain.lower()),
+                                     f[:1].isupper() != plain[:1].isupper()))
+    # 大文字を元の表記に合わせる
     if word[:1].isupper():
         form = form[:1].upper() + form[1:]
+    elif word[:1].islower():
+        form = form[:1].lower() + form[1:]
     return form

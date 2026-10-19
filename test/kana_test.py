@@ -90,6 +90,14 @@ class LanguageKatakanaTestCase(unittest.TestCase):
                          ['マスクヴァー', 'マラコー', 'プーチン', 'タチヤーナ', 'マチ', 'ヴォトカ', 'ヴァグザル',
                           'シヴォードニャ', 'ナホージッツァ', 'ドミートリー', 'チェーハフ', 'アンナ'])
         self.assertEqual(katakana('Москва́', long='phonemic'), 'マスクヴァ')
+        self.assertEqual([katakana(w) for w in ('сча́стья', 'кры́лья', 'мно́го', 'того́', 'всё', 'маши́ны')],
+                         ['シャスチヤ', 'クルィリヤ', 'ムノーガ', 'タヴォー', 'フショー', 'マシーヌィ'])   # сч → щ、ы → ウ段 + ィ
+
+    def test_russian_yo(self):
+        from dragoman.russian import morphology
+        if morphology.stressed('всё') == 'всё' and morphology.stressed('все') == 'все':
+            self.skipTest('ロシア語の辞書が無い')
+        self.assertEqual((morphology.stressed('всё'), morphology.stressed('все')), ('всё', 'все́'))   # ё を元の表記に
 
     def test_hawaiian(self):
         from dragoman.hawaiian.phonology import katakana
