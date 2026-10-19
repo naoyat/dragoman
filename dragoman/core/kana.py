@@ -13,6 +13,7 @@
 #   - 子音: v → ヴ行、ʃ → シャ行、ʒ・dʒ → ジャ行、tʃ → チャ行、ts → ツァ行、θ → サ行、ð → ザ行、x・ç → ハ行、ɲ → ニャ行、
 #     ɣ → ガ行、ʁ・ʀ・ɾ・r・l → ラ行 (区別しない)、ʔ は書かない
 #   - 子音 + j + 母音は拗音 (キャ・シュ)。子音 + w + 母音は「クァ」
+#   - [wa] は「ワ」(wa='ウァ' で西洋古典学の慣習の「ウァ」: Minerva → ミネルワ / ミネルウァ)
 #   - 重子音 (ː か同じ子音を2つ): 閉鎖音・摩擦音は「ッ」、n・m は「ン」、ほかは1つに
 #   - 母音の続かない子音はウ段 (t・d は「ト・ド」、x・h は「フ」、ʃ は「シュ」、tʃ は「チ」、ʒ・dʒ は「ジ」)。n・ŋ・m (p・b の前) は「ン」
 #
@@ -83,14 +84,16 @@ def _consonant(ph):
     return CONSONANTS.get(base, base), ph.endswith(LONG)
 
 
-def kana(phonemes, long='phonemic'):
-    """IPA の音素の列 → カタカナ。long='phonemic' なら ː だけ「ー」、'phonetic' なら ˑ も「ー」"""
+def kana(phonemes, long='phonemic', wa='ワ'):
+    """IPA の音素の列 → カタカナ。long='phonemic' なら ː だけ「ー」、'phonetic' なら ˑ も「ー」。wa は [wa] の書き方
+    (「ワ」か「ウァ」)"""
+    rows = ROWS if wa == 'ウァ' else dict(ROWS, w=dict(ROWS['w'], a=wa))
     if WORD_BREAK in phonemes:   # 語ごとに書いてつなぐ (Pāx Jūlia の s + j を「シュ」にしない)
         words, current = [], []
         for p in list(phonemes) + [WORD_BREAK]:
             if p == WORD_BREAK:
                 if current:
-                    words.append(kana(current, long))
+                    words.append(kana(current, long, wa))
                 current = []
             else:
                 current.append(p)
@@ -108,7 +111,7 @@ def kana(phonemes, long='phonemic'):
         v = _vowel(ph)
         if v is not None:
             dan, length = v
-            out.append(ROWS[''][dan] + lengthen(length))
+            out.append(rows[''][dan] + lengthen(length))
             i += 1
             continue
         consonant, geminate = _consonant(ph)
@@ -129,20 +132,20 @@ def kana(phonemes, long='phonemic'):
             elif consonant in ('n', 'm', 'N'):
                 out.append('ン')
         # 子音 + j + 母音 → 拗音 (キャ・シュ・ヴィェ)
-        if nxt == 'j' and consonant not in ('j', 'w', '') and consonant in ROWS and i + 2 < len(phs) and \
+        if nxt == 'j' and consonant not in ('j', 'w', '') and consonant in rows and i + 2 < len(phs) and \
                 _vowel(phs[i + 2]) is not None:
             dan, length = _vowel(phs[i + 2])
-            stem = ROWS[consonant]['i']
+            stem = rows[consonant]['i']
             out.append(stem + YOON[dan] + lengthen(length) if dan in YOON else stem + lengthen(length))
             i += 3
             continue
         v = _vowel(nxt) if nxt is not None else None
-        if v is not None and consonant in ROWS:
+        if v is not None and consonant in rows:
             dan, length = v
-            out.append(ROWS[consonant][dan] + lengthen(length))
+            out.append(rows[consonant][dan] + lengthen(length))
             i += 2
         elif v is not None and consonant == 'N':
-            out.append('ン' + ROWS['g'][v[0]] + lengthen(v[1]))   # 音節の頭の ŋ はガ行 (ンガ)
+            out.append('ン' + rows['g'][v[0]] + lengthen(v[1]))   # 音節の頭の ŋ はガ行 (ンガ)
             i += 2
         elif consonant == 'm' and nxt is not None and _consonant(nxt)[0] in ('p', 'b'):
             out.append('ン')   # Pompēius → ポンペーイウス

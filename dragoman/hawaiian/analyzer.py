@@ -151,8 +151,8 @@ def content(token):
             continue
         ja, lang = _gloss(row['word'], 'noun' if pos == 'noun' else pos, row['en'])
         if row['pos'] == 'name':
-            from dragoman.core.katakana_names import latin
-            ja, lang = latin(orthography.key(row['word'])), 'ja'
+            from .phonology import katakana
+            ja, lang = katakana(row['word']), 'ja'
         out.append((pos, row['word'], ja, lang, False, row['pos'] == 'name'))
     for lemma, pos in unmarked_plural:   # 長音符の無い綴りの複数の読み (冠詞 nā の後ろで選ぶ)
         for row in dictionary.lemmas(lemma, pos):
@@ -193,8 +193,8 @@ def _guess(token):
         if found:
             return found
     if token[:1].isupper():
-        from dragoman.core.katakana_names import latin
-        return [('noun', token, latin(orthography.key(token)), 'ja', False, True)]
+        from .phonology import katakana
+        return [('noun', token, katakana(token), 'ja', False, True)]
     return []
 
 

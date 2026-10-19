@@ -90,11 +90,9 @@ def _gloss(info, pos):
 
 
 def _katakana(name):
-    """古英語の名前をカタカナに (Ælfrēd → アルフレド、Ēadweard → エアドウェアルド)"""
-    from dragoman.core.katakana_names import latin
-    word = orthography.key(name).replace('sc', 'sh').replace('þ', 's').replace('æ', 'a').replace('c', 'k') \
-        .replace('y', 'i').replace('x', 'ks').replace('w', 'W')   # W: 英語の w (ウ。ドイツ語式のヴにしない)
-    return latin(word)
+    """古英語の名前をカタカナに (発音から: Ælfrēd → アルフレード、Ēadweard → エーアドウェアルド)"""
+    from .phonology import katakana
+    return katakana(name)
 
 
 def _signature(item):

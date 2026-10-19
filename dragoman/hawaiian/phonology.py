@@ -99,3 +99,25 @@ def espeak_words(spellings):
 
 def espeak_phonemes(text):
     return espeak_words(re.findall(r"[A-Za-zĀĒĪŌŪāēīōūʻ'‘`’]+|[.!?,;:]", orthography.normalize(text)))
+
+
+def katakana(word, **options):
+    """カタカナ (発音を共通の規則 core/kana.py で: Kamehameha → カメハメハ、Kalākaua → カラーカウア)。ʻokina (声門閉鎖音) は
+    書かない、長母音は「ー」、二重母音は母音2つ、w は i・e の後ろで「ヴ」"""
+    from dragoman.core.kana import kana
+    phonemes = []
+    for w in orthography.normalize(word).split():
+        if phonemes:
+            phonemes.append(' ')
+        prev = ''
+        for onset, nucleus, long_ in syllables(w):
+            if onset == '?':
+                phonemes.append('ʔ')
+            elif onset:
+                phonemes.append(_consonant(onset, prev[-1:] if prev else ''))
+            if len(nucleus) == 2:
+                phonemes += list(nucleus)
+            else:
+                phonemes.append(nucleus + ('ː' if long_ else ''))
+            prev = nucleus
+    return kana(phonemes, **options)

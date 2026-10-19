@@ -30,11 +30,11 @@ def ipa(phonemes):
     return out
 
 
-def katakana(word):
-    """ラテン語の語 → カタカナ (語ごとに音素の列にして、共通の規則 core/kana.py で)"""
+def katakana(word, **options):
+    """ラテン語の語 → カタカナ (語ごとに音素の列にして、共通の規則 core/kana.py で。options は long・wa)"""
     phonemes = []
     for w in word.split():
         if phonemes:
             phonemes.append(' ')
         phonemes += ipa(phonemize_word(w))
-    return kana(phonemes)
+    return kana(phonemes, **options)

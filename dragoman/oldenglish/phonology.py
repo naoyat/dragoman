@@ -271,3 +271,28 @@ def espeak_phonemes(text, table=None):
         else:
             parts.append(espeak_word(token, table))
     return '[[%s]]' % ' '.join(parts)
+
+
+def katakana(word, lemma=None, **options):
+    """カタカナ (発音を共通の規則 core/kana.py で: Æþelstān → エゼルスターン、Bēowulf → ベーオウルフ)。二重母音は母音2つ、
+    æ はエ段 (日本語の古英語の名前の書き方)、長母音は「ー」、重子音は「ッ」「ン」"""
+    from dragoman.core.kana import kana
+    phonemes = []
+    for w in word.split():
+        if phonemes:
+            phonemes.append(' ')
+        for s, vowel in segments(w, lemma):
+            if not vowel:
+                phonemes.append(s)
+                continue
+            current = ''
+            for ch in s.replace('æ', 'ɛ'):   # 二重母音 (æɑ・eːo) は母音ごとに、長さの ː は前の母音に。æ はエ段 (エゼルスターン)
+                if ch == 'ː':
+                    current += ch
+                    continue
+                if current:
+                    phonemes.append(current)
+                current = ch
+            if current:
+                phonemes.append(current)
+    return kana(phonemes, **options)

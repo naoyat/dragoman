@@ -39,5 +39,33 @@ class KanaTestCase(unittest.TestCase):
         self.assertEqual(kana(['p', 'aː', 'k', 's', ' ', 'j', 'uː', 'l', 'ɪ', 'a']), 'パークスユーリア')   # 語をまたがない
 
 
+class LanguageKatakanaTestCase(unittest.TestCase):
+    """言語ごとの発音 → 共通の規則"""
+
+    def test_wa_option(self):
+        self.assertEqual(kana(['m', 'i', 'n', 'ɛ', 'r', 'w', 'a']), 'ミネルワ')                 # 既定は「ワ」
+        self.assertEqual(kana(['m', 'i', 'n', 'ɛ', 'r', 'w', 'a'], wa='ウァ'), 'ミネルウァ')    # 西洋古典学の慣習
+
+    def test_greek(self):
+        from dragoman.greek.katakana import katakana
+        self.assertEqual([katakana(w) for w in ('Σωκράτης', 'Ἀθῆναι', 'Ὀδυσσεύς', 'φιλοσοφία')],
+                         ['ソークラテース', 'アテーナイ', 'オデュッセウス', 'ピロソピアー'])   # 長さは辞書から
+
+    def test_sanskrit(self):
+        from dragoman.sanskrit.katakana import katakana
+        self.assertEqual([katakana(w) for w in ('rāma', 'kṛṣṇa', 'śiva', 'buddha', 'gaṅgā')],
+                         ['ラーマ', 'クリシュナ', 'シヴァ', 'ブッダ', 'ガンガー'])
+
+    def test_old_english(self):
+        from dragoman.oldenglish.phonology import katakana
+        self.assertEqual([katakana(w) for w in ('Æþelstān', 'Bēowulf', 'Ēadweard')],
+                         ['エゼルスターン', 'ベーオウルフ', 'エーアドウェアルド'])   # æ はエ段
+
+    def test_hawaiian(self):
+        from dragoman.hawaiian.phonology import katakana
+        self.assertEqual([katakana(w) for w in ('Hawaiʻi', 'Kalākaua', 'Kamehameha')],
+                         ['ハワイイ', 'カラーカウア', 'カメハメハ'])
+
+
 if __name__ == '__main__':
     unittest.main()
