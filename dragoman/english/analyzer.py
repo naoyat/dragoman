@@ -1,0 +1,482 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+#
+# 英語の文の解析
+#
+# spaCy (en_core_web_sm) の品詞・原形・依存関係で語の項目を作り (english/morphology.py)、助動詞と本動詞を1語に
+# まとめてから、並列・係り先・前置詞句・格の枠・日本語訳は共通の解析器 (core/analyzer.py) を英語の設定 (ENGLISH) で使う:
+#   - 名詞に格の形は無いので、格は spaCy の依存関係から: 主語 (nsubj) は主格、目的語 (dobj) は対格、間接目的語
+#     (dative) は与格、前置詞の目的語 (pobj) は前置詞の目的語。補語 (attr) は主格。代名詞は形でも (I・me)
+#   - 冠詞は名詞に掛けて訳さない。所有格 (John's・my) は後ろの名詞に掛ける「〜の」
+#   - 助動詞と本動詞をまとめる: be + 過去分詞 → 受動、have + 過去分詞 → 完了、be + 現在分詞 → 進行「〜している」、
+#     will + 原形 → 未来、can・must・should など + 原形、do (否定・疑問の do) は落として時制だけ取る
+#   - not・n't・never は否定。there is / are は「〜がある」
+#   - 関係代名詞 (who・which・that) は共通の解析器の関係節に
+#
+import re
+
+from dragoman.core import analyzer as common
+from dragoman.core import language
+from dragoman.core.Word import Word
+from . import dictionary, morphology
+
+PUNCTUATION = {'.': 'period', '!': 'period', '?': 'question', '…': 'period', ',': 'comma', ';': 'comma',
+               ':': 'comma', '—': 'comma', '–': 'comma', '(': 'comma', ')': 'comma', '"': None, '“': None, '”': None,
+               "'": None, '‘': None, '’': None}
+
+
+def _root_items(lemma):
+    ja, gloss_lang = morphology.gloss(lemma, 'verb')
+    return [{'pos': 'verb', 'ja': ja, 'gloss_lang': gloss_lang}] if ja else []
+
+
+ENGLISH = language.Language(
+    name='en',
+    and_words=('and',),
+    nor_words=('nor',),
+    or_words=('or',),
+    copulas=frozenset({'be'}),
+    negations=frozenset({'not', "n't", 'never', '(not)'}),
+    case_particles={'Nom': 'が', 'Acc': 'を', 'Dat': 'に', 'Gen': 'の'},
+    absolute_case=None,
+    lookup=_root_items,
+    dictionary=dictionary,
+    pronoun_subject=True,
+    genitive_follows_head=True,
+    objects_follow_verb=True,
+    infinitive_objects_follow=True,
+    possessor_cases=(),
+)
+
+
+def tokens(text):
+    return morphology.tokenize(text.replace('’', "'"))
+
+
+def sentences(text):
+    current = []
+    for token in tokens(text):
+        current.append(token)
+        if PUNCTUATION.get(token) in ('period', 'question'):
+            yield current
+            current = []
+    if current:
+        yield current
+
+
+def _item(word):
+    return word.items[0] if isinstance(word, Word) and word.items else None
+
+
+def _pos(word):
+    item = _item(word)
+    return item.pos if item is not None else None
+
+
+# ----------------------------------------------------------------------
+# 語の項目
+
+def _verb_data(token):
+    lemma = token.lemma_.lower() if token.lemma_ else token.text.lower()
+    ja, gloss_lang = morphology.gloss(lemma, 'verb')
+    tag = token.tag_
+    tense = 'perfect' if tag == 'VBD' else 'present'
+    mood = 'indicative'
+    if tag == 'VBN':
+        mood = 'participle'
+    elif tag == 'VBG':
+        mood = 'participle'
+    elif tag == 'VB':
+        has_subject = any(c.dep_ in ('nsubj', 'nsubjpass', 'expl') for c in token.children)
+        has_aux = any(c.dep_ in ('aux', 'auxpass') for c in token.children)
+        mood = 'infinitive' if has_aux or token.dep_ in ('xcomp', 'ccomp', 'advcl') else \
+            'imperative' if not has_subject and token.dep_ == 'ROOT' else 'indicative'
+    person = 3 if tag == 'VBZ' else None
+    number = 'sg' if tag == 'VBZ' else None
+    data = {'surface': token.text, 'pos': 'verb', 'lemma': lemma, 'pres1sg': lemma, 'base': lemma,
+            'ja': ja or lemma, 'gloss_lang': gloss_lang or 'en', 'voice': 'active', 'mood': mood, 'tense': tense,
+            'person': person, 'number': number, 'main': True, 'progressive': tag == 'VBG'}
+    if mood == 'imperative':
+        data.update(person=2, number='sg')
+    if lemma == 'be':
+        data['existential'] = True
+    return data
+
+
+def _case(token):
+    """依存関係 → 格"""
+    dep = token.dep_
+    if dep in ('nsubj', 'nsubjpass', 'attr', 'csubj', 'expl'):
+        return ('Nom',)
+    if dep in ('dobj', 'oprd'):
+        return ('Acc',)
+    if dep == 'dative':
+        return ('Dat',)
+    if dep == 'pobj':
+        return ('Gen',)
+    if dep == 'conj':
+        return _case(token.head) if token.head.i != token.i else ('Nom', 'Acc')
+    if dep == 'appos':
+        return _case(token.head)
+    return ('Acc',) if token.head.pos_ in ('VERB', 'AUX') and token.head.i < token.i else ('Nom',)
+
+
+def _noun_data(token):
+    text, lemma = token.text, token.lemma_ or token.text
+    proper = token.tag_ in ('NNP', 'NNPS')
+    if proper:
+        lemma = text
+    ja, gloss_lang = morphology.gloss(lemma, 'noun')
+    if ja is None and lemma != text:
+        ja, gloss_lang = morphology.gloss(text, 'noun')
+    if proper and ja is None:
+        from .katakana import katakana
+        ja, gloss_lang = katakana(text), 'ja'   # 辞書に無い名前は英語の読みのカタカナ (Jennifer → ジェニファー)
+    number = 'pl' if token.tag_ in ('NNS', 'NNPS') else 'sg'
+    data = {'surface': text, 'pos': 'noun', 'base': lemma, 'lemma': lemma, 'ja': ja or text,
+            'gloss_lang': gloss_lang or 'en', 'main': True, '_': morphology.cngs(_case(token), number)}
+    if proper:
+        data['proper'] = True
+    return data
+
+
+def _preposition(text, prep):
+    ja = morphology.PREPOSITIONS.get(prep) or '〜' + prep
+    return {'surface': text, 'pos': 'preposition', 'base': prep, 'dominates': 'Gen', 'ja': ja, 'gloss_lang': 'ja'}
+
+
+def item_of(token, doc):
+    """spaCy の語 → 項目 (dict)。扱わない語は None (句読点)"""
+    pos, tag, text = token.pos_, token.tag_, token.text
+    lower = text.lower()
+    if pos == 'PUNCT' or text in PUNCTUATION:
+        return None
+    if tag == 'POS':   # 所有格の 's (前の名詞を「〜の」に: possessives)
+        return {'surface': text, 'pos': 'particle', 'base': "'s", 'ja': '', 'gloss_lang': 'ja', 'possessive_mark': True}
+    if tag == 'EX':    # there is「〜がある」の there
+        return {'surface': text, 'pos': 'particle', 'base': 'there', 'ja': '', 'gloss_lang': 'ja', 'expletive': True}
+    if tag == 'TO' and token.head.pos_ in ('VERB', 'AUX') and token.dep_ == 'aux':
+        return {'surface': text, 'pos': 'particle', 'base': 'to', 'ja': '', 'gloss_lang': 'ja'}   # 不定詞の to
+    if lower in morphology.NEGATIONS and (tag == 'RB' or token.dep_ == 'neg'):
+        return {'surface': text, 'pos': 'adv', 'base': 'not' if lower == "n't" else lower,
+                'ja': morphology.NEGATIONS[lower], 'gloss_lang': 'ja', 'negation': True}
+    if tag == 'MD':
+        suffix, tense = morphology.MODALS.get(lower, ('', 'present'))
+        return {'surface': text, 'pos': 'verb', 'lemma': lower, 'base': lower, 'ja': suffix, 'gloss_lang': 'ja',
+                'modal_suffix': suffix, 'tense': tense, 'mood': 'indicative', 'voice': 'active', 'modal_aux': True,
+                'person': None, 'number': None}
+    if tag in ('PRP$',) or tag == 'WP$':
+        ja = morphology.DETERMINERS.get(lower, lower)
+        return {'surface': text, 'pos': 'pronoun', 'base': lower, 'ja': ja, 'gloss_lang': 'ja', 'desc': '不定形容詞',
+                '_': morphology.cngs(morphology.ALL_CASES), 'compact': True, 'determiner': True}
+    if tag in ('WDT', 'WP') and token.dep_ in ('nsubj', 'dobj', 'nsubjpass', 'pobj') and \
+            token.head.dep_ in ('relcl', 'acl'):
+        return {'surface': text, 'pos': 'pronoun', 'base': lower, 'ja': '〜するところの', 'gloss_lang': 'ja',
+                'desc': '関係代名詞', '_': morphology.cngs(_case(token)), 'compact': True}
+    if tag == 'WRB' and lower in morphology.QUESTION_ADVERBS and token.dep_ != 'advmod' or \
+            tag == 'WRB' and lower in morphology.QUESTION_ADVERBS and token.head.dep_ != 'relcl':
+        return {'surface': text, 'pos': 'adv', 'base': lower, 'ja': morphology.QUESTION_ADVERBS[lower], 'gloss_lang': 'ja'}
+    if tag == 'DT' or tag == 'PDT':
+        if lower in morphology.DETERMINERS and token.dep_ in ('det', 'predet') or lower in morphology.ARTICLES:
+            ja = morphology.DETERMINERS.get(lower, '')
+            if lower == 'no':
+                return {'surface': text, 'pos': 'adv', 'base': 'no', 'ja': '〜ない', 'gloss_lang': 'ja', 'negation': True}
+            if not ja:
+                return {'surface': text, 'pos': 'article', 'base': lower, 'ja': '', 'gloss_lang': 'ja',
+                        '_': morphology.cngs(morphology.ALL_CASES), 'compact': True}
+            return {'surface': text, 'pos': 'pronoun', 'base': lower, 'ja': ja, 'gloss_lang': 'ja',
+                    'desc': '指示代名詞' if lower in ('this', 'that', 'these', 'those') else '不定形容詞',
+                    '_': morphology.cngs(morphology.ALL_CASES), 'compact': True, 'determiner': True}
+    if pos == 'PRON' or tag in ('PRP', 'WP', 'DT'):
+        ja, person, number, cases = morphology.PRONOUNS.get(lower) or (lower, 3, 'sg', morphology.ALL_CASES)
+        if len(cases) > 1:
+            cases = tuple(c for c in _case(token) if c in cases) or cases
+        return {'surface': text, 'pos': 'pronoun', 'base': lower, 'ja': ja, 'gloss_lang': 'ja', 'person': person,
+                'number': number, '_': morphology.cngs(cases, number), 'compact': True}
+    if pos == 'ADP' or tag == 'IN' and token.dep_ == 'prep' or tag == 'TO':
+        if token.dep_ == 'mark' or tag == 'IN' and token.dep_ not in ('prep', 'agent', 'dative', 'prt') and \
+                lower in morphology.CONJUNCTIONS:
+            return {'surface': text, 'pos': 'conj', 'base': lower, 'ja': morphology.CONJUNCTIONS[lower], 'gloss_lang': 'ja'}
+        if token.dep_ == 'prt':   # 句動詞の副詞 (give up の up): 動詞に付ける (phrasal_verbs)
+            return {'surface': text, 'pos': 'particle', 'base': lower, 'ja': '', 'gloss_lang': 'ja', 'particle_of': token.head.i}
+        return _preposition(text, lower)
+    if tag in ('CC',) or pos in ('CCONJ', 'SCONJ'):
+        return {'surface': text, 'pos': 'conj', 'base': lower, 'ja': morphology.CONJUNCTIONS.get(lower, lower),
+                'gloss_lang': 'ja'}
+    if pos == 'AUX' and token.dep_ in ('aux', 'auxpass'):
+        return dict(_verb_data(token), auxiliary=True)
+    if tag.startswith('VB'):
+        return _verb_data(token)
+    if (tag in ('NN', 'NNS') or pos == 'NOUN') and token.dep_ == 'npadvmod':
+        ja, gloss_lang = morphology.gloss(lower, 'noun')   # 副詞の働きの名詞 (tomorrow・last week の week)
+        return {'surface': text, 'pos': 'adv', 'base': lower, 'ja': ja or lower, 'gloss_lang': gloss_lang or 'en'}
+    if tag in ('NN', 'NNS', 'NNP', 'NNPS') or pos in ('NOUN', 'PROPN'):
+        return _noun_data(token)
+    if tag in ('JJ', 'JJR', 'JJS'):
+        ja, gloss_lang = morphology.gloss(token.lemma_ or lower, 'adj')
+        data = {'surface': text, 'pos': 'adj', 'base': token.lemma_ or lower, 'ja': ja or lower,
+                'gloss_lang': gloss_lang or 'en', '_': morphology.cngs(morphology.ALL_CASES), 'main': True}
+        if token.dep_ in ('acomp', 'attr') or token.dep_ == 'ROOT':
+            data.update(predicative=True, _=morphology.cngs(('Nom',)))
+        return data
+    if tag == 'CD':
+        return {'surface': text, 'pos': 'adj', 'base': text, 'ja': morphology.NUMBERS_JA.get(lower, text),
+                'gloss_lang': 'ja', '_': morphology.cngs(morphology.ALL_CASES)}
+    if tag in ('RB', 'RBR', 'RBS', 'WRB', 'UH') or pos in ('ADV', 'INTJ', 'PART'):
+        ja, gloss_lang = morphology.gloss(lower, 'adv')
+        if ja is None:
+            adj, lang = morphology.gloss(re.sub('ly$', '', lower), 'adj')
+            if adj and lower.endswith('ly'):
+                ja, gloss_lang = morphology.adverbial(adj), lang   # quickly → 速く
+        return {'surface': text, 'pos': 'adv', 'base': lower, 'ja': ja or lower, 'gloss_lang': gloss_lang or 'en'}
+    return {'surface': text, 'pos': 'adv', 'base': lower, 'ja': lower, 'gloss_lang': 'en'}
+
+
+# ----------------------------------------------------------------------
+# 動詞の組
+
+def _attach(verb, suffix):
+    from dragoman.core.japanese import attach_auxiliary
+    return attach_auxiliary(verb, suffix)
+
+
+def merge_verbs(words, doc):
+    """助動詞 (be・have・do・will・can …) を本動詞にまとめる。まとめた動詞は本動詞の位置に"""
+    by_i = {w.doc_i: w for w in words}
+    removed = set()
+    for token in doc:
+        main_word = by_i.get(token.i)
+        main = _item(main_word) if main_word is not None else None
+        if main is None or main.pos != 'verb' or main.attrib('auxiliary') or main.attrib('modal_aux'):
+            continue
+        auxes = [c for c in token.children if c.dep_ in ('aux', 'auxpass') and c.i in by_i]
+        if not auxes:
+            continue
+        data = dict(main.item)
+        forms = []
+        finite = None
+        for aux in sorted(auxes, key=lambda t: t.i):
+            a = _item(by_i[aux.i])
+            if a is None:
+                continue
+            lemma = a.attrib('lemma')
+            if a.attrib('modal_aux'):
+                finite = finite or a
+                suffix = a.attrib('modal_suffix')
+                if a.attrib('tense') == 'future' and not suffix:
+                    data['tense'] = 'future'
+                    forms.append('未来 (%s + 原形)' % aux.text)
+                elif suffix:
+                    data.update(modal=aux.text.lower(), main_ja=main.ja)
+                    if main.attrib('gloss_lang') == 'ja':
+                        data['ja'] = ','.join(_attach(j, suffix) for j in (main.ja or '').split(',')[:1])
+                    data['tense'] = a.attrib('tense')
+                    forms.append('%s + 原形' % aux.text)
+            elif lemma == 'be' and aux.dep_ == 'auxpass':
+                finite = finite or a
+                data['voice'] = 'passive'
+                if a.attrib('tense') == 'perfect':
+                    data['tense'] = 'perfect'
+                forms.append('受動 (be + 過去分詞)')
+            elif lemma == 'be' and token.tag_ == 'VBG':
+                finite = finite or a
+                if main.attrib('gloss_lang') == 'ja':
+                    data['ja'] = ','.join(_attach(j, 'ている') for j in (main.ja or '').split(',')[:1])
+                data['tense'] = a.attrib('tense')
+                forms.append('進行形 (be + 現在分詞)')
+            elif lemma == 'have' and token.tag_ == 'VBN':
+                finite = finite or a
+                data['tense'] = 'pluperfect' if a.attrib('tense') == 'perfect' else 'perfect'
+                forms.append('%s (have + 過去分詞)' % ('過去完了' if a.attrib('tense') == 'perfect' else '現在完了'))
+            elif lemma == 'do':
+                finite = finite or a
+                data['tense'] = a.attrib('tense')
+            elif lemma == 'be':   # be + 過去分詞を spaCy が aux と読んだもの
+                finite = finite or a
+                if token.tag_ == 'VBN':
+                    data['voice'] = 'passive'
+                    forms.append('受動 (be + 過去分詞)')
+            removed.add(aux.i)
+        if finite is not None:
+            data.update(person=finite.attrib('person'), number=finite.attrib('number'))
+        data['mood'] = 'indicative' if data.get('mood') in ('participle', 'infinitive') else data.get('mood')
+        data.pop('existential', None) if data.get('lemma') != 'be' else None
+        if forms:
+            data['form'] = '・'.join(forms)
+        surfaces = [by_i[a.i].surface for a in sorted(auxes, key=lambda t: t.i) if a.i in by_i] + [main_word.surface]
+        data['surface'] = ' '.join(surfaces)
+        main_word.items = [type(main)(data)]
+        main_word.token_ixs = tuple(by_i[a.i].token_ix for a in auxes if a.i in by_i) + (main_word.token_ix,)
+    dropped = {id(by_i[i]) for i in removed if i in by_i}
+    for w in words:
+        if id(w) in dropped:
+            w.merged_into = True
+    return [w for w in words if id(w) not in dropped]
+
+
+# 不定詞を取って1つの述語にする動詞: 原形 → 本動詞に付ける形 (want to go → 行きたい、have to go → 行かなければならない)
+CONTROL = {'want': 'たい', 'have': 'なければならない', 'need': 'なければならない', 'try': 'ようとする',
+           'begin': '始める', 'start': '始める', 'like': 'たい', 'love': 'たい', 'hope': 'たい', 'would like': 'たい'}
+
+
+def control_verbs(words, doc):
+    """want to go などの「動詞 + to 不定詞」を不定詞の位置の1語にまとめる (時制・人称は前の動詞から)"""
+    by_i = {w.doc_i: w for w in words}
+    removed = set()
+    for token in doc:
+        if token.dep_ != 'xcomp' or token.tag_ != 'VB' or token.head.i not in by_i or token.i not in by_i:
+            continue
+        head_word, main_word = by_i[token.head.i], by_i[token.i]
+        h, m = _item(head_word), _item(main_word)
+        if h is None or m is None or h.pos != 'verb' or m.pos != 'verb' or h.attrib('lemma') not in CONTROL:
+            continue
+        if not any(c.tag_ == 'TO' for c in token.children):
+            continue
+        suffix = CONTROL[h.attrib('lemma')]
+        data = dict(m.item)
+        if m.attrib('gloss_lang') == 'ja':
+            from dragoman.core.japanese import attach_auxiliary
+            first = (m.ja or '').split(',')[0]
+            data['ja'] = _masu(first) + '始める' if suffix == '始める' else attach_auxiliary(first, suffix)
+        data.update(tense=h.attrib('tense'), person=h.attrib('person'), number=h.attrib('number'), mood=h.attrib('mood'),
+                    surface=head_word.surface + ' to ' + main_word.surface, main_ja=m.ja,
+                    form='%s + to 不定詞' % h.attrib('lemma'))
+        if h.attrib('form'):
+            data['form'] = h.attrib('form') + '・' + data['form']
+        data.pop('existential', None)
+        main_word.items = [type(m)(data)]
+        main_word.surface = data['surface']
+        removed.add(token.head.i)
+    dropped = {id(by_i[i]) for i in removed}
+    for w in words:
+        if id(w) in dropped:
+            w.merged_into = True
+    return [w for w in words if id(w) not in dropped]
+
+
+def _masu(verb):
+    from dragoman.kobun.modernize import Modern
+    try:
+        return Modern.masu_stem(verb)
+    except Exception:
+        return verb
+
+
+def phrasal_verbs(words, doc):
+    """句動詞 (give up・look after の副詞の部分): 英和の表に句動詞があれば動詞の訳に、無ければ副詞は落とす"""
+    by_i = {w.doc_i: w for w in words}
+    for w in words:
+        item = _item(w)
+        if item is None or item.attrib('particle_of') is None:
+            continue
+        verb = by_i.get(item.attrib('particle_of'))
+        v = _item(verb) if verb is not None else None
+        if v is None or v.pos != 'verb':
+            continue
+        phrase = '%s %s' % (v.attrib('lemma'), item.attrib('base'))
+        ja, gloss_lang = morphology.gloss(phrase, 'verb')
+        if ja:
+            verb.items = [type(v)(dict(v.item, lemma=phrase, base=phrase, ja=ja, gloss_lang=gloss_lang))]
+
+
+def possessives(words):
+    """所有格の 's: 前の名詞を後ろの名詞に掛ける「〜の」(限定詞と同じく)"""
+    out = []
+    for k, w in enumerate(words):
+        item = _item(w)
+        if item is not None and item.attrib('possessive_mark'):
+            if out and _pos(out[-1]) == 'noun':
+                owner = out[-1]
+                o = _item(owner)
+                ja = (o.ja or owner.surface).split(',')[0]
+                owner.items = [type(o)(dict(o.item, pos='pronoun', ja=ja + 'の', determiner=True, desc='不定形容詞',
+                                            _=morphology.cngs(morphology.ALL_CASES), compact=True))]
+                owner.surface += w.surface
+            w.merged_into = True
+            continue
+        out.append(w)
+    return out
+
+
+def existential_there(words):
+    """there is / are「〜がある」: there を落とし、be の後ろの名詞を主語に"""
+    for k, w in enumerate(words):
+        item = _item(w)
+        if item is None or not item.attrib('expletive'):
+            continue
+        for v in words[k + 1:k + 4]:
+            vi = _item(v)
+            if vi is not None and vi.pos == 'verb' and vi.attrib('lemma') == 'be':
+                v.items = [type(vi)(dict(vi.item, ja='ある,いる', gloss_lang='ja', existential=True,
+                                         lemma='there be', base='there be'))]
+                break
+        return
+
+
+def attach_articles(words):
+    """冠詞 (the / a) を後ろの名詞 (間に形容詞・数詞があってもよい) に掛け、語の列から除く (訳さない)"""
+    out = []
+    for i, word in enumerate(words):
+        if _pos(word) != 'article':
+            out.append(word)
+            continue
+        j = i + 1
+        while j < len(words) and _pos(words[j]) in ('adj',) and not _item(words[j]).attrib('predicative'):
+            j += 1
+        if j < len(words) and _pos(words[j]) in ('noun', 'pronoun'):
+            words[j].add_modifier(word)
+            word.article_of = words[j]
+            continue
+        out.append(word)
+    return out
+
+
+def passive_agents(words):
+    """受動の文の by は動作主「〜によって」"""
+    if not any(_pos(w) == 'verb' and _item(w).attrib('voice') == 'passive' for w in words):
+        return
+    for w in words:
+        item = _item(w)
+        if item is not None and item.pos == 'preposition' and item.attrib('base') == 'by':
+            w.items = [type(item)(dict(item.item, ja='〜によって'))]
+
+
+def lookup_all(surfaces):
+    doc = morphology.parse(surfaces)
+    words = []
+    for token in doc:
+        data = item_of(token, doc)
+        word = Word(token.text, None if data is None else [data])
+        word.token_ix = token.i
+        word.doc_i = token.i
+        words.append(word)
+    global _display
+    _display = list(words)
+    words = merge_verbs(words, doc)
+    words = control_verbs(words, doc)
+    phrasal_verbs(words, doc)
+    words = possessives(words)
+    existential_there(words)
+    words = [w for w in words if _pos(w) != 'particle']
+    words = attach_articles(words)
+    passive_agents(words)
+    for i, word in enumerate(words):
+        word.index = i
+    return words
+
+
+_display = []
+
+
+def analyze_sentence(surfaces):
+    words = lookup_all(surfaces)
+    word_details = [word.detail() for word in words]
+    with language.using(ENGLISH):
+        analysis = common.analyze_words([w.surface for w in words], words, word_details, [])
+    analysis.original = list(surfaces)
+    return analysis
+
+
+def analyze_text(text):
+    for surfaces in sentences(text):
+        yield analyze_sentence(surfaces)

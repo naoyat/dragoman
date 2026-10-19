@@ -218,7 +218,7 @@ def phonemes(word, accent='us'):
         prev_base, prev_stress = (prev[:-1], prev[-1]) if prev[-1:].isdigit() else (prev, '')
         short_before = prev_base in SHORT and prev_stress == '1'
         if (short_before and ((not nxt and base in FINAL_GEMINATE) or (nxt_base in VOWELS and base in MEDIAL_GEMINATE))) or \
-                (prev_base in ('IH', 'EH', 'AH') and not nxt and base in ('P', 'T', 'K')):
+                (prev_base in ('IH', 'EH', 'AH') and not nxt and base in ('P', 'T', 'K', 'SH', 'CH', 'JH')):
             # 「ッ」(cat → キャット、happy → ハッピー。強勢の無い ɪ・ɛ + 語末の p・t・k も: music → ミューズィック)
             out.append(ph)                        # 「ッ」(cat → キャット、happy → ハッピー)
         out.append(ph)

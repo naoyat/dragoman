@@ -37,10 +37,10 @@ import tempfile
 
 LANGUAGES = {'la': 'latin', 'grc': 'greek', 'sa': 'sanskrit', 'ru': 'russian', 'he': 'hebrew', 'ar': 'arabic',
              'fa': 'persian', 'hi': 'hindi', 'ur': 'urdu', 'bo': 'tibetan', 'id': 'indonesian', 'ms': 'malay',
-             'tl': 'tagalog', 'ko': 'korean', 'de': 'german', 'fr': 'french', 'tr': 'turkish', 'mn': 'mongolian', 'fi': 'finnish', 'ang': 'oldenglish', 'haw': 'hawaiian', 'ain': 'ainu', 'kobun': 'kobun'}
+             'tl': 'tagalog', 'ko': 'korean', 'de': 'german', 'fr': 'french', 'tr': 'turkish', 'mn': 'mongolian', 'fi': 'finnish', 'ang': 'oldenglish', 'haw': 'hawaiian', 'ain': 'ainu', 'kobun': 'kobun', 'en': 'english'}
 NAMES = {'la': 'ラテン語', 'grc': '古典ギリシア語', 'sa': 'サンスクリット', 'ru': 'ロシア語',
          'he': '聖書ヘブライ語 (聖書アラム語も)', 'ar': 'アラビア語 (現代標準アラビア語)', 'fa': 'ペルシア語',
-         'hi': 'ヒンディー語', 'ur': 'ウルドゥー語', 'bo': '古典チベット語', 'id': 'インドネシア語', 'ms': 'マレー語', 'tl': 'タガログ語', 'ko': '韓国語', 'de': 'ドイツ語', 'fr': 'フランス語', 'tr': 'トルコ語', 'mn': 'モンゴル語', 'fi': 'フィンランド語', 'ang': '古英語', 'haw': 'ハワイ語', 'ain': 'アイヌ語', 'kobun': '古文 (平安の和文。現代語に組み立て直す)'}
+         'hi': 'ヒンディー語', 'ur': 'ウルドゥー語', 'bo': '古典チベット語', 'id': 'インドネシア語', 'ms': 'マレー語', 'tl': 'タガログ語', 'ko': '韓国語', 'de': 'ドイツ語', 'fr': 'フランス語', 'tr': 'トルコ語', 'mn': 'モンゴル語', 'fi': 'フィンランド語', 'ang': '古英語', 'haw': 'ハワイ語', 'ain': 'アイヌ語', 'kobun': '古文 (平安の和文。現代語に組み立て直す)', 'en': '英語 (現代英語)'}
 CODE = re.compile('^[a-z]{2,5}$')
 INDONESIAN_WORDS = {'yang', 'dan', 'di', 'ini', 'itu', 'dengan', 'untuk', 'tidak', 'adalah', 'akan', 'dari', 'ke', 'pada',
                     'saya', 'mereka', 'ada', 'sudah', 'juga', 'dalam', 'oleh', 'bahwa', 'bahawa', 'kami', 'kita'}
@@ -61,6 +61,11 @@ TURKISH_WORDS = {'bir', 've', 'bu', 'için', 'ile', 'çok', 'ben', 'sen', 'biz',
 MALAY_WORDS = {'kerana', 'sahaja', 'bahawa', 'wang', 'jepun', 'inggeris', 'kerajaan', 'boleh', 'hendak', 'awak'}
 OLD_ENGLISH_WORDS = {'and', 'ond', 'se', 'seo', 'þæt', 'wæs', 'is', 'on', 'mid', 'ic', 'he', 'heo', 'hie', 'him', 'his',
                      'ne', 'þa', 'þe', 'swa', 'ac', 'we', 'ge', 'eom', 'sind', 'sindon', 'hwæt', 'þone', 'þæs'}
+ENGLISH_WORDS = {'the', 'and', 'of', 'to', 'that', 'it', 'you', 'was', 'for', 'are', 'with', 'this', 'have', 'not',
+                 'be', 'they', 'what', 'i', 'my', 'we', 'she', 'there', 'can', 'will', 'from', 'your', 'were', 'has',
+                 'would', 'about', 'which', 'their', 'been', 'an', 'or', 'but', 'by', 'at', 'on', "don't", "it's",
+                 'he', 'his', 'her', 'him', 'them', 'our', 'is', 'very', 'gave', 'does', 'did', 'had', 'said', 'do', 'like',
+                 'please', 'some', 'give', 'want', 'go', 'how', 'why', 'where', 'who', 'when', 'if', 'yes', 'know'}
 HINDI_WORDS = {'है', 'हैं', 'का', 'की', 'के', 'में', 'नहीं', 'को', 'से', 'ने', 'था', 'थी', 'और', 'पर', 'भी'}
 
 
@@ -113,6 +118,10 @@ def detect(text):
             return 'fi'  # ラテン文字のフィンランド語 (ja, on, ei, että … か格の語尾 -ssa・-lla …)
         if len(words & GERMAN_WORDS) >= 2 or re.search('[äöüßÄÖÜ]', text):
             return 'de'  # ラテン文字のドイツ語 (der, die, das, und, ist … かウムラウト・ß)
+        english = set(re.findall(r"[a-z']+", text.lower())) & ENGLISH_WORDS | \
+            set(re.findall(r"[a-z]'(?:s|t|re|ll|ve|d|m)\b", text.lower()))   # John's・don't
+        if ('the' in english or len(english) >= 2) and len(english) > len(words & GERMAN_WORDS) and len(english) > len(words & INDONESIAN_WORDS):
+            return 'en'  # ラテン文字の英語 (the, and, of, to, that …)
         if len(words & INDONESIAN_WORDS) >= 2:
             return 'ms' if words & MALAY_WORDS else 'id'  # ラテン文字のインドネシア語・マレー語
     if best == 'deva':
