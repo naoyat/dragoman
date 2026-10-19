@@ -44,6 +44,14 @@ def available():
     return None if dictionary.available() else 'no Mongolian data (python3 tools/build_mongolian_dic.py)'
 
 
+def katakana(analysis, kana_options):
+    """カタカナ読み (--kana): 綴りの発音から語ごとに (mongolian/katakana.py)"""
+    from .katakana import sentence
+    from .script import from_latin, has_cyrillic
+    text = original(analysis)
+    return sentence(text if has_cyrillic(text) else from_latin(text), **kana_options)   # ラテン文字の転写はキリル文字に
+
+
 COMMAND = Command(lang='mn', name='モンゴル語', analyzer=analyzer, dictionary=dictionary, available=available,
                   usage=USAGE, header=lambda a, o: original(a), speech_text=lambda a, o: original(a), explain=explain,
-                  descendant_langs=('en', 'ja'), speech_lang='mn')
+                  descendant_langs=('en', 'ja'), speech_lang='mn', katakana=katakana)

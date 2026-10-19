@@ -55,6 +55,12 @@ def available():
     return None
 
 
+def katakana(analysis, kana_options):
+    """カタカナ読み (--kana): 標準発音の規則で語ごとに (korean/katakana.py。한국어 → ハングゴ)"""
+    from .katakana import sentence
+    return sentence(original(analysis), **kana_options)
+
+
 COMMAND = Command(lang='ko', name='韓国語', analyzer=analyzer, dictionary=dictionary, available=available,
                   usage=USAGE, header=lambda a, o: original(a), speech_text=lambda a, o: original(a), explain=explain,
-                  descendant_langs=('en', 'ja'), speech_lang='ko')
+                  descendant_langs=('en', 'ja'), speech_lang='ko', katakana=katakana)

@@ -45,6 +45,12 @@ def available():
     return None
 
 
+def katakana(analysis, kana_options):
+    """カタカナ読み (--kana): 綴りの発音から語ごとに (turkish/katakana.py)"""
+    from .katakana import sentence
+    return sentence(original(analysis), **kana_options)
+
+
 COMMAND = Command(lang='tr', name='トルコ語', analyzer=analyzer, dictionary=dictionary, available=available,
                   usage=USAGE, header=lambda a, o: original(a), speech_text=lambda a, o: original(a), explain=explain,
-                  descendant_langs=('en', 'ja'), speech_lang='tr')
+                  descendant_langs=('en', 'ja'), speech_lang='tr', katakana=katakana)

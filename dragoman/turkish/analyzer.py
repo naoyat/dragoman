@@ -340,7 +340,7 @@ def _noun_word(rec):
         return Word(rec['surface'], [data])
     ja, gloss_lang, row = morphology.gloss(lemma, 'name' if rec.get('proper') else 'noun')
     if rec.get('proper') and (ja is None or gloss_lang == 'en'):
-        from dragoman.core.katakana_names import turkish as katakana
+        from .katakana import katakana
         ja, gloss_lang = katakana(lemma), 'ja'   # 辞書に無い名前はカタカナ (Ali → アリ)
     if ja is None:
         ja, gloss_lang = lemma, 'ja'

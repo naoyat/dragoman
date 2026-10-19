@@ -62,7 +62,8 @@ YOON = {'a': 'ャ', 'u': 'ュ', 'o': 'ョ', 'e': 'エ', 'y': 'ュ'}   # e は小
 # 母音の続かない子音
 CODA = {'k': 'ク', 'g': 'グ', 's': 'ス', 'z': 'ズ', 't': 'ト', 'd': 'ド', 'n': 'ン', 'N': 'ン', 'h': 'フ', 'f': 'フ',
         'v': 'ヴ', 'p': 'プ', 'b': 'ブ', 'm': 'ム', 'r': 'ル', 'j': 'イ', 'w': 'ウ', 'ʃ': 'シュ', 'ʒ': 'ジ', 'tʃ': 'チ',
-        'ts': 'ツ', 'ɲ': 'ニュ'}
+        'ts': 'ツ', 'ɲ': 'ニュ',
+        'k̚': 'ク', 't̚': 'ッ', 'p̚': 'プ', 'm̚': 'ム', 'ɭ': 'ル', 'ɴ': 'ン'}   # 韓国語のパッチム (内破音・ㄹ・ㅇ)
 SOKUON = {'p', 'b', 't', 'd', 'k', 'g', 's', 'f', 'z', 'ʃ', 'tʃ', 'ts', 'h', 'v', 'ʒ'}
 LONG = 'ː'
 HALF_LONG = 'ˑ'
@@ -130,10 +131,12 @@ def _consonant(ph):
     return CONSONANTS.get(base, base), ph.endswith(LONG)
 
 
-def kana(phonemes, long='phonemic', wa='ワ', final_sokuon=False, si='スィ'):
+def kana(phonemes, long='phonemic', wa='ワ', final_sokuon=False, si='スィ', liquid_sokuon=False, labial_glide=False):
     """IPA の音素の列 (または IPA の文字列) → カタカナ。long='phonemic' なら ː だけ「ー」、'phonetic' なら ˑ も「ー」。
     wa は [wa] の書き方 (「ワ」か「ウァ」)。si は [si]・[zi] の書き方 (「スィ」「ズィ」か、慣用の「シ」「ジ」)。final_sokuon なら、短い母音の後ろの語末の無声閉鎖音の前に「ッ」
-    (Juliette → ジュリエット。日本語の耳に近い書き方。ラテン語の amat は「アマト」のまま)"""
+    (Juliette → ジュリエット。日本語の耳に近い書き方。ラテン語の amat は「アマト」のまま)。liquid_sokuon なら重子音の l・r も
+    「ッ」(フィンランド語・トルコ語の長い子音: Ville → ヴィッレ)。labial_glide なら子音 + w + 母音をウ段 + 小さい母音
+    (韓国語: 화 → ファ、뒤 → トゥィ。既定では k・g だけ: クァ)"""
     if isinstance(phonemes, str):
         phonemes = split_ipa(phonemes)
     rows = ROWS if wa == 'ウァ' else dict(ROWS, w=dict(ROWS['w'], a=wa))
@@ -144,7 +147,7 @@ def kana(phonemes, long='phonemic', wa='ワ', final_sokuon=False, si='スィ'):
         for p in list(phonemes) + [WORD_BREAK]:
             if p == WORD_BREAK:
                 if current:
-                    words.append(kana(current, long, wa, final_sokuon, si))
+                    words.append(kana(current, long, wa, final_sokuon, si, liquid_sokuon, labial_glide))
                 current = []
             else:
                 current.append(p)
@@ -177,11 +180,20 @@ def kana(phonemes, long='phonemic', wa='ワ', final_sokuon=False, si='スィ'):
             consonant += 'w'
             i += 1
             nxt = phs[i + 1]
+        if labial_glide and consonant in rows and consonant not in ('', 'j', 'w', 'kw', 'gw') and nxt == 'w' and \
+                i + 2 < len(phs) and _vowel(phs[i + 2]) is not None and _vowel(phs[i + 2])[0] in 'aieo':
+            dan, length = _vowel(phs[i + 2])
+            out.append(('ッ' if geminate and consonant in SOKUON else '') + rows[consonant]['u'] +
+                       {'a': 'ァ', 'i': 'ィ', 'e': 'ェ', 'o': 'ォ'}[dan] + lengthen(length))
+            i += 3
+            continue
         if geminate:
             if consonant in SOKUON:
                 out.append('ッ')
             elif consonant in ('n', 'm', 'N'):
                 out.append('ン')
+            elif liquid_sokuon and consonant == 'r':
+                out.append('ッ')
         # 子音 + j + 母音 → 拗音 (キャ・シュ・ヴィェ)
         if nxt == 'j' and consonant not in ('j', 'w', '') and consonant in rows and i + 2 < len(phs) and \
                 _vowel(phs[i + 2]) is not None:
@@ -212,3 +224,9 @@ def kana(phonemes, long='phonemic', wa='ワ', final_sokuon=False, si='スィ'):
             out.append(CODA.get(consonant, ''))
             i += 1
     return ''.join(out)
+
+
+def text_words(text):
+    """文 → 語の列 (前後の句読点を除く。文字の無い語は除く)"""
+    words = [w.strip('.,;:!?()[]«»„“”"\'‘’—–…') for w in text.split()]
+    return [w for w in words if any(c.isalpha() for c in w)]

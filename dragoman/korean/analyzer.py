@@ -312,7 +312,7 @@ def _noun_word(rec):
             gloss_lang = 'ja' if all(p[1] == 'ja' for p in pieces) else 'en'
     proper = rec['tag'] == 'NNP' or (row or {}).get('pos') == 'name'
     if ja is None and proper:
-        from dragoman.core.katakana_names import korean as katakana
+        from .katakana import katakana
         ja, gloss_lang = katakana(lemma), 'ja'   # 辞書に無い名前はカタカナ (민수 → ミンス)
     if ja is None:
         romanized = script.romanize(lemma)

@@ -105,6 +105,34 @@ class LanguageKatakanaTestCase(unittest.TestCase):
             self.skipTest('ロシア語の辞書が無い')
         self.assertEqual((morphology.stressed('всё'), morphology.stressed('все')), ('всё', 'все́'))   # ё を元の表記に
 
+    def test_finnish(self):
+        from dragoman.finnish.katakana import katakana
+        self.assertEqual([katakana(w) for w in ('Matti', 'Liisa', 'Anna', 'Jyväskylä', 'Ville', 'Lahti', 'Helsinki',
+                                                 'Helsingissä', 'Emma')],
+                         ['マッティ', 'リーサ', 'アンナ', 'ユヴァスキュラ', 'ヴィッレ', 'ラハティ', 'ヘルスィンキ',
+                          'ヘルスィンギッサ', 'エンマ'])   # l の重子音も「ッ」、母音の続かない h は前の母音の段
+
+    def test_turkish(self):
+        from dragoman.turkish.katakana import katakana
+        self.assertEqual([katakana(w) for w in ('Ali', 'Ayşe', 'Çağlar', 'İstanbul', 'Türkiye', 'Kılıç', 'değil',
+                                                 'Allah', 'Kâzım', 'teşekkür')],
+                         ['アリ', 'アイシェ', 'チャーラル', 'イスタンブル', 'テュルキイェ', 'クルチ', 'デイル',
+                          'アッラフ', 'キャーズム', 'テシェッキュル'])
+
+    def test_mongolian(self):
+        from dragoman.mongolian.katakana import katakana
+        self.assertEqual([katakana(w) for w in ('Бат', 'Дорж', 'Улаанбаатар', 'Дулмаа', 'Сүхбаатар', 'Ёндон', 'Батсүхийн')],
+                         ['バト', 'ドルジ', 'ウラーンバータル', 'ドゥルマー', 'スフバータル', 'ヨンドン', 'バトスヒーン'])
+
+    def test_korean(self):
+        from dragoman.korean.katakana import katakana
+        self.assertEqual([katakana(w) for w in ('민수', '김철수', '서울', '경희', '최', '민기', '대구')],
+                         ['ミンス', 'キムチョルス', 'ソウル', 'キョンヒ', 'チェ', 'ミンギ', 'テグ'])
+        self.assertEqual([katakana(w) for w in ('한국어', '감사합니다', '좋아요', '학교', '같이', '신라', '독립', '아빠',
+                                                 '맛있어요', '괜찮아요', '김밥')],
+                         ['ハングゴ', 'カムサハムニダ', 'チョアヨ', 'ハッキョ', 'カチ', 'シルラ', 'トンニプ', 'アッパ',
+                          'マシッソヨ', 'クェンチャナヨ', 'キムバプ'])   # 連音・鼻音化・流音化・口蓋音化・濃音
+
     def test_hawaiian(self):
         from dragoman.hawaiian.phonology import katakana
         self.assertEqual([katakana(w) for w in ('Hawaiʻi', 'Kalākaua', 'Kamehameha')],
