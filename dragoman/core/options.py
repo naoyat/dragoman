@@ -38,6 +38,7 @@ COMMON = (
     Option('kana-wa', value='KANA', help='カタカナ読みの [wa]: ワ (既定) / ウァ (西洋古典学の慣習: ミネルウァ)'),
     Option('kana-si', value='KANA', help='カタカナ読みの [si]・[zi]: スィ (既定。[ʃi] の「シ」と分ける) / シ (慣用)'),
     Option('kana-oe', value='KANA', help='カタカナ読みの [ø]・[œ] (ö・eu): エ (既定: Niinistö → ニーニステ) / オ (ニーニスト)'),
+    Option('kana-accent', value='ACCENT', help='英語のカタカナ読みの発音: us (既定。米音、CMUdict) / gb (英音、espeak-ng)'),
     Option('no-explain', help='初学者向けの解説 (動詞の型・語根など) を出さない'),
     Option('english-glosses', help='英語の訳語 (Wiktionary などの語義) を日本語に置き換えない'),
     Option('sentence-per-line', help='改行も文の区切りにする (歌詞・詩など、行末に句点の無い行。\n'
@@ -57,7 +58,7 @@ COMMON = (
 # ラテン語のコマンド (latin/main.py) が受け付ける共通のオプション (-r・--no-explain などはラテン語では使わない。
 # --sentence-per-line は入口 main.py が処理する) と、ラテン語だけのもの
 LATIN_COMMON = ('no-word-detail', 'descendants', 'etymology', 'speech', 'tts', 'html', 'pdf', 'marks', 'legend',
-                'provenance', 'compare', 'gaps', 'help', 'kana', 'kana-only', 'kana-long', 'kana-wa', 'kana-si', 'kana-oe')
+                'provenance', 'compare', 'gaps', 'help', 'kana', 'kana-only', 'kana-long', 'kana-wa', 'kana-si', 'kana-oe', 'kana-accent')
 LATIN = tuple(o for o in COMMON if o.long in LATIN_COMMON) + (
     Option('no-translation', 'q', help='訳 (日本語) を表示しない'),
     Option('capital-to-macron', 'm', help='[対話モード] 大文字の母音を長母音として読む (A → ā)'),

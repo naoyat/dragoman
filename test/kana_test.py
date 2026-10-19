@@ -134,6 +134,19 @@ class LanguageKatakanaTestCase(unittest.TestCase):
                          ['ハングゴ', 'カムサハムニダ', 'チョアヨ', 'ハッキョ', 'カチ', 'シルラ', 'トンニプ', 'アッパ',
                           'マシッソヨ', 'クェンチャナヨ', 'キムバプ'])   # 連音・鼻音化・流音化・口蓋音化・濃音
 
+    def test_english(self):
+        from dragoman.english import katakana as en
+        if not en.available():
+            self.skipTest('CMUdict も espeak-ng も無い')
+        words = ('about', 'water', 'car', 'think', 'music', 'nation', 'table', 'happy', 'cat', 'here', 'more',
+                 'horse', 'bird', 'sing', 'beautiful', 'little', 'the')
+        self.assertEqual([en.katakana(w) for w in words],
+                         ['アバウト', 'ウォーター', 'カー', 'スィンク', 'ミューズィック', 'ネイション', 'テイブル', 'ハッピー',
+                          'キャット', 'ヒア', 'モア', 'ホース', 'バード', 'スィング', 'ビューティフル', 'リットル', 'ザ'])
+        if en.shutil.which('espeak-ng'):
+            self.assertEqual([en.katakana(w, accent='gb') for w in ('hot', 'water', 'doctor', 'more', 'fire')],
+                             ['ホット', 'ウォーター', 'ドクター', 'モー', 'ファイア'])   # 英音
+
     def test_hawaiian(self):
         from dragoman.hawaiian.phonology import katakana
         self.assertEqual([katakana(w) for w in ('Hawaiʻi', 'Kalākaua', 'Kamehameha')],

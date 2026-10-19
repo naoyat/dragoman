@@ -85,6 +85,12 @@ dragoman に頼めるよう、外から呼びやすい口を用意する。
      ク・ッ・プ・ン・ム・ル。共通の規則に `labial_glide`（子音 + w + 母音 → ファ・トゥィ）とパッチムの記号（k̚ t̚ p̚ m̚ ɭ ɴ）を足した。
      語をまたぐ連音と ㄴ の添加（서울역 → ソウルリョク）はまだ
    * これで `core/katakana_names.py` の言語ごとの規則は使わなくなった（`latin()` は espeak-ng の無いときのフランス語・ドイツ語の予備）
+   * （済 2026-10-20）英語 `english/katakana.py`: 米音は CMUdict（$DRAGOMAN_DATA/en/cmudict.dict、BSD 系）の ARPABET、辞書に
+     無い語と英音（`accent='gb'`、`--kana-accent=gb`）は espeak-ng の IPA を ARPABET に読み替えて。あいまい母音は綴りの母音字
+     （アバウト・レモン・ネイション、-le は母音を書かない: テイブル・リットル、-ful → フル、the → ザ）、母音の後ろの r は長音に寄せる
+     （カー・バード・ウォーター、ほかの母音の後ろは「ア」: ヒア・ケア・モア、子音の前の ɔr は「オー」: ホース）、k・g + æ は
+     「キャ」「ギャ」、強勢のある短い母音の後ろは「ッ」（キャット・ブリッジ・ハッピー）、二重母音は2つの母音（メイク・ゴウ）。
+     米音のはたき音 [ɾ]（water [ˈwɔɾɚ]）は t のまま
 4. 外から呼ぶ口（関数・コマンド）。
    * （済 2026-10-19）コマンド: `./dragoman.py LANG --kana`（見出しの下にカタカナ読み）・`--kana-only`（読みだけ）、
      `--kana-long=phonemic|phonetic`・`--kana-wa=ワ|ウァ`。語の区切りは空白。言語のコマンドの `katakana(analysis, kana_options)`

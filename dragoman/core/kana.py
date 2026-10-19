@@ -132,13 +132,13 @@ def _consonant(ph):
 
 
 def kana(phonemes, long='phonemic', wa='ワ', final_sokuon=False, si='スィ', liquid_sokuon=False, labial_glide=False,
-         oe='エ'):
+         oe='エ', accent=None):
     """IPA の音素の列 (または IPA の文字列) → カタカナ。long='phonemic' なら ː だけ「ー」、'phonetic' なら ˑ も「ー」。
     wa は [wa] の書き方 (「ワ」か「ウァ」)。si は [si]・[zi] の書き方 (「スィ」「ズィ」か、慣用の「シ」「ジ」)。final_sokuon なら、短い母音の後ろの語末の無声閉鎖音の前に「ッ」
     (Juliette → ジュリエット。日本語の耳に近い書き方。ラテン語の amat は「アマト」のまま)。liquid_sokuon なら重子音の l・r も
     「ッ」(フィンランド語・トルコ語の長い子音: Ville → ヴィッレ)。labial_glide なら子音 + w + 母音をウ段 + 小さい母音
     (韓国語: 화 → ファ、뒤 → トゥィ。既定では k・g だけ: クァ)。oe は [ø]・[œ] の段 (「エ」: Niinistö → ニーニステ、
-    「オ」: ニーニスト)"""
+    「オ」: ニーニスト)。accent は英語の設定 (english/katakana.py が使う。ここでは使わない)"""
     if isinstance(phonemes, str):
         phonemes = split_ipa(phonemes)
     if oe == 'オ':   # [ø]・[œ] をオ段に (印はそのまま: øː → oː)
