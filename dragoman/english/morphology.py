@@ -76,7 +76,7 @@ GLOSSES = {
     ('man', 'noun'): '男', ('woman', 'noun'): '女', ('boy', 'noun'): '少年', ('girl', 'noun'): '少女',
     ('cat', 'noun'): '猫', ('dog', 'noun'): '犬', ('day', 'noun'): '日', ('time', 'noun'): '時間',
     ('people', 'noun'): '人々', ('station', 'noun'): '駅', ('garden', 'noun'): '庭',
-    ('very', 'adv'): 'とても', ('here', 'adv'): 'ここで', ('there', 'adv'): 'そこで', ('now', 'adv'): '今',
+    ('very', 'adv'): 'とても', ('ever', 'adv'): '今までに', ('here', 'adv'): 'ここで', ('here', 'adv'): 'ここで', ('there', 'adv'): 'そこで', ('now', 'adv'): '今',
     ('today', 'noun'): '今日', ('tomorrow', 'noun'): '明日', ('yesterday', 'noun'): '昨日', ('also', 'adv'): '〜も',
     ('always', 'adv'): 'いつも', ('often', 'adv'): 'しばしば', ('again', 'adv'): '再び', ('only', 'adv'): '〜だけ',
     ('well', 'adv'): '上手に', ('yes', 'adv'): 'はい', ('home', 'adv'): '家に', ('together', 'adv'): '一緒に',
@@ -128,7 +128,7 @@ def gloss(lemma, pos):
     key = (lemma.lower(), pos)
     if key in GLOSSES:
         return GLOSSES[key], 'ja'
-    for p in ((pos, 'name') if pos == 'noun' else (pos,)):
+    for p in ((pos, 'name') if pos == 'noun' else ('name', 'noun') if pos == 'name' else (pos,)):
         found = en_ja.lookup(lemma, p) or (en_ja.lookup(lemma.lower(), p) if lemma != lemma.lower() else [])
         if found:
             return ','.join(found[:2]), 'ja'

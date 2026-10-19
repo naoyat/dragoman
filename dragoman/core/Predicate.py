@@ -73,6 +73,18 @@ class Predicate (LatinObject):
         """言語の設定 (Language.particle) で決まる、格の枠の語の助詞。決まらなければ None (既定の助詞)"""
         return self.language.particle(case, obj, self) if self.language.particle else None
 
+    def _asks_other_than_subject(self):
+        """主語のほかに疑問詞がある (副詞・目的語・前置詞句の中)"""
+        from .Question import is_interrogative
+        nodes = list(self.modifiers) + ([self.conjunction] if self.conjunction else [])
+        for case, objs in self.case_slot.items():
+            if case != 'Nom':
+                for obj in objs:
+                    nodes += list(getattr(obj, 'words', [])) if isinstance(obj, PrepClause) else [obj]
+        nodes += [m for n in nodes if isinstance(n, Word) for m in getattr(n, 'modifiers', [])]   # which book の which
+        return any(isinstance(n, Word) and (is_interrogative(n) or n.items and n.items[0].attrib('interrogative'))
+                   for n in nodes)
+
     def _negative(self):
         """否定の副詞 (nōn, не, нет, οὐ, na) がある文か"""
         if self.first_item.attrib('negative'):
@@ -175,6 +187,13 @@ class Predicate (LatinObject):
             # 繋辞の文で冠詞の付いた主格があれば、それが主語 (ギリシア語: θεὸς ἦν ὁ λόγος「ことばは神であった」)
             articled = [o for o in nom_objs if self.is_sum and _has_article(o)]
             focused = [o for o in nom_objs if self.is_sum and self._particle('Nom', o)]
+            from .Question import is_interrogative
+            asked = [o for o in nom_objs if self.is_sum and (is_interrogative(o) or isinstance(o, Word) and o.items and
+                                                             o.items[0].attrib('complement'))]
+            others = [o for o in nom_objs if o not in asked]
+            if asked and others and all(_nominal(o) for o in others):   # 主語になれる名詞句があるときだけ
+                # 疑問詞・解析器が補語と決めた語は補語 (Who is that man? → その男は誰であるか、he is a doctor の doctor)
+                articled = [o for o in nom_objs if o not in asked]
             if focused and len(focused) < len(nom_objs):
                 # 言語の設定で主題「は」になる句 (タガログ語の ang、ハワイ語の ʻo) を主語に (He kumu ʻo ia「彼は先生である」)
                 articled = focused
@@ -228,6 +247,8 @@ class Predicate (LatinObject):
             nom_case_ja = 'が'
             if self.is_sum and not self.subordinate and (not is_existential or is_existential == 'personal'):
                 nom_case_ja = 'は'
+            if getattr(self, 'question', False) and self._asks_other_than_subject():
+                nom_case_ja = 'は'   # 疑問詞のある疑問文の主語は主題 (あなたは どこで 住むか、駅は どこに あるか)
             nom_particle = next((p for p in (self._particle('Nom', o) for o in self.case_slot.get('Nom', [])) if p), None)
             if nom_particle:
                 nom_case_ja = nom_particle  # 言語の設定で決まる主格の助詞 (タガログ語の焦点「は」)
@@ -364,6 +385,9 @@ class Predicate (LatinObject):
         if verb.attrib('wish') and verb.attrib('gloss_lang', 'ja') == 'ja':
             # 祈願の接続法 (古英語の sī þīn nama ġehālgod「君の名前が神聖にされるように」。解析器が印を付けたものだけ)
             verb_tr = ','.join(v + 'ように' for v in verb_tr.split(','))
+        if getattr(self, 'question', False) and not flag & Verb.IMPERATIVE:
+            # 直接疑問 (住むか・来たか)。補語の訳語の候補 (医者,医師である) は最後にだけ
+            verb_tr = verb_tr + 'か' if self.is_sum and sum_complement else ','.join(v + 'か' for v in verb_tr.split(','))
         tr.append(verb_tr)
 
 #        tr.append(self.first_item.ja )
@@ -444,6 +468,8 @@ def copula_translation(obj, tense, negated):
     elif '}' in gloss:
         cut = gloss.rindex('}') + 1
         modifier, head = gloss[:cut], gloss[cut:]
+    if head.endswith('が') and len(head) > 1 and isinstance(obj, Word) and obj.items and obj.items[0].pos == 'pronoun':
+        head = head[:-1]   # 助詞まで入った訳語 (quis「誰が」→ 誰である)
     if not head:
         # 括った並列 ({匂い,香り}と{形,型,姿}) など: 名詞の述語の形 (である / ではない / であった) を後ろに
         return gloss + copula_predicate('〇', False, tense, negated)[1:]

@@ -36,6 +36,22 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('There is a cat in the garden.'), '庭に / 猫が / いる')
         self.assertEqual(self.ja('The man who lives here is my teacher.'), '{ここで 住む}男は / 私の先生,教師である')
 
+    def test_questions(self):
+        self.assertEqual(self.ja('Where do you live?'), 'どこで / あなたは / 住むか')   # 疑問詞のある疑問文の主語は「は」
+        self.assertEqual(self.ja('Do you like cats?'), 'あなたが / 猫を / 好むか')
+        self.assertEqual(self.ja('Who is that man?'), 'その男は / 誰であるか')         # 疑問詞は補語
+        self.assertEqual(self.ja('How old are you?'), 'あなたは / 何歳であるか')
+        self.assertEqual(self.ja('What are you talking about?'), 'あなたは / 何について / 話しているか')   # 取り残された前置詞
+        self.assertEqual(self.ja('Have you ever been to Japan?'), '今までに / あなたが / 日本[へ,に] / 行ったか')
+
+    def test_indirect_questions(self):
+        self.assertEqual(self.ja("I don't know what you're talking about."),
+                         '私が / {あなたが 何について 話している}かを / 知らない')
+        self.assertEqual(self.ja('Do you know who wrote this book?'),
+                         'あなたが / {誰が この{本,書物}を 書いた,著作した}かを / 知っているか')
+        self.assertEqual(self.ja('I wonder whether he will come.'), '私が / {彼が 来るだろう}かどうかを / 不思議に思う,驚く')
+        self.assertEqual(self.ja('Tell me where you live.'), '私に / {どこで あなたが 住む}かを / 話せ,伝えろ')
+
     def test_detect(self):
         from dragoman.main import detect
         for text in ('The boy reads a book.', 'Do you like cats?', "John's sister can speak Japanese."):

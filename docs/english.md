@@ -29,6 +29,13 @@ spaCy の品詞（Penn Treebank）・原形・依存関係で語の項目を作�
   は1つの述語に
 * 句動詞（give up）は英和の表に句があればその訳
 * there is / are は「〜がある」、not・n't・never は否定、関係代名詞（who・which・that）は関係節
+* 疑問文（2026-10-20）: 文末の ? で主節の動詞に「か」（共通の解析器: どの言語も。Do you like cats? → あなたが / 猫を / 好むか）。
+  疑問詞のある疑問文の主語は主題「は」（Where do you live? → どこで / あなたは / 住むか）、繋辞の文の疑問詞は補語（Who is
+  that man? → その男は / 誰であるか）。how old「何歳」・how many「いくつの」、取り残された前置詞（What are you talking
+  about? → 何について）、have been to「〜へ行った」
+* 間接疑問: know・ask・wonder・tell など（core/Question.py の QUESTION_VERBS）の目的語の、疑問詞（who・what・where・
+  whether …）で始まる節（I don't know what you're talking about → 私が / {あなたが 何について 話している}かを / 知らない、
+  whether は「かどうか」）。従属節の最初の語に節の頭の印（clause_start）を付け、共通の解析器が動詞の間の語をそこで分ける
 
 言語の推定: the か、英語らしい語（and, of, to, you, is …）が2つ以上か、John's・don't の形があれば英語。
 
@@ -38,5 +45,5 @@ docs/katakana.md の「英語」を見よ。米音（既定）は CMUdict、英�
 
 ## まだできないこと
 
-* 疑問文の訳（Do you like cats? →「あなたが猫を好む」のまま）、間接疑問（what you are talking about）
+* 副詞節（when・because …）は節を分けて並べるだけ（〜するとき / 彼女が / 来た）
 * 評価（UD English-EWT）はまだ

@@ -68,10 +68,10 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('He kaʻa koʻu.'), '私には / 車が / ある,いる')
         self.assertEqual(self.ja('Naʻu kēia puke.'), 'この本は / 私のものである')
         self.assertEqual(self.ja('Loaʻa iaʻu ke kaʻa.'), '車が / 私に / ある,手に入る')
-        self.assertEqual(self.ja('He aha kēia?'), 'これは / 何である')
-        self.assertEqual(self.ja('ʻO wai kou inoa?'), '君の名前は / 何である')
-        self.assertEqual(self.ja('Ua hele ʻoe i hea?'), '君が / どこ[に,へ] / 行った')
-        self.assertEqual(self.ja('No ke aha ʻoe i hele ai?'), 'なぜ / 君が / 行った')
+        self.assertEqual(self.ja('He aha kēia?'), 'これは / 何であるか')
+        self.assertEqual(self.ja('ʻO wai kou inoa?'), '君の名前は / 何であるか')
+        self.assertEqual(self.ja('Ua hele ʻoe i hea?'), '君は / どこ[に,へ] / 行ったか')
+        self.assertEqual(self.ja('No ke aha ʻoe i hele ai?'), 'なぜ / 君が / 行ったか')
 
     def test_bible_1868(self):
         """1868年の聖書 (パブリックドメイン。ʻokina・長音符の無い綴り) の節"""

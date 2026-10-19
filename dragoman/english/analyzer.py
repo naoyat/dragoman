@@ -46,6 +46,7 @@ ENGLISH = language.Language(
     objects_follow_verb=True,
     infinitive_objects_follow=True,
     possessor_cases=(),
+    question_moods=('indicative',),   # 間接疑問の節の動詞は直説法 (I don't know what you want)
 )
 
 
@@ -108,6 +109,8 @@ def _case(token):
     dep = token.dep_
     if dep in ('nsubj', 'nsubjpass', 'attr', 'csubj', 'expl'):
         return ('Nom',)
+    if dep == 'dobj' and any(c.dep_ in ('dobj', 'ccomp', 'xcomp') and c.i > token.i for c in token.head.children):
+        return ('Dat',)   # 2つ目の目的語・節の前の人は与格 (Tell me where you live、ask him to come)
     if dep in ('dobj', 'oprd'):
         return ('Acc',)
     if dep == 'dative':
@@ -126,7 +129,9 @@ def _noun_data(token):
     proper = token.tag_ in ('NNP', 'NNPS')
     if proper:
         lemma = text
-    ja, gloss_lang = morphology.gloss(lemma, 'noun')
+    ja, gloss_lang = morphology.gloss(lemma, 'name') if proper else (None, None)   # 名前を先に (Japan → 日本。japan「漆」でなく)
+    if ja is None:
+        ja, gloss_lang = morphology.gloss(lemma, 'noun')
     if ja is None and lemma != text:
         ja, gloss_lang = morphology.gloss(text, 'noun')
     if proper and ja is None:
@@ -137,6 +142,8 @@ def _noun_data(token):
             'gloss_lang': gloss_lang or 'en', 'main': True, '_': morphology.cngs(_case(token), number)}
     if proper:
         data['proper'] = True
+    if token.dep_ == 'attr':
+        data['complement'] = True   # 繋辞の補語 (he is a doctor の doctor)
     return data
 
 
@@ -151,6 +158,8 @@ def item_of(token, doc):
     lower = text.lower()
     if pos == 'PUNCT' or text in PUNCTUATION:
         return None
+    if lower in ('whether', 'if') and (lower == 'whether' or token.dep_ == 'mark' and token.head.dep_ in ('ccomp', 'dobj')):
+        return {'surface': text, 'pos': 'adv', 'base': 'whether', 'ja': '', 'gloss_lang': 'ja'}   # 〜かどうか (間接疑問)
     if tag == 'POS':   # 所有格の 's (前の名詞を「〜の」に: possessives)
         return {'surface': text, 'pos': 'particle', 'base': "'s", 'ja': '', 'gloss_lang': 'ja', 'possessive_mark': True}
     if tag == 'EX':    # there is「〜がある」の there
@@ -173,9 +182,20 @@ def item_of(token, doc):
             token.head.dep_ in ('relcl', 'acl'):
         return {'surface': text, 'pos': 'pronoun', 'base': lower, 'ja': '〜するところの', 'gloss_lang': 'ja',
                 'desc': '関係代名詞', '_': morphology.cngs(_case(token)), 'compact': True}
+    if lower == 'how' and token.head.pos_ in ('ADJ', 'ADV') and token.dep_ == 'advmod':
+        return {'surface': text, 'pos': 'adv', 'base': 'how', 'ja': 'どれくらい', 'gloss_lang': 'ja', 'interrogative': True}
+    if tag == 'WRB' and token.head.dep_ == 'advcl' and lower in morphology.CONJUNCTIONS:
+        return {'surface': text, 'pos': 'conj', 'base': lower, 'ja': morphology.CONJUNCTIONS[lower], 'gloss_lang': 'ja',
+                'not_interrogative': True}   # 副詞節の when (I saw her when she came)
+    if lower == 'where' and token.head.lemma_ == 'be':
+        return {'surface': text, 'pos': 'adv', 'base': lower, 'ja': 'どこに', 'gloss_lang': 'ja'}   # Where is …?「どこにあるか」
     if tag == 'WRB' and lower in morphology.QUESTION_ADVERBS and token.dep_ != 'advmod' or \
             tag == 'WRB' and lower in morphology.QUESTION_ADVERBS and token.head.dep_ != 'relcl':
         return {'surface': text, 'pos': 'adv', 'base': lower, 'ja': morphology.QUESTION_ADVERBS[lower], 'gloss_lang': 'ja'}
+    if tag == 'WDT' and token.dep_ == 'det':
+        return {'surface': text, 'pos': 'pronoun', 'base': lower, 'ja': morphology.DETERMINERS.get(lower, lower),
+                'gloss_lang': 'ja', 'desc': '不定形容詞', '_': morphology.cngs(morphology.ALL_CASES), 'compact': True,
+                'determiner': True, 'interrogative': True}   # which book・what color
     if tag == 'DT' or tag == 'PDT':
         if lower in morphology.DETERMINERS and token.dep_ in ('det', 'predet') or lower in morphology.ARTICLES:
             ja = morphology.DETERMINERS.get(lower, '')
@@ -191,8 +211,11 @@ def item_of(token, doc):
         ja, person, number, cases = morphology.PRONOUNS.get(lower) or (lower, 3, 'sg', morphology.ALL_CASES)
         if len(cases) > 1:
             cases = tuple(c for c in _case(token) if c in cases) or cases
-        return {'surface': text, 'pos': 'pronoun', 'base': lower, 'ja': ja, 'gloss_lang': 'ja', 'person': person,
+        data = {'surface': text, 'pos': 'pronoun', 'base': lower, 'ja': ja, 'gloss_lang': 'ja', 'person': person,
                 'number': number, '_': morphology.cngs(cases, number), 'compact': True}
+        if tag == 'WP':
+            data['desc'] = '疑問代名詞'   # 直接疑問・間接疑問の who・what (関係代名詞は上で)
+        return data
     if pos == 'ADP' or tag == 'IN' and token.dep_ == 'prep' or tag == 'TO':
         if token.dep_ == 'mark' or tag == 'IN' and token.dep_ not in ('prep', 'agent', 'dative', 'prt') and \
                 lower in morphology.CONJUNCTIONS:
@@ -286,6 +309,10 @@ def merge_verbs(words, doc):
                 forms.append('進行形 (be + 現在分詞)')
             elif lemma == 'have' and token.tag_ == 'VBN':
                 finite = finite or a
+                if data.get('lemma') == 'be' and any(c.dep_ == 'prep' and c.text.lower() == 'to' for c in token.children):
+                    ja, gloss_lang = morphology.gloss('go', 'verb')   # have been to「〜へ行った」
+                    data.update(lemma='be (go)', pres1sg='go', base='be (go)', ja=ja, gloss_lang=gloss_lang)
+                    data.pop('existential', None)
                 data['tense'] = 'pluperfect' if a.attrib('tense') == 'perfect' else 'perfect'
                 forms.append('%s (have + 過去分詞)' % ('過去完了' if a.attrib('tense') == 'perfect' else '現在完了'))
             elif lemma == 'do':
@@ -300,7 +327,8 @@ def merge_verbs(words, doc):
         if finite is not None:
             data.update(person=finite.attrib('person'), number=finite.attrib('number'))
         data['mood'] = 'indicative' if data.get('mood') in ('participle', 'infinitive') else data.get('mood')
-        data.pop('existential', None) if data.get('lemma') != 'be' else None
+        if data.get('lemma') != 'be':
+            data.pop('existential', None)
         if forms:
             data['form'] = '・'.join(forms)
         surfaces = [by_i[a.i].surface for a in sorted(auxes, key=lambda t: t.i) if a.i in by_i] + [main_word.surface]
@@ -362,6 +390,40 @@ def _masu(verb):
         return verb
 
 
+CLAUSE_DEPS = ('ccomp', 'advcl', 'relcl', 'csubj', 'acl')
+
+
+def clause_starts(words, doc):
+    """従属節 (ccomp・advcl・relcl …) の最初の語に節の頭の印 (共通の解析器が動詞の間の語をそこで分ける:
+    I don't know | what you're talking about)"""
+    by_i = {w.doc_i: w for w in words}
+    for token in doc:
+        if token.dep_ not in CLAUSE_DEPS:
+            continue
+        start = min(t.i for t in token.subtree)
+        for i in range(start, token.i + 1):
+            item = _item(by_i.get(i)) if by_i.get(i) is not None else None
+            if item is not None:
+                item.item['clause_start'] = True
+                break
+
+
+def stranded_prepositions(words, doc):
+    """取り残された前置詞 (what are you talking about の about): 目的語 (前にある疑問詞・関係詞) の直前に移す"""
+    by_i = {w.doc_i: w for w in words}
+    for token in doc:
+        if token.dep_ != 'pobj' or token.head.i <= token.i or token.head.i not in by_i or token.i not in by_i:
+            continue
+        prep, obj = by_i[token.head.i], by_i[token.i]
+        if _pos(prep) != 'preposition':
+            continue
+        words.remove(prep)
+        words.insert(words.index(obj), prep)
+        if _item(obj) is not None and _item(obj).attrib('clause_start'):
+            _item(prep).item['clause_start'] = True
+    return words
+
+
 def phrasal_verbs(words, doc):
     """句動詞 (give up・look after の副詞の部分): 英和の表に句動詞があれば動詞の訳に、無ければ副詞は落とす"""
     by_i = {w.doc_i: w for w in words}
@@ -392,6 +454,33 @@ def possessives(words):
                 owner.items = [type(o)(dict(o.item, pos='pronoun', ja=ja + 'の', determiner=True, desc='不定形容詞',
                                             _=morphology.cngs(morphology.ALL_CASES), compact=True))]
                 owner.surface += w.surface
+            w.merged_into = True
+            continue
+        out.append(w)
+    return out
+
+
+HOW_ADJECTIVES = {'old': '何歳', 'many': 'いくつ', 'much': 'いくら', 'long': 'どれくらいの長さ', 'far': 'どれくらいの距離'}
+
+
+def how_adjectives(words):
+    """how old「何歳」・how many「いくつ」など: how を落とし、形容詞を疑問詞の補語に (How old are you? → あなたは何歳であるか)"""
+    out = []
+    for k, w in enumerate(words):
+        item = _item(w)
+        nxt = words[k + 1] if k + 1 < len(words) else None
+        n = _item(nxt) if nxt is not None else None
+        if item is not None and item.attrib('base') == 'how' and n is not None and n.attrib('base') in HOW_ADJECTIVES and \
+                n.attrib('predicative'):
+            nxt.items = [type(n)(dict(n.item, pos='pronoun', ja=HOW_ADJECTIVES[n.attrib('base')], desc='疑問代名詞',
+                                      complement=True, gloss_lang='ja', _=morphology.cngs(('Nom',))))]
+            nxt.surface = w.surface + ' ' + nxt.surface
+            w.merged_into = True
+            continue
+        if item is not None and item.attrib('base') == 'how' and n is not None and n.attrib('base') in ('many', 'much'):
+            nxt.items = [type(n)(dict(n.item, ja='いくつの' if n.attrib('base') == 'many' else 'どれくらいの',
+                                      gloss_lang='ja', interrogative=True))]   # how many books「いくつの本」
+            nxt.surface = w.surface + ' ' + nxt.surface
             w.merged_into = True
             continue
         out.append(w)
@@ -452,10 +541,13 @@ def lookup_all(surfaces):
         words.append(word)
     global _display
     _display = list(words)
+    clause_starts(words, doc)
+    words = stranded_prepositions(words, doc)
     words = merge_verbs(words, doc)
     words = control_verbs(words, doc)
     phrasal_verbs(words, doc)
     words = possessives(words)
+    words = how_adjectives(words)
     existential_there(words)
     words = [w for w in words if _pos(w) != 'particle']
     words = attach_articles(words)

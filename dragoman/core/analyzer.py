@@ -1007,6 +1007,15 @@ def _apposition_case(word, target):
     return case if case == 'Voc' or proper else None
 
 
+def _clause_start(node):
+    """解析器が節の頭の印 (clause_start) を付けた語か、その語で始まる前置詞句"""
+    if isinstance(node, Word):
+        return bool(node.items) and bool(node.items[0].attrib('clause_start'))
+    if isinstance(node, PrepClause):
+        return bool(node.item.attrib('clause_start')) or any(_clause_start(w) for w in node.words[:1])
+    return False
+
+
 def _group_by_verbs(words, verbs_ix, trace):
     """動詞が複数あるとき、語を動詞ごとのグループに分ける"""
     M = len(words)
@@ -1023,6 +1032,9 @@ def _group_by_verbs(words, verbs_ix, trace):
         fr = groups[i][-1] + 1
         to = groups[i+1][0] - 1
         if fr > to: continue
+        if fr == to and _clause_start(words[fr]):
+            groups[i+1] = [fr] + groups[i+1]   # 節の頭の語は後ろの動詞に (Do you know | who wrote this book?)
+            continue
         if fr == to:
             # 動詞の間の1語: 目的語が動詞の後ろに来る言語 (ロシア語・ヘブライ語) は前の動詞に、ほかは後ろの動詞に
             # (以前はどちらにも入らず落ちていた: וַיֹּאמֶר אֱלֹהִים יְהִי אוֹר の אֱלֹהִים)
@@ -1037,6 +1049,11 @@ def _group_by_verbs(words, verbs_ix, trace):
             if words[j].surface == ',':
                 well_divided_at = j
                 break
+        if well_divided_at is None:
+            for j in range(fr, to+1):
+                if _clause_start(words[j]):
+                    well_divided_at = j-1   # 解析器が節の頭と決めた語 (英語の I know | what you want)
+                    break
         if well_divided_at is None:
             for j in range(fr, to+1):
                 if isinstance(words[j], Word) and is_relative(words[j]) and j > fr:
@@ -1267,6 +1284,19 @@ def _relative_with_antecedent(word, words_by_index):
     nouns = [item for item in before.items if item.pos in ('noun', 'pronoun') and item._]
     return any((n, g) == (n2, g2) or g2 == 'c' for r in relatives for _, n, g in r._
                for noun in nouns for _, n2, g2 in noun._)
+
+
+QUESTION_MARKS = ('?', '？', ';', '؟', '՞')   # ギリシア語の ; ・アラビア文字の ؟
+
+
+def mark_direct_question(surfaces, clauses):
+    """文末の疑問符: 最後の主節の述語を疑問に (訳の動詞に「か」: Where do you live? → どこで / あなたが / 住むか)"""
+    marks = [s for s in surfaces if s and s.strip()]
+    if not marks or marks[-1] not in QUESTION_MARKS or not clauses:
+        return
+    if marks[-1] == ';' and language.current().name != 'grc':
+        return   # ; を疑問符に使うのはギリシア語だけ
+    clauses[-1].predicate.question = True
 
 
 def detect_indirect_questions(clauses, trace):
@@ -1778,6 +1808,7 @@ def analyze_words(surfaces, words, word_details=None, trace=None):
             clauses.append(Clause(nodes[verbs_ix[i]], not_solved))
     clauses, questions = detect_indirect_questions(clauses, trace)
     clauses, relatives = detect_relative_clauses(clauses, trace, words)
+    mark_direct_question(surfaces, clauses)
 
     return SentenceAnalysis(
         surfaces=list(surfaces), words=words, word_details=word_details,

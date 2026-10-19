@@ -21,18 +21,26 @@ QUESTION_VERBS = {'rogō', 'interrogō', 'quaerō', 'requīrō', 'exquīrō', 's
                   # ギリシア語
                   'ἐρωτάω', 'ἔρομαι', 'πυνθάνομαι', 'οἶδα', 'γιγνώσκω', 'ἐπίσταμαι', 'ἀγνοέω', 'μανθάνω', 'ὁράω',
                   'ἀκούω', 'λέγω', 'φράζω', 'δηλόω', 'διδάσκω', 'θαυμάζω', 'σκοπέω', 'ἀπορέω', 'βουλεύω', 'εἶπον',
-                  'αἰσθάνομαι', 'ἐννοέω', 'σκέπτομαι', 'ζητέω', 'ἐξετάζω'}
+                  'αἰσθάνομαι', 'ἐννοέω', 'σκέπτομαι', 'ζητέω', 'ἐξετάζω',
+                  # 英語 (原形)
+                  'ask', 'know', 'wonder', 'tell', 'see', 'understand', 'remember', 'forget', 'decide', 'explain',
+                  'show', 'learn', 'find', 'guess', 'imagine', 'say', 'care', 'doubt', 'check', 'discover', 'notice',
+                  'hear', 'think', 'realize', 'realise', 'consider', 'figure out', 'find out'}
 # 疑問の副詞・形容詞 (疑問代名詞 quis / quid は辞書の desc で見分ける)
 INTERROGATIVES = {'cūr', 'quārē', 'quōmodo', 'quemadmodum', 'unde', 'quō', 'quā', 'quotiēns', 'quandō',
                   'utrum', 'num', 'nōnne', 'quantus', 'quālis', 'quot', 'uter', 'ubi', 'quam',
                   # ギリシア語 (直接の形と間接の形 ὅπως・ὅπου …、εἰ「〜かどうか」)
                   'πῶς', 'ποῦ', 'πότε', 'πόθεν', 'ποῖ', 'πόσος', 'ποῖος', 'πότερον', 'ὅπως', 'ὅπου', 'ὁπότε', 'ὁπόθεν',
-                  'ὅποι', 'ὁπόσος', 'ὁποῖος', 'ὁπότερον', 'εἰ'}
+                  'ὅποι', 'ὁπόσος', 'ὁποῖος', 'ὁπότερον', 'εἰ',
+                  # 英語 (疑問代名詞 who・what は desc で)
+                  'where', 'when', 'why', 'how', 'whether'}
 
 
 def is_interrogative(word):
     """疑問代名詞 (quis, quid …) か、疑問の副詞 (cūr, quōmodo …) の語"""
     items = getattr(word, 'items', None) or []
+    if any(item.attrib('not_interrogative') for item in items):
+        return False   # 解析器が接続詞と決めたもの (英語の副詞節の when)
     if any(item.pos == 'pronoun' and item.attrib('desc') == '疑問代名詞' for item in items):
         return True
     if any(item.attrib('base') == 'ὅστις' for item in items):
@@ -51,4 +59,6 @@ class QuestionClause(LatinObject):
 
     def translate(self):
         inner, _ = self.predicate.translate()
-        return ('{' + inner.replace(' / ', ' ') + '}かを', False)
+        whether = getattr(self.word, 'surface', '').lower() in ('whether', 'if', 'εἰ')
+        inner = ' '.join(part for part in inner.split(' / ') if part.strip())
+        return ('{' + inner + ('}かどうかを' if whether else '}かを'), False)
