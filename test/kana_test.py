@@ -115,6 +115,9 @@ class SentenceKanaTestCase(unittest.TestCase):
             'Les enfants sont arrivés.': 'レ ザンファン ソン タリヴェ',               # リエゾンは次の語の頭に
             'Il y avait une femme.': 'イリヤヴェ テュヌ ファム',
             'Antoine et Étienne.': 'アントワーヌ エ エティエンヌ',                   # 綴りでも読む語末の子音は動かさない
+            'Il est arrivé.': 'イレ タリヴェ',                                         # il・elle + 母音は1語
+            'Elle aime Paris.': 'エレム パリ',
+            'Ils ont un chien.': 'イル ゾン タン シャン',
         }
         for text, expected in cases.items():
             self.assertEqual(' '.join(fr.sentence(text)), expected, text)

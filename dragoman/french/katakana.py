@@ -10,7 +10,7 @@
 #   - 鼻母音は「ン」(ɛ̃・œ̃ も今のフランス語の音 [æ̃] に近いのでアン: Vincent → ヴァンサン)。鼻母音は長くしない (Jean → ジャン)
 #   - あいまい母音 ə はウ段 (le → ル、je → ジュ、que → ク、de → ドゥ)
 #   - 文は文全体を espeak-ng に渡して語ごとに (sentence。y → i、m'aimes → mɛm)。リエゾンの子音は次の語の頭に (Les enfants →
-#     レ ザンファン)、il y a は1語「イリヤ」
+#     レ ザンファン)、il y a は1語「イリヤ」、il・elle + 母音で始まる語も1語 (il est → イレ、elle est → エレ)
 #   - 子音 + w + a は「ソワ」(oi)、子音 + w + i は「ルイ」(ui)
 #   - 音素としての長母音は無いので、長さは実際の発音の長さ (ˑ。既定は long='phonetic'): 強勢のある (最後の音節の) 母音のうち、
 #     語末の o・ø・ɑ (Rousseau → ルソー) と、語末の r・z・ʒ・v の前 (Pierre → ピエール)、o・ø・ɑ の後ろの語末の子音の前
@@ -86,9 +86,13 @@ def _french_vowel(p):
 SILENT_ENDINGS = {'z': ('s', 'x', 'z'), 't': ('t', 'd'), 'p': ('p',)}   # リエゾンで読む、ふだんは読まない語末の字
 
 
-def sentence_words(text):
-    """文全体を espeak-ng に渡した発音を、語ごとの音素の列に (文の中の読み: y → i、m'aimes → mɛm)。
-    リエゾンの子音 (le-z enfants の z、sont arrivés の t) は次の語の頭に、il y a は1語「イリヤ」に"""
+ENCHAINEMENT = ('il', 'ɛl')   # 母音で始まる次の語と続けて1語に読む代名詞 (il est → イレ、elle est → エレ)
+
+
+def _sentence_groups(text):
+    """(語の音素の列, 頭に続けた語の音素の数) の列。文全体を espeak-ng に渡した発音を、語ごとの音素の列に (文の中の読み: y → i、m'aimes → mɛm)。
+    リエゾンの子音 (le-z enfants の z、sont arrivés の t) は次の語の頭に、il y a は1語「イリヤ」に、
+    il・elle + 母音で始まる語も1語に (il est → イレ、elle aime → エレム)"""
     spellings = [w.lower().strip('.,;:!?') for w in text.split() if any(c.isalpha() for c in w)]
     words = [split_ipa(w) for w in ipa(text).split()]
     words = [[p for p in w if p not in ('ˈ', 'ˌ')] for w in words]
@@ -109,10 +113,10 @@ def sentence_words(text):
             words[k] = w[:-1]
             if consonant:
                 words[k + 1] = split_ipa(consonant) + nxt
-        elif len(w) > 1 and w[-1] in LIAISON and _is_vowel(w[-2]) and nxt and _is_vowel(nxt[0]) and \
-                (_nasal(w[-2]) or _silent(w[-1], spellings[k] if len(spellings) == len(words) else '')):
-            # リエゾン (sont arrivés → ソン タリヴェ、avait une → …ヴェ テュヌ)。綴りでも読む語末の子音はそのまま
-            # (Antoine et → アントワーヌ エ、petite amie → プティット アミ)
+        elif len(w) > 1 and w[-1] in LIAISON and nxt and _is_vowel(nxt[0]) and \
+                ((_is_vowel(w[-2]) and _nasal(w[-2])) or _silent(w[-1], spellings[k] if len(spellings) == len(words) else '')):
+            # リエゾン (sont arrivés → ソン タリヴェ、avait une → …ヴェ テュヌ、ils ont → イル ゾン)。綴りでも読む語末の子音は
+            # そのまま (Antoine et → アントワーヌ エ、petite amie → プティット アミ)
             words[k], words[k + 1] = w[:-1], [w[-1]] + nxt
     # il y a (il i a) → ilja「イリヤ」
     merged = []
@@ -120,12 +124,21 @@ def sentence_words(text):
     while k < len(words):
         if ''.join(words[k]) == 'il' and k + 2 < len(words) and ''.join(words[k + 1]) == 'i' and \
                 words[k + 2] and _is_vowel(words[k + 2][0]):
-            merged.append(['i', 'l', 'i', 'j'] + words[k + 2])   # イ・リ・ヤ (「リャ」にしない)
+            merged.append((['i', 'l', 'i', 'j'] + words[k + 2], 4))   # イ・リ・ヤ (「リャ」にしない)
             k += 3
             continue
-        merged.append(words[k])
+        if ''.join(words[k]) in ENCHAINEMENT and k + 1 < len(words) and words[k + 1] and _is_vowel(words[k + 1][0]):
+            merged.append((words[k] + words[k + 1], len(words[k])))   # il est → イレ、elle a → エラ
+            k += 2
+            continue
+        merged.append((words[k], 0))
         k += 1
-    return [w for w in merged if w]
+    return [(w, head) for w, head in merged if w]
+
+
+def sentence_words(text):
+    """文の発音を語ごとの音素の列に (_sentence_groups の語の列だけ)"""
+    return [w for w, _ in _sentence_groups(text)]
 
 
 def _silent(consonant, spelling):
@@ -167,9 +180,9 @@ def sentence(text, long='phonetic', **options):
         return [latin(w, 'fr') for w in text.split()]
     options.setdefault('final_sokuon', True)
     spellings = _merge_il_y([w for w in text.split() if any(c.isalpha() for c in w)])
-    words = sentence_words(text)
+    groups = _sentence_groups(text)
     out = []
-    for n, w in enumerate(words):
+    for n, (w, head) in enumerate(groups):
         fixed = []
         for k, p in enumerate(w):   # 子音 + w + 母音: oi は「オワ」、ui は「ウイ」
             p = _french_vowel(p)
@@ -179,19 +192,26 @@ def sentence(text, long='phonetic', **options):
                 fixed += ['o', 'w'] if nxt[:1] in ('a', 'ɑ') else ['u']
                 continue
             fixed.append(p)
-        spelling = spellings[n].lower().strip('.,;:!?') if len(spellings) == len(words) else ''
-        out.append(kana(_final_nasal(_lengthen(fixed), spelling), long=long, **options))
+        spelling = spellings[n].lower().strip('.,;:!?') if len(spellings) == len(groups) else ''
+        # 長さと語末の n・m は続けた語の後ろの語だけで見る (elle aime → エレム)
+        out.append(kana(fixed[:head] + _final_nasal(_lengthen(fixed[head:]), spelling.split()[-1] if spelling else ''),
+                        long=long, **options))
     return out
 
 
 def _merge_il_y(spellings):
-    """綴りの語の列も il y a を1語に (発音の語の列と数を揃えて、語末の -nne・-mme を綴りで見る)"""
+    """綴りの語の列も il y a・il est・elle est を1語に (発音の語の列と数を揃えて、語末の -nne・-mme を綴りで見る)"""
     out = []
     k = 0
     while k < len(spellings):
         if spellings[k].lower() == 'il' and k + 2 < len(spellings) and spellings[k + 1].lower() == 'y':
             out.append(' '.join(spellings[k:k + 3]))
             k += 3
+            continue
+        if spellings[k].lower() in ('il', 'elle') and k + 1 < len(spellings) and \
+                unicodedata.normalize('NFD', spellings[k + 1].lower())[:1] in tuple('aeiouyh'):
+            out.append(' '.join(spellings[k:k + 2]))
+            k += 2
             continue
         out.append(spellings[k])
         k += 1

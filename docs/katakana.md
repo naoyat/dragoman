@@ -62,7 +62,7 @@ dragoman に頼めるよう、外から呼びやすい口を用意する。
      分け方（`split_ipa`）・鼻母音の「ン」・`final_sokuon` の設定を足した
    * （済 2026-10-19）フランス語の文（`french/katakana.sentence`）: 文全体を espeak-ng に渡し、語ごとに（y → i、m'aimes → メム）。
      ə はウ段（ル・ジュ・ク）、リエゾンの子音は次の語の頭に（レ ザンファン、ソン タリヴェ。綴りでも読む語末の子音は動かさない:
-     アントワーヌ エ）、il y a は1語「イリヤ」。語末の [n]・[m] の前を長くするのは2音節以上（une → ユヌ、femme → ファム）
+     アントワーヌ エ。ils ont → イル ゾン）、il y a は1語「イリヤ」、il・elle + 母音で始まる語も1語（イレ・エレ・エラビット）。語末の [n]・[m] の前を長くするのは2音節以上（une → ユヌ、femme → ファム）
 4. 外から呼ぶ口（関数・コマンド）。
    * （済 2026-10-19）コマンド: `./dragoman.py LANG --kana`（見出しの下にカタカナ読み）・`--kana-only`（読みだけ）、
      `--kana-long=phonemic|phonetic`・`--kana-wa=ワ|ウァ`。語の区切りは空白。言語のコマンドの `katakana(analysis, kana_options)`
