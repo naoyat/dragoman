@@ -80,5 +80,31 @@ class LanguageKatakanaTestCase(unittest.TestCase):
                          ['ハワイイ', 'カラーカウア', 'カメハメハ'])
 
 
+class SentenceKanaTestCase(unittest.TestCase):
+    """文のカタカナ読み (--kana): 言語のコマンドの katakana (解析で選んだ読みの綴りから)"""
+
+    def test_latin(self):
+        from dragoman.latin import latindic, analyzer, main
+        latindic.load()
+
+        class Options:
+            kana_options = {}
+        a = next(analyzer.analyze_text('Gallia est omnis divisa in partes tres.'))
+        self.assertEqual(main.latin_kana(a, Options()), 'ガリア エスト オムニス ディーウィーサ イン パルテース トレース')
+        a = next(analyzer.analyze_text('Senatus populusque Romanus.'))
+        self.assertEqual(main.latin_kana(a, Options()), 'セナートゥス ポプルスクェ ローマーヌス')   # 後接語 -que
+
+    def test_hawaiian_and_old_english(self):
+        from dragoman.hawaiian import analyzer as haw, command as haw_command
+        from dragoman.oldenglish import analyzer as ang, command as ang_command, dictionary as ang_dictionary
+        from dragoman.hawaiian import dictionary as haw_dictionary
+        if haw_dictionary.available():
+            a = next(haw.analyze_text('Aloha au ia oe.'))
+            self.assertEqual(' '.join(haw_command.katakana(a, {})), 'アロハ アウ イアー オエ')   # 印の無い ia は iā
+        if ang_dictionary.available():
+            a = next(ang.analyze_text('He forlet þa burh.'))
+            self.assertEqual(' '.join(ang_command.katakana(a, {})), 'ヘー フォルレート サー ブルフ')
+
+
 if __name__ == '__main__':
     unittest.main()

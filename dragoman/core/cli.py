@@ -25,6 +25,9 @@ class Options:
     tts: str = None
     voice: str = None
     romanize: bool = False
+    kana: bool = False              # 見出しの下にカタカナ読み (--kana)
+    kana_only: bool = False         # カタカナ読みだけ (--kana-only)
+    kana_options: dict = field(default_factory=dict)   # カタカナの設定 (long・wa)
     explain: bool = True
     sentence_per_line: bool = False
     html: str = None                # ノートの HTML の書き出し先
@@ -48,6 +51,7 @@ class Command:
     header: object = None           # (analysis, options) → 見出しの行。無ければ語を並べるだけ
     speech_text: object = None      # (analysis, options) → 音読に渡す文
     romanize: object = None         # 語の転写の関数 (-r)
+    katakana: object = None         # (analysis, kana_options) → 語ごとのカタカナ読みの列 (--kana)
     explain: object = None          # (word) → 解説の行
     descendant_langs: tuple = ('en', 'ja')
     fallback_langs: tuple = ()
@@ -114,6 +118,14 @@ def parse(command, argv):
             options.speech, options.tts = True, arg
         elif option in ('-r', '--romanize'):
             options.romanize = True
+        elif option == '--kana':
+            options.kana = True
+        elif option == '--kana-only':
+            options.kana = options.kana_only = True
+        elif option == '--kana-long':
+            options.kana_options['long'] = arg
+        elif option == '--kana-wa':
+            options.kana_options['wa'] = arg
         elif option == '--no-explain':
             options.explain = False
         elif option == '--sentence-per-line':
@@ -201,9 +213,16 @@ def run(command, argv=None, texts=None):
                 gaps.add(analysis)
         print(gaps.report())
         return
+    if options.kana and command.katakana is None:
+        print('(%s のカタカナ読みはまだありません)' % command.name, file=sys.stderr)
     for text in texts:
         for analysis in command.analyzer.analyze_text(text):
             line = command.header(analysis, options) if command.header else ' '.join(analysis.surfaces)
+            kana_line = kana_text(command, analysis, options)
+            if options.kana_only:   # カタカナ読みだけ
+                print(line)
+                print('  カナ: %s' % kana_line if kana_line is not None else '  (カタカナ読みはまだありません)')
+                continue
             if notebook is not None:
                 rendered = None
                 if command.render:   # 独自の表示の言語 (古文など): 表示をそのままノートに
@@ -217,6 +236,8 @@ def run(command, argv=None, texts=None):
                              romanize=command.romanize if options.romanize else None, rendered=rendered)
                 continue
             render.render_sentence_header(line)
+            if kana_line is not None:
+                print('  カナ: %s' % kana_line)
             if speech:
                 speech.say_latin(command.speech_text(analysis, options) if command.speech_text
                                  else ' '.join(analysis.surfaces))
@@ -231,6 +252,13 @@ def run(command, argv=None, texts=None):
                 speech.pause_while_speaking()
     if notebook is not None:
         save_notebook(notebook, options, command.lang)
+
+
+def kana_text(command, analysis, options):
+    """文のカタカナ読み (語ごとに空白で区切る)。--kana が無いか、言語のカタカナ読みが無ければ None"""
+    if not options.kana or command.katakana is None:
+        return None
+    return ' '.join(k for k in command.katakana(analysis, dict(options.kana_options)) if k)
 
 
 def compare_langs(value):

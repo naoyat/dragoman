@@ -38,6 +38,27 @@ def latin_word_notes(options):
     return notes
 
 
+def latin_kana(analysis, options):
+    """文のカタカナ読み (--kana): 解析で選んだ読みの綴り (マクロン付き: 格の決まった Gallia・dīvīsa) を、語ごとに発音から
+    (latin/katakana.py)。辞書に無い語はマクロンを推定して"""
+    import re
+    from .katakana import katakana
+    out = []
+    for word in analysis.words:
+        if not re.search('[A-Za-z]', word.surface):
+            continue
+        spelling = (word.items[0].attrib('surface') if word.items else None) or word.surface
+        if not word.items and not re.search('[āēīōūȳ]', spelling):
+            spelling = macronizer.macronize_text(spelling).strip()
+        for enclitic in ('que', 'ne', 've'):   # 後接語 (virumque の -que) は解析の綴りに無いので元の語から
+            if word.surface.lower().endswith(enclitic) and not spelling.lower().endswith(enclitic) and \
+                    len(word.surface) > len(enclitic) + 1:
+                spelling += enclitic
+                break
+        out.append(katakana(spelling, **options.kana_options))
+    return ' '.join(out)
+
+
 def analyse_text(text, options):
     if options.auto_macron_mode:
         # マクロンの無い入力にマクロンを推定して付けてから解析する
@@ -50,8 +71,15 @@ def analyse_text(text, options):
             options.notebook.add(analysis, word_notes=latin_word_notes(options),
                                  show_word_detail=options.show_word_detail, show_translation=options.show_translation)
             continue
+        kana_line = latin_kana(analysis, options) if getattr(options, 'kana', False) else None
+        if getattr(options, 'kana_only', False):   # カタカナ読みだけ
+            print(analysis.text)
+            print('  カナ: %s' % kana_line)
+            continue
         if options.echo_on:
             render.render_sentence_header(analysis.text)
+        if kana_line is not None:
+            print('  カナ: %s' % kana_line)
         if options.speech_mode:
             speak_latin.say_latin(analysis.text)
 
@@ -234,10 +262,20 @@ class Options:
         self.compare = None
         self.notebook = None
         self.gaps = None   # 穴の一覧 (--gaps)
+        self.kana = self.kana_only = False   # カタカナ読み (--kana・--kana-only)
+        self.kana_options = {}
 
         for option, arg in opts:
             if option in ('-w', '--no-word-detail'):
                 self.show_word_detail = False
+            elif option == '--kana':
+                self.kana = True
+            elif option == '--kana-only':
+                self.kana = self.kana_only = True
+            elif option == '--kana-long':
+                self.kana_options['long'] = arg
+            elif option == '--kana-wa':
+                self.kana_options['wa'] = arg
             elif option in ('-q', '--no-translation'):
                 self.show_translation = False
             elif option in ('-m', '--capital-to-macron'):

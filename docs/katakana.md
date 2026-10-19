@@ -61,3 +61,9 @@ dragoman に頼めるよう、外から呼びやすい口を用意する。
      「ンヌ」: アンヌ。ほかは前を長く: セリーヌ）、語末の閉鎖音の前の「ッ」（ジュリエット）。共通の規則には IPA の文字列の
      分け方（`split_ipa`）・鼻母音の「ン」・`final_sokuon` の設定を足した
 4. 外から呼ぶ口（関数・コマンド）。
+   * （済 2026-10-19）コマンド: `./dragoman.py LANG --kana`（見出しの下にカタカナ読み）・`--kana-only`（読みだけ）、
+     `--kana-long=phonemic|phonetic`・`--kana-wa=ワ|ウァ`。語の区切りは空白。言語のコマンドの `katakana(analysis, kana_options)`
+     が、解析で選んだ読みの綴り（ラテン語の格の決まったマクロン付きの形、古英語・ハワイ語の辞書の綴り）から語ごとに作る。
+     ラテン語の入口（latin/main.py）にも同じ選択肢
+   * 関数: 言語ごとの `katakana(word, **options)`（latin/katakana.py・greek/katakana.py・sanskrit/katakana.py・
+     french/katakana.py・oldenglish/phonology.py・hawaiian/phonology.py）と、共通の `core.kana.kana(phonemes or ipa, …)`

@@ -104,10 +104,16 @@ def speech_text(analysis, options):
     return phonology.espeak_words(analyzer.spelled(analysis))
 
 
+def katakana(analysis, kana_options):
+    """カタカナ読み (--kana): 解析で選んだ読みの綴り (ʻokina・長音符付き) の発音から (hawaiian/phonology.katakana)"""
+    from .phonology import katakana as kana
+    return [kana(s, **kana_options) for s in analyzer.spelled(analysis) if any(c.isalpha() for c in s)]
+
+
 def available():
     return None if dictionary.available() else 'no Hawaiian dictionary (python3 tools/build_hawaiian_dic.py)'
 
 
 COMMAND = Command(lang='haw', name='ハワイ語', analyzer=analyzer, dictionary=dictionary, available=available,
                   usage=USAGE, header=lambda a, o: original(a), speech_text=speech_text, render=render,
-                  descendant_langs=('en',), speech_lang='haw')
+                  descendant_langs=('en',), speech_lang='haw', katakana=katakana)

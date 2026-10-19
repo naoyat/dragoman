@@ -40,6 +40,13 @@ def original(analysis):
     return text
 
 
+def katakana(analysis, kana_options):
+    """カタカナ読み (--kana): 元の文の語ごとに espeak-ng の発音から (french/katakana.py。l'allocution は1語で)"""
+    from .katakana import katakana as kana
+    words = getattr(analysis, 'original', None) or analysis.surfaces
+    return [kana(w, **kana_options) for w in words if any(c.isalpha() for c in w)]
+
+
 def available():
     if not morphology.available():
         return 'no French model or data (python3 -m spacy download fr_core_news_sm; python3 tools/build_french_dic.py)'
@@ -48,4 +55,4 @@ def available():
 
 COMMAND = Command(lang='fr', name='フランス語', analyzer=analyzer, dictionary=dictionary, available=available,
                   usage=USAGE, header=lambda a, o: original(a), speech_text=lambda a, o: original(a), explain=explain,
-                  descendant_langs=('en', 'ja'), speech_lang='fr')
+                  descendant_langs=('en', 'ja'), speech_lang='fr', katakana=katakana)

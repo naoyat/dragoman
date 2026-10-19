@@ -42,10 +42,16 @@ def speech_text(analysis, options):
     return phonology.espeak_words(analyzer.spelled(analysis))
 
 
+def katakana(analysis, kana_options):
+    """カタカナ読み (--kana): 解析で選んだ読みの辞書の綴り (長音符付き) の発音から (oldenglish/phonology.katakana)"""
+    from .phonology import katakana as kana
+    return [kana(s, lemma, **kana_options) for s, lemma in analyzer.spelled(analysis) if any(c.isalpha() for c in s)]
+
+
 def available():
     return None if dictionary.available() else 'no Old English dictionary (python3 tools/build_oldenglish_dic.py)'
 
 
 COMMAND = Command(lang='ang', name='古英語', analyzer=analyzer, dictionary=dictionary, available=available,
                   usage=USAGE, header=lambda a, o: original(a), speech_text=speech_text, explain=explain,
-                  descendant_langs=('en',))
+                  descendant_langs=('en',), katakana=katakana)

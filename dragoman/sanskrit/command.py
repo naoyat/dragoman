@@ -21,6 +21,16 @@ def header(analysis, options):
     return '%s  (%s)' % (original, script.devanagari(script.to_slp1(original)))
 
 
+def _has_letter(w):
+    return any(c.isalpha() for c in w)
+
+
+def katakana(analysis, kana_options):
+    """カタカナ読み (--kana): 語ごとに発音から (sanskrit/katakana.py)"""
+    from .katakana import katakana as kana
+    return [kana(w, **kana_options) for w in analysis.surfaces if _has_letter(w)]
+
+
 def handle_option(option, arg, options):
     if option == '--compound-labels':
         if arg not in compound.LABEL_STYLES:
@@ -45,4 +55,4 @@ def available():
 COMMAND = Command(lang='sa', name='サンスクリット', analyzer=analyzer, dictionary=dictionary, available=available,
                   usage=USAGE, header=header, descendant_langs=('pi', 'hi', 'en', 'ja'), fallback_langs=('bn', 'mr'),
                   options=OPTIONS,
-                  handle_option=handle_option)
+                  handle_option=handle_option, katakana=katakana)

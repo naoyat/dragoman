@@ -28,6 +28,16 @@ def handle_option(option, arg, options):
     return False
 
 
+def _has_letter(w):
+    return any(c.isalpha() for c in w)
+
+
+def katakana(analysis, kana_options):
+    """カタカナ読み (--kana): 語ごとにアッティカ方言の再建音から (greek/katakana.py)"""
+    from .katakana import katakana as kana
+    return [kana(w, **kana_options) for w in analysis.surfaces if _has_letter(w)]
+
+
 def available():
     return None if dictionary.available() else 'no Greek dictionary (python3 tools/build_greek_dic.py)'
 
@@ -36,4 +46,4 @@ COMMAND = Command(lang='grc', name='古典ギリシア語', analyzer=analyzer, d
                   usage=USAGE, header=header, romanize=greek_romanize.romanize_word,
                   descendant_langs=('la', 'en', 'fr'), fallback_langs=('it', 'es'),
                   speech_pron=lambda options: options.extra.get('pron', 'attic'),
-                  options=OPTIONS, notes=NOTES, handle_option=handle_option)
+                  options=OPTIONS, notes=NOTES, handle_option=handle_option, katakana=katakana)
