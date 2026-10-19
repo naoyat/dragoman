@@ -42,6 +42,12 @@ def available():
     return None
 
 
+def katakana(analysis, kana_options):
+    """カタカナ読み (--kana): espeak-ng の発音から語ごとに (german/katakana.sentence)"""
+    from .katakana import sentence
+    return sentence(original(analysis), **kana_options)
+
+
 COMMAND = Command(lang='de', name='ドイツ語', analyzer=analyzer, dictionary=dictionary, available=available,
                   usage=USAGE, header=lambda a, o: original(a), speech_text=lambda a, o: original(a), explain=explain,
-                  descendant_langs=('en', 'ja'), speech_lang='de')
+                  descendant_langs=('en', 'ja'), speech_lang='de', katakana=katakana)

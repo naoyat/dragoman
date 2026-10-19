@@ -74,6 +74,23 @@ class LanguageKatakanaTestCase(unittest.TestCase):
                          ['エマニュエル', 'ヴァンサン', 'フランソワ', 'ジュリエット', 'ピエール', 'セリーヌ', 'アンヌ',
                           'ルソー', 'ジャン', 'ユグ'])
 
+    def test_german(self):
+        from dragoman.german import katakana as de
+        if not de.available():
+            self.skipTest('espeak-ng が無い')
+        self.assertEqual([de.katakana(w) for w in ('Heinrich', 'Müller', 'Mozart', 'Bach', 'Zürich', 'Freud', 'Hamburg',
+                                                   'Nietzsche', 'Deutschland', 'Wolfgang', 'Mutter', 'Buch')],
+                         ['ハインリヒ', 'ミュラー', 'モーツァルト', 'バッハ', 'ツューリヒ', 'フロイト', 'ハンブルク',
+                          'ニーチェ', 'ドイチュラント', 'ヴォルフガング', 'ムッター', 'ブーフ'])
+
+    def test_russian(self):
+        from dragoman.russian.katakana import katakana
+        self.assertEqual([katakana(w) for w in ('Москва́', 'молоко́', 'Пу́тин', 'Татья́на', 'ма́ть', 'во́дка', 'вокза́л',
+                                                 'сего́дня', 'нахо́дится', 'Дми́трий', 'Че́хов', 'А́нна')],
+                         ['マスクヴァー', 'マラコー', 'プーチン', 'タチヤーナ', 'マチ', 'ヴォトカ', 'ヴァグザル',
+                          'シヴォードニャ', 'ナホージッツァ', 'ドミートリー', 'チェーハフ', 'アンナ'])
+        self.assertEqual(katakana('Москва́', long='phonemic'), 'マスクヴァ')
+
     def test_hawaiian(self):
         from dragoman.hawaiian.phonology import katakana
         self.assertEqual([katakana(w) for w in ('Hawaiʻi', 'Kalākaua', 'Kamehameha')],
@@ -93,6 +110,12 @@ class SentenceKanaTestCase(unittest.TestCase):
         self.assertEqual(main.latin_kana(a, Options()), 'ガリア エスト オムニス ディーウィーサ イン パルテース トレース')
         a = next(analyzer.analyze_text('Senatus populusque Romanus.'))
         self.assertEqual(main.latin_kana(a, Options()), 'セナートゥス ポプルスクェ ローマーヌス')   # 後接語 -que
+
+    def test_russian_sentence(self):
+        from dragoman.russian.katakana import sentence
+        self.assertEqual(sentence(['Ива́н', 'и', 'Ната́ша', 'живу́т', 'в', 'Москве́', '.']),
+                         ['イヴァン', 'イ', 'ナターシャ', 'ジヴト', 'ヴマスクヴェー'])   # в は次の語に続ける
+        self.assertEqual(sentence(['Он', 'не', 'зна́ет', '.']), ['オン', 'ニ', 'ズナーイト'])
 
     def test_hawaiian_and_old_english(self):
         from dragoman.hawaiian import analyzer as haw, command as haw_command

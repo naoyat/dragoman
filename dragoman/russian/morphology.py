@@ -195,8 +195,8 @@ def _item(parse):
         if proper:   # 名前・姓・父称・地名 (Иван・Петров・Москва)。訳が日本語でなければカタカナ (Иван → イヴァン)
             lemma = lemma[:1].upper() + lemma[1:]
             if gloss_lang != 'ja':
-                from dragoman.core.katakana_names import russian as katakana
-                ja, gloss_lang = katakana(lemma), 'ja'
+                from .katakana import katakana
+                ja, gloss_lang = katakana(stressed(lemma)), 'ja'   # 強勢の付いた綴りの発音から (Пу́тин → プーチン)
         item = {'pos': 'noun', 'base': lemma, 'ja': ja, 'gloss_lang': gloss_lang, '_': [cng]}
         if proper:
             item['proper'] = True

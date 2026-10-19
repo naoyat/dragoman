@@ -181,8 +181,8 @@ def item_of(token, doc):
         # 辞書の名前 (Hänsel・Gretel は NN と読まれる)。日本語の訳のある語 (Buch「本」。姓の Buch もある) は普通名詞
         proper = tag == 'NE' or (row or {}).get('pos') == 'name' and gloss_lang != 'ja'
         if proper and not diminutive and (ja is None or gloss_lang == 'en' and ja.split(',')[0] in (lemma, text)):
-            from dragoman.core.katakana_names import latin as katakana
-            ja, gloss_lang = katakana(lemma, 'de'), 'ja'   # 辞書に無い名前はカタカナ (Hänsel → ヘンゼル)
+            from .katakana import katakana
+            ja, gloss_lang = katakana(lemma), 'ja'   # 辞書に無い名前はカタカナ (Hänsel → ヘンゼル)
         data = {'surface': text, 'pos': 'noun', 'base': _base(lemma, row), 'lemma': lemma, 'ja': ja or text,
                 'gloss_lang': gloss_lang or 'en', '_': morphology.cngs(feats, (row or {}).get('gender')), 'main': True}
         if proper:

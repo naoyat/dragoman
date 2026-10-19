@@ -41,6 +41,13 @@ def available():
     return 'no Russian data (pip install pymorphy3 pymorphy3-dicts-ru, and python3 tools/build_russian_dic.py)'
 
 
+def katakana(analysis, kana_options):
+    """カタカナ読み (--kana): 強勢記号を付けた語の発音から語ごとに (russian/katakana.py)"""
+    from .katakana import sentence
+    return sentence([morphology.stressed(s) for s in analysis.surfaces if not s.startswith('(')], **kana_options)
+
+
 COMMAND = Command(lang='ru', name='ロシア語', analyzer=analyzer, dictionary=dictionary, available=available,
                   usage=USAGE, header=header, speech_text=lambda a, o: stressed_text(a.surfaces), romanize=romanized,
-                  descendant_langs=('en', 'ja', 'fr', 'de'), fallback_langs=('uk', 'be'), notes=NOTES)
+                  descendant_langs=('en', 'ja', 'fr', 'de'), fallback_langs=('uk', 'be'), notes=NOTES,
+                  katakana=katakana)
