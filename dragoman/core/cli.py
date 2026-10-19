@@ -118,7 +118,7 @@ def parse(command, argv):
             options.speech, options.tts = True, arg
         elif option in ('-r', '--romanize'):
             options.romanize = True
-        elif option == '--kana':
+        elif option in ('-k', '--kana'):
             options.kana = True
         elif option == '--kana-only':
             options.kana = options.kana_only = True

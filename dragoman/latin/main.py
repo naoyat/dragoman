@@ -268,7 +268,7 @@ class Options:
         for option, arg in opts:
             if option in ('-w', '--no-word-detail'):
                 self.show_word_detail = False
-            elif option == '--kana':
+            elif option in ('-k', '--kana'):
                 self.kana = True
             elif option == '--kana-only':
                 self.kana = self.kana_only = True
