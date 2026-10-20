@@ -141,6 +141,12 @@ class AnalyzerTestCase(unittest.TestCase):
                          '私たちの意見の多様さが / {ある人々が 他の人々より 理性的,正確である}ことからではなく='
                          '{〜だけ 私たちが 変化に富む{道,跡}[によって,を通って] 私たちの{考え,反射}を 導く}ことから / 来る')
 
+    def test_comparative_clauses(self):
+        self.assertEqual(self.ja("Ils n'ont point coutume d'en désirer plus qu'ils en ont."),
+                         '{{彼ら,それら}が それを 持つ}以上に / {彼ら,それら}が / それを / 強く望む習慣がない')   # 比較の節
+        self.assertEqual(self.ja('Il travaille plus que moi.'), '{彼,それ}が / 私より / もっと / 働く')   # 形容詞の無い比較
+        self.assertEqual(self.ja("Elle lit moins qu'elle écrit."), '{{彼女,それ}が 書く}より少なく / {彼女,それ}が / 読む')
+
     def test_adverbial_clauses(self):
         self.assertEqual(self.ja("Je reste à la maison parce qu'il pleut."), '{雨が降る}ので / 私が / 家[に,で] / とどまる')
         self.assertEqual(self.ja('Quand il arrive, nous mangeons.'), '{{彼,それ}が 着く}とき / 私たちが / 食べる')

@@ -530,6 +530,13 @@ def item_of(token, doc, fixed):
         ja, gloss_lang, _ = morphology.gloss(adj, 'adj')   # 繋辞の後ろの形容詞を副詞・名詞と読む誤り (Je suis content)
         return {'surface': text, 'pos': 'adj', 'base': adj, 'ja': ja or adj, 'gloss_lang': gloss_lang or 'en',
                 '_': morphology.cngs(morphology.CASES + ('Gen',), feats), 'main': True, 'predicative': True}
+    before = [t.text.lower() for t in doc[max(0, token.i - 2):token.i]]
+    if lower in ('que', "qu'") and token.dep_ == 'mark' and any(b in CLAUSE_COMPARATIVES for b in before) and \
+            token.head.pos_ in ('VERB', 'AUX') and token.head.i > token.i:
+        # 比較の節 (désirer plus qu'ils en ont「{彼らが それを 持つ}以上に 望む」): plus は節の形に入れて落とす
+        word = next(b for b in reversed(before) if b in CLAUSE_COMPARATIVES)
+        return {'surface': text, 'pos': 'conj', 'base': lower, 'ja': '〜より', 'gloss_lang': 'ja',
+                'clause_suffix': CLAUSE_COMPARATIVES[word], 'clause_tense': None, 'comparative_clause': word}
     if lower in ('que', "qu'") and token.dep_ == 'mark' and token.head.dep_ == 'ccomp':
         # 補文の que (Cela témoigne que …「{…}ことを 示す」): 共通の解析器が節を前の動詞の従属節にする (core/Adverbial.py)
         return {'surface': text, 'pos': 'conj', 'base': lower, 'ja': '〜ということ', 'gloss_lang': 'ja',
@@ -1037,6 +1044,25 @@ def negation(words):
     return out
 
 
+# 比較の節の que の前の語 → 節の後ろに付ける形
+CLAUSE_COMPARATIVES = {'plus': '以上に', 'davantage': '以上に', 'mieux': 'よりよく', 'moins': 'より少なく',
+                       'autant': 'と同じくらい', 'aussi': 'と同じくらい'}
+
+
+def comparative_clauses(words):
+    """比較の節の que の前の plus・moins … を落とす (que の節の形「以上に」に入れた)"""
+    out = list(words)
+    for k, w in enumerate(words):
+        item = _item(w)
+        if item is None or not item.attrib('comparative_clause'):
+            continue
+        for back in words[max(0, k - 2):k]:
+            if back.surface.lower() == item.attrib('comparative_clause') and back in out:
+                back.merged_into = True
+                out.remove(back)
+    return out
+
+
 def not_but(words):
     """ne … pas A, mais (seulement) B「A ではなく B」: 否定は A だけに掛かる。A と B が同じ前置詞の句なら、A の前置詞を
     「〜からではなく」に、mais と否定を落とす (ne vient pas de ce que …, mais seulement de ce que …「{…}ことからではなく
@@ -1220,6 +1246,17 @@ def comparatives(words):
             if lower == 'moins':   # 〜ほど大きくない
                 out.append(Word('(ne)', [{'surface': '(ne)', 'pos': 'adv', 'base': 'ne', 'ja': '〜ない', 'gloss_lang': 'ja',
                                          'negation': True}]))
+            continue
+        if lower in ('plus', 'moins', 'davantage') and pending is None and nxt is not None and \
+                nxt.surface.lower() in ('que', "qu'") and i + 2 < len(words) and _pos(words[i + 2]) in ('noun', 'pronoun') \
+                and words[i + 2].surface.lower() not in SUBJECT_CLITICS:   # que ils … は比較の節
+            # 形容詞の無い比較 (Il travaille plus que moi「私より もっと 働く」): plus は副詞のまま、que は「〜より」
+            pending = lower
+            item = _item(word)
+            if item is not None:
+                word.items = [type(item)(dict(item.item, pos='adv', ja='もっと' if lower != 'moins' else 'より少なく',
+                                              negative_word=None))]
+            out.append(word)
             continue
         if pending and lower in ('que', "qu'"):
             word.items = [type(_item(word))({'surface': word.surface, 'pos': 'preposition', 'base': 'que',
@@ -1722,6 +1759,7 @@ def lookup_all(surfaces):
     words = superlatives(words)   # 比較 (que のある文) より先に
     words = comparatives(words)
     words = negation(words)
+    words = comparative_clauses(words)
     words = not_but(words)
     words = impersonal_il(words)   # 動詞の組をまとめる前に (il faut partir の falloir で決める)
     words = impersonal_que(words)
