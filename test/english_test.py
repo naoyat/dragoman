@@ -22,7 +22,7 @@ class AnalyzerTestCase(unittest.TestCase):
     def test_cases_and_articles(self):
         self.assertEqual(self.ja('She gave me a beautiful flower.'), '彼女が / 私に / 美しい{花,草花}を / 与えた')
         self.assertEqual(self.ja("John's sister can speak Japanese."),
-                         'ジョンの{姉,妹}が / {日本語,日本の公用語}を / 話すことができる')
+                         'ジャンの{姉,妹}が / {日本語,日本の公用語}を / 話すことができる')
 
     def test_verb_groups(self):
         self.assertEqual(self.ja('The letter was written by my father.'),
@@ -56,7 +56,7 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('I saw her when she came.'), '{彼女が 来た}とき / 私が / 彼女を / 見た')
         self.assertEqual(self.ja('When she came, I saw her.'), '{彼女が 来た}とき / 私が / 彼女を / 見た')   # 文の頭の副詞節
         self.assertEqual(self.ja('If you study, you will pass the exam.'),
-                         '{あなたが 勉強する}なら / あなたが / 試験を / 通過するだろう,通り過ぎるだろう')
+                         '{あなたが 勉強する}なら / あなたが / 試験に / 受かるだろう')
         self.assertEqual(self.ja('He left after the meeting ended.'), '{{会議,会合}が 終わった,終了した}後で / 彼が / 去った')
         self.assertEqual(self.ja('Wash your hands before you eat.'),
                          '{あなたが 食べる,食事をする}前に / あなたの{手,針}を / 洗え,洗濯しろ')   # before の節は現在

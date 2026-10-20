@@ -78,8 +78,38 @@ def lookup(english, pos):
     for p in POS_GROUPS.get(pos, (pos,)):
         row = db.execute('SELECT ja FROM en_ja WHERE en = ? AND pos = ?', (phrase, p)).fetchone()
         if row:
-            return row[0].split(',')
+            return ranked(row[0].split(','))
     return []
+
+
+@functools.lru_cache(maxsize=100000)
+def commonness(japanese):
+    """日本語の訳語のよく使う度合い (JMdict の news1・ichi1 … と頻度の順位 nf から。0 は JMdict にあって印の無い語、
+    None は JMdict に無い語)"""
+    db = _connect()
+    if db is None:
+        return 0
+    try:
+        row = db.execute('SELECT score FROM common WHERE ja = ?', (japanese,)).fetchone()
+    except sqlite3.OperationalError:   # 古い表
+        return None
+    return row[0] if row else None
+
+
+def _rare(japanese):
+    """JMdict にあって、よく使う語の印の無い訳語 (JMdict に無い句の訳語 (不思議に思う) は数えない)"""
+    return commonness(japanese) == 0
+
+
+def ranked(japanese):
+    """訳語の候補の順: 辞書の順のまま、よく使う語の印 (JMdict) のある訳語を印の無い訳語より前に
+    (wait: 延期する,待つ → 待つ,延期する)。印の度合いの細かい差では並べ替えない (本・書物 はどちらも印がある)"""
+    if len(japanese) < 2:
+        return japanese
+    rare = [_rare(j) for j in japanese]
+    if all(rare) or not any(rare):
+        return japanese
+    return [j for j, r in zip(japanese, rare) if not r] + [j for j, r in zip(japanese, rare) if r]
 
 
 @functools.lru_cache(maxsize=100000)
@@ -165,3 +195,55 @@ def agrees(japanese, english, pos='noun'):
     back = {b for j in japanese_items for b in english_for(j)}
     return any(e in back or e.split(' ')[-1] in back for e in english_items)
 
+
+
+@functools.lru_cache(maxsize=20000)
+def phrasal(phrase):
+    """句動詞 → 日本語の訳語のリスト (give up → 諦める,見限る …。JMdict の英訳から: tools/build_en_ja.py)"""
+    db = _connect()
+    if db is None or not ENABLED:
+        return []
+    try:
+        row = db.execute('SELECT ja FROM phrasal WHERE phrase = ?', (key(phrase),)).fetchone()
+    except sqlite3.OperationalError:   # 古い表 (句動詞の表が無い)
+        return []
+    return row[0].split(',') if row else []
+
+
+@functools.lru_cache(maxsize=20000)
+def _verb_contexts(verb):
+    db = _connect()
+    if db is None:
+        return ()
+    try:
+        return tuple(db.execute('SELECT context, ja FROM verb_context WHERE verb = ?', (key(verb),)).fetchall())
+    except sqlite3.OperationalError:
+        return ()
+
+
+def _singular(word):
+    if len(word) > 4 and word.endswith('ies'):
+        return word[:-3] + 'y'
+    if len(word) > 3 and word.endswith('s') and not word.endswith('ss'):
+        return word[:-1]
+    return word
+
+
+def verb_in_context(verb, words):
+    """動詞と、その目的語・主語の語 (英語) → その場面の訳語のリスト (pass + exam → 受かる、take + medicine → 飲む)。
+    場面の語は JMdict の英訳の括弧の書き込み (to pass (examination))。短い形も前方一致で (exam → examination)"""
+    if not ENABLED:
+        return []
+    contexts = _verb_contexts(verb)
+    if not contexts:
+        return []
+    for word in words:
+        w = _singular(key(word))
+        for context, ja in contexts:
+            if context == w:
+                return ja.split(',')
+        if len(w) >= 4:
+            for context, ja in contexts:
+                if len(context) >= 4 and (context.startswith(w) or w.startswith(context)):
+                    return ja.split(',')
+    return []

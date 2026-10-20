@@ -43,6 +43,16 @@ spaCy の品詞（Penn Treebank）・原形・依存関係で語の項目を作�
 
 言語の推定: the か、英語らしい語（and, of, to, you, is …）が2つ以上か、John's・don't の形があれば英語。
 
+## 訳語（2026-10-20）
+
+* 動詞の訳語は目的語・主語の語で選ぶ: JMdict の英訳の括弧の書き込み（to pass (examination) → 受かる、to take (medicine) →
+  飲む、to pass (of time) → 経つ）から作った表（en-ja.sqlite の verb_context。tools/build_en_ja.py）。exam → examination の
+  ような短い形も前方一致で。自動詞の訳語の目的語は「に」（試験に受かる。自他は ja-transitivity.tsv）
+* 句動詞（give up → 諦める、run away → 逃げる、turn off → 止める・消す）・前置詞と組む動詞（look after「世話する」、
+  wait for「待つ」。前置詞の目的語は動詞の目的語に）は JMdict の英訳の句（phrasal の表）か GLOSSES から
+* 英和の表の訳語の順は、よく使う語の印（JMdict の news1・ichi1 …）の無い訳語を後ろに（core/en_ja.ranked。全言語に効く）
+* 人名（spaCy の固有表現 PERSON）は英語の読みのカタカナ（John → ジャン: 米音）、地名などは辞書の訳（Japan → 日本）
+
 ## カタカナ（`english/katakana.py`）
 
 docs/katakana.md の「英語」を見よ。米音（既定）は CMUdict、英音は `--kana-accent=gb`（espeak-ng）。

@@ -25,6 +25,13 @@ PUNCTUATION = {'.': 'period', '!': 'period', '?': 'question', '…': 'period', '
                "'": None, '‘': None, '’': None}
 
 
+def _particle(case, obj, predicate):
+    """自動詞の訳語の目的語は「に」(pass the exam → 試験に受かる。解析器が acc_particle を付けたもの)"""
+    if case == 'Acc':
+        return predicate.first_item.attrib('acc_particle')
+    return None
+
+
 def _root_items(lemma):
     ja, gloss_lang = morphology.gloss(lemma, 'verb')
     return [{'pos': 'verb', 'ja': ja, 'gloss_lang': gloss_lang}] if ja else []
@@ -40,6 +47,7 @@ ENGLISH = language.Language(
     case_particles={'Nom': 'が', 'Acc': 'を', 'Dat': 'に', 'Gen': 'の'},
     absolute_case=None,
     lookup=_root_items,
+    particle=_particle,
     dictionary=dictionary,
     pronoun_subject=True,
     genitive_follows_head=True,
@@ -116,7 +124,7 @@ def _case(token):
     if dep == 'dative':
         return ('Dat',)
     if dep == 'pobj':
-        return ('Gen',)
+        return ('Acc',) if _prepositional_verb(token.head) else ('Gen',)   # look after her brother の brother
     if dep == 'conj':
         return _case(token.head) if token.head.i != token.i else ('Nom', 'Acc')
     if dep == 'appos':
@@ -129,7 +137,12 @@ def _noun_data(token):
     proper = token.tag_ in ('NNP', 'NNPS')
     if proper:
         lemma = text
-    ja, gloss_lang = morphology.gloss(lemma, 'name') if proper else (None, None)   # 名前を先に (Japan → 日本。japan「漆」でなく)
+    person = proper and token.ent_type_ == 'PERSON'
+    # 地名などは辞書の名前を先に (Japan → 日本。japan「漆」でなく)。人名は英語の読みのカタカナ (John → ジョン。ヨハネでなく)
+    ja, gloss_lang = morphology.gloss(lemma, 'name') if proper and not person else (None, None)
+    if person:
+        from .katakana import katakana
+        ja, gloss_lang = katakana(text), 'ja'
     if ja is None:
         ja, gloss_lang = morphology.gloss(lemma, 'noun')
     if ja is None and lemma != text:
@@ -148,6 +161,28 @@ def _noun_data(token):
 
 
 WEATHER_VERBS = {'rain', 'snow', 'hail', 'thunder', 'drizzle', 'pour', 'freeze'}
+
+
+PARTICLES = ('up', 'down', 'out', 'off', 'away', 'back', 'in', 'on', 'over', 'around', 'along', 'through', 'forward')
+
+
+def _phrasal_particle(token):
+    """動詞に掛かる副詞のうち、句動詞の表にある組の副詞 (come back の back、run away の away)"""
+    from dragoman.core import en_ja
+    return token.text.lower() in PARTICLES and token.dep_ in ('advmod', 'prt') and token.head.pos_ in ('VERB', 'AUX') \
+        and bool(en_ja.phrasal(token.head.lemma_.lower() + ' ' + token.text.lower()))
+
+
+VERB_PREPOSITIONS = ('after', 'for', 'at', 'into')
+
+
+def _prepositional_verb(token):
+    """動詞と1つの訳語になる前置詞 (look after「世話をする」・wait for「待つ」)。前置詞の目的語は動詞の目的語に"""
+    from dragoman.core import en_ja
+    if token.text.lower() not in VERB_PREPOSITIONS or token.dep_ != 'prep' or token.head.pos_ != 'VERB':
+        return False
+    phrase = token.head.lemma_.lower() + ' ' + token.text.lower()
+    return (phrase, 'verb') in morphology.GLOSSES or bool(en_ja.phrasal(phrase))
 
 
 def _subordinator(text, lower, **extra):
@@ -236,7 +271,8 @@ def item_of(token, doc):
                 return _subordinator(text, lower)
             return {'surface': text, 'pos': 'conj', 'base': lower, 'ja': morphology.CONJUNCTIONS.get(lower, lower),
                     'gloss_lang': 'ja'}
-        if token.dep_ == 'prt':   # 句動詞の副詞 (give up の up): 動詞に付ける (phrasal_verbs)
+        if token.dep_ == 'prt' or _phrasal_particle(token) or _prepositional_verb(token):
+            # 句動詞の副詞 (give up の up)・前置詞 (look after の after): 動詞に付ける (phrasal_verbs)
             return {'surface': text, 'pos': 'particle', 'base': lower, 'ja': '', 'gloss_lang': 'ja', 'particle_of': token.head.i}
         return _preposition(text, lower)
     if pos == 'SCONJ' and token.dep_ == 'mark' and token.head.dep_ == 'advcl' and lower in morphology.SUBORDINATORS:
@@ -263,6 +299,8 @@ def item_of(token, doc):
     if tag == 'CD':
         return {'surface': text, 'pos': 'adj', 'base': text, 'ja': morphology.NUMBERS_JA.get(lower, text),
                 'gloss_lang': 'ja', '_': morphology.cngs(morphology.ALL_CASES)}
+    if _phrasal_particle(token):   # come back の back (spaCy は副詞と読む)
+        return {'surface': text, 'pos': 'particle', 'base': lower, 'ja': '', 'gloss_lang': 'ja', 'particle_of': token.head.i}
     if tag in ('RB', 'RBR', 'RBS', 'WRB', 'UH') or pos in ('ADV', 'INTJ', 'PART'):
         ja, gloss_lang = morphology.gloss(lower, 'adv')
         if ja is None:
@@ -454,9 +492,38 @@ def phrasal_verbs(words, doc):
         if v is None or v.pos != 'verb':
             continue
         phrase = '%s %s' % (v.attrib('lemma'), item.attrib('base'))
-        ja, gloss_lang = morphology.gloss(phrase, 'verb')
+        from dragoman.core import en_ja
+        found = en_ja.phrasal(phrase)   # JMdict の英訳の句動詞を先に (give up → 諦める)
+        ja, gloss_lang = (','.join(found[:2]), 'ja') if found else (None, None)
+        if (phrase, 'verb') in morphology.GLOSSES or not ja:
+            ja, gloss_lang = morphology.gloss(phrase, 'verb')
         if ja:
             verb.items = [type(v)(dict(v.item, lemma=phrase, base=phrase, ja=ja, gloss_lang=gloss_lang))]
+
+
+def verbs_in_context(words, doc):
+    """目的語・主語の語で動詞の訳語を選ぶ (pass the exam → 受かる、take medicine → 飲む、time passes → 経つ)"""
+    from dragoman.core import en_ja
+    by_i = {w.doc_i: w for w in words}
+    for token in doc:
+        word = by_i.get(token.i)
+        item = _item(word) if word is not None else None
+        if item is None or item.pos != 'verb' or ' ' in (item.attrib('lemma') or '') or item.attrib('modal_aux'):
+            continue
+        objects = [c.lemma_ for c in token.children if c.dep_ in ('dobj', 'nsubjpass')] + \
+            [c.lemma_ for c in token.children if c.dep_ == 'nsubj']
+        found = en_ja.verb_in_context(item.attrib('lemma'), objects) if objects else []
+        if found:
+            ja = ','.join(found[:2])
+            data = dict(item.item, ja=ja, gloss_lang='ja', context_gloss=True)
+            if _intransitive(found[0]) and any(c.dep_ == 'dobj' for c in token.children):
+                data['acc_particle'] = 'に'   # 試験に受かる (自動詞の訳語)
+            word.items = [type(item)(data)]
+
+
+def _intransitive(ja):
+    from dragoman.kobun.modernize import _transitivity
+    return _transitivity().get(ja) == {'vi'}
 
 
 def possessives(words):
@@ -561,9 +628,10 @@ def lookup_all(surfaces):
     _display = list(words)
     clause_starts(words, doc)
     words = stranded_prepositions(words, doc)
+    phrasal_verbs(words, doc)      # 訳語を決めてから助動詞とまとめる (can give up → 諦めることができる)
+    verbs_in_context(words, doc)
     words = merge_verbs(words, doc)
     words = control_verbs(words, doc)
-    phrasal_verbs(words, doc)
     words = possessives(words)
     words = how_adjectives(words)
     existential_there(words)
