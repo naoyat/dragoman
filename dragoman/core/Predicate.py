@@ -109,6 +109,9 @@ class Predicate (LatinObject):
         noms = case_slot.get('Nom', []) + (case_slot.get('Nom/Acc', []) if self.person() == 3 else [])
         if len(noms) != 1 or not _nominal(noms[0]) or case_slot.get('Acc'):
             return False  # 対格があれば存在文ではない (繋辞は対格を取らない)
+        if isinstance(noms[0], Word) and noms[0].items and noms[0].items[0].attrib('complement') and \
+                self.gap in ('Nom', 'Nom/Acc'):
+            return False  # 関係節の主語が空所で、残りは補語 (qui est ce qu'on nomme …「{…}ことである」)
         place = any(isinstance(case, tuple) for case in case_slot if case_slot[case]) or bool(case_slot.get('Loc'))
         possessor = any(case_slot.get(case) for case in self.language.possessor_cases)
         if self.first_item.attrib('existential'):
@@ -212,8 +215,10 @@ class Predicate (LatinObject):
                     # 形容詞（修飾語）の場合 (サンスクリットでは代名詞も名詞と同じく主語になる: tat tvam asi)
                     nominal = ('noun', 'pronoun') if self.language.pronoun_subject or getattr(obj, 'relatives', None) \
                         else ('noun',)   # 関係節の付いた代名詞は主語になる (Quae dīxistī, ea vēra sunt)
-                    if isinstance(obj, Word) and obj.items[0].pos not in nominal:
-                        # sum なら補語として
+                    if isinstance(obj, Word) and obj.items[0].pos not in nominal or \
+                            isinstance(obj, Word) and obj.items[0].attrib('complement') and \
+                            (len(nom_objs) > 1 or self.gap in ('Nom', 'Nom/Acc')):
+                        # sum なら補語として (解析器が補語と決めた語: 関係節 qui est ce qu'on nomme … の ce)
                         sum_complement.append(obj)
                     elif len(nom_objs) == 1 and self.language.pronoun_subject and isinstance(obj, Word) and \
                             obj.items[0].pos == 'pronoun':

@@ -1563,6 +1563,13 @@ def detect_relative_clauses(clauses, trace, sentence_words=()):
             # 無ければ前の節へ (Hīc est locus in quō …)
             finite = [t for t in (k + 1, k - 1) if 0 <= t < len(out) and
                       any(item.attrib('mood') != 'infinitive' for item in out[t].predicate.verb.items)]
+            # 後ろの節がそれ自身関係節 (… qui est ce qu'on nomme …, est égale) なら、さらに後ろの主節へ
+            later = [t for t in range(k + 1, len(out)) if t in finite or
+                     any(item.attrib('mood') != 'infinitive' for item in out[t].predicate.verb.items)]
+            if finite and finite[0] == k + 1 and _relative_pronoun(out[k + 1].predicate, out[k + 1].not_solved)[0] is not None:
+                rest = [t for t in later if _relative_pronoun(out[t].predicate, out[t].not_solved)[0] is None]
+                if rest:
+                    finite = rest[:1] + finite
             if not finite:
                 continue   # 不定詞の節には入れない (poterant iī quī … relictī erant lacrimās tenēre)
             target = finite[0]

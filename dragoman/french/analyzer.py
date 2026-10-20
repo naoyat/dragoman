@@ -1285,13 +1285,19 @@ def assign_cases(words, doc, existential=False):
     """名詞の格: 前置詞の後ろは前置詞の目的語 (Gen)。ほかは動詞の前なら主語、後ろなら目的語 (繋辞の後ろは補語)"""
     verb_before = None   # 同じ節の前の動詞
     after_prep = False
+    last_cases = None    # 直前の名詞の格 (et・ou でつないだ名詞に同じ格: le bon sens ou la raison)
+    coordinated = False
     for word in words:
         item = _item(word)
         lower = word.surface.lower()
+        if lower in ('et', 'ou', 'ni') and last_cases is not None:
+            coordinated = True
+            continue
         if PUNCTUATION.get(word.surface) and word.surface != '(' or item is not None and item.pos != 'preposition' and \
                 (lower in BOUNDARY or item.pos == 'conj'):   # 比較の que は前置詞 (que sa mère)
             verb_before = None
             after_prep = False
+            last_cases, coordinated = None, False
             continue
         if item is None:
             continue
@@ -1316,7 +1322,9 @@ def assign_cases(words, doc, existential=False):
                 after_prep = False
             continue
         feats = item.attrib('feats') or {}
-        if after_prep or getattr(word, 'genitive_of_de', False):
+        if coordinated and last_cases is not None and not after_prep:
+            cases = last_cases   # 並列の名詞は前の名詞と同じ格
+        elif after_prep or getattr(word, 'genitive_of_de', False):
             cases = ('Gen',)
         elif existential and verb_before is not None and verb_before.attrib('base') == 'il y a':
             cases = ('Nom',)
@@ -1328,6 +1336,7 @@ def assign_cases(words, doc, existential=False):
         else:
             cases = ('Acc',)
         after_prep = False
+        last_cases, coordinated = cases, False
         gender = item.attrib('gender') if item.attrib('gender') in ('m', 'f') else None
         # 名詞の性は辞書 (Wiktionary) を spaCy の読みより先に (soupe を男性と読むと ta soupe の ta が掛からない)
         item.item['_'] = morphology.cngs(cases, dict(feats, Gender=None) if gender else feats, gender)
@@ -1516,7 +1525,20 @@ def noun_infinitives(words):
             if m < len(words) and _pos(words[m]) == 'noun' and m > k:
                 obj = words[k:m + 1]
                 k = m + 1
+            source = []   # d'avec + 名詞「〜から」(distinguer le vrai d'avec le faux)
+            if k + 1 < len(words) and words[k].surface.lower() in ("d'avec", 'de', "d'") and \
+                    (words[k].surface.lower() == "d'avec" or k + 1 < len(words) and words[k + 1].surface.lower() == 'avec'):
+                m = k + (1 if words[k].surface.lower() == "d'avec" else 2)
+                n = m
+                while n < len(words) and (_pos(words[n]) in ('article', 'adj') or
+                                          words[n].surface.lower() in ('le', 'la', 'les', "l'")):
+                    n += 1
+                if n < len(words) and _pos(words[n]) in ('noun', 'adj'):
+                    source = words[k:n + 1]
+                    k = n + 1
             phrase = [(_item(a).ja or '').split(',')[0] for a in advs]
+            if source:
+                phrase.append((_item(source[-1]).ja or source[-1].surface).split(',')[0] + 'から')
             if obj:
                 noun = _item(obj[-1])
                 modifiers = [(_item(x).ja or '').split(',')[0] for x in obj[:-1] if _item(x) is not None and
@@ -1524,11 +1546,12 @@ def noun_infinitives(words):
                 phrase.append(' '.join(modifiers + [(noun.ja or obj[-1].surface).split(',')[0]]) + 'を')
             phrase.append(inf[0])
             parts.append(' '.join(p for p in phrase if p))
-            used += advs + [verb_word] + obj
-            if k + 1 < len(words) and words[k].surface.lower() == 'et' and \
-                    (_infinitive_word(words[k + 1]) is not None or _pos(words[k + 1]) == 'adv'):
-                used.append(words[k])
-                k += 1
+            used += advs + [verb_word] + obj + source
+            comma = 1 if k < len(words) and words[k].surface == ',' else 0   # カンマを挟んだ並列 (juger, et distinguer)
+            if k + comma + 1 < len(words) and words[k + comma].surface.lower() == 'et' and \
+                    (_infinitive_word(words[k + comma + 1]) is not None or _pos(words[k + comma + 1]) == 'adv'):
+                used += words[k:k + comma + 1]
+                k += comma + 1
                 continue   # et でつないだ不定詞 (juger et distinguer)
             break
         if not parts:

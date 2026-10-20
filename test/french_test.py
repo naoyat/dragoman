@@ -126,6 +126,14 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Cela témoigne que la puissance de bien juger est égale.'),
                          'それが / {{よく 判断する}{力,主権}が 同じ,公平である}ことを / 示す,証言する')
 
+    def test_long_sentence(self):
+        # 『方法序説』: 名詞 + de + 不定詞のカンマを挟んだ並列と d'avec「〜から」、関係節の中の関係節を越えて主節に主語、
+        # 関係節の繋辞の補語 (ce qu'on nomme …)、並列の名詞の格
+        self.assertEqual(self.ja("La puissance de bien juger, et distinguer le vrai d'avec le faux, qui est proprement ce "
+                                 "qu'on nomme le bon sens ou la raison, est naturellement égale en tous les hommes."),
+                         '{まさに,本来 {人々が 良識と={理性,理由}と 呼ぶ,名付ける}ことである}{よく 判断する、偽りから 真実を 区別する}'
+                         '{力,主権}は / 生まれつき,自然に / すべての男[に,で] / 同じ,公平である')
+
     def test_adverbial_clauses(self):
         self.assertEqual(self.ja("Je reste à la maison parce qu'il pleut."), '{雨が降る}ので / 私が / 家[に,で] / とどまる')
         self.assertEqual(self.ja('Quand il arrive, nous mangeons.'), '{{彼,それ}が 着く}とき / 私たちが / 食べる')
