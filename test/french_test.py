@@ -97,6 +97,8 @@ class AnalyzerTestCase(unittest.TestCase):
                          '{彼ら,それら}が / それを / もう / 強く望む習慣がない')                 # ne … point、avoir coutume de
         self.assertEqual(self.ja("J'ai envie de partir."), '私が / 出発したい')
         self.assertEqual(self.ja('Tu as besoin de dormir.'), '君が / 眠る必要がある')
+        self.assertEqual(self.ja('Chacun pense en être si bien pourvu.'),
+                         '各人が / それを / {それほど よく 備えられている}ことを / 考える')   # 不定詞の être + 分詞、si「それほど」
 
     def test_adverbial_clauses(self):
         self.assertEqual(self.ja("Je reste à la maison parce qu'il pleut."), '{雨が降る}ので / 私が / 家[に,で] / とどまる')

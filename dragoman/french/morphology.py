@@ -30,6 +30,7 @@ PRONOUNS = {
     'lui': ('彼,彼女', 3, 'sg', ('Dat', 'Acc')), 'leur': ('彼ら,彼女ら', 3, 'pl', ('Dat',)), 'se': ('自分', 3, 'sg', ('Acc', 'Dat')), "s'": ('自分', 3, 'sg', ('Acc', 'Dat')),
     'moi': ('私', 1, 'sg', ('Acc', 'Nom')), 'toi': ('君', 2, 'sg', ('Acc', 'Nom')), 'eux': ('彼ら', 3, 'pl', ('Acc', 'Nom')),
     'soi': ('自分', 3, 'sg', ('Acc',)), 'ce': ('それ', 3, 'sg', ('Nom',)), "c'": ('それ', 3, 'sg', ('Nom',)),
+    'chacun': ('各人', 3, 'sg', ('Nom', 'Acc')), 'chacune': ('各人', 3, 'sg', ('Nom', 'Acc')),
     'celui': ('人,もの', 3, 'sg', ('Nom', 'Acc')), 'celle': ('人,もの', 3, 'sg', ('Nom', 'Acc')),
     'ceux': ('人々', 3, 'pl', ('Nom', 'Acc')), 'celles': ('人々,もの', 3, 'pl', ('Nom', 'Acc')),
     'cela': ('それ', 3, 'sg', ('Nom', 'Acc')), 'ça': ('それ', 3, 'sg', ('Nom', 'Acc')), 'ceci': ('これ', 3, 'sg', ('Nom', 'Acc')),
@@ -275,9 +276,9 @@ def reform_note(surface, lemma):
     見出しの新旧が î・û の記号だけの違いなら、活用形にも同じ規則で (connaît → connait)"""
     new_to_old, old_to_new = dictionary.reform_spellings()
     word, lemma = surface.lower(), (lemma or surface).lower()
-    if word in old_to_new:
+    if word in old_to_new and ' ' not in old_to_new[word]:   # 句の項目 (être sur son trente-et-un) は語の注にしない
         return 'new', old_to_new[word]
-    if word in new_to_old:
+    if word in new_to_old and ' ' not in new_to_old[word]:
         return 'old', new_to_old[word]
     plain = lambda w: w.replace('î', 'i').replace('û', 'u')
     if lemma in old_to_new and plain(lemma) == old_to_new[lemma] and plain(word) != word:

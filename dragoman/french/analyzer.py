@@ -485,6 +485,9 @@ def item_of(token, doc, fixed):
             ja, gloss_lang, row = morphology.gloss(adj, 'adj')
             return {'surface': text, 'pos': 'adj', 'base': adj, 'ja': ja or adj, 'gloss_lang': gloss_lang or 'en',
                     '_': morphology.cngs(morphology.CASES + ('Gen',), feats), 'main': True}
+    if lower == 'si' and token.i + 1 < len(doc) and doc[token.i + 1].pos_ in ('ADJ', 'ADV') and \
+            doc[token.i + 1].text.lower() not in ('on', 'vous', 'tu', 'il', 'elle'):
+        return {'surface': text, 'pos': 'adv', 'base': 'si', 'ja': 'それほど', 'gloss_lang': 'ja'}   # si bien「それほどよく」
     if lower == 'point' and any(t.text.lower() in ('ne', "n'") for t in doc[:token.i]) and \
             not (token.i > 0 and doc[token.i - 1].pos_ == 'DET'):
         return {'surface': text, 'pos': 'particle', 'base': lower, 'ja': morphology.NEGATIONS.get(lower, '〜ない'),
@@ -1282,10 +1285,28 @@ def copular_adjectives(words):
     out = []
     for k, w in enumerate(words):
         item = _item(w)
-        prev = out[-1] if out else None
+        back = len(out) - 1   # 間の副詞を越えて前の動詞 (en être si bien pourvu)
+        while back > 0 and _pos(out[back]) == 'adv' and not _item(out[back]).attrib('negation'):
+            back -= 1
+        prev = out[back] if out else None
         p = _item(prev) if prev is not None else None
-        while p is not None and p.pos == 'adv' and len(out) > 1 and not p.attrib('negation'):
-            break
+        participle = item is not None and (item.pos == 'verb' and item.attrib('mood') == 'participle' or
+                                           item.pos == 'adj' and item.attrib('base') != w.surface.lower() and
+                                           bool(dictionary.lemmas(item.attrib('base') or '', 'verb')))   # 形容詞と読まれた分詞 (pourvu)
+        if participle and p is not None and \
+                p.pos == 'verb' and p.attrib('lemma') == 'être' and p.attrib('mood') == 'infinitive' and \
+                item.attrib('gloss_lang') == 'ja':
+            from dragoman.core.japanese import JaVerb
+            from dragoman.core import verb_flags as Verb
+            first = (item.ja or '').split(',')[0]   # 不定詞の être + 過去分詞「〜されている」(en être bien pourvu)
+            data = dict(p.item, ja=JaVerb(first).form(Verb.INDICATIVE | Verb.PASSIVE | Verb.ING, False), gloss_lang='ja',
+                        surface=prev.surface + ' … ' + w.surface, form='être + 過去分詞 (状態)', lemma=item.attrib('lemma'),
+                        pres1sg=item.attrib('lemma'))
+            data.pop('existential', None)
+            prev.items = [type(p)(data)]
+            prev.surface = data['surface']
+            w.merged_into = True
+            continue
         if item is not None and item.pos == 'adj' and item.attrib('predicative') and p is not None and p.pos == 'verb':
             lemma = p.attrib('lemma')
             first = (item.ja or '').split(',')[0]
