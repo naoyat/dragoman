@@ -26,7 +26,7 @@ class AnalyzerTestCase(unittest.TestCase):
 
     def test_verb_groups(self):
         self.assertEqual(self.ja('The letter was written by my father.'),
-                         '手紙が / 私の父によって / 書かれた')
+                         '手紙が / 私の{父,父親}によって / 書かれた')
         self.assertEqual(self.ja('We are studying English now.'), '私たちが / {英語,イングランド語}を / 今 / 勉強している')
         self.assertEqual(self.ja('He will come tomorrow.'), '彼が / 明日 / 来るだろう')
         self.assertEqual(self.ja('I want to go to London.'), '私が / ロンドン[へ,に] / 行きたい')
@@ -56,13 +56,13 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('I saw her when she came.'), '{彼女が 来た}とき / 私が / 彼女を / 見た')
         self.assertEqual(self.ja('When she came, I saw her.'), '{彼女が 来た}とき / 私が / 彼女を / 見た')   # 文の頭の副詞節
         self.assertEqual(self.ja('If you study, you will pass the exam.'),
-                         '{あなたが 勉強する}なら / あなたが / 試験に / 受かるだろう')
+                         '{あなたが 勉強する}なら / あなたが / {試験,テスト}に / 受かるだろう')
         self.assertEqual(self.ja('He left after the meeting ended.'), '{{会議,会合}が 終わった}後で / 彼が / 去った')
         self.assertEqual(self.ja('Wash your hands before you eat.'),
-                         '{あなたが 食べる}前に / あなたの手を / 洗え')   # before の節は現在
+                         '{あなたが 食べる,食う}前に / あなたの手を / 洗え')   # before の節は現在
 
     def test_glosses_in_context(self):
-        self.assertEqual(self.ja('You will pass the exam.'), 'あなたが / 試験に / 受かるだろう')   # 目的語で動詞の訳語 (JMdict)
+        self.assertEqual(self.ja('You will pass the exam.'), 'あなたが / {試験,テスト}に / 受かるだろう')   # 目的語で動詞の訳語 (JMdict)
         self.assertEqual(self.ja("Don't give up."), '諦めない,見限らない')                         # 句動詞
         self.assertEqual(self.ja('Take this medicine.'), 'この薬を / 飲め,受け付けろ')            # 対訳文 (Tatoeba) で薬
         self.assertEqual(self.ja('She is looking after her brother.'), '彼女が / 彼女の{兄,弟}を / 世話している')

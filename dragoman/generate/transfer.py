@@ -506,7 +506,25 @@ def _counts(lang):
     return table
 
 
-def _count(lang, lemma):
+@functools.lru_cache(maxsize=None)
+def _pos_counts(lang):
+    """(見出し語, 品詞) → 出現数 (tools/build_lemma_counts.py の lemma-pos-counts.tsv)。無ければ空"""
+    table = {}
+    try:
+        with open(paths.data(lang, 'lemma-pos-counts.tsv'), encoding='utf-8') as f:
+            for line in f:
+                lemma, pos, n = line.rstrip('\n').split('\t')
+                table[lemma, pos] = int(n)
+    except (OSError, ValueError):
+        pass
+    return table
+
+
+def _count(lang, lemma, pos=None):
+    """出現数。品詞ごとの表があればその品詞の数 (serang「広い」に menyerang「攻撃する」の数を足さない)"""
+    by_pos = _pos_counts(lang)
+    if pos in ('noun', 'verb', 'adj', 'adv') and by_pos:
+        return by_pos.get((lemma, pos), 0)
     return _counts(lang).get(lemma, 0)
 
 
@@ -514,7 +532,7 @@ def _frequency(lang, target):
     """コーパスでの出現数の点 (多いほど良い: 小さくする分)"""
     if lang == 'sa' and target.pos == 'verb':
         return 0
-    return FREQUENCY_WEIGHT.get(lang, 0) * math.log(1 + _count(lang, target.lemma))
+    return FREQUENCY_WEIGHT.get(lang, 0) * math.log(1 + _count(lang, target.lemma, target.pos))
 
 
 def _with_japanese(sources, wanted):

@@ -15,7 +15,7 @@
 # 動詞は JMdict の英訳の書き込みから、場面の語ごとの訳語 (verb_context: to pass (examination) → 受かる) と句動詞の訳語
 # (phrasal: give up → あきらめる) の表も作る (core/en_ja.verb_in_context・phrasal)。
 # 訳語のよく使う度合いの表 (common: JMdict の news1・ichi1 … と nf) も作る (core/en_ja.lookup が訳語の順を決めるのに使う)。
-# Wiktionary の表を先に使い、そこに無い英語の語句を JMdict で補う。JMdict は、よく使う語の印 (news1, ichi1 …) の
+# Wiktionary の訳語を先に、JMdict の訳語を後ろに足して持つ (Wiktionary に bank「土手」しか無くても 銀行 を)。JMdict は、よく使う語の印 (news1, ichi1 …) の
 # ある見出し語を、英語の訳がその語義の先頭にあるものから並べる
 #
 import os
@@ -32,6 +32,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dragoman.core import en_ja, paths
 from dragoman.core.wiktionary_import import japanese_gloss
 
+MAX_GLOSSES = 6   # 1つの見出しに持つ訳語の数 (Wiktionary の後ろに JMdict)
 POS = {'noun': 'noun', 'verb': 'verb', 'adj': 'adj', 'adv': 'adv', 'name': 'name', 'phrase': 'phrase'}
 
 
@@ -204,7 +205,7 @@ def main():
         os.unlink(tmp)
     db = sqlite3.connect(tmp)
     db.execute('CREATE TABLE en_ja (en TEXT, pos TEXT, ja TEXT, UNIQUE (en, pos))')
-    n = 0
+    wiktionary = {}
     with gzip.open(paths.data('ja-extract.jsonl.gz'), 'rt') as fp:
         for line in fp:
             if '"lang_code": "en"' not in line:
@@ -216,11 +217,12 @@ def main():
             glosses = en_ja.clean(japanese_gloss(entry, limit=8), pos)
             if not glosses:
                 continue
-            db.execute('INSERT OR IGNORE INTO en_ja VALUES (?, ?, ?)',
-                       (en_ja.key(entry['word']), pos, ','.join(glosses[:4])))
-            n += 1
-    n_wiktionary = n
+            row = wiktionary.setdefault((en_ja.key(entry['word']), pos), [])
+            row += [g for g in glosses[:4] if g not in row]
+    n_wiktionary = len(wiktionary)
+    merged = dict(wiktionary)
     jmdict = paths.data('JMdict_e.gz')
+    added = 0
     if os.path.exists(jmdict):
         with gzip.open(jmdict) as fp:
             for (english, pos), cands in jmdict_rows(fp).items():
@@ -228,9 +230,15 @@ def main():
                 for _, word in sorted(cands, key=lambda c: -c[0]):
                     if word not in words:
                         words.append(word)
-                cur = db.execute('INSERT OR IGNORE INTO en_ja VALUES (?, ?, ?)', (english, pos, ','.join(words[:4])))
-                n += cur.rowcount
-    print('Wiktionary %d, JMdict %d' % (n_wiktionary, n - n_wiktionary))
+                row = merged.setdefault((english, pos), [])
+                if not row:
+                    added += 1
+                # Wiktionary の訳語の後ろに JMdict の訳語も (bank: 土手 + 銀行、light: 光 … + 電気)。順は Wiktionary を先に
+                row += [w for w in words[:4] if w not in row]
+    db.executemany('INSERT INTO en_ja VALUES (?, ?, ?)', [(en, pos, ','.join(ja[:MAX_GLOSSES]))
+                                                          for (en, pos), ja in merged.items() if ja])
+    n = len(merged)
+    print('Wiktionary %d, JMdict %d (Wiktionary の見出しに足したものも)' % (n_wiktionary, added))
     # 動詞の場面ごとの訳語・句動詞 (JMdict の英訳の書き込みから)
     db.execute('CREATE TABLE common (ja TEXT PRIMARY KEY, score REAL)')
     if os.path.exists(jmdict):
