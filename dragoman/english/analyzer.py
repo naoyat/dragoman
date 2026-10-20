@@ -501,6 +501,31 @@ def phrasal_verbs(words, doc):
             verb.items = [type(v)(dict(v.item, lemma=phrase, base=phrase, ja=ja, gloss_lang=gloss_lang))]
 
 
+CONTENT_POS = ('noun', 'verb', 'adj')
+
+
+def corpus_glosses(words, doc):
+    """訳語の候補を対訳文 (Tatoeba) で文の語の文脈から選ぶ (take this medicine → 薬、write a letter → 手紙、
+    wash your hands → 手)。決めておいた訳語 (GLOSSES)・名前は変えない"""
+    from dragoman.core import en_ja
+    context = [t.lemma_.lower() for t in doc if t.pos_ in ('NOUN', 'VERB', 'ADJ', 'PROPN')]
+    for word in words:
+        item = _item(word)
+        if item is None or item.pos not in CONTENT_POS or item.attrib('gloss_lang') != 'ja' or item.attrib('proper') or \
+                item.attrib('context_gloss') or item.attrib('modal_aux'):
+            continue
+        lemma = item.attrib('lemma') or item.attrib('base')
+        if not lemma or ' ' in lemma or (lemma.lower(), item.pos) in morphology.GLOSSES:
+            continue
+        candidates = [c for c in en_ja.lookup(lemma, item.pos) if 'を' not in c]   # 目的語まで入った訳語 (手紙を書く) は除く
+        if len(candidates) < 2:
+            continue
+        ranked = en_ja.corpus_ranked(lemma, candidates, context, prune=True)
+        ja = ','.join(ranked[:2])
+        if ja != item.ja:
+            word.items = [type(item)(dict(item.item, ja=ja))]
+
+
 def verbs_in_context(words, doc):
     """目的語・主語の語で動詞の訳語を選ぶ (pass the exam → 受かる、take medicine → 飲む、time passes → 経つ)"""
     from dragoman.core import en_ja
@@ -628,7 +653,8 @@ def lookup_all(surfaces):
     _display = list(words)
     clause_starts(words, doc)
     words = stranded_prepositions(words, doc)
-    phrasal_verbs(words, doc)      # 訳語を決めてから助動詞とまとめる (can give up → 諦めることができる)
+    corpus_glosses(words, doc)     # 訳語を決めてから助動詞とまとめる (can give up → 諦めることができる)
+    phrasal_verbs(words, doc)
     verbs_in_context(words, doc)
     words = merge_verbs(words, doc)
     words = control_verbs(words, doc)

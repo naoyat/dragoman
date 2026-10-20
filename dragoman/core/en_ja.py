@@ -247,3 +247,71 @@ def verb_in_context(verb, words):
                 if len(context) >= 4 and (context.startswith(w) or w.startswith(context)):
                     return ja.split(',')
     return []
+
+
+CORPUS_PATH = paths.data('en', 'tatoeba.sqlite')
+_corpus = None
+
+
+def _corpus_db():
+    global _corpus
+    if _corpus is None and os.path.exists(CORPUS_PATH):
+        _corpus = sqlite3.connect(CORPUS_PATH, check_same_thread=False)
+    return _corpus
+
+
+def _stem(japanese):
+    """訳語が和訳の文にあるかを見る形 (活用語尾を除く: 待つ → 待、勉強する → 勉強、美しい → 美し、静かな → 静か)"""
+    j = _bare_japanese(japanese)
+    if j.endswith('する') and len(j) > 2:
+        j = j[:-2]
+    elif j.endswith(VERB_ENDINGS + ('い', 'な')) and len(j) > 1 and re.search('[一-龥]', j[:-1]):
+        j = j[:-1]
+    return j if len(j) > 1 or re.match('[一-龥]', j) else ''
+
+
+@functools.lru_cache(maxsize=20000)
+def _pair_ids(lemma):
+    db = _corpus_db()
+    if db is None:
+        return frozenset()
+    return frozenset(i for i, in db.execute('SELECT id FROM lemmas WHERE lemma = ?', (lemma.lower(),)))
+
+
+@functools.lru_cache(maxsize=20000)
+def _japanese(pair_id):
+    return _corpus_db().execute('SELECT ja FROM pairs WHERE id = ?', (pair_id,)).fetchone()[0]
+
+
+def corpus_ranked(english, candidates, context=(), prune=False):
+    """英語の語の訳語の候補を、対訳文 (Tatoeba) の数で並べ替える: その語を含む英文の和訳に訳語が現れる数と、
+    周りの語 (context の原形) も含む英文に絞った数 (3倍に数える)。辞書の順の最初の訳語より、2倍以上・3文以上
+    多く現れる訳語だけを先頭に (medicine: 医学,薬 → 薬、take + medicine の文脈)。prune なら、先頭の訳語の1割に満たない
+    訳語を落とす (hand: 手,針 → 手)。対訳文の表が無ければそのまま"""
+    candidates = list(candidates)
+    if len(candidates) < 2 or not ENABLED:
+        return candidates
+    ids = _pair_ids(english)
+    if not ids:
+        return candidates
+    near = set()
+    for c in context:
+        if c and c.lower() != english.lower():
+            near |= ids & _pair_ids(c)
+
+    def score(ja):
+        stem = _stem(ja)
+        if not stem:
+            return 0
+        return sum(1 for i in ids if stem in _japanese(i)) + 3 * sum(1 for i in near if stem in _japanese(i))
+
+    scores = [score(j) for j in candidates]
+    best = max(range(len(candidates)), key=lambda k: scores[k])
+    if best != 0 and scores[best] >= max(3, 2 * scores[0]):
+        order = [best] + [k for k in range(len(candidates)) if k != best]
+    else:
+        order = list(range(len(candidates)))
+    if prune and scores[order[0]] >= 5:
+        # prune なら、先頭の訳語の1割に満たない訳語を落とす (hand: 手,針 → 手)
+        order = [order[0]] + [k for k in order[1:] if scores[k] * 10 >= scores[order[0]]]
+    return [candidates[k] for k in order]

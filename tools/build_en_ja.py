@@ -151,8 +151,13 @@ def jmdict_contexts(path):
                     phrases.setdefault(verb + ' ' + rest[0], []).append((score, ja))   # 句動詞 (give up)
                     if len(rest) == 1:
                         rest = []
+                if 'を' in ja:
+                    continue   # 目的語まで入った訳語 (手紙を書く) は場面の訳語にしない
                 inside = ' '.join(re.findall(r'\(([^)]*)\)', body)).lower()
-                words = re.findall(r"[a-z][a-z'-]+", inside) + [w for w in rest if re.match(r"^[a-z][a-z'-]+$", w)]
+                content = [w for w in rest if re.match(r"^[a-z][a-z'-]+$", w) and w not in CONTEXT_STOP and w not in PARTICLES]
+                if content and (inside or len(content) > 1):
+                    continue   # ほかの語の付いた英訳 (to read (a book) again) は使わない
+                words = content if content else re.findall(r"[a-z][a-z'-]+", inside)
                 for w in words:
                     if w in CONTEXT_STOP or w in PARTICLES or len(w) < 3:
                         continue

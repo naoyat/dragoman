@@ -20,13 +20,13 @@ class AnalyzerTestCase(unittest.TestCase):
         return ' / '.join(c.predicate.translate()[0] for c in a.clauses if c.predicate)
 
     def test_cases_and_articles(self):
-        self.assertEqual(self.ja('She gave me a beautiful flower.'), '彼女が / 私に / 美しい{花,草花}を / 与えた')
+        self.assertEqual(self.ja('She gave me a beautiful flower.'), '彼女が / 私に / 美しい花を / 与えた')
         self.assertEqual(self.ja("John's sister can speak Japanese."),
                          'ジャンの{姉,妹}が / {日本語,日本の公用語}を / 話すことができる')
 
     def test_verb_groups(self):
         self.assertEqual(self.ja('The letter was written by my father.'),
-                         '{文字,手紙}が / 私の父によって / 書かれた,著作された')
+                         '手紙が / 私の父によって / 書かれた')
         self.assertEqual(self.ja('We are studying English now.'), '私たちが / {英語,イングランド語}を / 今 / 勉強している')
         self.assertEqual(self.ja('He will come tomorrow.'), '彼が / 明日 / 来るだろう')
         self.assertEqual(self.ja('I want to go to London.'), '私が / ロンドン[へ,に] / 行きたい')
@@ -48,7 +48,7 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja("I don't know what you're talking about."),
                          '私が / {あなたが 何について 話している}かを / 知らない')
         self.assertEqual(self.ja('Do you know who wrote this book?'),
-                         'あなたが / {誰が この{本,書物}を 書いた,著作した}かを / 知っているか')
+                         'あなたが / {誰が この本を 書いた}かを / 知っているか')
         self.assertEqual(self.ja('I wonder whether he will come.'), '私が / {彼が 来るだろう}かどうかを / 不思議に思う,驚く')
         self.assertEqual(self.ja('Tell me where you live.'), '私に / {どこで あなたが 住む}かを / 話せ,伝えろ')
 
@@ -57,9 +57,15 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('When she came, I saw her.'), '{彼女が 来た}とき / 私が / 彼女を / 見た')   # 文の頭の副詞節
         self.assertEqual(self.ja('If you study, you will pass the exam.'),
                          '{あなたが 勉強する}なら / あなたが / 試験に / 受かるだろう')
-        self.assertEqual(self.ja('He left after the meeting ended.'), '{{会議,会合}が 終わった,終了した}後で / 彼が / 去った')
+        self.assertEqual(self.ja('He left after the meeting ended.'), '{{会議,会合}が 終わった}後で / 彼が / 去った')
         self.assertEqual(self.ja('Wash your hands before you eat.'),
-                         '{あなたが 食べる,食事をする}前に / あなたの{手,針}を / 洗え,洗濯しろ')   # before の節は現在
+                         '{あなたが 食べる}前に / あなたの手を / 洗え')   # before の節は現在
+
+    def test_glosses_in_context(self):
+        self.assertEqual(self.ja('You will pass the exam.'), 'あなたが / 試験に / 受かるだろう')   # 目的語で動詞の訳語 (JMdict)
+        self.assertEqual(self.ja("Don't give up."), '諦めない,見限らない')                         # 句動詞
+        self.assertEqual(self.ja('Take this medicine.'), 'この薬を / 飲め,受け付けろ')            # 対訳文 (Tatoeba) で薬
+        self.assertEqual(self.ja('She is looking after her brother.'), '彼女が / 彼女の{兄,弟}を / 世話している')
 
     def test_detect(self):
         from dragoman.main import detect

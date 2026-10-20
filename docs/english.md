@@ -51,6 +51,10 @@ spaCy の品詞（Penn Treebank）・原形・依存関係で語の項目を作�
 * 句動詞（give up → 諦める、run away → 逃げる、turn off → 止める・消す）・前置詞と組む動詞（look after「世話する」、
   wait for「待つ」。前置詞の目的語は動詞の目的語に）は JMdict の英訳の句（phrasal の表）か GLOSSES から
 * 英和の表の訳語の順は、よく使う語の印（JMdict の news1・ichi1 …）の無い訳語を後ろに（core/en_ja.ranked。全言語に効く）
+* 名詞・動詞・形容詞の訳語の候補を、英日の対訳文（Tatoeba。ManyThings.org の jpn-eng.zip、約 11.7 万文、CC BY 2.0 FR。
+  $DRAGOMAN_DATA/en/tatoeba、tools/build_en_ja_corpus.py で tatoeba.sqlite に）で並べ替える: その語を含む英文の和訳に
+  訳語が現れる数と、文の中の周りの語も含む英文に絞った数（3倍）。辞書の順の最初の訳語より2倍以上・3文以上多い訳語を先頭に
+  （medicine → 薬、write a letter → 手紙）、先頭の1割に満たない訳語は落とす（hands → 手。針を出さない）（core/en_ja.corpus_ranked）
 * 人名（spaCy の固有表現 PERSON）は英語の読みのカタカナ（John → ジャン: 米音）、地名などは辞書の訳（Japan → 日本）
 
 ## カタカナ（`english/katakana.py`）

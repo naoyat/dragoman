@@ -138,6 +138,7 @@ def gloss(lemma, pos):
         return GLOSSES[key], 'ja'
     for p in ((pos, 'name') if pos == 'noun' else ('name', 'noun') if pos == 'name' else (pos,)):
         found = en_ja.lookup(lemma, p) or (en_ja.lookup(lemma.lower(), p) if lemma != lemma.lower() else [])
+        found = [f for f in found if 'を' not in f] or found   # 目的語まで入った訳語 (write: 手紙を書く) は後ろの候補にしない
         if found:
             return ','.join(found[:2]), 'ja'
     return None, None
