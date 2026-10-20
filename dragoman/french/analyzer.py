@@ -455,6 +455,8 @@ def item_of(token, doc, fixed):
         return {'surface': text, 'pos': 'pronoun', 'base': lower, 'ja': ja, 'gloss_lang': 'ja', 'desc': '不定形容詞',
                 '_': morphology.cngs(morphology.CASES + ('Gen',), dict(feats, Number=None), _determiner_gender(lower)),
                 'compact': True, 'determiner': True}
+    if pos in ('NOUN', 'PROPN') and lower in ('moi', 'toi', 'lui', 'eux', 'soi'):
+        pos = 'PRON'   # 名詞と読まれた強勢形の代名詞 (de toi)
     if pos == 'PRON':
         if lower in morphology.RELATIVES and (feats.get('PronType') == 'Rel' or token.dep_ != 'ROOT' and
                                               token.head.dep_ == 'acl:relcl'):
@@ -1033,6 +1035,45 @@ def negation(words):
                 pass
         out.append(w)
     return out
+
+
+def not_but(words):
+    """ne … pas A, mais (seulement) B「A ではなく B」: 否定は A だけに掛かる。A と B が同じ前置詞の句なら、A の前置詞を
+    「〜からではなく」に、mais と否定を落とす (ne vient pas de ce que …, mais seulement de ce que …「{…}ことからではなく
+    ただ {…}ことから 来る」)"""
+    k_mais = next((k for k, w in enumerate(words) if w.surface.lower() == 'mais' and k and words[k - 1].surface == ','),
+                  None)
+    if k_mais is None or any(_pos(w) == 'verb' for w in words[k_mais + 1:k_mais + 3]):
+        return words
+    negations = [w for w in words[:k_mais] if _item(w) is not None and _item(w).attrib('negation')]
+    if not negations:
+        return words
+    start = next(k for k, w in enumerate(words) if w is negations[0])
+    verb = next((k for k in range(start, k_mais) if _pos(words[k]) == 'verb'), None)   # 否定の掛かる動詞 (ne vient pas)
+    if verb is None:
+        return words
+    second = next((w for w in words[k_mais + 1:] if _pos(w) == 'preposition'), None)
+    if second is None:
+        return words
+    # A の前置詞は B と同じ綴りの語 (部分冠詞と読まれた de も: ne parle pas de toi, mais de lui)
+    first = next((w for w in words[verb + 1:k_mais] if w.surface.lower() == second.surface.lower() and
+                  _item(w) is not None), None)
+    if first is None:
+        return words
+    if _pos(first) != 'preposition':
+        first.items = [type(_item(second))(dict(_item(second).item, surface=first.surface))]
+    glosses = [g.strip() for g in (_item(first).ja or '').split(',')]
+    lemma = _item(words[verb]).attrib('lemma')
+    gloss = DE_VERBS.get(lemma) if _item(first).attrib('base') == 'de' and lemma in DE_VERBS else \
+        next((g for g in glosses if g.endswith('から')), glosses[0] if glosses else '')   # parler de「〜について」
+    f = _item(first)
+    first.items = [type(f)(dict(f.item, ja=gloss + 'ではなく'))]
+    s = _item(second)
+    second.items = [type(s)(dict(s.item, ja=gloss))]
+    dropped = negations + [words[k_mais]]   # カンマは節の区切りに残す
+    for w in dropped:
+        w.merged_into = True
+    return [w for w in words if not any(w is d for d in dropped)]
 
 
 IMPERSONAL_VERBS = {'falloir', 'pleuvoir', 'neiger', 'grêler', 'venter', 'sembler', 'agir', 'se agir'}
@@ -1680,6 +1721,7 @@ def lookup_all(surfaces):
     words = superlatives(words)   # 比較 (que のある文) より先に
     words = comparatives(words)
     words = negation(words)
+    words = not_but(words)
     words = impersonal_il(words)   # 動詞の組をまとめる前に (il faut partir の falloir で決める)
     words = impersonal_que(words)
     words = meme_even(words)

@@ -134,6 +134,13 @@ class AnalyzerTestCase(unittest.TestCase):
                          '{まさに,本来 {人々が 良識と={理性,理由}と 呼ぶ,名付ける}ことである}{よく 判断する、偽りから 真実を 区別する}'
                          '{力,主権}は / 生まれつき,自然に / すべての男[に,で] / 同じ,公平である')
 
+    def test_not_but(self):
+        self.assertEqual(self.ja('Je ne parle pas de toi, mais de lui.'), '私が / 君についてではなく={彼,彼女}について / 話す')
+        self.assertEqual(self.ja('La diversité de nos opinions ne vient pas de ce que les uns sont plus raisonnables que '
+                                 'les autres, mais seulement de ce que nous conduisons nos pensées par diverses voies.'),
+                         '私たちの意見の多様さが / {ある人々が 他の人々より 理性的,正確である}ことからではなく='
+                         '{〜だけ 私たちが 変化に富む{道,跡}[によって,を通って] 私たちの{考え,反射}を 導く}ことから / 来る')
+
     def test_adverbial_clauses(self):
         self.assertEqual(self.ja("Je reste à la maison parce qu'il pleut."), '{雨が降る}ので / 私が / 家[に,で] / とどまる')
         self.assertEqual(self.ja('Quand il arrive, nous mangeons.'), '{{彼,それ}が 着く}とき / 私たちが / 食べる')
