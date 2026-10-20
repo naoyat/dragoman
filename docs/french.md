@@ -103,6 +103,22 @@ python3 tools/generate.py --from=fr "Je le lui ai donné hier."      # 入口か
 * 新しい綴りで書いた語は従来の綴りの語義で訳す（cout → 代価,価格）。文の生成は従来の綴り（plaît）。
 * 連結符の改革（week-end → weekend、vingt et un → vingt-et-un）・二重子音の簡略化（ruisselle → ruissèle）は辞書の語義にある語だけ。
 
+## 17世紀（古典期）の綴り
+
+アカデミー・フランセーズの創設（1635年）のころの刊本の綴り（デカルト・コルネイユ・モリエール・ラシーヌ）を、解析の前に
+今の綴りに直す（`french/orthography.py`。ドイツ語の古い綴りの読み替えと同じ作り）。直した語は語の詳細に「古い綴り
+estoit → était」と出し、カタカナ読みは今の綴りで（今の発音）。
+
+* 規則: -oit・-ois・-oient → -ait・-ais・-aient（estoit → était）、子音の前の s → 曲アクサン・鋭アクサン（teste → tête、
+  escrire → écrire、maistre → maître）、y → i（luy → lui、j'ay → j'ai）、-ez → -és（bontez → bontés）、-ns → -nts
+  （enfans → enfants）、sç → s（sçavoir → savoir）、oi → ai（foible → faible）、u と v・i と j（auoir → avoir、vn → un、
+  iamais → jamais、Ie → Je）、長い s（ſ → s）。規則で作った候補のうち辞書にあるものを採る
+* 古い綴りの印（ſ・sç・luy・estoit・-oient …）のある文では、今の綴りにもある語も直す（teste「試す」→ tête）。ただし今の
+  綴りによくある並び（oi・-ns）の規則は、語形の表で同じ語の古い形と分かるとき（avoit と avait は avoir の半過去）だけ
+  （soit・croit・François はそのまま）
+* まだ: 刊本の一節での確かめ、語義のずれ（ennui「激しい苦悩」）、古い語順（Je le veux faire は今の解析でもおおむね読める）、
+  17世紀の発音のカタカナ（roy [rwɛ]）
+
 ## 法と動詞の組
 
 * 接続法: 語形の表でその人称に直説法の読みが無い形（parte・viennes）か、接続法を求める que の後ろ（主節が falloir・vouloir・

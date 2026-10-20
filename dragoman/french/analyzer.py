@@ -22,13 +22,13 @@ import re
 from dragoman.core import analyzer as common
 from dragoman.core import language
 from dragoman.core.Word import Word
-from . import dictionary, morphology
+from . import dictionary, morphology, orthography
 
 PUNCTUATION = {'.': 'period', '!': 'period', '?': 'question', '…': 'period', ',': 'comma', ';': 'comma',
                ':': 'comma', '—': 'comma', '–': 'comma', '(': 'comma', ')': 'comma', '"': None, '«': None, '»': None,
                '“': None, '”': None}
-LETTERS = "A-Za-zÀ-ÖØ-öø-ÿœŒæÆ"
-ELISIONS = ("l'", "d'", "j'", "m'", "t'", "s'", "n'", "c'", "qu'", "jusqu'", "lorsqu'", "puisqu'", "quoiqu'", "presqu'")
+LETTERS = "A-Za-zÀ-ÖØ-öø-ÿœŒæÆſ"   # ſ は17世紀の刊本の長い s
+ELISIONS = ("i'", "l'", "d'", "j'", "m'", "t'", "s'", "n'", "c'", "qu'", "jusqu'", "lorsqu'", "puisqu'", "quoiqu'", "presqu'")
 KEEP_APOSTROPHE = {"aujourd'hui", "quelqu'un", "quelqu'une", "prud'homme"}
 TOKEN = re.compile(r"[%s]+(?:['-][%s]+)*'?|\d+(?:[.,]\d+)*|[.!?…,;:—–()\"«»“”]" % (LETTERS, LETTERS))
 INVERSION = re.compile(r"^(.+?)(-t)?-(je|tu|il|elle|on|nous|vous|ils|elles|ce|moi|toi|le|la|les|lui|leur|y|en)$", re.I)
@@ -1146,6 +1146,10 @@ def passive_agents(words):
 
 
 def lookup_all(surfaces):
+    original_surfaces = list(surfaces)
+    surfaces, _ = orthography.tokens(surfaces)   # 17世紀の綴りを今の綴りに (estoit → était、luy → lui)
+    global _modern
+    _modern = list(surfaces)
     doc = morphology.parse(surfaces)
     fixed = corrections(doc)
     words = []
@@ -1155,6 +1159,8 @@ def lookup_all(surfaces):
             note = morphology.reform_note(token.text, data.get('lemma') or data.get('base'))
             if note:
                 data['reform'] = note   # 1990年の綴りの改革で変わった語 (plaît / plait)
+        if data is not None and original_surfaces[token.i] != token.text:
+            data['old_spelling'] = original_surfaces[token.i]   # 古い綴り (解析の表に出す)
         word = Word(token.text, None if data is None else [data])
         word.token_ix = token.i
         word.doc_i = token.i
@@ -1192,14 +1198,17 @@ def lookup_all(surfaces):
 
 
 _display = []
+_modern = []
 
 
 def analyze_sentence(surfaces):
     words = lookup_all(surfaces)
+    modern = list(_modern)
     word_details = [word.detail() for word in words]
     with language.using(FRENCH):
         analysis = common.analyze_words([w.surface for w in words], words, word_details, [])
     analysis.original = list(surfaces)
+    analysis.modern = modern   # 今の綴りに直した語の列 (カタカナ読みに使う)
     return analysis
 
 

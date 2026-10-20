@@ -23,14 +23,16 @@ def explain(word):
         out.append(item.attrib('form'))
     if item.attrib('clitic'):
         out.append('接語の代名詞 (動詞の前)')
+    if item.attrib('old_spelling'):
+        out.append('古い綴り %s → %s' % (item.attrib('old_spelling'), word.surface))
     if item.attrib('reform'):   # 1990年の綴りの改革 (rectifications orthographiques)
         kind, other = item.attrib('reform')
         out.append('1990年の新しい綴りでは %s' % other if kind == 'new' else '1990年の新しい綴り (従来の綴りは %s)' % other)
     return out
 
 
-def original(analysis):
-    words = getattr(analysis, 'original', None) or analysis.surfaces
+def original(analysis, words=None):
+    words = words or getattr(analysis, 'original', None) or analysis.surfaces
     text = ''
     for w in words:
         if w in analyzer.PUNCTUATION and w not in '(«"“' or text.endswith("'"):
@@ -43,6 +45,9 @@ def original(analysis):
 def katakana(analysis, kana_options):
     """カタカナ読み (--kana): 文全体の espeak-ng の発音から語ごとに (french/katakana.sentence。y → i、m'aimes → mɛm)"""
     from .katakana import sentence
+    modern = getattr(analysis, 'modern', None)
+    if modern and modern != list(getattr(analysis, 'original', [])):   # 古い綴りの文は今の綴りで読む
+        return sentence(original(analysis, modern), **kana_options)
     return sentence(original(analysis), **kana_options)
 
 
