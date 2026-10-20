@@ -80,7 +80,7 @@ class AnalyzerTestCase(unittest.TestCase):
 
     def test_superlatives_and_complements(self):
         self.assertEqual(self.ja('Le bon sens est la chose du monde la mieux partagée.'),
-                         '良い{意味,感覚}は / {世界の & 最もよく共有された}物体である')   # 最上級 + 分詞、繋辞の補語
+                         '良識は / {世界の & 最もよく共有された}物体である')   # 最上級 + 分詞、繋辞の補語
         self.assertEqual(self.ja("C'est le plus grand homme du monde."), 'それは / {世界の & 最も大きい}男である')
         self.assertEqual(self.ja('Je suis fatigué.'), '私は / 疲れている')             # 形容詞になった過去分詞
         self.assertEqual(self.ja('La porte était ouverte.'), 'ドアは / 開いていた')
@@ -115,6 +115,11 @@ class AnalyzerTestCase(unittest.TestCase):
                          '{よく 判断する、真実を 区別する}{力,主権}は / 同じ,公平である')   # et でつないだ不定詞
         self.assertEqual(self.ja('Je veux voir la mer.'), '私が / 海を / 見たい')   # 冠詞の後ろの mer は名詞
         self.assertEqual(self.ja('Le livre de Pierre est rouge.'), 'ピエールの本は / 赤い')
+
+    def test_naming_and_phrases(self):
+        self.assertEqual(self.ja("C'est ce qu'on nomme le bon sens."), 'それは / {人々が 良識と 呼ぶ,名付ける}ことである')
+        self.assertEqual(self.ja('La diversité de nos opinions ne vient pas de ce que les uns sont plus raisonnables que les autres.'),
+                         '私たちの意見の多様さが / {ある人々が 他の人々より 理性的,正確である}こと[の,から] / 来ない')
 
     def test_adverbial_clauses(self):
         self.assertEqual(self.ja("Je reste à la maison parce qu'il pleut."), '{雨が降る}ので / 私が / 家[に,で] / とどまる')

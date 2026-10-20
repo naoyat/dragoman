@@ -40,10 +40,21 @@ def _root_items(lemma):
     return [{'pos': 'verb', 'ja': ja, 'gloss_lang': gloss_lang}] if ja else []
 
 
+NAMING_VERBS = {'nommer', 'appeler', 'dire', 'croire', 'juger', 'estimer', 'trouver'}
+# 形容詞 + 名詞で1語の訳語 (bon sens「良識」)
+NOUN_PHRASES = {('bon', 'sens'): '良識', ('sens', 'commun'): '常識', ('pomme', 'terre'): 'じゃがいも'}
+
+
 def _particle(case, obj, predicate):
     """manquer à・plaire à の人は主題「は」(Tu me manques「私は 君が いなくて寂しい」)、s'appeler の名前は「と」(ジャンと呼ばれている)"""
     if isinstance(obj, Word) and obj.items and obj.items[0].attrib('focus'):
         return obj.items[0].attrib('focus')   # même「〜さえ」(Même les enfants le savent → 子供さえ)
+    if case == 'Acc' and predicate.first_item.attrib('lemma') in NAMING_VERBS and predicate.gap == 'Acc':
+        return 'と'
+    if case == 'Acc' and predicate.first_item.attrib('lemma') in ('nommer', 'appeler') and \
+            len(predicate.case_slot.get('Acc', [])) > 1 and isinstance(obj, Word) and obj.items and \
+            obj.items[0].pos == 'noun':
+        return 'と'   # 目的語が2つ: 名詞のほうが呼び名 (On l'appelle Jean「彼をジャンと呼ぶ」)   # ce qu'on nomme le bon sens「{人々が 良識と 呼ぶ}こと」(目的語は関係代名詞、残りは呼び名)
     if case == 'Dat' and predicate.first_item.attrib('experiencer'):
         return 'は'
     if case == 'Acc' and predicate.first_item.attrib('lemma') == 'se appeler':
@@ -1022,6 +1033,30 @@ def negation(words):
 IMPERSONAL_VERBS = {'falloir', 'pleuvoir', 'neiger', 'grêler', 'venter', 'sembler', 'agir', 'se agir'}
 
 
+def noun_phrases(words):
+    """形容詞 + 名詞の決まった言い方を1語の訳語に (le bon sens「良識」)。les uns・les autres (名詞の続かない) は「ある人々」
+    「他の人々」"""
+    out = []
+    for i, w in enumerate(words):
+        nxt = words[i + 1] if i + 1 < len(words) else None
+        if nxt is not None and (w.surface.lower(), nxt.surface.lower()) in NOUN_PHRASES and _pos(nxt) == 'noun':
+            n = _item(nxt)
+            nxt.items = [type(n)(dict(n.item, ja=NOUN_PHRASES[(w.surface.lower(), nxt.surface.lower())], gloss_lang='ja',
+                                      base=w.surface.lower() + ' ' + n.attrib('base')))]
+            nxt.surface = w.surface + ' ' + nxt.surface
+            w.merged_into = True
+            continue
+        if w.surface.lower() in ('autres', 'uns', 'unes') and i and words[i - 1].surface.lower() == 'les' and \
+                (nxt is None or _pos(nxt) != 'noun'):
+            it = _item(w)
+            if it is not None:
+                ja = '他の人々' if w.surface.lower() == 'autres' else 'ある人々'
+                w.items = [type(it)(dict(it.item, pos='pronoun', ja=ja, gloss_lang='ja', person=3, number='pl',
+                                         _=morphology.cngs(('Nom', 'Acc', 'Gen'))))]
+        out.append(w)
+    return out
+
+
 def ce_que(words):
     """ce qui・ce que の ce は「こと」(関係節の先行詞。C'est ce qu'on nomme la raison、Je ne sais pas ce qu'il veut)"""
     for i, w in enumerate(words):
@@ -1621,6 +1656,7 @@ def lookup_all(surfaces):
     words = impersonal_que(words)
     words = meme_even(words)
     words = ce_que(words)
+    words = noun_phrases(words)
     words = merge_verbs(words)
     words = avoir_idioms(words)
     words = noun_infinitives(words)   # de の扱いより先に (la puissance de juger は「判断の力」でなく「判断する力」)
