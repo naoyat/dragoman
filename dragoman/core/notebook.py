@@ -430,13 +430,15 @@ class Notebook:
         self.provenance = None   # 再現条件 [(項目, 値)] (core/provenance.info。書き出す前に入れる)
 
     def add(self, analysis, header=None, word_notes=None, romanize=None, show_word_detail=True,
-            show_translation=True, rendered=None):
-        """解析結果を1文足す。rendered があれば (独自の表示の言語: 古文など) その文字列をそのまま載せる"""
+            show_translation=True, rendered=None, kana=None):
+        """解析結果を1文足す。rendered があれば (独自の表示の言語: 古文など) その文字列をそのまま載せる。
+        kana は文のカタカナ読み (--kana。見出しの下に)"""
         from . import render
         if rendered is not None:   # 独自の表示の言語: 見出しと表示だけ
             text = header or ' '.join(getattr(analysis, 'surfaces', []) or [getattr(analysis, 'text', '')])
             self.sentences.append({'text': plain(text), 'words': [], 'arcs': [], 'tree': '', 'translations': [],
-                                   'detail': False, 'rendered': plain(rendered), 'rtl': bool(RTL.search(text))})
+                                   'detail': False, 'rendered': plain(rendered), 'rtl': bool(RTL.search(text)),
+                                   'kana': kana or ''})
             return
         words = []
         context = marks_context(analysis)
@@ -470,7 +472,7 @@ class Notebook:
         comparison = self._comparison(analysis) if self.compare else []
         self.sentences.append({'text': plain(text), 'words': words, 'compare': comparison, 'arcs': arcs_of(analysis) if rendered is None else [],
                                'tree': trees, 'translations': translations, 'detail': show_word_detail,
-                               'rendered': plain(rendered) if rendered else '',
+                               'rendered': plain(rendered) if rendered else '', 'kana': kana or '',
                                'rtl': bool(RTL.search(' '.join(analysis.surfaces)))})
 
     def _comparison(self, analysis):
@@ -657,6 +659,8 @@ def interlinear_columns(words):
 def sentence_html(n, s):
     out = ['<section class="sentence" data-n="%d">' % (n - 1)]
     out.append('<h2><span class="num">%d</span> %s</h2>' % (n, heading(s['text'])))
+    if s.get('kana'):   # カタカナ読み (--kana)
+        out.append('<div class="kana"><span class="ttl">カナ</span> %s</div>' % esc(s['kana']))
     if s['rendered']:
         out.append('<pre class="rendered">%s</pre></section>' % esc(s['rendered']))
         return '\n'.join(out)
@@ -703,6 +707,8 @@ body { font-family: "Gentium Plus", "Noto Serif", "Times New Roman", "Noto Serif
 .part.detail { break-inside: auto; } .detail tr { break-inside: avoid-page; }
 h2 { font-size: 1.25rem; font-weight: normal; margin: .5rem 0; }
 h2 .rm { font-size: .8em; color: var(--sub); opacity: .75; font-style: italic; }
+.kana { margin: -.2rem 0 .6rem 1.6rem; font-size: .95rem; letter-spacing: .02em; }
+.kana .ttl { font-family: sans-serif; font-size: .7rem; color: var(--sub); margin-right: .4rem; }
 h2 .num { font-family: sans-serif; font-size: .8rem; color: var(--sub); vertical-align: middle; }
 .part { margin: .75rem 0; }
 .part > .ttl { font-family: sans-serif; font-size: .7rem; color: var(--sub); margin-bottom: .25rem; }

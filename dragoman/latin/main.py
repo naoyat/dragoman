@@ -67,11 +67,12 @@ def analyse_text(text, options):
         if options.gaps is not None:   # 穴の一覧だけ (本文は出さない)
             options.gaps.add(analysis)
             continue
+        kana_line = latin_kana(analysis, options) if getattr(options, 'kana', False) else None
         if options.notebook is not None:
             options.notebook.add(analysis, word_notes=latin_word_notes(options),
-                                 show_word_detail=options.show_word_detail, show_translation=options.show_translation)
+                                 show_word_detail=options.show_word_detail, show_translation=options.show_translation,
+                                 kana=kana_line)
             continue
-        kana_line = latin_kana(analysis, options) if getattr(options, 'kana', False) else None
         if getattr(options, 'kana_only', False):   # カタカナ読みだけ
             print(analysis.text)
             print('  カナ: %s' % kana_line)

@@ -225,7 +225,7 @@ def run(command, argv=None, texts=None):
         for analysis in command.analyzer.analyze_text(text):
             line = command.header(analysis, options) if command.header else ' '.join(analysis.surfaces)
             kana_line = kana_text(command, analysis, options)
-            if options.kana_only:   # カタカナ読みだけ
+            if options.kana_only and notebook is None:   # カタカナ読みだけ (ノートには解析結果も)
                 print(line)
                 print('  カナ: %s' % kana_line if kana_line is not None else '  (カタカナ読みはまだありません)')
                 continue
@@ -239,7 +239,8 @@ def run(command, argv=None, texts=None):
                         command.render(analysis, options)
                     rendered = buffer.getvalue()
                 notebook.add(analysis, header=line, word_notes=notes, show_word_detail=options.show_word_detail,
-                             romanize=command.romanize if options.romanize else None, rendered=rendered)
+                             romanize=command.romanize if options.romanize else None, rendered=rendered,
+                             kana=kana_line)
                 continue
             render.render_sentence_header(line)
             if kana_line is not None:
