@@ -140,7 +140,7 @@ ETRE_VERBS = {'aller', 'venir', 'arriver', 'partir', 'entrer', 'sortir', 'naîtr
               'intervenir', 'décéder', 'apparaître', 'repartir', 'ressortir', 'redescendre', 'remonter'}
 # 訳語を決めておく語 (Wiktionary の最初の語義が外れるもの・日本語に直しにくいもの)
 GLOSSES = {
-    'nommer': '呼ぶ,名付ける', 'appeler': '呼ぶ', 'raison': '理性,理由', 'opinion': '意見', 'diversité': '多様さ',
+    'chose': 'もの', 'témoigner': '示す,証言する', 'nommer': '呼ぶ,名付ける', 'appeler': '呼ぶ', 'raison': '理性,理由', 'opinion': '意見', 'diversité': '多様さ',
     'juger': '判断する', 'distinguer': '区別する', 'réussir': '成功する', 'chercher': '探す', 'travailler': '働く', 'contenter': '満足させる', 'pourvoir': '備える',
     'être': 'ある,いる', 'avoir': '持つ', 'faire': 'する,作る', 'aller': '行く', 'venir': '来る', 'voir': '見る',
     'lire': '読む', 'écrire': '書く', 'parler': '話す', 'dire': '言う', 'donner': '与える', 'prendre': '取る',

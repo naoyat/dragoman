@@ -219,7 +219,8 @@ def corrections(doc):
             continue   # 名詞の後ろの形容詞の形 (la cuisine japonaise。japonaiser の活用形と読まない)
         if prev.pos_ in ('VERB', 'AUX') and k == t.i - 1 and \
                 any(w.text.lower() in ('qui', 'que', "qu'") for w in words[:prev.i]) and \
-                t.pos_ in ('ADV', 'ADJ', 'NOUN', 'X') and not dictionary.lemmas(lower, 'adv'):
+                t.pos_ in ('ADV', 'NOUN', 'X') and not dictionary.lemmas(lower, 'adv') and \
+                prev.lemma_ not in ('être', 'devenir', 'sembler', 'rester'):   # 繋辞の後ろは補語 (est égale)
             fixed[t.i] = 'VERB'   # 関係節の後ろの主節の動詞 (Ceux qui travaillent réussissent)
             continue
         if prev.pos_ in ('NOUN', 'PROPN') or p in ('qui', 'je', "j'", 'tu', 'il', 'elle', 'on', 'nous', 'vous', 'ils',
@@ -527,6 +528,10 @@ def item_of(token, doc, fixed):
         ja, gloss_lang, _ = morphology.gloss(adj, 'adj')   # 繋辞の後ろの形容詞を副詞・名詞と読む誤り (Je suis content)
         return {'surface': text, 'pos': 'adj', 'base': adj, 'ja': ja or adj, 'gloss_lang': gloss_lang or 'en',
                 '_': morphology.cngs(morphology.CASES + ('Gen',), feats), 'main': True, 'predicative': True}
+    if lower in ('que', "qu'") and token.dep_ == 'mark' and token.head.dep_ == 'ccomp':
+        # 補文の que (Cela témoigne que …「{…}ことを 示す」): 共通の解析器が節を前の動詞の従属節にする (core/Adverbial.py)
+        return {'surface': text, 'pos': 'conj', 'base': lower, 'ja': '〜ということ', 'gloss_lang': 'ja',
+                'clause_suffix': 'ことを', 'clause_tense': None}
     if pos in ('CCONJ', 'SCONJ'):
         return {'surface': text, 'pos': 'conj', 'base': lower, 'ja': morphology.CONJUNCTIONS.get(lower, lemma),
                 'gloss_lang': 'ja'}

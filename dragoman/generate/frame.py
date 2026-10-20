@@ -1209,8 +1209,14 @@ def frames(analysis):
     """SentenceAnalysis → Clause の列"""
     _sentence_words[:] = analysis.words
     clauses = []
-    for c in analysis.clauses:
-        clause = clause_of(c.predicate)
+    for c, conjunction in _flattened(analysis.clauses):
+        if conjunction is not None:
+            c.predicate.conjunction = conjunction   # 入れ子にした副詞節・補文の接続詞を、枠を作る間だけ戻す
+        try:
+            clause = clause_of(c.predicate)
+        finally:
+            if conjunction is not None:
+                c.predicate.conjunction = None
         for word in c.not_solved:   # 述語に結びつかなかった接続詞 (et postquam … の postquam)、副詞 (aegrē)
             if _lang == 'he' and isinstance(word, Word) and unicodedata.normalize('NFC', word.surface) in HEBREW_VAV:
                 _add_connective(clause, 'et')   # 物語の接続詞 (וַיֹּאמֶר の וַ)
@@ -1245,6 +1251,27 @@ def frames(analysis):
         _mark_apposed(clause)
         _bare_direction(clause)
     return clauses
+
+
+def _flattened(clauses):
+    """解析の節の列に、述語の従属節に入れ子にした副詞節・補文 (core/Adverbial.py: I saw her when she came、
+    Je sais que tu viens) を元の並び (動詞の位置の順) で戻す。[(節, 戻す接続詞 / None)]"""
+    from dragoman.core.Adverbial import AdverbialClause
+    from types import SimpleNamespace
+    out = []
+    for c in clauses:
+        out.append((c, None))
+        for sub in c.predicate.subordinates:
+            if isinstance(sub, AdverbialClause):
+                out.append((SimpleNamespace(predicate=sub.predicate, not_solved=[]), sub.conjunction))
+    def position(entry):
+        verb = getattr(entry[0].predicate, 'verb', None)
+        index = getattr(verb, 'index', None)
+        conj = entry[1]
+        if conj is not None and getattr(conj, 'index', None) is not None:
+            index = conj.index
+        return index if index is not None else 0
+    return sorted(out, key=position)
 
 
 ACCUSATIVE_ENDINGS = ('am', 'em', 'um', 'ēn', 'ān', 'ān', 'ōn')
