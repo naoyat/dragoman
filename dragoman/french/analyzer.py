@@ -891,6 +891,15 @@ IMPERATIVE_OBJECTS = {'moi': 'Dat', 'toi': 'Dat', 'lui': 'Dat', 'leur': 'Dat', '
                       'le': 'Acc', 'la': 'Acc', 'les': 'Acc', "l'": 'Acc', 'en': 'Acc', 'y': 'Dat'}
 
 
+def _shared_subject(before, form):
+    """前の語に、この動詞の形 (1・2人称複数) と合う主語の代名詞 (nous・vous) があるか"""
+    tags = [t for _, t in morphology.verb_forms(form) if 'plural' in t and 'imperative' not in t]
+    for pronoun, person in (('nous', 'first-person'), ('vous', 'second-person')):
+        if any(w.surface.lower() == pronoun for w in before) and any(person in t for t in tags):
+            return True
+    return False
+
+
 def imperatives(words):
     """主語の無い文頭・節の頭の動詞で、命令形の読みがあれば命令形 (Mange ta soupe !、Ne pars pas !)。後ろの接語の代名詞
     (Donne-moi le livre の moi) は目的語: le・la・les は対格、moi・toi・lui・leur は与格 (二重目的語の動詞でなければ対格)"""
@@ -906,6 +915,9 @@ def imperatives(words):
             continue   # 前に主語などがある
         if not any('imperative' in t for l, t in morphology.verb_forms(word.surface.lower())):
             continue
+        if k >= 0 and words[k].surface.lower() in ('et', 'ou', 'mais', 'puis') and \
+                _shared_subject(words[:k], word.surface.lower()):
+            continue   # 前の節と主語を共有した並列の動詞 (nous conduisons … et ne considérons pas …)
         reading = next(t for l, t in morphology.verb_forms(word.surface.lower()) if 'imperative' in t)
         person = 1 if 'first-person' in reading else 2
         word.items = [type(item)(dict(item.item, mood='imperative', person=person,

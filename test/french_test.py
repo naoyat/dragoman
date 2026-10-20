@@ -155,6 +155,11 @@ class AnalyzerTestCase(unittest.TestCase):
                          'それが / {{まさに,本来 {人々が 良識と={理性,理由}と 呼ぶ,名付ける}ことである}{よく 判断する、'
                          '偽りから 真実を 区別する}{力,主権}が すべての男[に,で] 生まれつき,自然に 同じ,公平である}ことを / 示す,証言する')
 
+    def test_shared_subject_not_imperative(self):
+        self.assertEqual(self.ja('Nous conduisons nos pensées par diverses voies et ne considérons pas les mêmes choses.')
+                         .split(' / ')[-1], '考慮しない,浮かべない')   # 主語 nous を共有した並列の動詞は命令形でない
+        self.assertEqual(self.ja('Ne pars pas !'), '出発するな')
+
     def test_adverbial_clauses(self):
         self.assertEqual(self.ja("Je reste à la maison parce qu'il pleut."), '{雨が降る}ので / 私が / 家[に,で] / とどまる')
         self.assertEqual(self.ja('Quand il arrive, nous mangeons.'), '{{彼,それ}が 着く}とき / 私たちが / 食べる')
