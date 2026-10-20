@@ -1575,6 +1575,15 @@ def detect_relative_clauses(clauses, trace, sentence_words=()):
             if not finite:
                 continue   # 不定詞の節には入れない (poterant iī quī … relictī erant lacrimās tenēre)
             target = finite[0]
+            # 解析器が並列の相手の動詞を決めた前置詞句 (ne vient pas de ce que A, mais seulement de ce que B の B) は
+            # その動詞の節へ
+            for objs in pred.case_slot.values():
+                for o in objs:
+                    verb = o.item.attrib('parallel_verb') if isinstance(o, PrepClause) else None
+                    owner = next((t for t in range(len(out)) if out[t] is not q and out[t].predicate.verb is verb), None) \
+                        if verb is not None else None
+                    if owner is not None:
+                        target = owner
             # 先行詞と、関係代名詞より前の語 (Domine Deus, Agnus Dei, Fīlius Patris, quī tollis … の呼びかけ) を移す
             for case in list(pred.case_slot):
                 moving = [o for o in pred.case_slot[case]

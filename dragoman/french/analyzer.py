@@ -1137,7 +1137,7 @@ def not_but(words):
     f = _item(first)
     first.items = [type(f)(dict(f.item, ja=gloss + 'ではなく'))]
     s = _item(second)
-    second.items = [type(s)(dict(s.item, ja=gloss))]
+    second.items = [type(s)(dict(s.item, ja=gloss, parallel_verb=words[verb]))]   # B は A と同じ動詞の句 (共通の解析器)
     dropped = negations + [words[k_mais]]   # カンマは節の区切りに残す
     for w in dropped:
         w.merged_into = True
@@ -1159,6 +1159,25 @@ def noun_phrases(words):
                                       base=w.surface.lower() + ' ' + n.attrib('base')))]
             nxt.surface = w.surface + ' ' + nxt.surface
             w.merged_into = True
+            continue
+        if w.surface.lower() == 'hommes' and _pos(w) == 'noun':
+            it = _item(w)   # 複数の hommes は「人々」(tous les hommes「すべての人々」)。単数の homme は「男」
+            w.items = [type(it)(dict(it.item, ja='人々,人間', gloss_lang='ja'))]
+        if w.surface.lower() in ('tous', 'toutes') and (nxt is None or not (_pos(nxt) in ('article', 'noun', 'adj') or
+                                                             _determiner(nxt))):
+            it = _item(w)   # 名詞の続かない tous「みな」(tous se trompent)
+            if it is not None:
+                after_verb = False   # 同じ節の前に動詞があれば目的語 (Je les connais tous。que tous se trompent は主語)
+                for x in reversed(words[:i]):
+                    if _pos(x) == 'conj' or PUNCTUATION.get(x.surface) or x.surface.lower() in ('que', "qu'"):
+                        break
+                    if _pos(x) == 'verb':
+                        after_verb = True
+                        break
+                cases = ('Gen',) if i and _pos(words[i - 1]) == 'preposition' else ('Acc',) if after_verb else ('Nom',)
+                w.items = [type(it)(dict(it.item, pos='pronoun', ja='みな', gloss_lang='ja', person=3, number='pl',
+                                         _=morphology.cngs(cases)))]   # de tous「みなから」は前置詞の目的語
+            out.append(w)
             continue
         if w.surface.lower() in ('autres', 'uns', 'unes') and i and words[i - 1].surface.lower() == 'les' and \
                 (nxt is None or _pos(nxt) != 'noun'):
