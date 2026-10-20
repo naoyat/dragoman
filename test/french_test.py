@@ -100,6 +100,14 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Chacun pense en être si bien pourvu.'),
                          '各人が / それを / {それほど よく 備えられている}ことを / 考える')   # 不定詞の être + 分詞、si「それほど」
 
+    def test_meme_impersonal_and_ce_que(self):
+        self.assertEqual(self.ja('Même les enfants le savent.'), '子供さえ / {彼,それ}を / 知っている')   # même「〜さえ」
+        self.assertEqual(self.ja("C'est le même livre."), 'それは / {同じ,真実の}本である')            # le même「同じ」
+        self.assertEqual(self.ja('Il est important que tu viennes.'), '{君が 来る}ことは / 重要である,大きい')
+        self.assertEqual(self.ja("Il n'est pas vraisemblable que tous se trompent."),
+                         '{すべての(人,物)が 間違える}ことは / もっとも,ありそうではない')
+        self.assertEqual(self.ja("Je ne sais pas ce qu'il veut."), '私が / {{彼,それ}が 欲する}ことを / 知らない')
+
     def test_adverbial_clauses(self):
         self.assertEqual(self.ja("Je reste à la maison parce qu'il pleut."), '{雨が降る}ので / 私が / 家[に,で] / とどまる')
         self.assertEqual(self.ja('Quand il arrive, nous mangeons.'), '{{彼,それ}が 着く}とき / 私たちが / 食べる')

@@ -42,6 +42,8 @@ def _root_items(lemma):
 
 def _particle(case, obj, predicate):
     """manquer à・plaire à の人は主題「は」(Tu me manques「私は 君が いなくて寂しい」)、s'appeler の名前は「と」(ジャンと呼ばれている)"""
+    if isinstance(obj, Word) and obj.items and obj.items[0].attrib('focus'):
+        return obj.items[0].attrib('focus')   # même「〜さえ」(Même les enfants le savent → 子供さえ)
     if case == 'Dat' and predicate.first_item.attrib('experiencer'):
         return 'は'
     if case == 'Acc' and predicate.first_item.attrib('lemma') == 'se appeler':
@@ -1009,6 +1011,86 @@ def negation(words):
 IMPERSONAL_VERBS = {'falloir', 'pleuvoir', 'neiger', 'grêler', 'venter', 'sembler', 'agir', 'se agir'}
 
 
+def ce_que(words):
+    """ce qui・ce que の ce は「こと」(関係節の先行詞。C'est ce qu'on nomme la raison、Je ne sais pas ce qu'il veut)"""
+    for i, w in enumerate(words):
+        nxt = words[i + 1] if i + 1 < len(words) else None
+        if w.surface.lower() == 'ce' and _pos(w) == 'pronoun' and nxt is not None and \
+                nxt.surface.lower() in ('qui', 'que', "qu'"):
+            it = _item(w)
+            w.items = [type(it)(dict(it.item, ja='こと', free_relative=True, _=morphology.cngs(('Nom', 'Acc'))))]
+            n = _item(nxt)
+            if n is not None and n.attrib('desc') != '関係代名詞':   # 接続詞と読まれた que も関係代名詞に
+                rel = nxt.surface.lower()
+                nxt.items = [type(n)({'surface': nxt.surface, 'pos': 'pronoun', 'base': rel, 'ja': '〜するところの',
+                                      'gloss_lang': 'ja', 'desc': '関係代名詞', 'compact': True,
+                                      '_': morphology.cngs(morphology.RELATIVES.get(rel, ('Acc',)))})]
+    return words
+
+
+def meme_even(words):
+    """même「〜さえ」: 限定詞・冠詞の前 (même les enfants) は後ろの名詞に、代名詞・名詞の後ろ (ceux même qui) は前の語に。
+    le même「同じ」(冠詞の後ろ) はそのまま"""
+    out = []
+    for i, w in enumerate(words):
+        if w.surface.lower() != 'même' or (i and _pos(words[i - 1]) == 'article'):
+            out.append(w)
+            continue
+        target = None
+        if i and _pos(words[i - 1]) in ('pronoun', 'noun') and not _item(words[i - 1]).attrib('clitic'):
+            target = words[i - 1]
+        else:
+            k = i + 1
+            while k < len(words) and (_pos(words[k]) in ('article', 'adj') or _determiner(words[k])):
+                k += 1
+            if k < len(words) and _pos(words[k]) in ('noun', 'pronoun') and k > i + 1:
+                target = words[k]
+        if target is None:
+            out.append(w)
+            continue
+        t = _item(target)
+        target.items = [type(t)(dict(t.item, focus='さえ'))]
+        w.merged_into = True
+    return out
+
+
+# 非人称の il est + 形容詞 + que (Il est important que tu viennes「{君が 来る}ことは 重要である」)
+IMPERSONAL_ADJECTIVE_COPULAS = {'être', 'sembler', 'paraître'}
+
+
+def impersonal_que(words):
+    """il est + 形容詞・名詞 (+ pas) + que の il を落とし、que の節を「〜ことは」の副詞節にして主節に入れる
+    (Il n'est pas vraisemblable que tous se trompent「{みなが 間違える}ことは ありそうではない」)"""
+    out = list(words)
+    for i, w in enumerate(words):
+        if w.surface.lower() != 'il' or _pos(w) != 'pronoun':
+            continue
+        k = i + 1
+        while k < len(words) and (_pos(words[k]) == 'adv' or _item(words[k]) is not None and
+                                  _item(words[k]).attrib('base') == 'ne'):
+            k += 1
+        verb = _item(words[k]) if k < len(words) else None
+        if verb is None or verb.pos != 'verb' or verb.attrib('lemma') not in IMPERSONAL_ADJECTIVE_COPULAS:
+            continue
+        m = k + 1
+        while m < len(words) and (_pos(words[m]) in ('adv', 'particle') or words[m].surface.lower() in ('pas', 'point')):
+            m += 1
+        if m >= len(words) or _pos(words[m]) not in ('adj', 'noun') or \
+                any(x.surface.lower() in COMPARATIVES for x in words[k + 1:m]):
+            continue   # 比較の que (Il est plus grand que moi) は除く
+        q = m + 1
+        if q >= len(words) or words[q].surface.lower() not in ('que', "qu'") or _item(words[q]) is None or \
+                _item(words[q]).attrib('comparison'):
+            continue   # 比較の que (comparatives が先に前置詞「〜より」にしたもの)
+        que = _item(words[q])
+        words[q].items = [type(que)(dict(que.item, pos='conj', ja='〜ことは', clause_suffix='ことは', clause_tense=None))]
+        words[k].items = [type(verb)(dict(verb.item, person=None, impersonal=True))]
+        w.merged_into = True
+        if w in out:
+            out.remove(w)
+    return out
+
+
 def impersonal_il(words):
     """非人称の il (il faut・il pleut・il s'agit de): il は主語でないので落とし、動詞の人称も無しに (主語を補わない)"""
     out = []
@@ -1176,7 +1258,8 @@ def assign_cases(words, doc, existential=False):
             item.item.update(_=morphology.cngs(('Nom',)), predicative=True, complement=True)
             word.items = [type(item)(item.item)]
             continue
-        demonstrative = item.pos == 'pronoun' and item.attrib('base') in ('celui', 'celle', 'ceux', 'celles')
+        demonstrative = item.pos == 'pronoun' and (item.attrib('base') in ('celui', 'celle', 'ceux', 'celles') or
+                                                   item.attrib('free_relative'))
         if item.pos != 'noun' and not demonstrative:
             if item.pos not in ('adj', 'article', 'adv') and not item.attrib('determiner'):
                 after_prep = False
@@ -1449,6 +1532,9 @@ def lookup_all(surfaces):
     words = comparatives(words)
     words = negation(words)
     words = impersonal_il(words)   # 動詞の組をまとめる前に (il faut partir の falloir で決める)
+    words = impersonal_que(words)
+    words = meme_even(words)
+    words = ce_que(words)
     words = merge_verbs(words)
     words = avoir_idioms(words)
     subjunctives(words)
