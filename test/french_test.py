@@ -147,6 +147,14 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Il travaille plus que moi.'), '{彼,それ}が / 私より / もっと / 働く')   # 形容詞の無い比較
         self.assertEqual(self.ja("Elle lit moins qu'elle écrit."), '{{彼女,それ}が 書く}より少なく / {彼女,それ}が / 読む')
 
+    def test_complement_with_inserted_relative(self):
+        # 補文の que は節の頭 (カンマより先に分ける): 挿入された関係節の先行詞 (力) が補文の主語に
+        self.assertEqual(self.ja("Cela témoigne que la puissance de bien juger, et distinguer le vrai d'avec le faux, qui "
+                                 "est proprement ce qu'on nomme le bon sens ou la raison, est naturellement égale en tous "
+                                 "les hommes."),
+                         'それが / {{まさに,本来 {人々が 良識と={理性,理由}と 呼ぶ,名付ける}ことである}{よく 判断する、'
+                         '偽りから 真実を 区別する}{力,主権}が すべての男[に,で] 生まれつき,自然に 同じ,公平である}ことを / 示す,証言する')
+
     def test_adverbial_clauses(self):
         self.assertEqual(self.ja("Je reste à la maison parce qu'il pleut."), '{雨が降る}ので / 私が / 家[に,で] / とどまる')
         self.assertEqual(self.ja('Quand il arrive, nous mangeons.'), '{{彼,それ}が 着く}とき / 私たちが / 食べる')

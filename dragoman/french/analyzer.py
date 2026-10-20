@@ -540,7 +540,7 @@ def item_of(token, doc, fixed):
     if lower in ('que', "qu'") and token.dep_ == 'mark' and token.head.dep_ == 'ccomp':
         # 補文の que (Cela témoigne que …「{…}ことを 示す」): 共通の解析器が節を前の動詞の従属節にする (core/Adverbial.py)
         return {'surface': text, 'pos': 'conj', 'base': lower, 'ja': '〜ということ', 'gloss_lang': 'ja',
-                'clause_suffix': 'ことを', 'clause_tense': None}
+                'clause_suffix': 'ことを', 'clause_tense': None, 'clause_start': True}   # 節の頭 (前の動詞の節に入れない)
     if pos in ('CCONJ', 'SCONJ'):
         return {'surface': text, 'pos': 'conj', 'base': lower, 'ja': morphology.CONJUNCTIONS.get(lower, lemma),
                 'gloss_lang': 'ja'}

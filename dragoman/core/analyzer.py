@@ -1046,13 +1046,15 @@ def _group_by_verbs(words, verbs_ix, trace):
 
         well_divided_at = None
         for j in range(fr, to+1):
-            if words[j].surface == ',':
-                well_divided_at = j
+            if _clause_start(words[j]):
+                # 解析器が節の頭と決めた語 (英語の I know | what you want、フランス語の témoigne | que la puissance, qui …)。
+                # カンマより先に (節の頭の後ろのカンマは挿入句の区切り)
+                well_divided_at = j-1
                 break
         if well_divided_at is None:
             for j in range(fr, to+1):
-                if _clause_start(words[j]):
-                    well_divided_at = j-1   # 解析器が節の頭と決めた語 (英語の I know | what you want)
+                if words[j].surface == ',':
+                    well_divided_at = j
                     break
         if well_divided_at is None:
             for j in range(fr, to+1):
