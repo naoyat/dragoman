@@ -1286,6 +1286,29 @@ def _relative_with_antecedent(word, words_by_index):
                for noun in nouns for _, n2, g2 in noun._)
 
 
+def detect_adverbial_clauses(clauses, trace):
+    """副詞節: 従属接続詞 (解析器が clause_suffix を付けたもの: when → とき) で始まる節を、隣の主節の従属節に。
+    文の頭の節は後ろの節に (When she came, I saw her)、ほかは前の節に (I saw her when she came)"""
+    from .Adverbial import AdverbialClause
+    out = list(clauses)
+    for q in list(clauses):
+        conj = q.predicate.conjunction
+        if conj is None or not isinstance(conj, Word) or not conj.items or not conj.items[0].attrib('clause_suffix'):
+            continue
+        k = out.index(q)
+        target = k + 1 if k == 0 else k - 1
+        if not 0 <= target < len(out):
+            continue
+        main = out[target].predicate
+        q.predicate.conjunction = None
+        q.predicate.subordinate = True
+        main.add_subordinate(AdverbialClause(q.predicate, conj))
+        out[target].not_solved.extend(q.not_solved)
+        out.remove(q)
+        trace.append('// ADVERBIAL %s (%s) -> VERB %s' % (q.predicate.surface, conj.surface, main.surface))
+    return out
+
+
 QUESTION_MARKS = ('?', '？', ';', '؟', '՞')   # ギリシア語の ; ・アラビア文字の ؟
 
 
@@ -1808,6 +1831,7 @@ def analyze_words(surfaces, words, word_details=None, trace=None):
             clauses.append(Clause(nodes[verbs_ix[i]], not_solved))
     clauses, questions = detect_indirect_questions(clauses, trace)
     clauses, relatives = detect_relative_clauses(clauses, trace, words)
+    clauses = detect_adverbial_clauses(clauses, trace)
     mark_direct_question(surfaces, clauses)
 
     return SentenceAnalysis(

@@ -33,6 +33,10 @@ spaCy の品詞（Penn Treebank）・原形・依存関係で語の項目を作�
   疑問詞のある疑問文の主語は主題「は」（Where do you live? → どこで / あなたは / 住むか）、繋辞の文の疑問詞は補語（Who is
   that man? → その男は / 誰であるか）。how old「何歳」・how many「いくつの」、取り残された前置詞（What are you talking
   about? → 何について）、have been to「〜へ行った」
+* 副詞節（2026-10-20）: 従属接続詞（when・because・if・although・before・after・until …。english/morphology.SUBORDINATORS）
+  の節を主節の従属節に入れ、主節の訳の頭に（共通の解析器 core/Adverbial.py。接続詞の項目の clause_suffix で
+  つなぎ方: I saw her when she came → {彼女が 来た}とき / 私が / 彼女を / 見た、before は現在「食べる前に」、after は過去
+  「終わった後で」）。天候の it（it rained）は訳さない
 * 間接疑問: know・ask・wonder・tell など（core/Question.py の QUESTION_VERBS）の目的語の、疑問詞（who・what・where・
   whether …）で始まる節（I don't know what you're talking about → 私が / {あなたが 何について 話している}かを / 知らない、
   whether は「かどうか」）。従属節の最初の語に節の頭の印（clause_start）を付け、共通の解析器が動詞の間の語をそこで分ける
@@ -45,5 +49,4 @@ docs/katakana.md の「英語」を見よ。米音（既定）は CMUdict、英�
 
 ## まだできないこと
 
-* 副詞節（when・because …）は節を分けて並べるだけ（〜するとき / 彼女が / 来た）
 * 評価（UD English-EWT）はまだ

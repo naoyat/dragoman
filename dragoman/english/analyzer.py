@@ -147,6 +147,18 @@ def _noun_data(token):
     return data
 
 
+WEATHER_VERBS = {'rain', 'snow', 'hail', 'thunder', 'drizzle', 'pour', 'freeze'}
+
+
+def _subordinator(text, lower, **extra):
+    """副詞節の従属接続詞 (共通の解析器が節を主節の従属節にする: core/Adverbial.py)"""
+    suffix, tense = morphology.SUBORDINATORS.get(lower, ('', None))
+    data = {'surface': text, 'pos': 'conj', 'base': lower, 'ja': morphology.CONJUNCTIONS.get(lower, lower),
+            'gloss_lang': 'ja', 'clause_suffix': suffix, 'clause_tense': tense}
+    data.update(extra)
+    return data
+
+
 def _preposition(text, prep):
     ja = morphology.PREPOSITIONS.get(prep) or '〜' + prep
     return {'surface': text, 'pos': 'preposition', 'base': prep, 'dominates': 'Gen', 'ja': ja, 'gloss_lang': 'ja'}
@@ -185,8 +197,7 @@ def item_of(token, doc):
     if lower == 'how' and token.head.pos_ in ('ADJ', 'ADV') and token.dep_ == 'advmod':
         return {'surface': text, 'pos': 'adv', 'base': 'how', 'ja': 'どれくらい', 'gloss_lang': 'ja', 'interrogative': True}
     if tag == 'WRB' and token.head.dep_ == 'advcl' and lower in morphology.CONJUNCTIONS:
-        return {'surface': text, 'pos': 'conj', 'base': lower, 'ja': morphology.CONJUNCTIONS[lower], 'gloss_lang': 'ja',
-                'not_interrogative': True}   # 副詞節の when (I saw her when she came)
+        return _subordinator(text, lower, not_interrogative=True)   # 副詞節の when (I saw her when she came)
     if lower == 'where' and token.head.lemma_ == 'be':
         return {'surface': text, 'pos': 'adv', 'base': lower, 'ja': 'どこに', 'gloss_lang': 'ja'}   # Where is …?「どこにあるか」
     if tag == 'WRB' and lower in morphology.QUESTION_ADVERBS and token.dep_ != 'advmod' or \
@@ -207,6 +218,8 @@ def item_of(token, doc):
             return {'surface': text, 'pos': 'pronoun', 'base': lower, 'ja': ja, 'gloss_lang': 'ja',
                     'desc': '指示代名詞' if lower in ('this', 'that', 'these', 'those') else '不定形容詞',
                     '_': morphology.cngs(morphology.ALL_CASES), 'compact': True, 'determiner': True}
+    if lower == 'it' and token.dep_ == 'nsubj' and token.head.lemma_ in WEATHER_VERBS:
+        return {'surface': text, 'pos': 'particle', 'base': 'it', 'ja': '', 'gloss_lang': 'ja'}   # 天候の it (it rained)
     if pos == 'PRON' or tag in ('PRP', 'WP', 'DT'):
         ja, person, number, cases = morphology.PRONOUNS.get(lower) or (lower, 3, 'sg', morphology.ALL_CASES)
         if len(cases) > 1:
@@ -219,10 +232,15 @@ def item_of(token, doc):
     if pos == 'ADP' or tag == 'IN' and token.dep_ == 'prep' or tag == 'TO':
         if token.dep_ == 'mark' or tag == 'IN' and token.dep_ not in ('prep', 'agent', 'dative', 'prt') and \
                 lower in morphology.CONJUNCTIONS:
-            return {'surface': text, 'pos': 'conj', 'base': lower, 'ja': morphology.CONJUNCTIONS[lower], 'gloss_lang': 'ja'}
+            if token.dep_ == 'mark' and token.head.dep_ == 'advcl' and lower in morphology.SUBORDINATORS:
+                return _subordinator(text, lower)
+            return {'surface': text, 'pos': 'conj', 'base': lower, 'ja': morphology.CONJUNCTIONS.get(lower, lower),
+                    'gloss_lang': 'ja'}
         if token.dep_ == 'prt':   # 句動詞の副詞 (give up の up): 動詞に付ける (phrasal_verbs)
             return {'surface': text, 'pos': 'particle', 'base': lower, 'ja': '', 'gloss_lang': 'ja', 'particle_of': token.head.i}
         return _preposition(text, lower)
+    if pos == 'SCONJ' and token.dep_ == 'mark' and token.head.dep_ == 'advcl' and lower in morphology.SUBORDINATORS:
+        return _subordinator(text, lower)
     if tag in ('CC',) or pos in ('CCONJ', 'SCONJ'):
         return {'surface': text, 'pos': 'conj', 'base': lower, 'ja': morphology.CONJUNCTIONS.get(lower, lower),
                 'gloss_lang': 'ja'}

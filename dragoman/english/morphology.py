@@ -57,6 +57,13 @@ CONJUNCTIONS = {'and': 'そして,〜と', 'or': 'または', 'but': 'しかし'
                 'although': '〜にもかかわらず', 'though': '〜けれども', 'that': '〜ということ', 'whether': '〜かどうか',
                 'before': '〜する前に', 'after': '〜した後で', 'since': '〜して以来', 'until': '〜するまで',
                 'unless': '〜でなければ', 'as': '〜なので,〜のように', 'once': 'いったん〜すると', 'than': '〜より'}
+# 副詞節の従属接続詞: 語形 → (節の後ろに付ける形, 節の動詞の時制 / None)
+SUBORDINATORS = {'when': ('とき', None), 'whenever': ('ときはいつも', None), 'because': ('ので', None),
+                 'since': ('ので', None), 'as': ('ので', None), 'if': ('なら', None), 'although': ('けれども', None),
+                 'though': ('けれども', None), 'while': ('間に', None), 'before': ('前に', 'present'),
+                 'after': ('後で', 'perfect'), 'until': ('まで', 'present'), 'till': ('まで', 'present'),
+                 'once': ('と', 'present'), 'so': ('ので', None), 'unless': ('のでなければ', None),
+                 'whereas': ('一方で', None), 'wherever': ('ところならどこでも', None)}
 NEGATIONS = {'not': '〜ない', "n't": '〜ない', 'never': '決して〜ない', 'no': '〜ない'}
 QUESTION_ADVERBS = {'where': 'どこで', 'when': 'いつ', 'why': 'なぜ', 'how': 'どのように'}
 # 法の助動詞 (MD): 語形 → (本動詞に付ける形, 時制)

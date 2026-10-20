@@ -52,6 +52,15 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('I wonder whether he will come.'), '私が / {彼が 来るだろう}かどうかを / 不思議に思う,驚く')
         self.assertEqual(self.ja('Tell me where you live.'), '私に / {どこで あなたが 住む}かを / 話せ,伝えろ')
 
+    def test_adverbial_clauses(self):
+        self.assertEqual(self.ja('I saw her when she came.'), '{彼女が 来た}とき / 私が / 彼女を / 見た')
+        self.assertEqual(self.ja('When she came, I saw her.'), '{彼女が 来た}とき / 私が / 彼女を / 見た')   # 文の頭の副詞節
+        self.assertEqual(self.ja('If you study, you will pass the exam.'),
+                         '{あなたが 勉強する}なら / あなたが / 試験を / 通過するだろう,通り過ぎるだろう')
+        self.assertEqual(self.ja('He left after the meeting ended.'), '{{会議,会合}が 終わった,終了した}後で / 彼が / 去った')
+        self.assertEqual(self.ja('Wash your hands before you eat.'),
+                         '{あなたが 食べる,食事をする}前に / あなたの{手,針}を / 洗え,洗濯しろ')   # before の節は現在
+
     def test_detect(self):
         from dragoman.main import detect
         for text in ('The boy reads a book.', 'Do you like cats?', "John's sister can speak Japanese."):
