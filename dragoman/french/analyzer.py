@@ -1048,6 +1048,7 @@ def not_but(words):
     negations = [w for w in words[:k_mais] if _item(w) is not None and _item(w).attrib('negation')]
     if not negations:
         return words
+    negations = negations[-1:]   # mais に一番近い否定だけ (同じ文の前の節の n'est pas は残す)
     start = next(k for k, w in enumerate(words) if w is negations[0])
     verb = next((k for k in range(start, k_mais) if _pos(words[k]) == 'verb'), None)   # 否定の掛かる動詞 (ne vient pas)
     if verb is None:
