@@ -19,6 +19,16 @@ class OrthographyTestCase(unittest.TestCase):
                           'savoir', 'faible', 'avoir', 'un', 'jamais', 'connaissance', 'connaître', 'île', 'hôtel',
                           'plutôt', 'sais', 'discours'])
 
+    def test_descartes(self):
+        # 『方法序説』(1637。Adam・Tannery 版の綴り) の語: u と v、アクサンの無い e、見出しの語 (est・esprit) はそのまま
+        words = ('eſt', 'eſprit', 'ſouuent', 'liures', 'peuuent', 'ſuiure', 'conuerſation', 'auoit', 'verité', 'extreme',
+                 'deſirer', 'moymeſme', 'peuteſtre', 'eſcholes', 'acheué', 'vraye', 'celebres', 'ames')
+        self.assertEqual([o.modern(w, True) for w in words],
+                         ['est', 'esprit', 'souvent', 'livres', 'peuvent', 'suivre', 'conversation', 'avait', 'vérité',
+                          'extrême', 'désirer', 'moi-même', 'peut-être', 'écoles', 'achevé', 'vraie', 'célèbres', 'âmes'])
+        self.assertEqual(o.tokens('il a eſcrit vne lettre a ſon pere'.split())[0][:6],
+                         ['il', 'a', 'écrit', 'une', 'lettre', 'à'])   # アクサンの無い前置詞 a
+
     def test_modern_words_kept(self):
         # 今の綴りにもよくある並び (oi) の語はそのまま: soit を sait、François を Français にしない
         self.assertEqual([o.modern(w, True) for w in ('soit', 'doit', 'croit', 'François', 'avez')],

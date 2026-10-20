@@ -116,7 +116,12 @@ estoit → était」と出し、カタカナ読みは今の綴りで（今の発
 * 古い綴りの印（ſ・sç・luy・estoit・-oient …）のある文では、今の綴りにもある語も直す（teste「試す」→ tête）。ただし今の
   綴りによくある並び（oi・-ns）の規則は、語形の表で同じ語の古い形と分かるとき（avoit と avait は avoir の半過去）だけ
   （soit・croit・François はそのまま）
-* まだ: 刊本の一節での確かめ、語義のずれ（ennui「激しい苦悩」）、古い語順（Je le veux faire は今の解析でもおおむね読める）、
+* 刊本での確かめ（2026-10-20）: Wikisource の『方法序説』Adam・Tannery 版（1902年。1637年の刊本の綴り。
+  $DRAGOMAN_DATA/fr/classical、リポジトリには入れない）の第1部の頭の3,550語で、直したあと辞書に無い語は319 → 31
+  （エリジオンの断片を除く）。u と v（souuent → souvent、liures → livres、conuersation → conversation）、アクサンの無い e・a
+  （verité → vérité、extreme → extrême、celebres → célèbres、ames → âmes）、アクサンの無い前置詞 a（difficiles a
+  contenter → à。主語の後ろの a は avoir）、見出しの語は同じ語の古い形のときだけ直す（eſt → est。et にしない）
+* まだ: 語義のずれ（ennui「激しい苦悩」）、古い語順（Je le veux faire は今の解析でもおおむね読める）、
   17世紀の発音のカタカナ（roy [rwɛ]）
 
 ## 法と動詞の組
