@@ -1075,6 +1075,35 @@ def comparative_clauses(words):
     return out
 
 
+def coordinated_complements(words):
+    """補文の que の後ろの et (ainsi) que「そしてまた〜ということ」は、同じ動詞の2つ目の補文 (cela témoigne que …;
+    et ainsi que …「{…}ことを / {…}ことも / 示す」)。et・ainsi は que の節の形に入れて落とす"""
+    if not any(_item(w) is not None and _item(w).attrib('clause_suffix') == 'ことを' for w in words):
+        return words
+    out = []
+    k = 0
+    while k < len(words):
+        w = words[k]
+        seq = [x.surface.lower() for x in words[k:k + 3]]
+        n = 3 if seq[:3] == ['et', 'ainsi', 'que'] or seq[:3] == ['et', 'ainsi', "qu'"] else \
+            2 if seq[:2] in (['et', 'que'], ['et', "qu'"]) else 0
+        before = any(_item(x) is not None and _item(x).attrib('clause_suffix') == 'ことを' for x in words[:k])
+        if n and before:
+            que = words[k + n - 1]
+            item = _item(que)
+            que.items = [type(item)({'surface': ' '.join(x.surface for x in words[k:k + n]), 'pos': 'conj',
+                                     'base': 'que', 'ja': '〜ということも', 'gloss_lang': 'ja', 'clause_suffix': 'ことも',
+                                     'clause_tense': None, 'clause_start': True})]
+            for x in words[k:k + n - 1]:
+                x.merged_into = True
+            out.append(que)
+            k += n
+            continue
+        out.append(w)
+        k += 1
+    return out
+
+
 def not_but(words):
     """ne … pas A, mais (seulement) B「A ではなく B」: 否定は A だけに掛かる。A と B が同じ前置詞の句なら、A の前置詞を
     「〜からではなく」に、mais と否定を落とす (ne vient pas de ce que …, mais seulement de ce que …「{…}ことからではなく
@@ -1772,6 +1801,7 @@ def lookup_all(surfaces):
     words = comparatives(words)
     words = negation(words)
     words = comparative_clauses(words)
+    words = coordinated_complements(words)
     words = not_but(words)
     words = impersonal_il(words)   # 動詞の組をまとめる前に (il faut partir の falloir で決める)
     words = impersonal_que(words)

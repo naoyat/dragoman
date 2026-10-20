@@ -20,7 +20,7 @@ class AdverbialClause(LatinObject):
         self.predicate = predicate
         self.conjunction = conjunction
         # 目的語の働きの節 (補文「〜ことを」) は主語の後ろに (私が / {君が 来る}ことを / 知っている)
-        self.adverbial = (conjunction.items[0].attrib('clause_suffix') or '').endswith('を')
+        self.adverbial = (conjunction.items[0].attrib('clause_suffix') or '') in ('ことを', 'ことも')
         self.surface = conjunction.surface + ' ' + predicate.surface
         self.surface_len = len(self.surface)
 

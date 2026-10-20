@@ -160,6 +160,13 @@ class AnalyzerTestCase(unittest.TestCase):
                          .split(' / ')[-1], '考慮しない,浮かべない')   # 主語 nous を共有した並列の動詞は命令形でない
         self.assertEqual(self.ja('Ne pars pas !'), '出発するな')
 
+    def test_coordinated_complements(self):
+        self.assertEqual(self.ja('Cela témoigne que la puissance de bien juger est naturellement égale en tous les hommes ; '
+                                 'et ainsi que la diversité de nos opinions ne vient pas de ce que les uns sont plus '
+                                 'raisonnables que les autres.'),
+                         'それが / {{よく 判断する}{力,主権}が すべての男[に,で] 生まれつき,自然に 同じ,公平である}ことを / '
+                         '{私たちの意見の多様さが {ある人々が 他の人々より 理性的,正確である}こと[の,から] 来ない}ことも / 示す,証言する')
+
     def test_adverbial_clauses(self):
         self.assertEqual(self.ja("Je reste à la maison parce qu'il pleut."), '{雨が降る}ので / 私が / 家[に,で] / とどまる')
         self.assertEqual(self.ja('Quand il arrive, nous mangeons.'), '{{彼,それ}が 着く}とき / 私たちが / 食べる')
