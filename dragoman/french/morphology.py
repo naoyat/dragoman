@@ -30,6 +30,8 @@ PRONOUNS = {
     'lui': ('彼,彼女', 3, 'sg', ('Dat', 'Acc')), 'leur': ('彼ら,彼女ら', 3, 'pl', ('Dat',)), 'se': ('自分', 3, 'sg', ('Acc', 'Dat')), "s'": ('自分', 3, 'sg', ('Acc', 'Dat')),
     'moi': ('私', 1, 'sg', ('Acc', 'Nom')), 'toi': ('君', 2, 'sg', ('Acc', 'Nom')), 'eux': ('彼ら', 3, 'pl', ('Acc', 'Nom')),
     'soi': ('自分', 3, 'sg', ('Acc',)), 'ce': ('それ', 3, 'sg', ('Nom',)), "c'": ('それ', 3, 'sg', ('Nom',)),
+    'celui': ('人,もの', 3, 'sg', ('Nom', 'Acc')), 'celle': ('人,もの', 3, 'sg', ('Nom', 'Acc')),
+    'ceux': ('人々', 3, 'pl', ('Nom', 'Acc')), 'celles': ('人々,もの', 3, 'pl', ('Nom', 'Acc')),
     'cela': ('それ', 3, 'sg', ('Nom', 'Acc')), 'ça': ('それ', 3, 'sg', ('Nom', 'Acc')), 'ceci': ('これ', 3, 'sg', ('Nom', 'Acc')),
     'qui': ('誰', 3, 'sg', ('Nom', 'Acc')), 'quoi': ('何', 3, 'sg', ('Acc',)), 'rien': ('何', 3, 'sg', ('Acc', 'Nom')),
     'personne': ('誰', 3, 'sg', ('Nom', 'Acc')), 'tout': ('すべて', 3, 'sg', ('Nom', 'Acc')),
@@ -136,6 +138,7 @@ ETRE_VERBS = {'aller', 'venir', 'arriver', 'partir', 'entrer', 'sortir', 'naîtr
               'intervenir', 'décéder', 'apparaître', 'repartir', 'ressortir', 'redescendre', 'remonter'}
 # 訳語を決めておく語 (Wiktionary の最初の語義が外れるもの・日本語に直しにくいもの)
 GLOSSES = {
+    'réussir': '成功する', 'chercher': '探す', 'travailler': '働く', 'contenter': '満足させる', 'pourvoir': '備える',
     'être': 'ある,いる', 'avoir': '持つ', 'faire': 'する,作る', 'aller': '行く', 'venir': '来る', 'voir': '見る',
     'lire': '読む', 'écrire': '書く', 'parler': '話す', 'dire': '言う', 'donner': '与える', 'prendre': '取る',
     'manger': '食べる', 'boire': '飲む', 'habiter': '住む', 'vivre': '生きる,住む', 'aimer': '愛する,好む',

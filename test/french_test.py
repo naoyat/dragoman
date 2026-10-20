@@ -90,6 +90,14 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Il est devenu riche.'), '{彼,それ}が / 金持ちになった')
         self.assertEqual(self.ja('Elle est partie.'), '{彼女,それ}が / 出発した')   # 分詞の見出し parti → partir
 
+    def test_relatives_and_idioms(self):
+        self.assertEqual(self.ja('Ceux qui travaillent réussissent.'), '働く人々が / 成功する')   # 関係節の後ろの主節の動詞
+        self.assertEqual(self.ja("J'aime ceux qui lisent."), '私が / 読む人々を / 愛する,好む')
+        self.assertEqual(self.ja("Ils n'ont point coutume d'en désirer plus."),
+                         '{彼ら,それら}が / それを / もう / 強く望む習慣がない')                 # ne … point、avoir coutume de
+        self.assertEqual(self.ja("J'ai envie de partir."), '私が / 出発したい')
+        self.assertEqual(self.ja('Tu as besoin de dormir.'), '君が / 眠る必要がある')
+
     def test_adverbial_clauses(self):
         self.assertEqual(self.ja("Je reste à la maison parce qu'il pleut."), '{雨が降る}ので / 私が / 家[に,で] / とどまる')
         self.assertEqual(self.ja('Quand il arrive, nous mangeons.'), '{{彼,それ}が 着く}とき / 私たちが / 食べる')

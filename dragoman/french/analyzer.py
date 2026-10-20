@@ -1225,7 +1225,8 @@ def avoir_idioms(words):
         noun = None
         while j < len(words) and j <= i + 3:
             surface = words[j].surface.lower()
-            two = (words[j - 1].surface.lower() + ' ' + surface) if j > i + 1 else ''
+            prev_surface = words[j - 1].surface.lower() if j > i + 1 else ''
+            two = (prev_surface + ('' if prev_surface.endswith("'") else ' ') + surface) if prev_surface else ''
             if surface in AVOIR_IDIOMS or two in AVOIR_IDIOMS:
                 noun = (two if two in AVOIR_IDIOMS else surface, j)
                 break
@@ -1240,6 +1241,12 @@ def avoir_idioms(words):
                                   _item(words[k]).attrib('clitic')):
             between.append(words[k])
             k += 1
+        if k < len(words) and _pos(words[k]) == 'noun' and re.search(r'(?:er|ir|re|oir)$', words[k].surface.lower()) and \
+                dictionary.lemmas(words[k].surface.lower(), 'verb'):
+            v_ja, v_lang, _ = morphology.gloss(words[k].surface.lower(), 'verb')   # 名詞と読まれた不定詞 (besoin de dormir)
+            n_item = _item(words[k])
+            words[k].items = [type(n_item)(dict(n_item.item, pos='verb', mood='infinitive', lemma=words[k].surface.lower(),
+                                                ja=v_ja or words[k].surface, gloss_lang=v_lang or 'en'))]
         if k >= len(words) or _pos(words[k]) != 'verb' or _item(words[k]).attrib('mood') != 'infinitive':
             continue
         inf = words[k]
@@ -1258,7 +1265,8 @@ def avoir_idioms(words):
         data.pop('existential', None)
         w.items = [type(item)(data)]
         w.surface = data['surface']
-        for dropped in [words[noun[1]], inf] + [b for b in between if b.surface.lower() in ('de', "d'")]:
+        article = [words[noun[1] - 1]] if ' ' in noun[0] or "'" in noun[0] else []   # l'habitude の l'
+        for dropped in article + [words[noun[1]], inf] + [b for b in between if b.surface.lower() in ('de', "d'")]:
             dropped.merged_into = True
             if dropped in out:
                 out.remove(dropped)
