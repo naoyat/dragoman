@@ -117,6 +117,14 @@ SUBJUNCTIVE_TRIGGERS = {'falloir', 'vouloir', 'souhaiter', 'désirer', 'exiger',
                         'aimer', 'attendre', 'craindre', 'regretter', 'douter', 'permettre', 'interdire', 'empêcher',
                         'suffire', 'valoir', 'importer', 'convenir'}
 # 後ろを接続法にする接続詞 (前置詞・副詞 + que。解析で1語にした見出し)
+# 副詞節の従属接続詞 → (節の後ろに付ける形, 節の動詞の時制) (core/Adverbial.py)
+SUBORDINATORS = {'quand': ('とき', None), 'lorsque': ('とき', None), "lorsqu'": ('とき', None), 'parce': ('ので', None),
+                 'parce que': ('ので', None), "parce qu'": ('ので', None), 'puisque': ('ので', None),
+                 "puisqu'": ('ので', None), 'comme': ('ので', None), 'si': ('なら', None), "s'": ('なら', None),
+                 'bien que': ('けれども', None), 'quoique': ('けれども', None), 'avant que': ('前に', 'present'),
+                 'après que': ('後で', 'perfect'), 'pendant que': ('間に', None), 'tandis que': ('一方で', None),
+                 'dès que': ('とすぐに', None), "jusqu'à ce que": ('まで', 'present'), 'pour que': ('ように', 'present'),
+                 'afin que': ('ように', 'present'), 'sans que': ('まま', None, True)}   # 3つ目: 節を否定に
 SUBJUNCTIVE_CONJUNCTIONS = {'sans que', 'pour que', 'afin que', 'avant que', 'bien que', 'quoique', 'à condition que',
                             'de sorte que', 'jusqu\'à ce que'}
 # 人が与格・物が主語の動詞 (経験者の構文): 日本語では人を主題「は」に (Tu me manques「私は 君が いなくて寂しい」、

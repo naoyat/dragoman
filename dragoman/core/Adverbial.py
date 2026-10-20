@@ -7,7 +7,8 @@
 #   Because it rained, we stayed home.  {雨が 降った}ので / 私たちが / 家に / とどまった
 #
 # 接続詞の語の項目の clause_suffix (とき・ので・なら …) で日本語のつなぎ方を決める (解析器が付ける)。clause_tense が
-# あれば節の動詞の時制をそれにする (before「来る前に」は現在、after「来た後で」は過去)
+# あれば節の動詞の時制をそれにする (before「来る前に」は現在、after「来た後で」は過去)、clause_negate なら節を否定に
+# (sans que「〜しないまま」)
 #
 from .LatinObject import LatinObject
 
@@ -26,15 +27,30 @@ class AdverbialClause(LatinObject):
         suffix = item.attrib('clause_suffix')
         verb = self.predicate.first_item
         tense = item.attrib('clause_tense')
-        saved = verb.item.get('tense')
+        saved = dict(verb.item)
         if tense:
             verb.item['tense'] = tense
+        if item.attrib('clause_negate') and not self.predicate._negative():
+            verb.item['negative'] = True   # sans que「〜しないまま」(否定の無い節を否定に。ne の付いた節はそのまま)
         try:
             inner, _ = self.predicate.translate()
         finally:
-            if tense:
-                verb.item['tense'] = saved
+            verb.item.clear()
+            verb.item.update(saved)
         inner = ' '.join(part for part in inner.split(' / ') if part.strip())
-        if item.attrib('clause_negated'):   # unless「〜しないなら」
-            pass
         return ('{' + inner + '}' + suffix, False)
+
+
+def mark_subordinators(words, table):
+    """解析器の語の列の従属接続詞 (項目の base が table にあるもの) に、副詞節のつなぎ方の印を付ける。
+    table は 接続詞 → (節の後ろに付ける形, 節の動詞の時制 / None)"""
+    for word in words:
+        items = getattr(word, 'items', None)
+        if not items or items[0].pos != 'conj':
+            continue
+        base = (items[0].attrib('base') or word.surface).lower()
+        if base in table:
+            suffix, tense = table[base][:2]
+            items[0].item['clause_suffix'] = suffix
+            items[0].item['clause_tense'] = tense
+            items[0].item['clause_negate'] = len(table[base]) > 2 and table[base][2]

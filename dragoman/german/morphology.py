@@ -62,6 +62,13 @@ CONJUNCTIONS = {'und': 'そして,〜と', 'oder': 'または', 'aber': 'しか�
                 'bevor': '〜する前に', 'nachdem': '〜した後で', 'während': '〜する間に', 'da': '〜なので', 'falls': '〜の場合',
                 'seit': '〜して以来', 'seitdem': '〜して以来', 'bis': '〜するまで', 'sobald': '〜するとすぐ', 'indem': '〜することによって',
                 'um': '〜するために', 'ohne': '〜せずに', 'statt': '〜する代わりに', 'wie': '〜のように', 'so': 'そのように'}
+# 副詞節の従属接続詞 → (節の後ろに付ける形, 節の動詞の時制) (core/Adverbial.py)
+SUBORDINATORS = {'weil': ('ので', None), 'da': ('ので', None), 'wenn': ('とき', None), 'als': ('とき', None),
+                 'falls': ('なら', None), 'obwohl': ('けれども', None), 'obgleich': ('けれども', None),
+                 'bevor': ('前に', 'present'), 'ehe': ('前に', 'present'), 'nachdem': ('後で', 'perfect'),
+                 'während': ('間に', None), 'bis': ('まで', 'present'), 'seit': ('以来', 'perfect'),
+                 'seitdem': ('以来', 'perfect'), 'sobald': ('とすぐに', None), 'damit': ('ように', 'present'),
+                 'indem': ('ことによって', None)}
 NEGATIONS = {'nicht': '〜ない', 'nie': '決して〜ない', 'niemals': '決して〜ない', 'kein': '〜ない'}
 # 話法の助動詞: 原形 → 本動詞に付ける形
 MODALS = {'können': 'ことができる', 'müssen': 'なければならない', 'wollen': 'たい', 'sollen': 'べきだ', 'dürfen': 'てもよい',

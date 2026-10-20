@@ -74,9 +74,14 @@ class AnalyzerTestCase(unittest.TestCase):
     def test_en_clitic_and_negative_pronouns(self):
         a = next(analyzer.analyze_text("Il est parti sans que personne ne s'en aperçoive."))
         self.assertEqual([c.predicate.translate()[0] for c in a.clauses][-1],
-                         '〜することなく / 誰も / それに / 実感しない,気づかない')   # s'en aperçoive (en は接語)・sans que
+                         '{誰も それに 実感しない,気づかない}まま / {彼,それ}が / 出発した')   # s'en aperçoive (en は接語)・sans que
         self.assertEqual(self.ja('Personne ne vient.'), '誰も / 来ない')
         self.assertEqual(self.ja('Il ne voit rien.'), '{彼,それ}が / 何も / 見ない')
+
+    def test_adverbial_clauses(self):
+        self.assertEqual(self.ja("Je reste à la maison parce qu'il pleut."), '{雨が降る}ので / 私が / 家[に,で] / とどまる')
+        self.assertEqual(self.ja('Quand il arrive, nous mangeons.'), '{{彼,それ}が 着く}とき / 私たちが / 食べる')
+        self.assertEqual(self.ja('Si tu viens, je serai content.'), '私は / {君が 来る}なら / うれしいだろう')
 
     def test_questions_and_imperatives(self):
         self.assertEqual(self.ja('Viens-tu avec moi ?'), '君が / 私[と,で] / 来るか')    # 倒置は主語を前に、疑問文は「か」
@@ -88,7 +93,7 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja("J'aime le vin français."), '私が / フランスのワインを / 愛する,好む')
 
     def test_verb_constructions(self):
-        self.assertEqual(self.ja('Je viendrais si je pouvais.').split(' / ')[:2], ['私が', '来るだろう'])   # 条件法
+        self.assertEqual(self.ja('Je viendrais si je pouvais.').split(' / ')[1:], ['私が', '来るだろう'])   # 条件法
         self.assertEqual(self.ja('Je viens de manger.'), '私が / 食べたところだ')                # 近い過去
         self.assertEqual(self.ja('Il me fait rire.'), '{彼,それ}が / 私を / 笑わせる')           # 使役 faire
         self.assertEqual(self.ja('En marchant, il chante.'), '歩きながら / {彼,それ}が / 歌う')  # ジェロンディフ

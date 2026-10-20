@@ -1184,6 +1184,8 @@ def lookup_all(surfaces):
     assign_cases(words, doc, existential)
     words = attach_articles(words)
     passive_agents(words)
+    from dragoman.core.Adverbial import mark_subordinators
+    mark_subordinators(words, morphology.SUBORDINATORS)
     for i, word in enumerate(words):
         word.index = i
     return words

@@ -404,6 +404,20 @@ def existential_es_gibt(words):
         return
 
 
+WEATHER_VERBS = {'regnen', 'schneien', 'donnern', 'blitzen', 'hageln', 'frieren'}
+
+
+def weather_es(words):
+    """天候の es (es regnet「雨が降る」) は訳さない"""
+    if not any(_pos(w) == 'verb' and _item(w).attrib('lemma') in WEATHER_VERBS for w in words):
+        return words
+    for w in words:
+        item = _item(w)
+        if item is not None and item.pos == 'verb' and item.attrib('lemma') in WEATHER_VERBS:
+            w.items = [type(item)(dict(item.item, person=None, impersonal=True))]   # 主語を補わない
+    return [w for w in words if not (w.surface.lower() == 'es' and _pos(w) == 'pronoun')]
+
+
 def passive_agents(words):
     """受動の文の von + 与格は動作主「〜によって」"""
     if not any(_pos(w) == 'verb' and _item(w).attrib('voice') == 'passive' for w in words):
@@ -433,7 +447,10 @@ def lookup_all(surfaces):
     words = attach_articles(words)
     words = [w for w in words if _pos(w) != 'particle']
     existential_es_gibt(words)
+    words = weather_es(words)
     passive_agents(words)
+    from dragoman.core.Adverbial import mark_subordinators
+    mark_subordinators(words, morphology.SUBORDINATORS)
     words = [w for w in words if _pos(w) != 'particle']
     for i, word in enumerate(words):
         word.index = i

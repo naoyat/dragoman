@@ -34,6 +34,11 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Er ruft seine Mutter an.'), '彼が / 彼の母を / 電話する')
         self.assertEqual(self.ja('Es gibt keinen Zucker.'), '砂糖が / ない,いない')
 
+    def test_adverbial_clauses(self):
+        self.assertEqual(self.ja('Ich bleibe zu Hause, weil es regnet.'), '{雨が降る}ので / 私が / 家[へ,のところへ] / とどまる')
+        self.assertEqual(self.ja('Bevor er isst, wäscht er die Hände.'), '{彼が 食べる}前に / 彼が / 手を / 洗う')
+        self.assertEqual(self.ja('Obwohl sie müde war, arbeitete sie.'), '{彼女が 疲れていた}けれども / 彼女が / 働いた')
+
     def test_clauses(self):
         self.assertEqual(self.ja('Ich weiß, dass du mich liebst.'), '私が / 知っている / 〜ということ / 君が / 私を / 愛する')
         self.assertEqual(self.ja('Das Haus, das ich gekauft habe, ist sehr schön.'), 'とても / {私が 買った}家は / 美しい')
