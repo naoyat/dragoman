@@ -137,6 +137,21 @@ def _finite_forms(text):
     return [(lemma, tags) for lemma, tags in morphology.verb_forms(text) if tags & set(FINITE) or 'imperative' in tags]
 
 
+def _participle_lemma(word):
+    """過去分詞の形 → 動詞の見出し (語形の表から。表の見出しが分詞の男性単数 (parti) なら動詞を探す: partir)"""
+    for lemma, tags in morphology.verb_forms(word):
+        if 'participle' in tags and 'past' in tags:
+            return lemma
+    for lemma, tags in morphology.verb_forms(word):
+        if 'participle' in tags and 'present' not in tags:
+            for verb in (lemma + 'r', lemma[:-1] + 'er' if lemma.endswith('é') else None,
+                         lemma[:-1] + 're' if lemma.endswith('u') else None, lemma[:-1] + 'oir' if lemma.endswith('u') else None,
+                         lemma[:-1] + 'ir' if lemma.endswith('u') else None):
+                if verb and dictionary.lemmas(verb, 'verb'):
+                    return verb
+    return None
+
+
 SUBJECTS = {'je', "j'", 'tu', 'il', 'elle', 'on', 'nous', 'vous', 'ils', 'elles'}
 
 
@@ -189,6 +204,11 @@ def corrections(doc):
         if prev.pos_ in ('NOUN', 'PROPN') and k == t.i - 1 and t.pos_ == 'ADJ' and \
                 any(pos == 'adj' for _, pos, _ in dictionary.forms(lower)) | bool(dictionary.lemmas(lower, 'adj')):
             continue   # 名詞の後ろの形容詞の形 (la cuisine japonaise。japonaiser の活用形と読まない)
+        if prev.pos_ in ('VERB', 'AUX') and k == t.i - 1 and \
+                any(w.text.lower() in ('qui', 'que', "qu'") for w in words[:prev.i]) and \
+                t.pos_ in ('ADV', 'ADJ', 'NOUN', 'X') and not dictionary.lemmas(lower, 'adv'):
+            fixed[t.i] = 'VERB'   # 関係節の後ろの主節の動詞 (Ceux qui travaillent réussissent)
+            continue
         if prev.pos_ in ('NOUN', 'PROPN') or p in ('qui', 'je', "j'", 'tu', 'il', 'elle', 'on', 'nous', 'vous', 'ils',
                                                   'elles', 'ce', "c'", 'cela', 'ça') or k < t.i - 1:
             fixed[t.i] = 'VERB'   # 主語・関係代名詞 qui・接語の後ろの動詞の形 (Le garçon lit、qui chante)
@@ -196,6 +216,8 @@ def corrections(doc):
         if t.i in fixed or t.pos_ in ('VERB', 'AUX', 'PUNCT'):
             continue
         lower = t.text.lower()
+        if lower in ('point', 'pas', 'plus', 'jamais', 'guère') and any(w.text.lower() in ('ne', "n'") for w in words[:t.i]):
+            continue   # ne … point の point (poindre の過去分詞と読まない)
         k = t.i - 1
         while k >= 0 and (words[k].pos_ == 'ADV' or words[k].text.lower() in morphology.CLITICS | {'ne', "n'", 'pas'}):
             k -= 1
@@ -203,7 +225,7 @@ def corrections(doc):
             continue
         head = words[k].lemma_
         if head in ('avoir', 'être') and (words[k].pos_ in ('AUX', 'VERB') or fixed.get(words[k].i) == 'VERB') and \
-                any('participle' in t2 and 'past' in t2 for _, t2 in morphology.verb_forms(lower)):
+                _participle_lemma(lower):
             fixed[t.i] = 'PARTICIPLE'
         elif head in morphology.MODALS and dictionary.lemmas(lower, 'verb') and \
                 re.search(r'(?:er|ir|re|oir)$', lower) and words[k].pos_ in ('VERB', 'AUX'):
@@ -324,7 +346,7 @@ def item_of(token, doc, fixed):
     if pos == 'PUNCT' or lower in PUNCTUATION:
         return None
     if fixed.get(token.i) == 'PARTICIPLE':
-        lemma = next(l for l, t in morphology.verb_forms(lower) if 'participle' in t and 'past' in t)
+        lemma = _participle_lemma(lower)
         return _verb_data(token, {'VerbForm': 'Part', 'Tense': 'Past'}, lemma, {'participle', 'past'})
     if fixed.get(token.i) == 'INFINITIVE':
         return _verb_data(token, {'VerbForm': 'Inf'}, lower)
@@ -343,7 +365,8 @@ def item_of(token, doc, fixed):
         return {'surface': text, 'pos': 'article', 'base': 'de', 'ja': '', 'gloss_lang': 'ja',
                 '_': morphology.cngs(morphology.CASES + ('Gen',), feats), 'compact': True}   # 否定の de (pas de pain)
     if fixed.get(token.i) == 'VERB':   # 3人称の読みを先に (qui chante・le garçon lit。je・tu の後ろは subject_persons で)
-        forms = sorted(_finite_forms(lower), key=lambda f: 'third-person' not in f[1])
+        forms = sorted(_finite_forms(lower), key=lambda f: ('third-person' not in f[1], 'present' not in f[1],
+                                                            'indicative' not in f[1]))   # 直説法現在を先に
         return _verb_data(token, {}, forms[0][0], forms[0][1])
     starts = token.i == 0 or doc[token.i - 1].pos_ in ('PUNCT', 'CCONJ', 'SCONJ') or \
         doc[token.i - 1].text.lower() in ('que', "qu'", 'si', 'quand')
@@ -462,6 +485,10 @@ def item_of(token, doc, fixed):
             ja, gloss_lang, row = morphology.gloss(adj, 'adj')
             return {'surface': text, 'pos': 'adj', 'base': adj, 'ja': ja or adj, 'gloss_lang': gloss_lang or 'en',
                     '_': morphology.cngs(morphology.CASES + ('Gen',), feats), 'main': True}
+    if lower == 'point' and any(t.text.lower() in ('ne', "n'") for t in doc[:token.i]) and \
+            not (token.i > 0 and doc[token.i - 1].pos_ == 'DET'):
+        return {'surface': text, 'pos': 'particle', 'base': lower, 'ja': morphology.NEGATIONS.get(lower, '〜ない'),
+                'gloss_lang': 'ja', 'negative_word': True}   # ne … point (poindre の過去分詞と読まない)
     if pos in ('VERB', 'AUX'):
         return _verb_data(token, feats)
     if lower in morphology.NEGATIONS and pos in ('ADV', 'PRON', 'NOUN', 'X'):
@@ -561,6 +588,10 @@ def merge_verbs(words):
                 word.surface = data['surface']
                 word.token_ixs = (word.token_ix, main.token_ix)
                 word.token_ix = main.token_ix
+            elif lemma in COPULA_LIKE and _participle(main) and _adjectival(main, words[j + 1:j + 3]) and \
+                    not (lemma == 'être' and _item(main).attrib('lemma') in morphology.ETRE_VERBS):
+                _to_adjective(main)   # 形容詞になった分詞 (Je suis fatigué「疲れている」、Elle semble fatiguée)
+                continue
             elif lemma in ('avoir', 'être') and _participle(main):
                 _merge(word, main, lemma, reflexive=_reflexive_before(words, i))
             elif lemma in morphology.MODALS and _infinitive(main):
@@ -572,6 +603,31 @@ def merge_verbs(words):
             changed = True
             break
     return words
+
+
+STATE_ENDINGS = ('た', 'ている', 'い', 'な', 'だ')
+
+
+def _adjectival(word, after):
+    """繋辞の後ろの分詞が形容詞として辞書にあり、状態の訳語 (疲れた・開いている) で、動作主 (par・de + 名詞) が
+    続かないか (Il est aimé de tous は受動)"""
+    if any(w.surface.lower() in ('par', 'de', "d'", 'des', 'du') for w in after[:1]):
+        return False
+    masculine = re.sub('(?:e|s|es)$', '', word.surface.lower()) if word.surface.lower().endswith(('ée', 'és', 'ées', 'ie', 'ies', 'is', 'ue', 'ues', 'us', 'te', 'tes', 'ts')) else word.surface.lower()
+    for form in dict.fromkeys((word.surface.lower(), masculine)):
+        ja, gloss_lang, _ = morphology.gloss(form, 'adj')
+        if ja and gloss_lang == 'ja' and ja.split(',')[0].endswith(STATE_ENDINGS):
+            word.adjective_gloss = (form, ja)
+            return True
+    return False
+
+
+def _to_adjective(word):
+    form, ja = word.adjective_gloss
+    item = _item(word)
+    word.items = [type(item)({'surface': word.surface, 'pos': 'adj', 'base': form, 'ja': ja, 'gloss_lang': 'ja',
+                              '_': morphology.cngs(('Nom',)), 'main': True, 'predicative': True, 'complement': True,
+                              'form': '形容詞になった過去分詞 (%s)' % item.attrib('lemma')})]
 
 
 def _reflexive_before(words, i):
@@ -999,6 +1055,75 @@ def comparatives(words):
     return out
 
 
+SUPERLATIVES = {'plus': '最も', 'mieux': '最もよく', 'moins': '最も〜ない'}
+BEST = {'meilleur': '最も良い', 'meilleure': '最も良い', 'meilleurs': '最も良い', 'meilleures': '最も良い',
+        'pire': '最も悪い', 'pires': '最も悪い'}
+
+
+def _adjective_ja(item):
+    """形容詞の訳語、分詞なら受動の過去の形 (partagée → 分けられた)"""
+    first = (item.ja or '').split(',')[0]
+    if item.pos == 'verb' and item.attrib('gloss_lang') == 'ja':
+        from dragoman.core.japanese import JaVerb
+        from dragoman.core import verb_flags as Verb
+        return JaVerb(first).form(Verb.INDICATIVE | Verb.PASSIVE | Verb.PERFECT, False)
+    return first
+
+
+def superlatives(words):
+    """最上級: 冠詞 + plus / mieux / moins + 形容詞・分詞 (la chose la mieux partagée「最もよく分けられた物」、le plus grand
+    「最も大きい」)、冠詞 + meilleur (最も良い) を1つの形容詞に。比較の que が後ろにあれば比較級 (comparatives) のまま"""
+    out = []
+    i = 0
+    while i < len(words):
+        word = words[i]
+        nxt = words[i + 1] if i + 1 < len(words) else None
+        after = words[i + 2] if i + 2 < len(words) else None
+        if _determiner(word) and nxt is not None and nxt.surface.lower() in BEST and _item(nxt) is not None:
+            n = _item(nxt)   # 所有の限定詞 + meilleur (ma meilleure amie「私の最も良い友達」): 限定詞はそのまま
+            nxt.items = [type(n)(dict(n.item, pos='adj', ja=BEST[nxt.surface.lower()], gloss_lang='ja', superlative=True,
+                                      form='最上級 (%s %s)' % (word.surface.lower(), nxt.surface.lower())))]
+            out += [word, nxt]
+            i += 2
+            continue
+        if _pos(word) == 'article' and nxt is not None and nxt.surface.lower() in BEST:
+            n = _item(nxt)
+            data = {'surface': word.surface + ' ' + nxt.surface, 'pos': 'adj', 'base': nxt.surface.lower(),
+                    'ja': BEST[nxt.surface.lower()], 'gloss_lang': 'ja', '_': _item(word)._, 'main': True,
+                    'superlative': True, 'form': '最上級 (%s %s)' % (word.surface.lower(), nxt.surface.lower())}
+            nxt.items = [type(n)(data)]
+            nxt.surface = data['surface']
+            word.merged_into = True
+            out.append(nxt)
+            i += 2
+            continue
+        if _pos(word) == 'article' and nxt is not None and nxt.surface.lower() in SUPERLATIVES and after is not None \
+                and _item(after) is not None and (_pos(after) == 'adj' or _pos(after) == 'verb' and
+                                                  _item(after).attrib('mood') == 'participle') and \
+                not any(w.surface.lower() in ('que', "qu'") for w in words[i + 3:i + 6]):
+            a = _item(after)
+            head = SUPERLATIVES[nxt.surface.lower()]
+            adjective = _adjective_ja(a)
+            if head.endswith('ない'):
+                ja = '最も' + adjective + 'くない' if adjective.endswith('い') else '最も' + adjective + 'でない'
+            else:
+                ja = head + adjective
+            data = {'surface': ' '.join(w.surface for w in (word, nxt, after)), 'pos': 'adj', 'base': a.attrib('base'),
+                    'lemma': a.attrib('lemma'), 'ja': ja if a.attrib('gloss_lang') == 'ja' else head + ' ' + (a.ja or ''),
+                    'gloss_lang': 'ja', '_': _item(word)._, 'main': True, 'superlative': True,
+                    'form': '最上級 (%s %s + %s)' % (word.surface.lower(), nxt.surface.lower(),
+                                                    '分詞' if a.pos == 'verb' else '形容詞')}
+            after.items = [type(a)(data)]
+            after.surface = data['surface']
+            word.merged_into = nxt.merged_into = True
+            out.append(after)
+            i += 3
+            continue
+        out.append(word)
+        i += 1
+    return out
+
+
 def existential_il_y_a(words):
     """il y a + 名詞「〜がある」: il・y を除き、名詞を主語に"""
     for i, word in enumerate(words):
@@ -1041,7 +1166,15 @@ def assign_cases(words, doc, existential=False):
             verb_before = item
             after_prep = False
             continue
-        if item.pos != 'noun':
+        if item.pos == 'adj' and not after_prep and verb_before is not None and \
+                verb_before.attrib('lemma') in COPULA_LIKE and verb_before.attrib('voice') != 'passive' and \
+                not item.attrib('superlative') and not _noun_follows(words, word):
+            # 繋辞の後ろの形容詞は補語 (Ils pensent être heureux「幸せであると」)
+            item.item.update(_=morphology.cngs(('Nom',)), predicative=True, complement=True)
+            word.items = [type(item)(item.item)]
+            continue
+        demonstrative = item.pos == 'pronoun' and item.attrib('base') in ('celui', 'celle', 'ceux', 'celles')
+        if item.pos != 'noun' and not demonstrative:
             if item.pos not in ('adj', 'article', 'adv') and not item.attrib('determiner'):
                 after_prep = False
             continue
@@ -1054,6 +1187,7 @@ def assign_cases(words, doc, existential=False):
             cases = ('Nom',)
         elif verb_before.attrib('lemma') in COPULA_LIKE and verb_before.attrib('voice') != 'passive':
             cases = ('Nom',)   # 補語 (Elle est ma sœur)
+            item.item['complement'] = True   # 繋辞の後ろの名詞は補語 (Le bon sens est la chose …)
         else:
             cases = ('Acc',)
         after_prep = False
@@ -1061,6 +1195,115 @@ def assign_cases(words, doc, existential=False):
         # 名詞の性は辞書 (Wiktionary) を spaCy の読みより先に (soupe を男性と読むと ta soupe の ta が掛からない)
         item.item['_'] = morphology.cngs(cases, dict(feats, Gender=None) if gender else feats, gender)
         word.items = [type(item)(item.item)]
+
+
+def _noun_follows(words, word):
+    """形容詞のすぐ後ろ (形容詞・副詞を越えて) に名詞があるか (C'est un bon livre の bon は名詞に掛かる)"""
+    k = words.index(word) + 1
+    while k < len(words) and _pos(words[k]) in ('adj', 'adv'):
+        k += 1
+    return k < len(words) and _pos(words[k]) == 'noun'
+
+
+# avoir + 名詞 + de + 不定詞の熟語: 名詞 → 不定詞の訳語に付ける形 (avoir coutume de「〜する習慣がある」)
+AVOIR_IDIOMS = {'coutume': '習慣がある', 'habitude': '習慣がある', 'besoin': '必要がある', 'envie': 'たい',
+                'peur': 'のを恐れる', 'droit': '権利がある', 'raison': 'のは正しい', 'tort': 'のは間違っている',
+                'honte': 'のを恥じる', 'hâte': 'のが待ち遠しい', 'intention': 'つもりである', 'temps': '時間がある',
+                'occasion': '機会がある', 'l\'habitude': '習慣がある', 'l\'intention': 'つもりである',
+                'l\'occasion': '機会がある', 'le temps': '時間がある', 'le droit': '権利がある'}
+
+
+def avoir_idioms(words):
+    """avoir + 名詞 + (de) + 不定詞を1つの述語に (ils n'ont point coutume d'en désirer plus「それをもっと望む習慣がない」、
+    j'ai envie de partir「出発したい」)。時制・人称は avoir から、不定詞の目的語 (en) はそのまま"""
+    out = list(words)
+    for i, w in enumerate(words):
+        item = _item(w)
+        if item is None or item.pos != 'verb' or item.attrib('lemma') != 'avoir' or item.attrib('mood') == 'infinitive':
+            continue
+        j = i + 1
+        noun = None
+        while j < len(words) and j <= i + 3:
+            surface = words[j].surface.lower()
+            two = (words[j - 1].surface.lower() + ' ' + surface) if j > i + 1 else ''
+            if surface in AVOIR_IDIOMS or two in AVOIR_IDIOMS:
+                noun = (two if two in AVOIR_IDIOMS else surface, j)
+                break
+            if _pos(words[j]) not in ('adv', 'particle', 'article') and surface not in ('le', 'la', "l'"):
+                break
+            j += 1
+        if noun is None:
+            continue
+        k = noun[1] + 1
+        between = []
+        while k < len(words) and (words[k].surface.lower() in ('de', "d'") or _item(words[k]) is not None and
+                                  _item(words[k]).attrib('clitic')):
+            between.append(words[k])
+            k += 1
+        if k >= len(words) or _pos(words[k]) != 'verb' or _item(words[k]).attrib('mood') != 'infinitive':
+            continue
+        inf = words[k]
+        m = _item(inf)
+        suffix = AVOIR_IDIOMS[noun[0]]
+        first = (m.ja or '').split(',')[0]
+        if m.attrib('gloss_lang') == 'ja':
+            from dragoman.core.japanese import attach_auxiliary
+            ja = attach_auxiliary(first, suffix) if suffix == 'たい' else first + suffix
+        else:
+            ja = first
+        data = dict(m.item, ja=ja, gloss_lang='ja', tense=item.attrib('tense'), mood=item.attrib('mood'),
+                    person=item.attrib('person'), number=item.attrib('number'), main_ja=m.ja,
+                    surface=w.surface + ' ' + words[noun[1]].surface + ' … ' + inf.surface,
+                    form='avoir %s de + 不定詞' % noun[0])
+        data.pop('existential', None)
+        w.items = [type(item)(data)]
+        w.surface = data['surface']
+        for dropped in [words[noun[1]], inf] + [b for b in between if b.surface.lower() in ('de', "d'")]:
+            dropped.merged_into = True
+            if dropped in out:
+                out.remove(dropped)
+    return out
+
+
+SEEM_VERBS = {'sembler': 'ように見える', 'paraître': 'ように見える', 'devenir': 'なる', 'rester': 'ままである'}
+
+
+def copular_adjectives(words):
+    """繋辞のような動詞 (sembler・paraître・devenir・rester) と不定詞の être に続く形容詞の補語を、動詞の訳語にまとめる
+    (Elle semble fatiguée「疲れたように見える」、Ils pensent être heureux「{幸せである}ことを考える」)"""
+    out = []
+    for k, w in enumerate(words):
+        item = _item(w)
+        prev = out[-1] if out else None
+        p = _item(prev) if prev is not None else None
+        while p is not None and p.pos == 'adv' and len(out) > 1 and not p.attrib('negation'):
+            break
+        if item is not None and item.pos == 'adj' and item.attrib('predicative') and p is not None and p.pos == 'verb':
+            lemma = p.attrib('lemma')
+            first = (item.ja or '').split(',')[0]
+            ja = None
+            if lemma in SEEM_VERBS and item.attrib('gloss_lang') == 'ja':
+                suffix = SEEM_VERBS[lemma]
+                if suffix == 'なる':
+                    ja = (first[:-1] + 'く' if first.endswith('い') else first[:-1] + 'に' if first.endswith(('な', 'の')) else
+                          first + 'に') + 'なる'
+                elif suffix == 'ままである':
+                    ja = first + 'ままである' if not first.endswith('な') else first + 'ままである'
+                else:
+                    ja = first + suffix
+            elif lemma == 'être' and p.attrib('mood') == 'infinitive' and item.attrib('gloss_lang') == 'ja':
+                from dragoman.core.japanese import copula_predicate
+                ja = copula_predicate(first, True)
+            if ja:
+                data = dict(p.item, ja=ja, gloss_lang='ja', surface=prev.surface + ' ' + w.surface,
+                            form='%s + 形容詞' % lemma, copular_adjective=item.attrib('base'))
+                data.pop('existential', None)
+                prev.items = [type(p)(data)]
+                prev.surface = data['surface']
+                w.merged_into = True
+                continue
+        out.append(w)
+    return out
 
 
 def genitive_de(words):
@@ -1173,10 +1416,12 @@ def lookup_all(surfaces):
     clitic_cases(words)
     subject_persons(words)
     imperatives(words)
+    words = superlatives(words)   # 比較 (que のある文) より先に
     words = comparatives(words)
     words = negation(words)
     words = impersonal_il(words)   # 動詞の組をまとめる前に (il faut partir の falloir で決める)
     words = merge_verbs(words)
+    words = avoir_idioms(words)
     subjunctives(words)
     words = pronominal_verbs(words)
     words = il_faut_que(words)
@@ -1188,6 +1433,7 @@ def lookup_all(surfaces):
     words = infinitive_prepositions(words)
     words = genitive_de(words)
     assign_cases(words, doc, existential)
+    words = copular_adjectives(words)
     words = attach_articles(words)
     passive_agents(words)
     from dragoman.core.Adverbial import mark_subordinators

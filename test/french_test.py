@@ -78,6 +78,18 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Personne ne vient.'), '誰も / 来ない')
         self.assertEqual(self.ja('Il ne voit rien.'), '{彼,それ}が / 何も / 見ない')
 
+    def test_superlatives_and_complements(self):
+        self.assertEqual(self.ja('Le bon sens est la chose du monde la mieux partagée.'),
+                         '良い{意味,感覚}は / {世界の & 最もよく共有された}物体である')   # 最上級 + 分詞、繋辞の補語
+        self.assertEqual(self.ja("C'est le plus grand homme du monde."), 'それは / {世界の & 最も大きい}男である')
+        self.assertEqual(self.ja('Je suis fatigué.'), '私は / 疲れている')             # 形容詞になった過去分詞
+        self.assertEqual(self.ja('La porte était ouverte.'), 'ドアは / 開いていた')
+        self.assertEqual(self.ja('Il est aimé de tous.'), '{彼,それ}が / すべて[の,から] / 愛される,好まれる')   # 動作主があれば受動
+        self.assertEqual(self.ja('Elle semble fatiguée.'), '{彼女,それ}が / 疲れたように見える')
+        self.assertEqual(self.ja('Ils pensent être heureux.'), '{彼ら,それら}が / {幸せである}ことを / 考える')
+        self.assertEqual(self.ja('Il est devenu riche.'), '{彼,それ}が / 金持ちになった')
+        self.assertEqual(self.ja('Elle est partie.'), '{彼女,それ}が / 出発した')   # 分詞の見出し parti → partir
+
     def test_adverbial_clauses(self):
         self.assertEqual(self.ja("Je reste à la maison parce qu'il pleut."), '{雨が降る}ので / 私が / 家[に,で] / とどまる')
         self.assertEqual(self.ja('Quand il arrive, nous mangeons.'), '{{彼,それ}が 着く}とき / 私たちが / 食べる')
@@ -99,7 +111,7 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('En marchant, il chante.'), '歩きながら / {彼,それ}が / 歌う')  # ジェロンディフ
         self.assertEqual(self.ja('Il faut partir.'), '出発しなければならない')                   # 非人称の il
         self.assertEqual(self.ja('Il est plus grand que moi.'), '{彼,それ}は / 私より / 大きい')  # 比較
-        self.assertEqual(self.ja("C'est le livre que j'ai lu."), '{私が 読んだ}本は / それである')
+        self.assertEqual(self.ja("C'est le livre que j'ai lu."), 'それは / {私が 読んだ}本である')
 
     def test_subjunctive(self):
         def mood(text, surface):

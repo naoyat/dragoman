@@ -484,6 +484,8 @@ def _complement_type(gloss, adjective):
 def _copula_parts(gloss, adjective):
     """(語幹, 型)。型は 'i' (形容詞), 'te' (〜ている), 'da' / 'nda' (〜である で結ぶもの)"""
     gloss = RENTAISHI.get(gloss, gloss)
+    if gloss.endswith(('ている', 'でいる')) and len(gloss) > 3:
+        return gloss[:-2], 'te'   # 状態の訳語 (開いている → 開いていた・開いていない)
     kind = _complement_type(gloss, adjective)
     if kind == 'i':
         return ('よ' if gloss == 'いい' else gloss[:-1]), 'i'  # いい → よかった
