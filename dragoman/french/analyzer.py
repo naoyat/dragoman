@@ -229,9 +229,17 @@ def corrections(doc):
         if head in ('avoir', 'être') and (words[k].pos_ in ('AUX', 'VERB') or fixed.get(words[k].i) == 'VERB') and \
                 _participle_lemma(lower):
             fixed[t.i] = 'PARTICIPLE'
+        elif t.i > 0 and words[t.i - 1].pos_ == 'DET' and words[t.i - 1].text.lower() in morphology.ARTICLES:
+            continue   # 冠詞の後ろは名詞 (voir la mer の mer を不定詞と読まない)
         elif head in morphology.MODALS and dictionary.lemmas(lower, 'verb') and \
                 re.search(r'(?:er|ir|re|oir)$', lower) and words[k].pos_ in ('VERB', 'AUX'):
             fixed[t.i] = 'INFINITIVE'
+    for t in words:   # 冠詞の後ろの動詞と読まれた名詞 (voir la mer の mer): 動詞の見出しも定形も無く名詞の見出しがある
+        lower = t.text.lower()
+        if t.pos_ == 'VERB' and t.i > 0 and words[t.i - 1].pos_ == 'DET' and \
+                words[t.i - 1].text.lower() in morphology.ARTICLES and dictionary.lemmas(lower, 'noun') and \
+                not dictionary.lemmas(lower, 'verb') and not _finite_forms(lower) and t.i not in fixed:
+            fixed[t.i] = 'NOUN'
     for t in words:
         lower = t.text.lower()
         if lower not in morphology.CLITICS or t.i in fixed:
@@ -239,7 +247,8 @@ def corrections(doc):
         k = t.i + 1
         while k < len(words) and words[k].text.lower() in morphology.CLITICS | {'ne', "n'"}:
             k += 1
-        if k < len(words) and (words[k].pos_ in ('VERB', 'AUX') or fixed.get(words[k].i) == 'VERB'):
+        if k < len(words) and (words[k].pos_ in ('VERB', 'AUX') or fixed.get(words[k].i) == 'VERB') and \
+                fixed.get(words[k].i) != 'NOUN':
             fixed[t.i] = 'CLITIC'   # 動詞の前の接語の代名詞 (Je le lui ai donné)
     return fixed
 
@@ -350,6 +359,8 @@ def item_of(token, doc, fixed):
     if fixed.get(token.i) == 'PARTICIPLE':
         lemma = _participle_lemma(lower)
         return _verb_data(token, {'VerbForm': 'Part', 'Tense': 'Past'}, lemma, {'participle', 'past'})
+    if fixed.get(token.i) == 'NOUN':
+        return _noun_data(token, feats)
     if fixed.get(token.i) == 'INFINITIVE':
         return _verb_data(token, {'VerbForm': 'Inf'}, lower)
     if lower.endswith('ant') and token.i > 0 and doc[token.i - 1].text.lower() == 'en':
@@ -1418,6 +1429,81 @@ def copular_adjectives(words):
     return out
 
 
+def _infinitive_word(word):
+    """不定詞の語か (名詞と読まれた不定詞 juger・vivre も、辞書の動詞の見出しなら)。訳語と見出しを返す"""
+    item = _item(word)
+    if item is None:
+        return None
+    lower = word.surface.lower()
+    if item.pos == 'verb' and item.attrib('mood') == 'infinitive':
+        return (item.ja or lower).split(',')[0], item.attrib('gloss_lang')
+    if item.pos in ('noun', 'adv', 'adj') and re.search(r'(?:er|ir|re|oir)$', lower) and dictionary.lemmas(lower, 'verb'):
+        ja, gloss_lang, _ = morphology.gloss(lower, 'verb')
+        return ((ja or lower).split(',')[0], gloss_lang) if ja else None
+    return None
+
+
+def noun_infinitives(words):
+    """名詞 + de + 不定詞 (+ 目的語) を名詞に掛ける「{…する}名詞」(la puissance de bien juger「{よく 判断する}力」、
+    le courage de parler「{話す}勇気」、le désir de voir la mer「{海を 見る}願い」)。et でつないだ不定詞も"""
+    from dragoman.core.AndOr import braced
+    out = []
+    i = 0
+    while i < len(words):
+        w = words[i]
+        out.append(w)
+        if _pos(w) != 'noun' or i + 2 >= len(words) or words[i + 1].surface.lower() not in ('de', "d'"):
+            i += 1
+            continue
+        k = i + 2
+        parts, used = [], []
+        while True:
+            advs = []
+            while k < len(words) and _pos(words[k]) == 'adv' and not _item(words[k]).attrib('negation') and \
+                    _infinitive_word(words[k]) is None:
+                advs.append(words[k])
+                k += 1
+            inf = _infinitive_word(words[k]) if k < len(words) else None
+            if inf is None:
+                break
+            verb_word = words[k]
+            k += 1
+            obj = []   # 目的語の名詞句 (冠詞・限定詞・形容詞 + 名詞)
+            m = k
+            while m < len(words) and (_pos(words[m]) in ('article', 'adj') or _determiner(words[m]) or
+                                      words[m].surface.lower() in ('la', 'le', 'les', "l'")):
+                m += 1
+            if m < len(words) and _pos(words[m]) == 'noun' and m > k:
+                obj = words[k:m + 1]
+                k = m + 1
+            phrase = [(_item(a).ja or '').split(',')[0] for a in advs]
+            if obj:
+                noun = _item(obj[-1])
+                modifiers = [(_item(x).ja or '').split(',')[0] for x in obj[:-1] if _item(x) is not None and
+                             _item(x).ja and _pos(x) != 'article']
+                phrase.append(' '.join(modifiers + [(noun.ja or obj[-1].surface).split(',')[0]]) + 'を')
+            phrase.append(inf[0])
+            parts.append(' '.join(p for p in phrase if p))
+            used += advs + [verb_word] + obj
+            if k + 1 < len(words) and words[k].surface.lower() == 'et' and \
+                    (_infinitive_word(words[k + 1]) is not None or _pos(words[k + 1]) == 'adv'):
+                used.append(words[k])
+                k += 1
+                continue   # et でつないだ不定詞 (juger et distinguer)
+            break
+        if not parts:
+            i += 1
+            continue
+        item = _item(w)
+        clause = '、'.join(parts)
+        w.items = [type(item)(dict(item.item, ja='{%s}%s' % (clause, braced(item.ja or w.surface)),
+                                   infinitive_clause=clause, form='名詞 + de + 不定詞'))]
+        for x in [words[i + 1]] + used:
+            x.merged_into = True
+        i = k
+    return out
+
+
 def genitive_de(words):
     """名詞 + de + 名詞: de を落として後ろの名詞を属格に (la présidence de l'Organisation「組織の主宰」)。
     動詞の後ろの de (parler de …) は前置詞のまま"""
@@ -1537,6 +1623,7 @@ def lookup_all(surfaces):
     words = ce_que(words)
     words = merge_verbs(words)
     words = avoir_idioms(words)
+    words = noun_infinitives(words)   # de の扱いより先に (la puissance de juger は「判断の力」でなく「判断する力」)
     subjunctives(words)
     words = pronominal_verbs(words)
     words = il_faut_que(words)

@@ -108,6 +108,14 @@ class AnalyzerTestCase(unittest.TestCase):
                          '{すべての(人,物)が 間違える}ことは / もっとも,ありそうではない')
         self.assertEqual(self.ja("Je ne sais pas ce qu'il veut."), '私が / {{彼,それ}が 欲する}ことを / 知らない')
 
+    def test_noun_infinitives(self):
+        self.assertEqual(self.ja('Il a le courage de parler.'), '{彼,それ}が / {話す}勇気を / 持つ')
+        self.assertEqual(self.ja("J'ai le désir de voir la mer."), '私が / {海を 見る}強い願いを / 持つ')
+        self.assertEqual(self.ja('La puissance de bien juger et distinguer le vrai est égale.'),
+                         '{よく 判断する、真実を 区別する}{力,主権}は / 同じ,公平である')   # et でつないだ不定詞
+        self.assertEqual(self.ja('Je veux voir la mer.'), '私が / 海を / 見たい')   # 冠詞の後ろの mer は名詞
+        self.assertEqual(self.ja('Le livre de Pierre est rouge.'), 'ピエールの本は / 赤い')
+
     def test_adverbial_clauses(self):
         self.assertEqual(self.ja("Je reste à la maison parce qu'il pleut."), '{雨が降る}ので / 私が / 家[に,で] / とどまる')
         self.assertEqual(self.ja('Quand il arrive, nous mangeons.'), '{{彼,それ}が 着く}とき / 私たちが / 食べる')
