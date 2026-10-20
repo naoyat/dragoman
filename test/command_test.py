@@ -114,6 +114,13 @@ class DragomanCommandTestCase(unittest.TestCase):
         for code in ('la', 'grc', 'sa', 'ru', 'he', 'ar', 'fa', 'hi', 'ur', 'kobun'):
             self.assertIn('  %s ' % code, result.stdout)
 
+    def test_sentence_per_line_short_option(self):
+        from dragoman.main import _take_flag
+        self.assertEqual(_take_flag(['-kl', 'a.txt'], 'l', '--sentence-per-line'), (True, ['-k', 'a.txt']))
+        self.assertEqual(_take_flag(['-l', '-k'], 'l', '--sentence-per-line'), (True, ['-k']))
+        self.assertEqual(_take_flag(['-tsay'], 'l', '--sentence-per-line'), (False, ['-tsay']))   # 値の中の l は除かない
+        self.assertEqual(_take_flag(['--sentence-per-line'], 'l', '--sentence-per-line'), (True, []))
+
     def test_detect(self):
         sys.path.insert(0, ROOT)
         from dragoman.main import detect

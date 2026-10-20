@@ -110,7 +110,7 @@ python3 tools/build_en_ja.py        # → ~/.local/share/dragoman-data/en-ja.sql
 | `--kana-long` / `--kana-wa` / `--kana-si` / `--kana-oe` / `--kana-accent` | カタカナ読みの書き方の設定（長音「ー」・[wa]・[si]・[ø]・英語の米音 / 英音） |
 | `--no-explain` | 初学者向けの解説（動詞の型・語根・連語形など）を出さない |
 | `--english-glosses` | 英語の訳語を日本語に置き換えない |
-| `--sentence-per-line` | 改行も文の区切りにする（歌詞・詩など、行末に句点の無い行。行末がカンマなら次の行に続ける） |
+| `-l`, `--sentence-per-line` | 改行も文の区切りにする（歌詞・詩など、行末に句点の無い行。行末がカンマなら次の行に続ける） |
 | `--html=FILE` | 解析結果をノート（HTML）に清書する（下の「ノート」） |
 | `--pdf=FILE` | ノートを PDF にする（Google Chrome / Chromium のヘッドレス印刷） |
 | `--marks` / `--legend` / `--provenance` | ノートに確かさの印 / 印の凡例 / 再現条件を載せる |

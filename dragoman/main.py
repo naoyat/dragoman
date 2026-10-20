@@ -160,6 +160,39 @@ def value_short():
     return {name[1] for name in value_options() if len(name) == 2}
 
 
+def _take_flag(args, short, long):
+    """値を取らないオプション (-l / --sentence-per-line) を引数から除く。短いオプションのまとまり (-kl) の中の字も。
+    返り値: (あったか, 残りの引数)"""
+    found, out = False, []
+    values = value_short()
+    skip_next = False
+    for arg in args:
+        if skip_next:
+            out.append(arg)
+            skip_next = False
+            continue
+        if arg == long:
+            found = True
+            continue
+        if _short_cluster(arg) and arg != '-':
+            letters = ''
+            for k, ch in enumerate(arg[1:]):
+                if ch in values:   # 値を取る字の後ろは値 (-tsay)
+                    letters += arg[1 + k:]
+                    break
+                if ch == short:
+                    found = True
+                    continue
+                letters += ch
+            if letters:
+                out.append('-' + letters)
+            skip_next = takes_next('-' + letters) if letters else False
+            continue
+        out.append(arg)
+        skip_next = takes_next(arg)
+    return found, out
+
+
 def _short_cluster(arg):
     """短いオプションのまとまり (-wt、-wtsay、-we) か"""
     return arg.startswith('-') and not arg.startswith('--') and len(arg) > 1
@@ -300,10 +333,11 @@ def main(argv=None):
         # 推定した言語を標準エラー出力に (解析結果の出力は汚さない)
         print('推定した言語: %s (%s)%s' % (lang, NAMES[lang], '' if detected else '。文字から推定できないのでラテン語に'),
               file=sys.stderr)
-    if lang == 'la' and '--sentence-per-line' in args:
+    per_line, stripped = _take_flag(args, 'l', '--sentence-per-line') if lang == 'la' else (False, args)
+    if per_line:
         # ラテン語の入口 (latin/main.py) はファイルを自分で読むので、行の区切りに句点を補った一時ファイルにして渡す
         from dragoman.core import cli
-        args = [a for a in args if a != '--sentence-per-line']
+        args = stripped
         if texts is None:
             files = input_files(args)
             texts = cli.read_texts(files)

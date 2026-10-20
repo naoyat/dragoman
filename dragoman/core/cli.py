@@ -134,7 +134,7 @@ def parse(command, argv):
             options.kana_options['accent'] = arg
         elif option == '--no-explain':
             options.explain = False
-        elif option == '--sentence-per-line':
+        elif option in ('-l', '--sentence-per-line'):
             options.sentence_per_line = True
         elif option == '--html':
             options.html = check_html_path(arg)

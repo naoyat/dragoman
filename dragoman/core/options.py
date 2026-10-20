@@ -41,7 +41,7 @@ COMMON = (
     Option('kana-accent', value='ACCENT', help='英語のカタカナ読みの発音: us (既定。米音、CMUdict) / gb (英音、espeak-ng)'),
     Option('no-explain', help='初学者向けの解説 (動詞の型・語根など) を出さない'),
     Option('english-glosses', help='英語の訳語 (Wiktionary などの語義) を日本語に置き換えない'),
-    Option('sentence-per-line', help='改行も文の区切りにする (歌詞・詩など、行末に句点の無い行。\n'
+    Option('sentence-per-line', 'l', help='改行も文の区切りにする (歌詞・詩など、行末に句点の無い行。\n'
                                      '行末がカンマなら次の行に続ける)'),
     Option('html', value='FILE', help='解析結果をノート (HTML) に清書する (行間逐語訳・弧の図・入れ子の図・訳・語の詳細)'),
     Option('pdf', value='FILE', help='ノートを PDF に (Google Chrome のヘッドレス印刷)'),
