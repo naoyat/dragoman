@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# dragoman: 文を辞書引き・構文解析して、日本語の逐語訳を付ける (ラテン語・古典ギリシア語・サンスクリット・ロシア語・
-# 聖書ヘブライ語 (聖書アラム語)・アラビア語・ペルシア語・ヒンディー語・ウルドゥー語、古文 (現代語に組み立て直す))
+# dragoman: 文を辞書引き・構文解析して、日本語の逐語訳を付ける (ラテン語・古典ギリシア語・サンスクリットをはじめ
+# 20あまりの言語。下の「対応している言語」・./dragoman.py --languages)
 #
 #   ./dragoman.py [LANG] [オプション] [ファイル...]     (python3 dragoman.py / python3 -m dragoman でも)
 #
@@ -20,7 +20,11 @@
 #                 ほかのアラビア文字 → ar、デーヴァナーガリーはヒンディー語らしい語 (है, का, की, में …) があれば hi、無ければ sa、
 #                 チベット文字 → bo、インドネシア語らしい語 (yang, dan, di, ini, itu …) が2つ以上あるラテン文字 → id
 #                 (マレー語らしい語 kerana, sahaja, bahawa … があれば ms)、タガログ語らしい語 (ang, ng, mga, ay …) → tl、
-#                 アイヌ語らしい語 (kamuy, kotan, wa, kor, ne …) → ain、かな交じりの日本語 → kobun)
+#                 アイヌ語らしい語 (kamuy, kotan, wa, kor, ne …) → ain、ʻokina か長音符とハワイ語の字だけ → haw、
+#                 þ・ð・ƿ・ġ・ċ → ang、フランス語らしい語 (le, est, que …) かアクセント記号・エリジオン → fr、
+#                 ğ・ı・ş か トルコ語らしい語 → tr、フィンランド語らしい語 (ja, on, ei …) → fi、ドイツ語らしい語
+#                 (der, und, ist …) かウムラウト・ß → de、the か英語らしい語 (and, of, you …) → en、
+#                 ө・ү のあるキリル文字 → mn、ハングル → ko、かな交じりの日本語 → kobun)
 #   -e, --text=TEXT       引数の文を入力にする (何度でも。ファイル・標準入力の代わりに)
 #   -L, --languages       対応している言語の一覧を出す
 #
@@ -275,7 +279,12 @@ def main(argv=None):
     if lang is not None and lang not in LANGUAGES:
         sys.exit('知らない言語: %s\n対応している言語:\n%s' % (lang, language_list()))
     if lang is None and ('-h' in args or '--help' in args):
-        print(open(__file__, encoding='utf-8').read().split('\nimport')[0].replace('# ', '').replace('#', ''))
+        header = open(__file__, encoding='utf-8').read().split('\nimport')[0].split('\n')[2:]   # #! と coding の行は除く
+        print('\n'.join(line[2:] if line.startswith('# ') else line.lstrip('#') for line in header))
+        from dragoman.core import options as option_defs
+        print('共通のオプション (どの言語でも。ラテン語の入口はその一部と独自のもの: ./dragoman.py la --help):')
+        print(option_defs.help_text(option_defs.COMMON))
+        print()
         print('対応している言語:\n' + language_list())
         return
     texts = texts or None

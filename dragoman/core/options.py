@@ -34,7 +34,7 @@ COMMON = (
     Option('kana', 'k', help='文のカタカナ読み (発音に忠実に。語の区切りは空白) を見出しの下に添える'),
     Option('kana-only', help='カタカナ読みだけを出す (解析結果は出さない)'),
     Option('kana-long', value='STYLE', help='カタカナ読みの長音「ー」: phonemic (音素として長い母音だけ) / phonetic\n'
-                                            '(実際に長く発音される母音にも)。既定は言語ごと (フランス語は phonetic)'),
+                                            '(実際に長く発音される母音にも)。既定は言語ごと (フランス語・ロシア語は phonetic)'),
     Option('kana-wa', value='KANA', help='カタカナ読みの [wa]: ワ (既定) / ウァ (西洋古典学の慣習: ミネルウァ)'),
     Option('kana-si', value='KANA', help='カタカナ読みの [si]・[zi]: スィ (既定。[ʃi] の「シ」と分ける) / シ (慣用)'),
     Option('kana-oe', value='KANA', help='カタカナ読みの [ø]・[œ] (ö・eu): エ (既定: Niinistö → ニーニステ) / オ (ニーニスト)'),
