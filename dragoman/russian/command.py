@@ -25,6 +25,12 @@ def stressed_text(surfaces):
     return out
 
 
+def explain(word):
+    """語の詳細の注記: まとめた構文 (б … ни плёл「譲歩 (疑問詞 + бы … ни + 動詞「〜しても」)」、бы пошёл「条件法」)"""
+    item = word.items[0] if word.items else None
+    return [item.attrib('form')] if item is not None and item.attrib('form') else []
+
+
 def _surfaces(analysis):
     """元の文の語の列 (解析で落とした語 б・ни も)"""
     return getattr(analysis, 'original', None) or analysis.surfaces
@@ -53,6 +59,6 @@ def katakana(analysis, kana_options):
 
 
 COMMAND = Command(lang='ru', name='ロシア語', analyzer=analyzer, dictionary=dictionary, available=available,
-                  usage=USAGE, header=header, speech_text=lambda a, o: stressed_text(_surfaces(a)), romanize=romanized,
+                  usage=USAGE, header=header, speech_text=lambda a, o: stressed_text(_surfaces(a)), explain=explain, romanize=romanized,
                   descendant_langs=('en', 'ja', 'fr', 'de'), fallback_langs=('uk', 'be'), notes=NOTES,
                   katakana=katakana)
