@@ -40,7 +40,7 @@ COMMON = (
     Option('kana-oe', value='KANA', help='カタカナ読みの [ø]・[œ] (ö・eu): エ (既定: Niinistö → ニーニステ) / オ (ニーニスト)'),
     Option('kana-accent', value='ACCENT', help='英語のカタカナ読みの発音: us (既定。米音、CMUdict) / gb (英音、espeak-ng)'),
     Option('kana-json', help='ルビ (フリガナ) 用のカタカナを JSON で出す (入力の1行ごとに {"text", "ruby": [{text, start, end,\n'
-                              'kana}]}。解析はしない。カラオケの字幕など外から呼ぶ口)'),
+                              'kana}]}。解析はしない)'),
     Option('kana-liaison', value='MODE', help='ルビの語をまたぐ音 (リエゾンなど) の載せ方: next (既定。次の語に) / prev (前の語に)\n'
                                               '/ merge (つながった語をまとめる)'),
     Option('no-explain', help='初学者向けの解説 (動詞の型・語根など) を出さない'),

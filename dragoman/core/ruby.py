@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# ルビ (フリガナ) 用のカタカナ: 元の文の語ごとに、文字の範囲とその上に載せるカナ (カラオケの字幕などの外から呼ぶ口)
+# ルビ (フリガナ) 用のカタカナ: 元の文の語ごとに、文字の範囲とその上に載せるカナ
 #
 #   ruby("Les enfants sont arrivés.", "fr")
 #   → [{"text": "Les", "start": 0, "end": 3, "kana": "レ"}, {"text": "enfants", "start": 4, "end": 11, "kana": "ザンファン"},
