@@ -224,3 +224,86 @@ def katakana(word, long='phonetic', **options):
         return latin(word, 'fr')
     options.setdefault('final_sokuon', True)
     return kana(phonemes(word), long=long, **options)
+
+
+def _word_ipa(words):
+    """語の列 → 語ごとの IPA の音素の列 (文全体を espeak-ng に渡して空白で分ける。リエゾンの印 - の後ろは次の語の頭の
+    子音として ('-', 子音) で残す)。語の数が合わなければ語ごとに"""
+    import re
+    raw = ipa(' '.join(words)).split()
+    if len(raw) != len(words):
+        raw = [ipa(w).replace(' ', '') for w in words]
+    # espeak-ng が別の言語に切り替えた語 ((en)…(fr): d'aujourd'hui) はエリジオンを分けて引き直す
+    raw = [_elided_ipa(w) if '(' in r else r for w, r in zip(words, raw)]
+    out = []
+    for w in raw:
+        head, mark, tail = w.partition('-')
+        phs = [p for p in split_ipa(head) if p not in ('ˈ', 'ˌ')]
+        out.append((phs, split_ipa(tail) if mark and tail else []))
+    return out
+
+
+ELISION_SOUNDS = {"d'": 'd', "l'": 'l', "j'": 'ʒ', "m'": 'm', "t'": 't', "s'": 's', "n'": 'n', "c'": 's', "qu'": 'k'}
+
+
+def _elided_ipa(word):
+    """エリジオンの付いた語の IPA (d'aujourd'hui → d + aujourd'hui の IPA)"""
+    import re
+    lower = word.lower().replace('’', "'")
+    for prefix, sound in ELISION_SOUNDS.items():
+        if lower.startswith(prefix) and len(lower) > len(prefix):
+            return sound + re.sub(r'\([a-z-]+\)', '', ipa(word[len(prefix):])).replace(' ', '')
+    return re.sub(r'\([a-z-]+\)', '', ipa(word)).replace(' ', '')
+
+
+def ruby_words(words, liaison='next', long='phonetic', **options):
+    """ルビ用: 語の列 (句読点を除いた綴り) → (語ごとのカタカナ, 語の間で音がつながったか)。
+    リエゾン・アンシェヌマンの子音は liaison='next' なら次の語に (les enfants → レ / ザンファン、il est → イ / レ、
+    il y a → イ / リ / ヤ)、'prev' なら前の語に残す (レズ / アンファン)"""
+    if not available():
+        from dragoman.core.katakana_names import latin
+        return [latin(w, 'fr') for w in words], [False] * max(0, len(words) - 1)
+    options.setdefault('final_sokuon', True)
+    spellings = [w.lower() for w in words]
+    pairs = _word_ipa(words)
+    phs = [list(p) for p, _ in pairs]
+    links = [False] * max(0, len(words) - 1)
+    kept = [[] for _ in words]
+    for k in range(len(words) - 1):
+        marked = pairs[k][1]
+        nxt = phs[k + 1]
+        moved = []
+        if marked:   # 印の付いたリエゾン (le-z enfants)
+            moved = marked
+        elif len(phs[k]) > 1 and phs[k][-1] in LIAISON and nxt and _is_vowel(nxt[0]) and \
+                ((_is_vowel(phs[k][-2]) and _nasal(phs[k][-2])) or _silent(phs[k][-1], spellings[k])):
+            moved = [phs[k].pop()]   # リエゾン (sont arrivés)
+        elif ''.join(phs[k]) in ENCHAINEMENT and nxt and _is_vowel(nxt[0]):
+            moved = [phs[k].pop()]   # アンシェヌマン (il est → イ / レ)
+        if ''.join(phs[k] + moved) in ('i', 'li') and spellings[k] == 'y' and nxt and _is_vowel(nxt[0]):
+            phs[k + 1] = ['j'] + nxt   # il y a の y + a は「ヤ」(イ / リ / ヤ)
+            links[k] = True
+        if not moved:
+            continue
+        links[k] = True
+        if liaison == 'prev':
+            kept[k] = moved   # 前の語に残す子音 (語の読みを作ってから語末に足す: レズ / アンファン)
+        else:
+            phs[k + 1] = moved + phs[k + 1]
+    out = []
+    for w, spelling, extra in zip(phs, spellings, kept):
+        fixed = []
+        for k, p in enumerate(w):   # 子音 + w + 母音: oi は「オワ」、ui は「ウイ」
+            p = _french_vowel(p)
+            nxt = w[k + 1] if k + 1 < len(w) else ''
+            prev = fixed[-1] if fixed else ''
+            if p == 'w' and prev and not _is_vowel(prev) and _is_vowel(nxt):
+                fixed += ['o', 'w'] if nxt[:1] in ('a', 'ɑ') else ['u']
+                continue
+            fixed.append(p)
+        text = kana(_final_nasal(_lengthen(fixed), spelling.strip(".,;:!?")), long=long, **options) if fixed else ''
+        if extra and not (extra == ['n'] and text.endswith('ン')):   # 鼻母音の後ろの n は「ン」に含まれる (un ami)
+            from dragoman.core.kana import CODA, CONSONANTS
+            text += ''.join(CODA.get(CONSONANTS.get(p, p), '') for p in extra)
+        out.append(text)
+    return out, links

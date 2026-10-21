@@ -160,6 +160,39 @@ def value_short():
     return {name[1] for name in value_options() if len(name) == 2}
 
 
+KANA_VALUE_OPTIONS = {'--kana-long': 'long', '--kana-wa': 'wa', '--kana-si': 'si', '--kana-oe': 'oe',
+                      '--kana-accent': 'accent'}
+
+
+def kana_json(lang, args, texts):
+    """--kana-json: 入力の1行ごとに {"text": 行, "ruby": [{text, start, end, kana}]} を1行の JSON で (core/ruby.py)"""
+    import json
+    from dragoman.core import cli, ruby
+    options, liaison, files = {}, 'next', []
+    k = 0
+    while k < len(args):
+        arg = args[k]
+        name, eq, value = arg.partition('=')
+        if name in KANA_VALUE_OPTIONS or name == '--kana-liaison':
+            if not eq:
+                k += 1
+                value = args[k] if k < len(args) else ''
+            if name == '--kana-liaison':
+                liaison = value
+            else:
+                options[KANA_VALUE_OPTIONS[name]] = value
+        elif not arg.startswith('-'):
+            files.append(arg)
+        k += 1
+    if not ruby.available(lang):
+        sys.exit('ルビのカタカナが無い言語: %s' % lang)
+    for text in texts if texts is not None else cli.read_texts(files):
+        for line in text.splitlines():
+            if line.strip():
+                print(json.dumps({'text': line, 'ruby': ruby.ruby(line, lang, liaison=liaison, **options)},
+                                 ensure_ascii=False))
+
+
 def _take_flag(args, short, long):
     """値を取らないオプション (-l / --sentence-per-line) を引数から除く。短いオプションのまとまり (-kl) の中の字も。
     返り値: (あったか, 残りの引数)"""
@@ -333,6 +366,8 @@ def main(argv=None):
         # 推定した言語を標準エラー出力に (解析結果の出力は汚さない)
         print('推定した言語: %s (%s)%s' % (lang, NAMES[lang], '' if detected else '。文字から推定できないのでラテン語に'),
               file=sys.stderr)
+    if '--kana-json' in args:   # ルビ用のカタカナ (解析はしない。どの言語も同じ入口で)
+        return kana_json(lang, args, texts)
     per_line, stripped = _take_flag(args, 'l', '--sentence-per-line') if lang == 'la' else (False, args)
     if per_line:
         # ラテン語の入口 (latin/main.py) はファイルを自分で読むので、行の区切りに句点を補った一時ファイルにして渡す
