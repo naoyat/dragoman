@@ -94,9 +94,15 @@ def available():
         return False
 
 
+# 訳語を決めておく語 (英語の語義から日本語に直すとぎこちないもの: обман の deception →「騙すこと」)
+GLOSSES = {'обман': '欺瞞,ごまかし'}
+
+
 def _gloss(lemma, kinds):
     """見出し語の訳語 (訳語, 言語)。kinds は Wiktionary の品詞の候補 (先のものを優先)。無ければ (見出し語, 'en')"""
     lemmas = dictionary.lemmas(lemma)
+    if lemma in GLOSSES:
+        return GLOSSES[lemma], 'ja', (lemmas[0] if lemmas else None)
     for kind in kinds:
         found = [l for l in lemmas if l['pos'] == kind]
         if found:

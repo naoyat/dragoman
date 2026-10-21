@@ -77,8 +77,8 @@ class AnalyzerTestCase(unittest.TestCase):
         def ja(text):
             return ' / '.join(c.predicate.translate()[0] for c in analyze(text).clauses)
         # 疑問詞 + бы (б) … ни + 動詞は譲歩「〜しても」(не と書かれても同じ)。сколько の後ろの属格は目的語に
-        self.assertEqual(ja('Сколько б нитей ни плёл обман.'), 'どれほど / 騙すことが / 糸を / 組んでも')
-        self.assertEqual(ja('Сколько бы нитей не плёл обман.'), 'どれほど / 騙すことが / 糸を / 組んでも')
+        self.assertEqual(ja('Сколько б нитей ни плёл обман.'), 'どれほど / {欺瞞,ごまかし}が / 糸を / 組んでも')
+        self.assertEqual(ja('Сколько бы нитей не плёл обман.'), 'どれほど / {欺瞞,ごまかし}が / 糸を / 組んでも')
         self.assertTrue(ja('Я бы пошёл в кино.').endswith('行くだろう,歩くだろう,雨が降るだろう,動くだろう'))   # 条件法
         a = analyze('Сколько б нитей ни плёл обман.')
         self.assertEqual(a.original, ['Сколько', 'б', 'нитей', 'ни', 'плёл', 'обман', '.'])   # 見出し・カナは元の語の列で
