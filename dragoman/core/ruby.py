@@ -108,14 +108,14 @@ def russian_ruby_words(words, liaison='next', **options):
     while k < len(words):
         plain = script.strip_stress(words[k]).lower()
         following = script.strip_stress(words[k + 1]).lower() if k + 1 < len(words) else ''
-        if plain in ('в', 'к', 'с', 'б') and following and SEPARATE_BEFORE_CONSONANT and \
+        if plain in ('в', 'к', 'с') and following and SEPARATE_BEFORE_CONSONANT and \
                 following[:1] not in RUSSIAN_VOWELS:
             # 子音の前: 前置詞だけの読み (次の語の頭の子音で有声・無声を決める: в театр → フ)
             first = katakana.phonemes(stressed[k] + stressed[k + 1])[0]
             out.append(CODA.get(CONSONANTS.get(first, first), ''))
             k += 1
             continue
-        if plain in ('в', 'к', 'с', 'б') and k + 1 < len(words):
+        if plain in ('в', 'к', 'с') and k + 1 < len(words):
             links[k] = True
             if liaison == 'prev':
                 out.append(katakana.katakana(stressed[k], **options))

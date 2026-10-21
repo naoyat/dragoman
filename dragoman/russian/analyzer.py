@@ -253,10 +253,12 @@ def particle_by(words):
         if verb_ix is None:
             continue
         verb = words[verb_ix]
+        dropped = [w] + ([negator] if question is not None and negator is not None else [])
         if question is not None and negator is not None:
             out.remove(negator)
             negator.merged_into = True
-            verb.items = [type(i)(dict(i.item, concessive=True)) for i in verb.items]
+            verb.items = [type(i)(dict(i.item, concessive=True, form='譲歩 (疑問詞 + бы … %s + 動詞「〜しても」)'
+                                       % negator.surface.lower())) for i in verb.items]
             q = question.items[0] if question.items else None
             if q is not None:
                 question.items = [type(q)(dict(q.item, pos='adv', ja=CONCESSIVE_WORDS[question.surface.lower()],
@@ -268,7 +270,11 @@ def particle_by(words):
                                    for i in x.items if i._ and any(t[0] == 'Gen' for t in i._)] or x.items
                         break
         elif any(i.attrib('tense') in ('perfect', 'imperfect', 'past') for i in verb.items):
-            verb.items = [type(i)(dict(i.item, tense='future', conditional=True)) for i in verb.items]   # 条件法
+            verb.items = [type(i)(dict(i.item, tense='future', conditional=True, form='条件法 (бы + 過去形)'))
+                          for i in verb.items]   # 条件法
+        else:
+            continue
+        verb.surface = ' … '.join(x.surface for x in dropped) + ' ' + verb.surface   # 語の表に落とした語も (б … ни плёл)
     return out
 
 
@@ -293,7 +299,9 @@ def analyze_sentence(surfaces):
     words = lookup_all(surfaces)
     word_details = [word.detail() for word in words]
     with language.using(RUSSIAN):
-        return common.analyze_words([w.surface for w in words], words, word_details, [])
+        analysis = common.analyze_words([w.surface for w in words], words, word_details, [])
+    analysis.original = list(surfaces)   # 元の文の語の列 (見出し・音読・カタカナ読み: 解析で落とした б・ни も)
+    return analysis
 
 
 def analyze_text(text):

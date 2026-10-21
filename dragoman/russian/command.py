@@ -25,8 +25,13 @@ def stressed_text(surfaces):
     return out
 
 
+def _surfaces(analysis):
+    """元の文の語の列 (解析で落とした語 б・ни も)"""
+    return getattr(analysis, 'original', None) or analysis.surfaces
+
+
 def header(analysis, options):
-    stressed = stressed_text(analysis.surfaces)
+    stressed = stressed_text(_surfaces(analysis))
     return '%s  (%s)' % (stressed, script.translit(stressed))
 
 
@@ -44,10 +49,10 @@ def available():
 def katakana(analysis, kana_options):
     """カタカナ読み (--kana): 強勢記号を付けた語の発音から語ごとに (russian/katakana.py)"""
     from .katakana import sentence
-    return sentence([morphology.stressed(s) for s in analysis.surfaces if not s.startswith('(')], **kana_options)
+    return sentence([morphology.stressed(s) for s in _surfaces(analysis) if not s.startswith('(')], **kana_options)
 
 
 COMMAND = Command(lang='ru', name='ロシア語', analyzer=analyzer, dictionary=dictionary, available=available,
-                  usage=USAGE, header=header, speech_text=lambda a, o: stressed_text(a.surfaces), romanize=romanized,
+                  usage=USAGE, header=header, speech_text=lambda a, o: stressed_text(_surfaces(a)), romanize=romanized,
                   descendant_langs=('en', 'ja', 'fr', 'de'), fallback_langs=('uk', 'be'), notes=NOTES,
                   katakana=katakana)

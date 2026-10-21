@@ -80,6 +80,9 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(ja('Сколько б нитей ни плёл обман.'), 'どれほど / 騙すことが / 糸を / 組んでも')
         self.assertEqual(ja('Сколько бы нитей не плёл обман.'), 'どれほど / 騙すことが / 糸を / 組んでも')
         self.assertTrue(ja('Я бы пошёл в кино.').endswith('行くだろう,歩くだろう,雨が降るだろう,動くだろう'))   # 条件法
+        a = analyze('Сколько б нитей ни плёл обман.')
+        self.assertEqual(a.original, ['Сколько', 'б', 'нитей', 'ни', 'плёл', 'обман', '.'])   # 見出し・カナは元の語の列で
+        self.assertIn('б … ни плёл', [w.surface for w in a.words])   # 語の表には落とした語も
 
     def test_preposition_governs_genitive(self):
         # из дома: 副詞 дома「家で」でなく、前置詞の支配する属格に。係り先の無い属格を対格に読み替えない

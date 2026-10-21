@@ -181,7 +181,7 @@ def sentence(words, **options):
         if not any(c.isalpha() for c in w):
             continue
         plain = script.strip_stress(w).lower()
-        if plain in ('в', 'к', 'с', 'б'):
+        if plain in ('в', 'к', 'с'):
             prefix += w
             continue
         out.append(katakana(prefix + w, **options))
@@ -193,4 +193,6 @@ def sentence(words, **options):
 
 def katakana(word, long='phonetic', **options):
     """強勢記号を付けた語 (Москва́) → カタカナ"""
+    if script.strip_stress(word).lower() == 'б':
+        return 'ブ'   # бы を縮めた助詞 б は前の語に続けて読む (語末の無声化をしない: сколько б → スコリカ ブ)
     return kana(phonemes(word), long=long, **options)
