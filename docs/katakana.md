@@ -99,7 +99,8 @@ dragoman に頼めるよう、外から呼びやすい口を用意する。
    * （済 2026-10-21）ルビ（フリガナ）用: `core/ruby.ruby(text, lang, liaison='next', **options)` とコマンドの
      `./dragoman.py LANG --kana-json`（入力の1行ごとに `{"text": 行, "ruby": [{text, start, end, kana}]}` の JSON。解析はしない）。
      元の文の文字の範囲ごとにカナ（句読点はカナを空に）。語をまたぐ音は `--kana-liaison`: next（既定。次の語に: les enfants →
-     レ / ザンファン、il y a → イ / リ / ヤ、в Москве → （空）/ ヴマスクヴェー）・prev（前の語に残す: レズ / アンファン）・merge
+     レ / ザンファン、il y a → イ / リ / ヤ、в Италии → （空）/ ヴィターリイ。子音で始まる語の前では前置詞だけで読む: в Москве → ヴ / マスクヴェー、в театр → フ / チアトル。
+     検討中: core/ruby.SEPARATE_BEFORE_CONSONANT）・prev（前の語に残す: レズ / アンファン）・merge
      （つながった語を1つの区切りに: レザンファン）。ラテン語は解析で決まった綴り（マクロン付き）から。カラオケの字幕など、
      読みやすさのための崩しは呼ぶ側で（dragoman は発音に忠実なカナと語の対応まで）
    * 関数: 言語ごとの `katakana(word, **options)`（latin/katakana.py・greek/katakana.py・sanskrit/katakana.py・

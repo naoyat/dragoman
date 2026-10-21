@@ -90,15 +90,31 @@ def latin_ruby_words(words, liaison='next', **options):
     return out, [False] * max(0, len(words) - 1)
 
 
+# 母音の無い前置詞を次の語に続けるのは、次の語が母音で始まるときだけ (в Италии → ヴィターリイ)。子音で始まる語の前では
+# 前置詞だけで読む (в Москве → ヴ / マスクヴェー、в театр → フ / チアトル: 次の語の頭の子音との有声・無声の同化は残す)。
+# False にすると子音の前でも続ける (検討中: 2026-10-21)
+SEPARATE_BEFORE_CONSONANT = True
+RUSSIAN_VOWELS = 'аеёиоуыэюя'
+
+
 def russian_ruby_words(words, liaison='next', **options):
-    """ロシア語: 強勢を辞書から付けて読み、母音の無い前置詞 (в・к・с) は次の語と続けて読む (в Москве → ヴマスクヴェー:
-    'next' なら前置詞の上は空で次の語に、'prev' なら前置詞だけの読み「ヴ」)"""
+    """ロシア語: 強勢を辞書から付けて読み、母音の無い前置詞 (в・к・с) は次の語と続けて読む ('next' なら前置詞の上は空で
+    次の語に、'prev' なら前置詞だけの読み)。次の語が子音で始まるなら前置詞だけで読む (SEPARATE_BEFORE_CONSONANT)"""
     from dragoman.russian import morphology, katakana, script
+    from dragoman.core.kana import CODA, CONSONANTS
     stressed = [morphology.stressed(w) for w in words]
     out, links = [], [False] * max(0, len(words) - 1)
     k = 0
     while k < len(words):
         plain = script.strip_stress(words[k]).lower()
+        following = script.strip_stress(words[k + 1]).lower() if k + 1 < len(words) else ''
+        if plain in ('в', 'к', 'с', 'б') and following and SEPARATE_BEFORE_CONSONANT and \
+                following[:1] not in RUSSIAN_VOWELS:
+            # 子音の前: 前置詞だけの読み (次の語の頭の子音で有声・無声を決める: в театр → フ)
+            first = katakana.phonemes(stressed[k] + stressed[k + 1])[0]
+            out.append(CODA.get(CONSONANTS.get(first, first), ''))
+            k += 1
+            continue
         if plain in ('в', 'к', 'с', 'б') and k + 1 < len(words):
             links[k] = True
             if liaison == 'prev':

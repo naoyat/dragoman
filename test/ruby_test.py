@@ -32,7 +32,10 @@ class RubyTestCase(unittest.TestCase):
                          [('Les enfants', 'レザンファン'), ('sont arrivés', 'ソンタリヴェ')])   # つながった語をまとめる
 
     def test_russian_preposition(self):
-        self.assertEqual(kanas(ruby.ruby('в Москве', 'ru')), [('в', ''), ('Москве', 'ヴマスクヴェー')])
+        # 母音で始まる語には続け、子音で始まる語の前では前置詞だけで読む (有声・無声の同化は残す)
+        self.assertEqual(kanas(ruby.ruby('в Италии', 'ru')), [('в', ''), ('Италии', 'ヴィターリイ')])
+        self.assertEqual(kanas(ruby.ruby('в Москве', 'ru')), [('в', 'ヴ'), ('Москве', 'マスクヴェー')])
+        self.assertEqual(kanas(ruby.ruby('в театр', 'ru')), [('в', 'フ'), ('театр', 'チアトル')])
 
     def test_english(self):
         from dragoman.english import katakana
