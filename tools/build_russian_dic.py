@@ -76,7 +76,7 @@ def main():
     db = sqlite3.connect(tmp)
     db.executescript('''
         CREATE TABLE lemmas (key TEXT, pos TEXT, ja TEXT, gloss_lang TEXT, word TEXT, aspect TEXT, senses INTEGER);
-        CREATE TABLE forms (key TEXT, stressed TEXT, UNIQUE (key, stressed));
+        CREATE TABLE forms (key TEXT, stressed TEXT, lemma TEXT, UNIQUE (key, stressed, lemma));
         CREATE TABLE descendants (lemma TEXT, pos TEXT, data TEXT);
         CREATE TABLE etymology (lemma TEXT, pos TEXT, data TEXT);
     ''')
@@ -93,7 +93,7 @@ def main():
                                   if not SKIP_FORM_TAGS & set(f.get('tags', [])) and CYRILLIC.match(f['form'])}
             for form in forms:
                 if script.stress_index(form) is not None:
-                    db.execute('INSERT OR IGNORE INTO forms VALUES (?, ?)', (script.key(form), form))
+                    db.execute('INSERT OR IGNORE INTO forms VALUES (?, ?, ?)', (script.key(form), form, key))   # 見出し語も
                     n_forms += 1
             senses = entry.get('senses', [])
             if senses and all('form_of' in s or 'alt_of' in s for s in senses):

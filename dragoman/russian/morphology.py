@@ -302,6 +302,15 @@ def _analyze(key):
     return table + list(merged.values())
 
 
+def _likely_lemma(word):
+    """pymorphy3 の一番の読みの見出し語 (照合用のキー)"""
+    try:
+        parses = morph().parse(script.strip_stress(word).lower())
+    except Exception:
+        return None
+    return script.key(parses[0].normal_form) if parses else None
+
+
 def analyze(word):
     """語 (表記どおり) → 項目 (dict) のリスト (確からしいものから)。項目の surface は表記どおり"""
     # pymorphy3 は ё と е を区別する (всё「すべて」/ все「みな」) ので、強勢記号を除いて小文字にするだけ
@@ -309,11 +318,18 @@ def analyze(word):
             for item in _analyze(script.strip_stress(word).lower())]
 
 
-def stressed(word):
-    """語形に強勢記号を付けた形 (Wiktionary の変化表から。同じ形で強勢の違うもの (замо́к / за́мок) は最初のもの)"""
-    forms = dictionary.stressed_forms(word)
+def stressed(word, lemma=None):
+    """語形に強勢記号を付けた形 (Wiktionary の変化表から)。同じ形で強勢の違うもの (моя: мо́я「洗いながら」/ моя́「私の」) は
+    見出し語 lemma (無ければ pymorphy3 の一番の読みの見出し語: мой) の変化形を先に。決まらなければ最初のもの"""
+    rows = dictionary.stressed_forms_with_lemma(word)
+    forms = list(dict.fromkeys(s for s, _ in rows))
     if not forms:
         return word
+    if len(forms) > 1 and any(l for _, l in rows):
+        wanted = script.key(lemma) if lemma else _likely_lemma(word)
+        matching = [s for s, l in rows if l == wanted]
+        if matching:
+            forms = matching + [f for f in forms if f not in matching]
     # ё と е・大文字と小文字が元の表記と同じ候補を先に (всё → всё、все → все́、сча́стья は小文字の形)
     plain = script.strip_stress(word)
     form = min(forms, key=lambda f: (('ё' in script.strip_stress(f).lower()) != ('ё' in plain.lower()),

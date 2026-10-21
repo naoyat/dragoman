@@ -100,6 +100,14 @@ class LanguageKatakanaTestCase(unittest.TestCase):
         self.assertEqual([katakana(w) for w in ('си́ла', 'сы́р', 'Росси́я', 'звёздной')],
                          ['シーラ', 'スィル', 'ラッシーヤ', 'ズヴョーズナイ'])   # си は「シ」、сы は「スィ」、軟らかい с・з・в + ё は「スョ」「ヴョ」
 
+    def test_russian_ambiguous_stress(self):
+        from dragoman.russian import morphology
+        from dragoman.russian.katakana import katakana
+        if morphology.stressed('моя') == 'моя':
+            self.skipTest('ロシア語の辞書が無い')
+        # 同じ綴りで強勢の違う形 (мо́я「洗いながら」/ моя́「私の」) は一番ありそうな見出し語 (мой) の形を
+        self.assertEqual([katakana(morphology.stressed(w)) for w in ('моя', 'мою')], ['マヤー', 'マユー'])
+
     def test_russian_yo(self):
         from dragoman.russian import morphology
         if morphology.stressed('всё') == 'всё' and morphology.stressed('все') == 'все':

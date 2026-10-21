@@ -44,7 +44,19 @@ def stressed_forms(word):
     db = _connect()
     if db is None or not word:
         return []
-    return [s for s, in db.execute('SELECT stressed FROM forms WHERE key = ?', (script.key(word),)).fetchall()]
+    return list(dict.fromkeys(s for s, _ in stressed_forms_with_lemma(word)))
+
+
+def stressed_forms_with_lemma(word):
+    """語形 (強勢記号なし) → [(強勢付きの形, その形の見出し語のキー)] (Wiktionary の変化表から。見出し語の列の無い古い表は None)"""
+    db = _connect()
+    if db is None or not word:
+        return []
+    try:
+        rows = db.execute('SELECT stressed, lemma FROM forms WHERE key = ? ORDER BY rowid', (script.key(word),)).fetchall()
+    except sqlite3.OperationalError:   # 見出し語の列の無い古い表
+        rows = [(s, None) for s, in db.execute('SELECT stressed FROM forms WHERE key = ?', (script.key(word),))]
+    return list(dict.fromkeys(rows))
 
 
 def _rows(table, key):
