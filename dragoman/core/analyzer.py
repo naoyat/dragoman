@@ -1311,6 +1311,37 @@ def detect_adverbial_clauses(clauses, trace):
     return out
 
 
+def verbs_in_context(clauses, trace):
+    """英語の語義から訳した動詞 (Wiktionary の語義: плести の braid, plait, weave, spin …) の訳語を、目的語 (無ければ主語) の
+    英語の語義で選ぶ (JMdict の英訳の書き込みの表 core/en_ja.verb_in_context: spin + thread → 繰る、tell + lie → つく)"""
+    from . import en_ja
+    from .Adverbial import AdverbialClause
+    predicates = [c.predicate for c in clauses]
+    predicates += [s.predicate for p in list(predicates) for s in p.subordinates if isinstance(s, AdverbialClause)]
+    for pred in predicates:
+        verb = pred.first_item
+        senses = [s.strip() for s in (verb.attrib('ja_en') or '').split(',') if s.strip()]
+        if not senses or verb.pos != 'verb':
+            continue
+        objects = []
+        for case in ('Acc', 'Nom'):
+            for obj in pred.case_slot.get(case, []):
+                item = obj.items[0] if isinstance(obj, Word) and obj.items else None
+                if item is not None and item.pos == 'noun':
+                    objects += [e.strip() for e in (item.attrib('ja_en') or '').split(',') if e.strip()]
+            if objects:
+                break
+        if not objects:
+            continue
+        for sense in senses:
+            found = en_ja.verb_in_context(sense, objects)
+            if found:
+                ja = ','.join(found[:2])
+                verb.item['ja'] = verb.ja = ja
+                trace.append('// CONTEXT %s (%s + %s) -> %s' % (pred.surface, sense, ','.join(objects[:3]), ja))
+                break
+
+
 QUESTION_MARKS = ('?', '？', ';', '؟', '՞')   # ギリシア語の ; ・アラビア文字の ؟
 
 
@@ -1850,6 +1881,7 @@ def analyze_words(surfaces, words, word_details=None, trace=None):
     clauses, questions = detect_indirect_questions(clauses, trace)
     clauses, relatives = detect_relative_clauses(clauses, trace, words)
     clauses = detect_adverbial_clauses(clauses, trace)
+    verbs_in_context(clauses, trace)
     mark_direct_question(surfaces, clauses)
 
     return SentenceAnalysis(

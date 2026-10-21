@@ -102,10 +102,10 @@ def main():
             if gloss:  # 長い日本語の訳語は説明文 (ほかに訳語があれば落とす)
                 short = [g for g in gloss.split(',') if len(g) <= 12 and ':w:' not in g and '→' not in g]
                 gloss = ','.join(short) if short else None
-            if gloss and not en_ja.agrees(gloss, english_glosses(entry), POS.get(entry.get('pos'), 'noun')):
+            if gloss and not en_ja.agrees(gloss, english_glosses(entry, limit=6, per_sense=2), POS.get(entry.get('pos'), 'noun')):
                 gloss = None   # 英語の語義と合わない日本語の訳語 (同じ綴りの別の語の訳語) は使わない
             gloss_lang = 'ja' if gloss else 'en'
-            gloss = gloss or english_glosses(entry)
+            gloss = gloss or english_glosses(entry, limit=6, per_sense=2)
             if not gloss:
                 continue
             n_ja += gloss_lang == 'ja'

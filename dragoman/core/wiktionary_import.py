@@ -92,13 +92,14 @@ def canonical(entry):
     return entry['word']
 
 
-def english_glosses(entry, senses=None, limit=3):
-    """語義の頭から最大 limit 個の語句を取り出す: 'to love, be fond of' → 'love,be fond of'"""
+def english_glosses(entry, senses=None, limit=3, per_sense=None):
+    """語義の頭から最大 limit 個の語句を取り出す: 'to love, be fond of' → 'love,be fond of'。per_sense があれば語義ごとに
+    その数まで (後ろの語義も入れる: плести の braid, plait / weave, spin / chatter, tell nonsense)"""
     glosses = []
     for sense in senses if senses is not None else entry.get('senses', []):
         for gloss in sense.get('glosses', [])[:1]:
             gloss = re.sub(r'\s*\(.*?\)', '', gloss)
-            for chunk in re.split(r'[;,]', gloss):
+            for chunk in re.split(r'[;,]', gloss)[:per_sense]:
                 chunk = re.sub(r'^(to|a|an|the) ', '', chunk.strip().rstrip('.:'), flags=re.I).strip()
                 if chunk and chunk not in glosses:
                     glosses.append(chunk)
