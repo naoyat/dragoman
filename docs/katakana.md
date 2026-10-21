@@ -103,5 +103,9 @@ dragoman に頼めるよう、外から呼びやすい口を用意する。
      検討中: core/ruby.SEPARATE_BEFORE_CONSONANT）・prev（前の語に残す: レズ / アンファン）・merge
      （つながった語を1つの区切りに: レザンファン）。ラテン語は解析で決まった綴り（マクロン付き）から。カラオケの字幕など、
      読みやすさのための崩しは呼ぶ側で（dragoman は発音に忠実なカナと語の対応まで）
+   * （済 2026-10-21）必要なときだけ解析: 英語は品詞で発音の変わる語（read・live・close・record・use …。english/katakana.HOMOGRAPHS）
+     がある行だけ spaCy で品詞を付けて CMUdict の発音を選ぶ（I read → リード、I have read → レッド、Where do you live? → リヴ）。
+     ロシア語は強勢の候補が別の見出し語のとき pymorphy3 の一番の読みの見出し語（моя → моя́「マヤー」）。стоит（сто́ит / стои́т）の
+     ように解析器も読みを決めない語はまだ
    * 関数: 言語ごとの `katakana(word, **options)`（latin/katakana.py・greek/katakana.py・sanskrit/katakana.py・
      french/katakana.py・oldenglish/phonology.py・hawaiian/phonology.py）と、共通の `core.kana.kana(phonemes or ipa, …)`

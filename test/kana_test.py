@@ -155,6 +155,22 @@ class LanguageKatakanaTestCase(unittest.TestCase):
             self.assertEqual([en.katakana(w, accent='gb') for w in ('hot', 'water', 'doctor', 'more', 'fire')],
                              ['ホット', 'ウォーター', 'ドクター', 'モー', 'ファイア'])   # 英音
 
+    def test_english_homographs(self):
+        from dragoman.english import katakana as en
+        if not en.available():
+            self.skipTest('CMUdict も espeak-ng も無い')
+        try:
+            from dragoman.english import morphology
+            morphology.nlp()
+        except (ImportError, OSError):
+            self.skipTest('spaCy の英語モデルが無い')
+        # 品詞で発音の変わる語は文の品詞から (必要なときだけ spaCy)
+        self.assertEqual(en.sentence('Where do you live?')[-1], 'リヴ')
+        self.assertEqual(en.sentence('Live music is fun.')[0], 'ライヴ')
+        self.assertEqual(en.sentence('I read books every day.'), ['アイ', 'リード', 'ブックス', 'エヴァリー', 'デイ'])
+        self.assertEqual(en.sentence('I have read this book.')[2], 'レッド')
+        self.assertEqual(en.sentence('The cats sing a song.'), ['ザ', 'キャッツ', 'スィング', 'ア', 'ソング'])
+
     def test_hawaiian(self):
         from dragoman.hawaiian.phonology import katakana
         self.assertEqual([katakana(w) for w in ('Hawaiʻi', 'Kalākaua', 'Kamehameha')],

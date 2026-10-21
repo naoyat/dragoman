@@ -23,12 +23,12 @@ PUNCT = '.,;:!?…«»"“”„()[]{}—–¡¿、。・'
 WORD_KANA = {
     'grc': ('dragoman.greek.katakana', 'katakana'),
     'sa': ('dragoman.sanskrit.katakana', 'katakana'), 'de': ('dragoman.german.katakana', 'katakana'),
-    'en': ('dragoman.english.katakana', 'katakana'), 'fi': ('dragoman.finnish.katakana', 'katakana'),
+    'fi': ('dragoman.finnish.katakana', 'katakana'),
     'tr': ('dragoman.turkish.katakana', 'katakana'), 'mn': ('dragoman.mongolian.katakana', 'katakana'),
     'ko': ('dragoman.korean.katakana', 'katakana'), 'haw': ('dragoman.hawaiian.phonology', 'katakana'),
     'ang': ('dragoman.oldenglish.phonology', 'katakana'),
 }
-RUBY_WORDS = {'fr': 'dragoman.french.katakana', 'ru': 'dragoman.core.ruby', 'la': 'dragoman.core.ruby'}
+RUBY_WORDS = {'fr': 'dragoman.french.katakana', 'en': 'dragoman.english.katakana', 'ru': 'dragoman.core.ruby', 'la': 'dragoman.core.ruby'}
 
 
 def available(lang):

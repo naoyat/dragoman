@@ -52,10 +52,44 @@ def _cmudict():
     with open(CMUDICT, encoding='utf-8') as f:
         for line in f:
             parts = line.split('#')[0].split()
-            if len(parts) < 2 or '(' in parts[0]:   # word(2) などの別の発音は使わない
+            if len(parts) < 2 or '(' in parts[0]:   # word(2) などの別の発音は _variants で
                 continue
             table.setdefault(parts[0], parts[1:])
     return table
+
+
+@functools.lru_cache(maxsize=1)
+def _variants():
+    """同じ綴りの別の発音 (CMUdict の word(2)): 語 → [発音1, 発音2, …]。同綴り異音語の表 (HOMOGRAPHS) の語だけ"""
+    table = {}
+    if not os.path.exists(CMUDICT):
+        return table
+    with open(CMUDICT, encoding='utf-8') as f:
+        for line in f:
+            parts = line.split('#')[0].split()
+            if len(parts) < 2:
+                continue
+            word = parts[0].split('(')[0]
+            if word in HOMOGRAPHS:
+                table.setdefault(word, []).append(parts[1:])
+    return table
+
+
+# 品詞で発音の変わる語 (同綴り異音語): 語 → {品詞: CMUdict の何番目の発音 (0 から)}。品詞は spaCy の Penn の印から
+# VERB (原形・現在形・-ing)・PAST (過去形・過去分詞)・NOUN・ADJ・ADV。表に無い品詞は最初の発音
+HOMOGRAPHS = {
+    'read': {'VERB': 1, 'NOUN': 1, 'PAST': 0}, 'live': {'VERB': 1, 'ADJ': 0, 'ADV': 0},
+    'lives': {'VERB': 0, 'NOUN': 1}, 'lead': {'VERB': 1, 'NOUN': 1, 'PAST': 1}, 'close': {'VERB': 1, 'ADJ': 0, 'ADV': 0},
+    'use': {'NOUN': 0, 'VERB': 1}, 'record': {'VERB': 0, 'NOUN': 1, 'ADJ': 1}, 'present': {'NOUN': 0, 'ADJ': 0, 'VERB': 1},
+    'object': {'NOUN': 0, 'VERB': 1}, 'project': {'NOUN': 0, 'VERB': 1}, 'subject': {'NOUN': 1, 'ADJ': 1, 'VERB': 0},
+    'content': {'NOUN': 0, 'ADJ': 1}, 'contract': {'NOUN': 0, 'VERB': 1}, 'conduct': {'NOUN': 0, 'VERB': 1},
+    'desert': {'NOUN': 0, 'VERB': 1}, 'excuse': {'NOUN': 0, 'VERB': 1}, 'minute': {'NOUN': 0, 'ADJ': 1},
+    'permit': {'VERB': 0, 'NOUN': 1}, 'produce': {'VERB': 0, 'NOUN': 1}, 'refuse': {'VERB': 0, 'NOUN': 1},
+    'tear': {'VERB': 0, 'NOUN': 1}, 'wind': {'NOUN': 1, 'VERB': 0}, 'wound': {'PAST': 0, 'NOUN': 1, 'VERB': 1},
+    'increase': {'VERB': 0, 'NOUN': 1}, 'decrease': {'VERB': 0, 'NOUN': 1},
+}
+PENN = {'VB': 'VERB', 'VBP': 'VERB', 'VBZ': 'VERB', 'VBG': 'VERB', 'VBD': 'PAST', 'VBN': 'PAST', 'NN': 'NOUN',
+        'NNS': 'NOUN', 'NNP': 'NOUN', 'JJ': 'ADJ', 'JJR': 'ADJ', 'JJS': 'ADJ', 'RB': 'ADV'}
 
 
 def available():
@@ -102,9 +136,15 @@ def _from_ipa(ipa):
     return out
 
 
-def arpabet(word, accent='us'):
-    """語 → ARPABET の列 (米音は CMUdict、無ければ espeak-ng。英音は espeak-ng)"""
+def arpabet(word, accent='us', tag=None):
+    """語 → ARPABET の列 (米音は CMUdict、無ければ espeak-ng。英音は espeak-ng)。tag (Penn の品詞の印) があれば
+    同綴り異音語の発音を選ぶ (read: VBD → R EH1 D、VBP → R IY1 D)"""
     key = word.lower().strip("'")
+    if accent != 'gb' and tag and key in HOMOGRAPHS:
+        variants = _variants().get(key, [])
+        n = HOMOGRAPHS[key].get(PENN.get(tag, ''), 0)
+        if n < len(variants):
+            return list(variants[n])
     if accent != 'gb':
         entry = _cmudict().get(key)
         if entry:
@@ -150,13 +190,17 @@ def _schwa_vowels(word, arpa):
     return out
 
 
-def phonemes(word, accent='us'):
+def phonemes(word, accent='us', tag=None):
     """語 → 共通の規則の音素の列"""
-    arpa = arpabet(word, accent)
+    arpa = arpabet(word, accent, tag)
     schwas = _schwa_vowels(word, arpa)
     out = []
     n = len(arpa)
+    skip = False
     for k, p in enumerate(arpa):
+        if skip:
+            skip = False
+            continue
         base, stress = (p[:-1], p[-1]) if p[-1:].isdigit() else (p, '')
         nxt = arpa[k + 1] if k + 1 < n else ''
         nxt_base = nxt[:-1] if nxt[-1:].isdigit() else nxt
@@ -176,10 +220,12 @@ def phonemes(word, accent='us'):
                 vowel = schwas.get(k, 'a') if stress == '0' else 'a'
                 if vowel:
                     out.append(vowel)
+            elif base == 'ER' and nxt_base in VOWELS:
+                out += ['a', 'r']                 # r の後ろに母音: every → エヴァリー、different → ディファレント
             elif base == 'ER':
                 out.append('a' if prev[:-1] in VOWELS and stress == '0' else 'aː')   # fire → ファイア
             elif base == 'AO':
-                out.append('o' if r_coda and not after else 'oː')
+                out.append('o' if r_coda and not after or nxt_base == 'NG' else 'oː')   # song → ソング
             elif base == 'IY':
                 out.append('i' if r_coda or (stress == '0' and nxt) else 'iː')
             elif base == 'UW':
@@ -215,9 +261,13 @@ def phonemes(word, accent='us'):
         ph = CONSONANTS.get(base)
         if ph is None:
             continue
+        if base in ('T', 'D') and nxt_base in ('S', 'Z') and k + 2 == n:
+            ph = 'ts' if base == 'T' else 'dz'   # 語末の -ts・-ds は「ツ」「ズ」(cats → キャッツ、sits → スィッツ)
+            skip = True
         prev_base, prev_stress = (prev[:-1], prev[-1]) if prev[-1:].isdigit() else (prev, '')
         short_before = prev_base in SHORT and prev_stress == '1'
-        if (short_before and ((not nxt and base in FINAL_GEMINATE) or (nxt_base in VOWELS and base in MEDIAL_GEMINATE))) or \
+        final = not nxt or nxt_base in ('S', 'Z') and k + 2 == n   # 語末 (複数・3単現の -s の前も: books → ブックス)
+        if (short_before and ((final and base in FINAL_GEMINATE) or (nxt_base in VOWELS and base in MEDIAL_GEMINATE))) or \
                 (prev_base in ('IH', 'EH', 'AH') and not nxt and base in ('P', 'T', 'K', 'SH', 'CH', 'JH')):
             # 「ッ」(cat → キャット、happy → ハッピー。強勢の無い ɪ・ɛ + 語末の p・t・k も: music → ミューズィック)
             out.append(ph)                        # 「ッ」(cat → キャット、happy → ハッピー)
@@ -230,10 +280,27 @@ def phonemes(word, accent='us'):
     return out
 
 
-def katakana(word, accent='us', long='phonemic', **options):
-    return kana(phonemes(word, accent), long=long, **options)
+def katakana(word, accent='us', long='phonemic', tag=None, **options):
+    return kana(phonemes(word, accent, tag), long=long, **options)
+
+
+def tags(words):
+    """同綴り異音語のある語の列だけ spaCy で品詞を付ける (必要なときだけ解析: 無ければ [None, …])"""
+    if not any(w.lower().strip("'") in HOMOGRAPHS for w in words):
+        return [None] * len(words)
+    try:
+        from .morphology import parse
+        return [t.tag_ for t in parse(words)]
+    except Exception:   # spaCy の英語モデルが無い
+        return [None] * len(words)
+
+
+def ruby_words(words, liaison='next', **options):
+    """ルビ用: 語の列 → (語ごとのカタカナ, つながり)。品詞で発音の変わる語があれば文の品詞を付けて (I read → リード、
+    I have read → レッド、Where do you live? → リヴ)"""
+    return [katakana(w, tag=t, **options) for w, t in zip(words, tags(words))], [False] * max(0, len(words) - 1)
 
 
 def sentence(text, **options):
     """文のカタカナ読み (語ごとの列)"""
-    return [katakana(w, **options) for w in text_words(text)]
+    return ruby_words(text_words(text), **options)[0]
