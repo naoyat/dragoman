@@ -73,6 +73,14 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(surfaces(pred.case_slot['Acc']), ['книгу'])
         self.assertEqual(surfaces(pred.case_slot['Dat']), ['брату'])
 
+    def test_particle_by(self):
+        def ja(text):
+            return ' / '.join(c.predicate.translate()[0] for c in analyze(text).clauses)
+        # 疑問詞 + бы (б) … ни + 動詞は譲歩「〜しても」(не と書かれても同じ)。сколько の後ろの属格は目的語に
+        self.assertEqual(ja('Сколько б нитей ни плёл обман.'), 'どれほど / 騙すことが / 糸を / 組んでも')
+        self.assertEqual(ja('Сколько бы нитей не плёл обман.'), 'どれほど / 騙すことが / 糸を / 組んでも')
+        self.assertTrue(ja('Я бы пошёл в кино.').endswith('行くだろう,歩くだろう,雨が降るだろう,動くだろう'))   # 条件法
+
     def test_preposition_governs_genitive(self):
         # из дома: 副詞 дома「家で」でなく、前置詞の支配する属格に。係り先の無い属格を対格に読み替えない
         pred = analyze('Я пришёл из дома.').clauses[0].predicate

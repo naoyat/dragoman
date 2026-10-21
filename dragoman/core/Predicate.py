@@ -389,6 +389,11 @@ class Predicate (LatinObject):
 
         if case_slot.get('Inf'):
             verb_tr = verb_tr.lstrip('〜～')  # {本を 読む}ことが できる (possum の訳語は「〜できる」)
+        if verb.attrib('concessive') and verb.attrib('gloss_lang', 'ja') == 'ja' and not self.is_sum:
+            # 譲歩「〜しても」(ロシア語の сколько бы … ни плёл「どれほど 紡いでも」。解析器が印を付けたもの)
+            from .japanese import japanese_form
+            verb_tr = ','.join(japanese_form(ja, False, 'te', 'present', negated) + 'も' for ja in jas)
+            negated = False
         if verb.attrib('wish') and verb.attrib('gloss_lang', 'ja') == 'ja':
             # 祈願の接続法 (古英語の sī þīn nama ġehālgod「君の名前が神聖にされるように」。解析器が印を付けたものだけ)
             verb_tr = ','.join(v + 'ように' for v in verb_tr.split(','))

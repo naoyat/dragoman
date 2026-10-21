@@ -227,6 +227,51 @@ def mark_existential(words):
         _possessive_preposition(words)
 
 
+# 譲歩の構文「疑問詞 + бы … ни + 動詞」(Сколько бы нитей ни плёл обман「嘘が どれほど 糸を 紡いでも」) の疑問詞の訳
+CONCESSIVE_WORDS = {'сколько': 'どれほど', 'что': '何を', 'как': 'どんなに', 'где': 'どこで', 'куда': 'どこへ',
+                    'когда': 'いつ', 'кто': '誰が', 'какой': 'どんな', 'какая': 'どんな', 'какое': 'どんな',
+                    'какие': 'どんな', 'откуда': 'どこから', 'чей': '誰の'}
+
+
+def particle_by(words):
+    """бы (縮めた形 б) の構文:
+    疑問詞 + бы … ни (не と書かれても) + 動詞 → 譲歩「どれほど〜しても」(ни・бы は落とし、сколько の後ろの属格は目的語に)、
+    ほかは過去形 + бы → 条件法「〜するだろう」(Я бы пошёл「私は 行くだろう」)"""
+    out = list(words)
+    for k, w in enumerate(words):
+        if w.surface.lower() not in ('бы', 'б') or w not in out:
+            continue
+        clause_start = k
+        while clause_start > 0 and words[clause_start - 1].items is not None:
+            clause_start -= 1
+        question = next((q for q in reversed(words[clause_start:k]) if q.surface.lower() in CONCESSIVE_WORDS), None)
+        verb_ix = next((j for j in range(k + 1, len(words)) if words[j].items and words[j].items[0].pos == 'verb'), None)
+        negator = next((x for x in words[k + 1:verb_ix] if x.surface.lower() in ('ни', 'не')), None) \
+            if verb_ix is not None else None
+        out.remove(w)
+        w.merged_into = True
+        if verb_ix is None:
+            continue
+        verb = words[verb_ix]
+        if question is not None and negator is not None:
+            out.remove(negator)
+            negator.merged_into = True
+            verb.items = [type(i)(dict(i.item, concessive=True)) for i in verb.items]
+            q = question.items[0] if question.items else None
+            if q is not None:
+                question.items = [type(q)(dict(q.item, pos='adv', ja=CONCESSIVE_WORDS[question.surface.lower()],
+                                               gloss_lang='ja', _=None))]
+            if question.surface.lower() == 'сколько':   # сколько + 属格 (сколько нитей「どれほど 糸を」)
+                for x in words[words.index(question) + 1:verb_ix]:
+                    if x.items and x.items[0].pos == 'noun' and any(c == 'Gen' for c, _, _ in x.items[0]._ or []):
+                        x.items = [type(i)(dict(i.item, _=[('Acc',) + t[1:] for t in i._ if t[0] == 'Gen']))
+                                   for i in x.items if i._ and any(t[0] == 'Gen' for t in i._)] or x.items
+                        break
+        elif any(i.attrib('tense') in ('perfect', 'imperfect', 'past') for i in verb.items):
+            verb.items = [type(i)(dict(i.item, tense='future', conditional=True)) for i in verb.items]   # 条件法
+    return out
+
+
 def lookup_all(surfaces):
     words = [_word(s) for s in surfaces]
     choose_est(words)
@@ -235,6 +280,7 @@ def lookup_all(surfaces):
     choose_verbs(words)
     words = merge_compound_verbs(words)
     prefer_governed_cases(words)
+    words = particle_by(words)
     words = negative_existence(words)
     words = supply_copula(words)
     mark_existential(words)
