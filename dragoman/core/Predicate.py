@@ -245,7 +245,9 @@ class Predicate (LatinObject):
             pn = str(self.person()) + str(self.number())
             subj_ja = {'1sg':'私', '2sg':'あなた', '3sg':'彼,彼女,それ',
                        '1pl':'我々', '2pl':'あなた方', '3pl':'彼ら,彼女ら,それら'}
-            if pn in subj_ja:
+            if verb.attrib('subject_ja'):
+                noms.append(verb.attrib('subject_ja'))   # 解析器が決めた補う主語 (前の節の nous「私たち」)
+            elif pn in subj_ja:
                 noms.append(subj_ja[pn])
 
         if noms:

@@ -117,14 +117,28 @@ def translate(glosses, pos, limit=1):
     """英語の語義 (カンマ区切り) → 日本語の訳語 (カンマ区切り)。1つも訳せなければ None"""
     if not ENABLED or not glosses or pos not in POS_GROUPS:
         return None
-    out = []
+    out, sources = [], []
     for english in glosses.split(','):
         found = lookup(english.strip(), pos)
         if found and found[0] not in out:
             out.append(found[0])  # 語義ごとに一番の訳語 (go → 行く、travel → 旅行する)
+            sources.append(english.strip())
         if len(out) >= limit:
             break
+    if len(out) > 1:   # 対訳文 (Tatoeba) の英文にまれな語義の訳語は落とす (puissance: power, sovereignty → 力)
+        counts = [_english_count(e) for e in sources]
+        if counts[0] >= 20:
+            out = [out[0]] + [j for j, n in zip(out[1:], counts[1:]) if n * 10 >= counts[0]]
     return ','.join(out) if out else None
+
+
+def _english_count(english):
+    """英語の語義の頭の語が対訳文 (Tatoeba) の英文に出る文の数 (表が無ければ大きい数: 落とさない)"""
+    if _corpus_db() is None:
+        return 10 ** 6
+    words = re.sub(r'\([^)]*\)', '', english.lower()).replace('to ', '', 1).split()
+    words = [w for w in words if w not in ('a', 'an', 'the', 'to', 'be', 'of', 'one', "one's", 'something', 'someone')]
+    return len(_pair_ids(words[0])) if words else 0
 
 
 PARTICLE_TAIL = re.compile(r' (?:with|for|on|to|at|of|about|from)$')

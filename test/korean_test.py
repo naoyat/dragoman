@@ -31,7 +31,7 @@ class AnalyzerTestCase(unittest.TestCase):
 
     def test_cases_and_tense(self):
         self.assertEqual(self.ja('소년이 학교에서 책을 읽었다.'), '少年が / 学校[で,から] / 本を / 読んだ')
-        self.assertEqual(self.ja('나는 어제 친구에게 편지를 보냈습니다.'), '私は / 昨日 / 友達に / 手紙を / 送った,派遣した')
+        self.assertEqual(self.ja('나는 어제 친구에게 편지를 보냈습니다.'), '私は / 昨日 / 友達に / 手紙を / 送った')
 
     def test_copula_and_adjective(self):
         self.assertEqual(self.ja('저는 학생입니다.'), '私は / 学生である')

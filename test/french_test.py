@@ -84,7 +84,7 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja("C'est le plus grand homme du monde."), 'それは / {世界の & 最も大きい}男である')
         self.assertEqual(self.ja('Je suis fatigué.'), '私は / 疲れている')             # 形容詞になった過去分詞
         self.assertEqual(self.ja('La porte était ouverte.'), 'ドアは / 開いていた')
-        self.assertEqual(self.ja('Il est aimé de tous.'), '{彼,それ}が / みな[の,から] / 愛される,好まれる')   # 動作主があれば受動
+        self.assertEqual(self.ja('Il est aimé de tous.'), '{彼,それ}が / みなから / 愛される,好まれる')   # 動作主があれば受動
         self.assertEqual(self.ja('Elle semble fatiguée.'), '{彼女,それ}が / 疲れたように見える')
         self.assertEqual(self.ja('Ils pensent être heureux.'), '{彼ら,それら}が / {幸せである}ことを / 考える')
         self.assertEqual(self.ja('Il est devenu riche.'), '{彼,それ}が / 金持ちになった')
@@ -112,7 +112,7 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Il a le courage de parler.'), '{彼,それ}が / {話す}勇気を / 持つ')
         self.assertEqual(self.ja("J'ai le désir de voir la mer."), '私が / {海を 見る}強い願いを / 持つ')
         self.assertEqual(self.ja('La puissance de bien juger et distinguer le vrai est égale.'),
-                         '{よく 判断する、真実を 区別する}{力,主権}は / 同じ,公平である')   # et でつないだ不定詞
+                         '{よく 判断する、真実を 区別する}力は / 同じである')   # et でつないだ不定詞
         self.assertEqual(self.ja('Je veux voir la mer.'), '私が / 海を / 見たい')   # 冠詞の後ろの mer は名詞
         self.assertEqual(self.ja('Le livre de Pierre est rouge.'), 'ピエールの本は / 赤い')
 
@@ -124,7 +124,7 @@ class AnalyzerTestCase(unittest.TestCase):
     def test_que_complements(self):
         self.assertEqual(self.ja('Je sais que tu viens.'), '私が / {君が 来る}ことを / 知っている')   # 補文は入れ子
         self.assertEqual(self.ja('Cela témoigne que la puissance de bien juger est égale.'),
-                         'それが / {{よく 判断する}{力,主権}が 同じ,公平である}ことを / 示す,証言する')
+                         'それが / {{よく 判断する}力が 同じである}ことを / 示す,証言する')
 
     def test_long_sentence(self):
         # 『方法序説』: 名詞 + de + 不定詞のカンマを挟んだ並列と d'avec「〜から」、関係節の中の関係節を越えて主節に主語、
@@ -132,14 +132,14 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja("La puissance de bien juger, et distinguer le vrai d'avec le faux, qui est proprement ce "
                                  "qu'on nomme le bon sens ou la raison, est naturellement égale en tous les hommes."),
                          '{まさに,本来 {人々が 良識と={理性,理由}と 呼ぶ,名付ける}ことである}{よく 判断する、偽りから 真実を 区別する}'
-                         '{力,主権}は / 生まれつき,自然に / すべての{人々,人間}[に,で] / 同じ,公平である')
+                         '力は / 生まれつき,自然に / すべての{人々,人間}[に,で] / 同じである')
 
     def test_not_but(self):
         self.assertEqual(self.ja('Je ne parle pas de toi, mais de lui.'), '私が / 君についてではなく={彼,彼女}について / 話す')
         self.assertEqual(self.ja('La diversité de nos opinions ne vient pas de ce que les uns sont plus raisonnables que '
                                  'les autres, mais seulement de ce que nous conduisons nos pensées par diverses voies.'),
                          '私たちの意見の多様さが / {ある人々が 他の人々より 理性的,正確である}ことからではなく='
-                         '{〜だけ 私たちが 変化に富む{道,跡}[によって,を通って] 私たちの{考え,反射}を 導く}ことから / 来る')
+                         '{〜だけ 私たちが 変化に富む道[によって,を通って] 私たちの考えを 導く}ことから / 来る')
 
     def test_comparative_clauses(self):
         self.assertEqual(self.ja("Ils n'ont point coutume d'en désirer plus qu'ils en ont."),
@@ -153,7 +153,7 @@ class AnalyzerTestCase(unittest.TestCase):
                                  "est proprement ce qu'on nomme le bon sens ou la raison, est naturellement égale en tous "
                                  "les hommes."),
                          'それが / {{まさに,本来 {人々が 良識と={理性,理由}と 呼ぶ,名付ける}ことである}{よく 判断する、'
-                         '偽りから 真実を 区別する}{力,主権}が すべての{人々,人間}[に,で] 生まれつき,自然に 同じ,公平である}ことを / 示す,証言する')
+                         '偽りから 真実を 区別する}力が すべての{人々,人間}[に,で] 生まれつき,自然に 同じである}ことを / 示す,証言する')
 
     def test_shared_subject_not_imperative(self):
         self.assertEqual(self.ja('Nous conduisons nos pensées par diverses voies et ne considérons pas les mêmes choses.')
@@ -164,7 +164,7 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Cela témoigne que la puissance de bien juger est naturellement égale en tous les hommes ; '
                                  'et ainsi que la diversité de nos opinions ne vient pas de ce que les uns sont plus '
                                  'raisonnables que les autres.'),
-                         'それが / {{よく 判断する}{力,主権}が すべての{人々,人間}[に,で] 生まれつき,自然に 同じ,公平である}ことを / '
+                         'それが / {{よく 判断する}力が すべての{人々,人間}[に,で] 生まれつき,自然に 同じである}ことを / '
                          '{私たちの意見の多様さが {ある人々が 他の人々より 理性的,正確である}こと[の,から] 来ない}ことも / 示す,証言する')
 
     def test_not_but_inside_complement(self):
@@ -172,7 +172,7 @@ class AnalyzerTestCase(unittest.TestCase):
         a = self.ja('Cela témoigne que la raison est égale en tous les hommes ; et ainsi que la diversité de nos opinions '
                     'ne vient pas de ce que les uns sont plus raisonnables que les autres, mais seulement de ce que nous '
                     'conduisons nos pensées par diverses voies, et ne considérons pas les mêmes choses.')
-        self.assertIn('ことからではなく={〜だけ 私たちが 変化に富む{道,跡}[によって,を通って] 私たちの{考え,反射}を 導く}ことから 来る}ことも', a)
+        self.assertIn('ことからではなく={〜だけ 私たちが 変化に富む道[によって,を通って] 私たちの考えを 導く}ことから 来る}ことも', a)
         self.assertEqual(self.ja('Je les connais tous.'), '私が / {彼ら,それら}=みなを / 知っている')   # 名詞の続かない tous
 
     def test_adverbial_clauses(self):

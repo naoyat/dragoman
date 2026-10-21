@@ -62,8 +62,8 @@ class AnalyzerTestCase(unittest.TestCase):
     def test_fairy_tale(self):
         # グリム童話『白雪姫』(1857年版。パブリックドメイン) の綴りのまま
         self.assertEqual(self.ja('Da war sie zufrieden, denn sie wußte daß der Spiegel die Wahrheit sagte.'),
-                         'そこで,その後すぐ / 彼女は / 満足していた / というのは / 彼女が / 知っていた / 〜ということ / 鏡が / 真実を / 言った')
-        self.assertEqual(self.ja('Da erschrack die Königin.'), 'そこで,その後すぐ / 女王が / 驚いた')
+                         'そこで / 彼女は / 満足していた / というのは / 彼女が / 知っていた / 〜ということ / 鏡が / 真実を / 言った')
+        self.assertEqual(self.ja('Da erschrack die Königin.'), 'そこで / 女王が / 驚いた')
 
     def test_detect(self):
         from dragoman.main import detect

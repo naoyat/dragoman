@@ -896,8 +896,8 @@ def _shared_subject(before, form):
     tags = [t for _, t in morphology.verb_forms(form) if 'plural' in t and 'imperative' not in t]
     for pronoun, person in (('nous', 'first-person'), ('vous', 'second-person')):
         if any(w.surface.lower() == pronoun for w in before) and any(person in t for t in tags):
-            return True
-    return False
+            return pronoun
+    return None
 
 
 def imperatives(words):
@@ -917,7 +917,9 @@ def imperatives(words):
             continue
         if k >= 0 and words[k].surface.lower() in ('et', 'ou', 'mais', 'puis') and \
                 _shared_subject(words[:k], word.surface.lower()):
-            continue   # 前の節と主語を共有した並列の動詞 (nous conduisons … et ne considérons pas …)
+            pronoun = _shared_subject(words[:k], word.surface.lower())
+            word.items = [type(item)(dict(item.item, subject_ja=morphology.PRONOUNS[pronoun][0]))]
+            continue   # 前の節と主語を共有した並列の動詞 (nous conduisons … et ne considérons pas …「私たちが」)
         reading = next(t for l, t in morphology.verb_forms(word.surface.lower()) if 'imperative' in t)
         person = 1 if 'first-person' in reading else 2
         word.items = [type(item)(dict(item.item, mood='imperative', person=person,
@@ -1786,6 +1788,9 @@ def passive_agents(words):
         item = _item(w)
         if item is not None and item.pos == 'preposition' and item.attrib('base') == 'par':
             w.items = [type(item)(dict(item.item, ja='〜によって', agent=True))]
+        elif item is not None and item.pos == 'preposition' and item.attrib('base') == 'de' and \
+                not getattr(w, 'genitive_of_de', False):
+            w.items = [type(item)(dict(item.item, ja='〜から', agent=True))]   # aimé de tous「みなから愛される」
 
 
 def lookup_all(surfaces):
