@@ -88,6 +88,9 @@ HOMOGRAPHS = {
     'tear': {'VERB': 0, 'NOUN': 1}, 'wind': {'NOUN': 1, 'VERB': 0}, 'wound': {'PAST': 0, 'NOUN': 1, 'VERB': 1},
     'increase': {'VERB': 0, 'NOUN': 1}, 'decrease': {'VERB': 0, 'NOUN': 1},
 }
+# 口語の綴り (歌詞などに出るもの): CMUdict に無いか、CMUdict の発音が誤っているもの
+COLLOQUIAL = {'tryna': 'T R AY1 N AH0', 'outta': 'AW1 T AH0', 'imma': 'AY1 M AH0', "i'ma": 'AY1 M AH0',
+              'finna': 'F IH1 N AH0', 'whatcha': 'W AH1 CH AH0'}
 PENN = {'VB': 'VERB', 'VBP': 'VERB', 'VBZ': 'VERB', 'VBG': 'VERB', 'VBD': 'PAST', 'VBN': 'PAST', 'NN': 'NOUN',
         'NNS': 'NOUN', 'NNP': 'NOUN', 'JJ': 'ADJ', 'JJR': 'ADJ', 'JJS': 'ADJ', 'RB': 'ADV'}
 
@@ -139,13 +142,20 @@ def _from_ipa(ipa):
 def arpabet(word, accent='us', tag=None):
     """語 → ARPABET の列 (米音は CMUdict、無ければ espeak-ng。英音は espeak-ng)。tag (Penn の品詞の印) があれば
     同綴り異音語の発音を選ぶ (read: VBD → R EH1 D、VBP → R IY1 D)"""
-    key = word.lower().strip("'")
+    key = word.lower().strip("'").replace('’', "'")
+    if key in COLLOQUIAL:
+        return COLLOQUIAL[key].split()
     if accent != 'gb' and tag and key in HOMOGRAPHS:
         variants = _variants().get(key, [])
         n = HOMOGRAPHS[key].get(PENN.get(tag, ''), 0)
         if n < len(variants):
             return list(variants[n])
     if accent != 'gb':
+        if key.endswith('in') and word.endswith(("'", '’')):
+            # g を落とした -in' は -ing の発音の ŋ を n に (lovin' → ラヴィン。CMUdict の名前の Lovin より先に)
+            full = _cmudict().get(key + 'g')
+            if full and full[-1] == 'NG':
+                return list(full[:-1]) + ['N']
         entry = _cmudict().get(key)
         if entry:
             return list(entry)

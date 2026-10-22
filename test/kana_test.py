@@ -171,6 +171,14 @@ class LanguageKatakanaTestCase(unittest.TestCase):
         self.assertEqual(en.sentence('I have read this book.')[2], 'レッド')
         self.assertEqual(en.sentence('The cats sing a song.'), ['ザ', 'キャッツ', 'スィング', 'ア', 'ソング'])
 
+    def test_english_colloquial(self):
+        from dragoman.english import katakana as en
+        if not en.available():
+            self.skipTest('CMUdict も espeak-ng も無い')
+        # 口語の綴り (CMUdict に無いか誤っているもの) と、g を落とした -in' (-ing の発音の ŋ を n に)
+        self.assertEqual([en.katakana(w) for w in ('tryna', 'outta', 'imma', "lovin'", "rollin'")],
+                         ['トライナ', 'アウタ', 'アイマ', 'ラヴィン', 'ロウリン'])
+
     def test_hawaiian(self):
         from dragoman.hawaiian.phonology import katakana
         self.assertEqual([katakana(w) for w in ('Hawaiʻi', 'Kalākaua', 'Kamehameha')],
