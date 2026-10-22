@@ -203,6 +203,8 @@ def _schwa_vowels(word, arpa):
 def phonemes(word, accent='us', tag=None):
     """語 → 共通の規則の音素の列"""
     arpa = arpabet(word, accent, tag)
+    if word.lower().replace('’', "'").endswith("n't") and arpa[-3:] == ['AH0', 'N', 'T']:
+        arpa = arpa[:-3] + ['N', 'T']   # -n't の n は音節になる (wasn't [wʌzn̩t] → ワズント、weren't → ワーント)
     schwas = _schwa_vowels(word, arpa)
     out = []
     n = len(arpa)

@@ -178,6 +178,9 @@ class LanguageKatakanaTestCase(unittest.TestCase):
         # 口語の綴り (CMUdict に無いか誤っているもの) と、g を落とした -in' (-ing の発音の ŋ を n に)
         self.assertEqual([en.katakana(w) for w in ('tryna', 'outta', 'imma', "lovin'", "rollin'")],
                          ['トライナ', 'アウタ', 'アイマ', 'ラヴィン', 'ロウリン'])
+        # -n't の n は音節になる (前の弱い母音を書かない)
+        self.assertEqual([en.katakana(w) for w in ("weren't", "wasn't", "aren't", "didn't")],
+                         ['ワーント', 'ワズント', 'アーント', 'ディドント'])
 
     def test_hawaiian(self):
         from dragoman.hawaiian.phonology import katakana
