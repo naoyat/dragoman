@@ -161,7 +161,7 @@ def value_short():
 
 
 KANA_VALUE_OPTIONS = {'--kana-long': 'long', '--kana-wa': 'wa', '--kana-si': 'si', '--kana-oe': 'oe',
-                      '--kana-accent': 'accent'}
+                      '--kana-accent': 'accent', '--kana-small': 'small', '--kana-kobun': 'kobun'}
 
 
 def kana_json(lang, args, texts):

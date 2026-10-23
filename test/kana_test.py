@@ -275,6 +275,38 @@ class SpellingKanaTestCase(unittest.TestCase):
         for word, expected in cases.items():
             self.assertEqual(katakana(word), expected, word)
 
+    def test_hebrew(self):   # 聖書時代の再建音
+        from dragoman.hebrew.katakana import word_katakana
+        cases = {'בְּרֵאשִׁית': 'ベレーシース', 'אֱלֹהִים': 'エローヒーム', 'הַשָּׁמַיִם': 'ハッシャーマイム', 'דָּבָר': 'ダーヴァール',
+                 'מֶלֶךְ': 'メレフ', 'שָׁלוֹם': 'シャーローム', 'רוּחַ': 'ルーアフ'}
+        for word, expected in cases.items():
+            self.assertEqual(word_katakana(word), expected, word)
+
+    def test_tibetan(self):   # ラサ発音
+        from dragoman.tibetan.katakana import word_katakana
+        cases = {'ལྷ་ས': 'ラサ', 'བཀྲ་ཤིས': 'タシ', 'བཀྲ་ཤིས་བདེ་ལེགས': 'タシデレ', 'སངས་རྒྱས': 'サンギェ',
+                 'ཐུགས་རྗེ་ཆེ': 'トゥジェチェ'}
+        for word, expected in cases.items():
+            self.assertEqual(word_katakana(word), expected, word)
+
+    def test_ainu(self):
+        try:
+            import ainu_utils  # noqa: F401
+        except ImportError:
+            self.skipTest('ainu-utils が無い')
+        from dragoman.ainu.katakana import katakana
+        self.assertEqual(katakana('cep'), 'チェㇷ゚')
+        self.assertEqual(katakana('cep', small='off'), 'チェプ')
+        self.assertEqual(katakana('pirka', small='off'), 'ピリカ')
+
+    def test_kobun(self):
+        from dragoman.kobun import mecab
+        if not mecab.available():
+            self.skipTest('中古和文 UniDic が無い')
+        from dragoman.kobun.katakana import sentence
+        self.assertEqual(sentence('いと思ふ人'), ['イト', 'オモウ', 'ヒト'])
+        self.assertEqual(sentence('いと思ふ人', kobun='historical'), ['イト', 'オモフ', 'ヒト'])
+
     def test_ruby_punctuation(self):   # ダンダ・アラビア文字の句点は区切り (カナは空)
         from dragoman.core.ruby import ruby
         self.assertEqual([(r['text'], r['kana']) for r in ruby('वह आया।', 'hi')],

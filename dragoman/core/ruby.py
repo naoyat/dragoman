@@ -18,7 +18,7 @@
 import importlib
 import re
 
-PUNCT = '.,;:!?…«»"“”„()[]{}—–¡¿、。・।॥۔،؟؛'   # デーヴァナーガリーのダンダ・アラビア文字の句読点も
+PUNCT = '.,;:!?…«»"“”„()[]{}—–¡¿、。・।॥۔،؟؛׃־'   # デーヴァナーガリーのダンダ・アラビア文字の句読点も
 # 言語 → (モジュール, 語のカタカナの関数の名前)。語をまたぐ音を扱う言語は ruby_words (語の列 → (カナの列, つながり))
 WORD_KANA = {
     'grc': ('dragoman.greek.katakana', 'katakana'),
@@ -29,7 +29,8 @@ WORD_KANA = {
     'ang': ('dragoman.oldenglish.phonology', 'katakana'),
     'id': ('dragoman.indonesian.katakana', 'katakana'), 'ms': ('dragoman.indonesian.katakana', 'katakana'),
     'tl': ('dragoman.tagalog.katakana', 'katakana'), 'hi': ('dragoman.hindi.katakana', 'word_katakana'),
-    'ur': ('dragoman.urdu.katakana', 'word_katakana'),
+    'ur': ('dragoman.urdu.katakana', 'word_katakana'), 'he': ('dragoman.hebrew.katakana', 'word_katakana'),
+    'ain': ('dragoman.ainu.katakana', 'katakana'),
 }
 RUBY_WORDS = {'fr': 'dragoman.french.katakana', 'en': 'dragoman.english.katakana', 'ru': 'dragoman.core.ruby', 'la': 'dragoman.core.ruby',
               'ar': 'dragoman.core.ruby', 'fa': 'dragoman.core.ruby'}
@@ -39,7 +40,38 @@ ANALYSED = {'ar': ('dragoman.arabic.analyzer', 'dragoman.arabic.katakana'),
 
 
 def available(lang):
-    return lang in WORD_KANA or lang in RUBY_WORDS
+    return lang in WORD_KANA or lang in RUBY_WORDS or lang in SEGMENTED
+
+
+def tibetan_segments(text, **options):
+    """チベット語: 語の間に空白が無いので、文を解析した語の区切り (助詞は前の語に) ごとに。文字の範囲は元の文の中を
+    順に探して"""
+    from dragoman.tibetan import analyzer
+    from dragoman.tibetan.katakana import word_katakana
+    out, pos = [], 0
+    for analysis in analyzer.analyze_text(text):
+        for word, enclitic in analysis.word_texts():
+            piece = word.strip()
+            if not piece:
+                continue
+            start = text.find(piece, pos)
+            if start < 0:
+                continue
+            end = start + len(piece)
+            punct = re.fullmatch('[།༎༏༐༑༔་ ]+', piece) is not None
+            out.append({'text': piece, 'start': start, 'end': end,
+                        'kana': '' if punct else word_katakana(piece, enclitic, **options)})
+            pos = end
+    return out
+
+
+def kobun_segments(text, **options):
+    """古文: MeCab の語ごとに (今の発音か歴史的仮名遣い: kobun='modern' / 'historical')"""
+    from dragoman.kobun.katakana import tokens
+    return [{'text': s, 'start': a, 'end': b, 'kana': k} for s, a, b, k in tokens(text, **options)]
+
+
+SEGMENTED = {'bo': tibetan_segments, 'kobun': kobun_segments}   # 空白で語を区切らない言語: 言語 → (文 → 区切りの列)
 
 
 def tokens(text):
@@ -160,6 +192,8 @@ def ruby(text, lang, liaison='next', **options):
     """文 → ルビの区切りの列 [{text, start, end, kana}] (上の説明)"""
     if not available(lang):
         raise ValueError('ルビのカタカナが無い言語: %s' % lang)
+    if lang in SEGMENTED:
+        return SEGMENTED[lang](text, **options)
     toks = tokens(text)
     word_ix = [k for k, t in enumerate(toks) if t[3]]
     kanas, links = _word_kana(lang, [toks[k][0] for k in word_ix], liaison, options) if word_ix else ([], [])

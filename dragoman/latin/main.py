@@ -281,8 +281,8 @@ class Options:
                 self.kana_options['si'] = arg
             elif option == '--kana-oe':
                 self.kana_options['oe'] = arg
-            elif option == '--kana-accent':
-                self.kana_options['accent'] = arg
+            elif option in ('--kana-accent', '--kana-small', '--kana-kobun'):
+                self.kana_options[option[len('--kana-'):]] = arg   # ラテン語では使わない (ほかの言語と同じく受け付ける)
             elif option in ('-q', '--no-translation'):
                 self.show_translation = False
             elif option in ('-m', '--capital-to-macron'):

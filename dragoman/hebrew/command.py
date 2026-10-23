@@ -54,8 +54,14 @@ def available():
     return None if dictionary.available() else 'no Hebrew data (python3 tools/build_hebrew_dic.py)'
 
 
+def katakana(analysis, kana_options):
+    """カタカナ読み (--kana): 聖書時代の再建音で語ごとに (hebrew/katakana.py。神の名は朗読の読み アドーナーイ)"""
+    from .katakana import sentence
+    return sentence(original_text(analysis), **kana_options)
+
+
 COMMAND = Command(lang='he', name='聖書ヘブライ語', analyzer=analyzer, dictionary=dictionary, available=available,
                   usage=USAGE, header=header, speech_text=lambda a, o: original_text(a), romanize=script.translit,
                   explain=explain.notes, descendant_langs=('en', 'ja', 'el', 'la', 'ar'),
                   options=OPTIONS, handle_option=handle_option,
-                  texts_hook=texts_hook, speech_setup=speech_setup)
+                  texts_hook=texts_hook, speech_setup=speech_setup, katakana=katakana)

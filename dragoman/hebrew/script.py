@@ -27,6 +27,8 @@ CONSONANTS = {'א': 'ʾ', 'ב': 'b', 'ג': 'g', 'ד': 'd', 'ה': 'h', 'ו': 'w',
               'כ': 'k', 'ך': 'k', 'ל': 'l', 'מ': 'm', 'ם': 'm', 'נ': 'n', 'ן': 'n', 'ס': 's', 'ע': 'ʿ', 'פ': 'p',
               'ף': 'p', 'צ': 'ṣ', 'ץ': 'ṣ', 'ק': 'q', 'ר': 'r', 'ש': 'š', 'ת': 't'}
 SPIRANT = {'ב': 'v', 'כ': 'ḵ', 'ך': 'ḵ', 'פ': 'f', 'ף': 'f'}  # 弱いダゲシュの無い begadkefat (b k p だけ書き分ける)
+# g d t も書き分けるとき (カタカナの再建音: ḡ [ɣ]・ḏ [ð]・ṯ [θ]。translit(word, all_spirants=True))
+SPIRANT_ALL = dict(SPIRANT, **{'ג': 'ḡ', 'ד': 'ḏ', 'ת': 'ṯ'})
 FINALS = {'ך': 'כ', 'ם': 'מ', 'ן': 'נ', 'ף': 'פ', 'ץ': 'צ'}
 
 
@@ -64,11 +66,12 @@ def _clusters(word):
     return out
 
 
-def translit(word):
+def translit(word, all_spirants=False):
     """簡略な学術転写 (母音の長短、ʾ ʿ ḥ ṭ ṣ q š ś、母音の読みの文字 (matres lectionis) は長母音に)。
-    マカフ (־) でつながった語はハイフンで"""
+    マカフ (־) でつながった語はハイフンで。all_spirants なら g d t の摩擦音も (ḡ ḏ ṯ)"""
     if MAQAF in word:
-        return '-'.join(translit(part) for part in word.split(MAQAF))
+        return '-'.join(translit(part, all_spirants) for part in word.split(MAQAF))
+    SPIRANT = SPIRANT_ALL if all_spirants else globals()['SPIRANT']
     clusters = _clusters(word)
     out = []
     prev_sheva = True  # 語頭のシェヴァは有声

@@ -55,5 +55,12 @@ def available():
     return None
 
 
+def katakana(analysis, kana_options):
+    """カタカナ読み (--kana): 語ごとに現代のアイヌ語のカタカナ表記 (ainu/katakana.py。--kana-small=off で小書きなし)"""
+    from .katakana import sentence
+    return sentence(analysis.text, **kana_options)
+
+
 COMMAND = Command(lang='ain', name='アイヌ語', analyzer=analyzer, dictionary=None, available=available,
-                  usage=USAGE, header=header, render=render, speech_lang='ain', speech_text=lambda a, o: a.text)
+                  usage=USAGE, header=header, render=render, speech_lang='ain', speech_text=lambda a, o: a.text,
+                  katakana=katakana)

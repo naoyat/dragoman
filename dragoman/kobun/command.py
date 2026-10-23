@@ -62,6 +62,12 @@ def available():
         'unzipped into $DRAGOMAN_DATA/ojp/unidic-chuko)')
 
 
+def katakana(analysis, kana_options):
+    """カタカナ読み (--kana): 語ごとに今の発音 (--kana-kobun=historical で歴史的仮名遣い。kobun/katakana.py)"""
+    from .katakana import sentence
+    return sentence(analysis.text, **kana_options)
+
+
 COMMAND = Command(lang='kobun', name='古文 (平安の和文)', analyzer=analyzer, dictionary=None, available=available,
                   usage=USAGE, header=lambda a, o: a.text, speech_text=lambda a, o: a.reading,
-                  speech_lang='ja', render=render)
+                  speech_lang='ja', render=render, katakana=katakana)

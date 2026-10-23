@@ -132,6 +132,10 @@ def parse(command, argv):
             options.kana_options['oe'] = arg
         elif option == '--kana-accent':
             options.kana_options['accent'] = arg
+        elif option == '--kana-small':
+            options.kana_options['small'] = arg
+        elif option == '--kana-kobun':
+            options.kana_options['kobun'] = arg
         elif option == '--no-explain':
             options.explain = False
         elif option in ('-l', '--sentence-per-line'):

@@ -6,7 +6,7 @@
 from dragoman.core import ansi_color
 from dragoman.core.cli import Command
 from dragoman.core import options
-from . import analyzer, dictionary, grammar, phonology, script, segment
+from . import analyzer, dictionary, grammar, katakana, phonology, script, segment
 
 USAGE = '''
   ./dragoman.py bo -e "རྒྱལ་པོས་བློན་པོ་ལ་གསེར་བྱིན་ནོ།"
@@ -89,5 +89,5 @@ def available():
 
 COMMAND = Command(lang='bo', name='古典チベット語', analyzer=analyzer, dictionary=dictionary, available=available,
                   usage=USAGE, header=header, romanize=script.translit, render=render, speech_lang='bo',
-                  speech_text=speech_text, speech_pron=pron, options=OPTIONS,
+                  speech_text=speech_text, speech_pron=pron, options=OPTIONS, katakana=katakana.katakana,
                   handle_option=handle_option)

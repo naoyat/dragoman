@@ -39,6 +39,9 @@ COMMON = (
     Option('kana-si', value='KANA', help='カタカナ読みの [si]・[zi]: スィ (既定。[ʃi] の「シ」と分ける) / シ (慣用)'),
     Option('kana-oe', value='KANA', help='カタカナ読みの [ø]・[œ] (ö・eu): エ (既定: Niinistö → ニーニステ) / オ (ニーニスト)'),
     Option('kana-accent', value='ACCENT', help='英語のカタカナ読みの発音: us (既定。米音、CMUdict) / gb (英音、espeak-ng)'),
+    Option('kana-small', value='ON|OFF', help='アイヌ語のカタカナの音節末の子音: on (既定。小書きの ㇰ・ㇼ・ㇷ゚ …) / off (ク・リ・プ)'),
+    Option('kana-kobun', value='STYLE', help='古文のカタカナ読み: modern (既定。今の発音: オモウ・サブライ) / historical\n'
+                                           '(歴史的仮名遣い: オモフ・サブラヒ)'),
     Option('kana-json', help='ルビ (フリガナ) 用のカタカナを JSON で出す (入力の1行ごとに {"text", "ruby": [{text, start, end,\n'
                               'kana}]}。解析はしない)'),
     Option('kana-liaison', value='MODE', help='ルビの語をまたぐ音 (リエゾンなど) の載せ方: next (既定。次の語に) / prev (前の語に)\n'
@@ -62,7 +65,7 @@ COMMON = (
 # ラテン語のコマンド (latin/main.py) が受け付ける共通のオプション (-r・--no-explain などはラテン語では使わない。
 # --sentence-per-line は入口 main.py が処理する) と、ラテン語だけのもの
 LATIN_COMMON = ('no-word-detail', 'descendants', 'etymology', 'speech', 'tts', 'html', 'pdf', 'marks', 'legend',
-                'provenance', 'compare', 'gaps', 'help', 'kana', 'kana-only', 'kana-long', 'kana-wa', 'kana-si', 'kana-oe', 'kana-accent', 'kana-json',
+                'provenance', 'compare', 'gaps', 'help', 'kana', 'kana-only', 'kana-long', 'kana-wa', 'kana-si', 'kana-oe', 'kana-accent', 'kana-small', 'kana-kobun', 'kana-json',
                 'kana-liaison')
 LATIN = tuple(o for o in COMMON if o.long in LATIN_COMMON) + (
     Option('no-translation', 'q', help='訳 (日本語) を表示しない'),
