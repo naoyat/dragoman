@@ -41,6 +41,12 @@ def available():
     return None if dictionary.available() else 'no Indonesian data (python3 tools/build_indonesian_dic.py)'
 
 
+def katakana(analysis, kana_options):
+    """カタカナ読み (--kana): 元の文の語ごとに綴りから (indonesian/katakana.py。マレー語も)"""
+    from .katakana import sentence
+    return sentence(original(analysis), **kana_options)
+
+
 COMMAND = Command(lang='id', name='インドネシア語', analyzer=analyzer, dictionary=dictionary, available=available,
                   usage=USAGE, header=lambda a, o: original(a), speech_text=lambda a, o: original(a), explain=explain,
-                  descendant_langs=('en', 'ja', 'ms'), speech_lang='id')
+                  descendant_langs=('en', 'ja', 'ms'), speech_lang='id', katakana=katakana)

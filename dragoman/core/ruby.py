@@ -18,7 +18,7 @@
 import importlib
 import re
 
-PUNCT = '.,;:!?…«»"“”„()[]{}—–¡¿、。・'
+PUNCT = '.,;:!?…«»"“”„()[]{}—–¡¿、。・।॥۔،؟؛'   # デーヴァナーガリーのダンダ・アラビア文字の句読点も
 # 言語 → (モジュール, 語のカタカナの関数の名前)。語をまたぐ音を扱う言語は ruby_words (語の列 → (カナの列, つながり))
 WORD_KANA = {
     'grc': ('dragoman.greek.katakana', 'katakana'),
@@ -27,6 +27,9 @@ WORD_KANA = {
     'tr': ('dragoman.turkish.katakana', 'katakana'), 'mn': ('dragoman.mongolian.katakana', 'katakana'),
     'ko': ('dragoman.korean.katakana', 'katakana'), 'haw': ('dragoman.hawaiian.phonology', 'katakana'),
     'ang': ('dragoman.oldenglish.phonology', 'katakana'),
+    'id': ('dragoman.indonesian.katakana', 'katakana'), 'ms': ('dragoman.indonesian.katakana', 'katakana'),
+    'tl': ('dragoman.tagalog.katakana', 'katakana'), 'hi': ('dragoman.hindi.katakana', 'word_katakana'),
+    'ur': ('dragoman.urdu.katakana', 'word_katakana'),
 }
 RUBY_WORDS = {'fr': 'dragoman.french.katakana', 'en': 'dragoman.english.katakana', 'ru': 'dragoman.core.ruby', 'la': 'dragoman.core.ruby'}
 

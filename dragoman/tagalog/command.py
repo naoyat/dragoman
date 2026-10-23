@@ -106,6 +106,12 @@ def available():
     return None if dictionary.available() else 'no Tagalog data (python3 tools/build_tagalog_dic.py)'
 
 
+def katakana(analysis, kana_options):
+    """カタカナ読み (--kana): 元の文の語ごとに綴りから (tagalog/katakana.py。ng → ナン、mga → マンガ)"""
+    from .katakana import sentence
+    return sentence(original(analysis), **kana_options)
+
+
 COMMAND = Command(lang='tl', name='タガログ語', analyzer=analyzer, dictionary=dictionary, available=available,
                   usage=USAGE, header=lambda a, o: original(a), speech_text=speech_text, explain=explain, render=render,
-                  descendant_langs=('en', 'ja'), speech_lang='tl')
+                  descendant_langs=('en', 'ja'), speech_lang='tl', katakana=katakana)

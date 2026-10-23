@@ -237,5 +237,35 @@ class SentenceKanaTestCase(unittest.TestCase):
             self.assertEqual(' '.join(fr.sentence(text)), expected, text)
 
 
+
+class SpellingKanaTestCase(unittest.TestCase):
+    """綴り・転写から読む言語 (2026-10-23 に足したもの)"""
+    def test_indonesian(self):
+        from dragoman.indonesian.katakana import katakana
+        cases = {'saya': 'サヤ', 'bapak': 'バパッ', 'rumah': 'ルマ', 'nyanyi': 'ニャニ', 'bunga': 'ブンガ', 'syukur': 'シュクル',
+                 'pulau': 'プラウ', 'anak-anak': 'アナッアナッ', 'cinta': 'チンタ', 'khabar': 'ハバル'}
+        for word, expected in cases.items():
+            self.assertEqual(katakana(word), expected, word)
+
+    def test_tagalog(self):
+        from dragoman.tagalog.katakana import katakana
+        cases = {'salamat': 'サラマト', 'ngayon': 'ンガヨン', 'mga': 'マンガ', 'ng': 'ナン', 'araw-araw': 'アラウアラウ',
+                 'tsinelas': 'ツィネラス'}
+        for word, expected in cases.items():
+            self.assertEqual(katakana(word), expected, word)
+
+    def test_hindi(self):
+        from dragoman.hindi.katakana import word_katakana
+        cases = {'आदमी': 'アードミー', 'किताब': 'キターブ', 'नमस्ते': 'ナマステー', 'है': 'ヘー', 'और': 'オール', 'मैं': 'メーン',
+                 'कहाँ': 'カハーン', 'धन्यवाद': 'ダンヤワード', 'में': 'メーン'}
+        for word, expected in cases.items():
+            self.assertEqual(word_katakana(word), expected, word)
+
+    def test_ruby_punctuation(self):   # ダンダ・アラビア文字の句点は区切り (カナは空)
+        from dragoman.core.ruby import ruby
+        self.assertEqual([(r['text'], r['kana']) for r in ruby('वह आया।', 'hi')],
+                         [('वह', 'ワフ'), ('आया', 'アーヤー'), ('।', '')])
+
+
 if __name__ == '__main__':
     unittest.main()

@@ -4,7 +4,7 @@
 # ウルドゥー語のコマンドの設定 (core/cli.py)。解析はヒンディー語の解析器で行う
 #
 from dragoman.core.cli import Command
-from dragoman.hindi import explain
+from dragoman.hindi import command as hindi_command, explain
 from . import analyzer, dictionary, script
 
 USAGE = '''
@@ -33,4 +33,4 @@ def available():
 
 COMMAND = Command(lang='ur', name='ウルドゥー語', analyzer=analyzer, dictionary=dictionary, available=available,
                   usage=USAGE, header=header, speech_text=lambda a, o: a.forms_text[0], romanize=romanized,
-                  explain=explain.notes, descendant_langs=('en', 'ja', 'hi', 'pa'))
+                  explain=explain.notes, descendant_langs=('en', 'ja', 'hi', 'pa'), katakana=hindi_command.katakana)

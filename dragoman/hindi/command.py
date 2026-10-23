@@ -22,6 +22,12 @@ def available():
     return None if dictionary.available() else 'no Hindi data (python3 tools/build_hindi_dic.py)'
 
 
+def katakana(analysis, kana_options):
+    """カタカナ読み (--kana): 見出しの行の転写 (選んだ語形) から語ごとに (hindi/katakana.py。ウルドゥー語も)"""
+    from .katakana import katakana as roman_katakana
+    return [roman_katakana(w, **kana_options) for w in analysis.forms_text[1].split()]
+
+
 COMMAND = Command(lang='hi', name='ヒンディー語', analyzer=analyzer, dictionary=dictionary, available=available,
                   usage=USAGE, header=header, speech_text=lambda a, o: a.forms_text[0], romanize=script.translit,
-                  explain=explain.notes, descendant_langs=('en', 'ja', 'ur', 'pa', 'bn', 'ne'))
+                  explain=explain.notes, descendant_langs=('en', 'ja', 'ur', 'pa', 'bn', 'ne'), katakana=katakana)
