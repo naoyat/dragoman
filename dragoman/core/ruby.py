@@ -31,7 +31,11 @@ WORD_KANA = {
     'tl': ('dragoman.tagalog.katakana', 'katakana'), 'hi': ('dragoman.hindi.katakana', 'word_katakana'),
     'ur': ('dragoman.urdu.katakana', 'word_katakana'),
 }
-RUBY_WORDS = {'fr': 'dragoman.french.katakana', 'en': 'dragoman.english.katakana', 'ru': 'dragoman.core.ruby', 'la': 'dragoman.core.ruby'}
+RUBY_WORDS = {'fr': 'dragoman.french.katakana', 'en': 'dragoman.english.katakana', 'ru': 'dragoman.core.ruby', 'la': 'dragoman.core.ruby',
+              'ar': 'dragoman.core.ruby', 'fa': 'dragoman.core.ruby'}
+# 文を解析して選んだ語形 (analysis.forms の転写) から読む言語 (母音を書かない文字): 言語 → (解析器, カタカナのモジュール)
+ANALYSED = {'ar': ('dragoman.arabic.analyzer', 'dragoman.arabic.katakana'),
+            'fa': ('dragoman.persian.analyzer', 'dragoman.persian.katakana')}
 
 
 def available(lang):
@@ -61,6 +65,8 @@ def _word_kana(lang, words, liaison, options):
     """語の列 → (カナの列, 語の間でつながったか)"""
     if lang in RUBY_WORDS:
         module = importlib.import_module(RUBY_WORDS[lang])
+        if lang in ANALYSED:
+            return analysed_ruby_words(lang, words, **options)
         func = {'ru': russian_ruby_words, 'la': latin_ruby_words}.get(lang) or module.ruby_words
         return func(words, liaison=liaison, **options)
     module_name, name = WORD_KANA[lang]
@@ -91,6 +97,22 @@ def latin_ruby_words(words, liaison='next', **options):
             spelling = macronizer.macronize_text(word).strip() or word
         out.append(katakana(spelling, **options))
     return out, [False] * max(0, len(words) - 1)
+
+
+def analysed_ruby_words(lang, words, **options):
+    """アラビア語・ペルシア語: 文を解析して、選んだ語形の転写から語ごとに (--kana と同じ)。解析の語の数が合わなければ
+    語ごとに解析して"""
+    analyzer_name, katakana_name = ANALYSED[lang]
+    analyzer = importlib.import_module(analyzer_name)
+    katakana = importlib.import_module(katakana_name).katakana
+
+    def romans(text):
+        return [latin for analysis in analyzer.analyze_text(text) for _, latin in analysis.forms
+                if re.search(r'\w', latin)]
+    found = romans(' '.join(words))
+    if len(found) != len(words):
+        found = [(romans(w) or [''])[0] for w in words]
+    return [katakana(r, **options) if r else '' for r in found], [False] * max(0, len(words) - 1)
 
 
 # 母音の無い前置詞を次の語に続けるのは、次の語が母音で始まるときだけ (в Италии → ヴィターリイ)。子音で始まる語の前では

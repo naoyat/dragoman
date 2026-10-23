@@ -261,6 +261,20 @@ class SpellingKanaTestCase(unittest.TestCase):
         for word, expected in cases.items():
             self.assertEqual(word_katakana(word), expected, word)
 
+    def test_arabic(self):
+        from dragoman.arabic.katakana import katakana
+        cases = {'kitābun': 'キターブン', 'al-waladu': 'アルワラドゥ', 'ad-darsa': 'アッダルサ', 'ḏahaba': 'ザハバ',
+                 'ʿarabiyyun': 'アラビーユン', 'muḥammad': 'ムハンマド', 'bayt': 'バイト'}
+        for word, expected in cases.items():
+            self.assertEqual(katakana(word), expected, word)
+
+    def test_persian(self):
+        from dragoman.persian.katakana import katakana
+        cases = {'ketâb': 'ケターブ', 'xarid': 'ハリード', 'šahr': 'シャフル', 'dust-e': 'ドゥーステ', 'xeyli': 'ヘイリー',
+                 'dowlat': 'ドウラト'}
+        for word, expected in cases.items():
+            self.assertEqual(katakana(word), expected, word)
+
     def test_ruby_punctuation(self):   # ダンダ・アラビア文字の句点は区切り (カナは空)
         from dragoman.core.ruby import ruby
         self.assertEqual([(r['text'], r['kana']) for r in ruby('वह आया।', 'hi')],

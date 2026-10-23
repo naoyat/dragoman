@@ -3,6 +3,8 @@
 #
 # ペルシア語のコマンドの設定 (core/cli.py)
 #
+import re
+
 from dragoman.core.cli import Command
 from . import analyzer, dictionary, explain, script
 
@@ -18,6 +20,12 @@ def header(analysis, options):
     return '%s  (%s)' % (script.isolate(original), latin)
 
 
+def katakana(analysis, kana_options):
+    """カタカナ読み (--kana): 解析で選んだ語形の転写から語ごとに (persian/katakana.py)"""
+    from .katakana import katakana as roman_katakana
+    return [roman_katakana(latin, **kana_options) for _, latin in analysis.forms if re.search(r'\w', latin)]
+
+
 def available():
     return None if dictionary.available() else 'no Persian data (python3 tools/build_persian_dic.py)'
 
@@ -25,4 +33,4 @@ def available():
 COMMAND = Command(lang='fa', name='ペルシア語', analyzer=analyzer, dictionary=dictionary, available=available,
                   usage=USAGE, header=header, speech_text=lambda a, o: analyzer.sentence_text(a.forms)[0],
                   romanize=script.rough_translit, explain=explain.notes,
-                  descendant_langs=('en', 'ja', 'tr', 'ur', 'hi', 'ar', 'hy', 'ka'))
+                  descendant_langs=('en', 'ja', 'tr', 'ur', 'hi', 'ar', 'hy', 'ka'), katakana=katakana)

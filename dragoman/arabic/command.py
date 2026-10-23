@@ -3,6 +3,8 @@
 #
 # アラビア語 (現代標準アラビア語) のコマンドの設定 (core/cli.py)
 #
+import re
+
 from dragoman.core.cli import Command
 from . import analyzer, dictionary, explain, morphology, script
 
@@ -18,6 +20,12 @@ def header(analysis, options):
     return '%s  (%s)' % (script.isolate(vocalized), latin)
 
 
+def katakana(analysis, kana_options):
+    """カタカナ読み (--kana): 解析で選んだ母音付きの語形の転写から語ごとに (arabic/katakana.py)"""
+    from .katakana import katakana as roman_katakana
+    return [roman_katakana(latin, **kana_options) for _, latin in analysis.forms if re.search(r'\w', latin)]
+
+
 def available():
     if dictionary.available() and morphology.available():
         return None
@@ -28,4 +36,4 @@ def available():
 COMMAND = Command(lang='ar', name='アラビア語', analyzer=analyzer, dictionary=dictionary, available=available,
                   usage=USAGE, header=header, speech_text=lambda a, o: analyzer.sentence_text(a.forms)[0],
                   romanize=script.translit, explain=explain.notes,
-                  descendant_langs=('en', 'ja', 'fa', 'tr', 'es', 'pt', 'sw', 'ur', 'ms'))
+                  descendant_langs=('en', 'ja', 'fa', 'tr', 'es', 'pt', 'sw', 'ur', 'ms'), katakana=katakana)
