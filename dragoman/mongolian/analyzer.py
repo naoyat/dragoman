@@ -39,8 +39,14 @@ def _root_items(lemma):
     return []
 
 
+# 副詞節の副動詞の語尾 (切り出した語の見出し) → (節の後ろに付ける形, 節の動詞の時制) (core/Adverbial.py。-ж は
+# 助動詞の前 (орж байхад) にも来るので入れない)
+SUBORDINATORS = {'-вал': ('なら', None), '-аад': ('て', 'present')}
+
+
 MONGOLIAN = language.Language(
     name='mn',
+    subordinators=SUBORDINATORS, subordinators_follow=True,
     and_words=('ба', 'болон'),
     or_words=('буюу', 'эсвэл'),
     copulas=frozenset({'(байх)'}),

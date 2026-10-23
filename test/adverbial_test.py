@@ -84,6 +84,22 @@ class AdverbialTestCase(unittest.TestCase):
         self.check('oldenglish', 'Gif he cymþ, ic hine geseo.', 'なら')
         self.assertIn('以来', translate('oldenglish', 'Siþþan þæm dæge he com.'))
 
+    def test_korean(self):   # 連結語尾 (節の後ろ) と 連体形 + 때・후
+        self.assertIn('{雨が 降る}なら / ', translate('korean', '비가 오면 나는 집에 있다.'))
+        self.assertIn('{雨が 降る}けれども / ', translate('korean', '비가 오지만 나는 간다.'))
+        self.assertIn('{彼が 来た}とき / ', translate('korean', '그가 왔을 때 나는 그를 보았다.'))
+        self.assertIn('{ご飯を 食べた}後で / ', translate('korean', '밥을 먹은 후에 나는 잤다.'))
+        self.assertIn('{母が 作った}食べ物を', translate('korean', '어머니가 만든 음식을 먹었다.'))   # 関係節はそのまま
+
+    def test_turkish(self):   # 副動詞の語尾
+        self.check('turkish', 'Eve gelince yemek yedim.', 'と')
+        self.check('turkish', 'Okula giderken onu gördüm.', '間に')
+        self.assertTrue(translate('turkish', 'Eve gelip yemek yedim.').startswith('{家に 来て} / '))   # て形
+
+    def test_mongolian(self):
+        self.check('mongolian', 'Бороо орвол би гэртээ байна.', 'なら')
+        self.assertIn('来て} / ', translate('mongolian', 'Би гэртээ ирээд хоол идсэн.'))
+
     def test_russian(self):
         self.check('russian', 'Когда он пришёл, я увидел его.', 'とき')
         self.check('russian', 'Я остался дома, потому что шёл дождь.', 'ので')

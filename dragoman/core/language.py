@@ -44,6 +44,8 @@ class Language:
     infinitive_objects_follow: bool = False  # 不定詞の目的語が不定詞の後ろに来る (フランス語の pour établir le baromètre)
     subordinators: dict = field(default_factory=dict)  # 副詞節の従属接続詞の見出し → (節の後ろに付ける形, 時制[, 否定])
     # (core/Adverbial.mark_subordinators。共通の解析器の入口で印を付ける)
+    subordinators_follow: bool = False  # 従属接続詞 (副動詞の語尾) が節の後ろに来る (韓国語の -면、トルコ語の -ınca)。
+    # 解析器は語尾を動詞の後ろの語に切り出すので、後ろの節の頭に来る。前の節をその節の副詞節に
     relatives_before_head: bool = False  # 関係節が名詞の前に来る (トルコ語の分詞の節: Kitap okuyan çocuk「本を読む子供」)。
     # 先行詞は節の後ろの最初の名詞 (前の名詞は探さない)
 

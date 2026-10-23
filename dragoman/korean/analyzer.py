@@ -59,8 +59,16 @@ def _root_items(lemma):
     return []
 
 
+# 副詞節の連結語尾 (切り出した語の見出し) → (節の後ろに付ける形, 節の動詞の時制) (core/Adverbial.py。-고 は並列なので入れない)
+SUBORDINATORS = {'-면': ('なら', None), '-으면': ('なら', None), '-어서': ('ので', None), '-아서': ('ので', None),
+                 '-니까': ('ので', None), '-으니까': ('ので', None), '-지만': ('けれども', None), '-는데': ('けれど', None),
+                 '때': ('とき', None), '동안': ('間に', None), '후': ('後で', 'perfect'), '뒤': ('後で', 'perfect'),
+                 '전': ('前に', 'present')}   # 連体形 + 때 … (mark_attributives が接続詞に)
+
+
 KOREAN = language.Language(
     name='ko',
+    subordinators=SUBORDINATORS, subordinators_follow=True,
     and_words=('와', '과', '하고', '랑', '이랑', '및'),
     or_words=('나', '이나', '또는', '혹은'),
     copulas=frozenset({'이다'}),
@@ -581,14 +589,32 @@ def _pred_words(rec, nxt):
 # ----------------------------------------------------------------------
 # 連体形
 
+CLAUSE_NOUNS = {'때': '〜するとき', '동안': '〜する間', '후': '〜した後', '뒤': '〜した後', '전': '〜する前'}
+
+
 def mark_attributives(words):
     """連体形の用言を後ろの名詞に掛ける。補語の無い形容詞は修飾語 (예쁜 꽃)、ほかは関係節を名詞の訳に組み込む"""
-    out = []
+    out, dropped = [], set()
     for i, word in enumerate(words):
+        if id(word) in dropped:
+            continue
         if not getattr(word, 'attributive', None):
             out.append(word)
             continue
         head = next((w for w in words[i + 1:i + 3] if _pos(w) in ('noun', 'pronoun')), None)
+        between = words[i + 1:words.index(head)] if head is not None else []
+        nxt = head if all(_pos(w) == 'preposition' for w in between) else None   # 후에 の 에 は名詞の前に置いてある
+        if nxt is not None and nxt.surface in CLAUSE_NOUNS:
+            dropped.update(id(w) for w in between)
+            # 連体形 + 때・동안・후・전 は副詞節 (왔을 때「来たとき」。「来るだろう時の」でなく): 用言を節の定動詞に、
+            # 名詞を接続詞に (従属接続詞は節の後ろ: KOREAN.subordinators_follow)
+            item = _item(word)
+            word.items = [type(item)(dict(item.item, mood='indicative'))]
+            word.attributive = None
+            noun = _item(nxt)
+            nxt.items = [type(noun)(dict(noun.item, pos='conj', base=nxt.surface, ja=CLAUSE_NOUNS[nxt.surface], _=None))]
+            out.append(word)
+            continue
         # 関係節の補語: 直前の、主題でない名詞句 (と後置詞・否定・副詞)
         start = len(out)
         while start > 0:

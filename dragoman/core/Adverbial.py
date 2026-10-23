@@ -40,6 +40,12 @@ class AdverbialClause(LatinObject):
             verb.item.clear()
             verb.item.update(saved)
         inner = ' '.join(part for part in inner.split(' / ') if part.strip())
+        if suffix.startswith('て'):
+            # て形の語尾 (トルコ語の -ıp・モンゴル語の -аад「〜して」): 節の最後の動詞を て形に (来る → 来て)
+            from .japanese import attach_auxiliary
+            head, _, verb = inner.rpartition(' ')
+            verb = ','.join(attach_auxiliary(v, suffix) for v in verb.split(','))
+            return ('{' + (head + ' ' if head else '') + verb + '}', False)
         return ('{' + inner + '}' + suffix, False)
 
 
@@ -51,8 +57,9 @@ def mark_subordinators(words, table):
         if not items or items[0].pos != 'conj':
             continue
         base = (items[0].attrib('base') or word.surface).lower()
-        # 見出しが「転写 原綴り」のもの (アラビア語の ʿindamā عِنْدَما) は転写でも引く
-        base = next((k for k in (base, base.split(' ')[0]) if k in table), base)
+        # 見出しが「転写 原綴り」のもの (アラビア語の ʿindamā عِنْدَما)・語尾に説明の付いたもの (-면 (連結語尾)、
+        # -ınca「〜すると」) は前の部分でも引く
+        base = next((k for k in (base, base.split(' ')[0], base.split('「')[0]) if k in table), base)
         if base in table:
             suffix, tense = table[base][:2]
             items[0].item['clause_suffix'] = suffix

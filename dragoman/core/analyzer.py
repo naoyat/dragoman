@@ -1316,6 +1316,28 @@ def _relative_with_antecedent(word, words_by_index):
                for noun in nouns for _, n2, g2 in noun._)
 
 
+def _adverbial_clauses_before(clauses, trace):
+    """従属接続詞が節の後ろの言語 (副動詞の語尾 -면・-ınca を切り出した語は後ろの節の頭に来る): 語尾の前の節を、
+    語尾の付いた節の副詞節に (비가 오면 | 나는 집에 있다 → {雨が 降る}なら / 私は / 家に / いる)"""
+    from .Adverbial import AdverbialClause
+    out = list(clauses)
+    for k in range(len(clauses) - 1, 0, -1):
+        main = clauses[k].predicate
+        conj = main.conjunction
+        if conj is None or not isinstance(conj, Word) or not conj.items or not conj.items[0].attrib('clause_suffix'):
+            continue
+        sub = clauses[k - 1]
+        if sub not in out:
+            continue
+        main.conjunction = None
+        sub.predicate.subordinate = True
+        main.add_subordinate(AdverbialClause(sub.predicate, conj))
+        clauses[k].not_solved.extend(sub.not_solved)
+        out.remove(sub)
+        trace.append('// ADVERBIAL %s (%s) -> VERB %s' % (sub.predicate.surface, conj.surface, main.surface))
+    return out
+
+
 CLAUSE_CORRELATIVES = {'tadā', 'tarhi', 'tab', 'to', 'فَ'}   # 前の副詞節を受ける主節の頭の語 (サンスクリット・ヒンディー語、アラビア語の帰結の fa)
 
 
@@ -1324,6 +1346,8 @@ def detect_adverbial_clauses(clauses, trace):
     文の頭の節は後ろの節に (When she came, I saw her)、ほかは前の節に (I saw her when she came)"""
     from .Adverbial import AdverbialClause
     out = list(clauses)
+    if language.current().subordinators_follow:
+        return _adverbial_clauses_before(out, trace)
     for q in list(clauses):
         conj = q.predicate.conjunction
         coordinator = None

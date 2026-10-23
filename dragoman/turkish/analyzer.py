@@ -43,8 +43,13 @@ def _root_items(lemma):
     return []
 
 
+# 副詞節の副動詞の語尾 (切り出した語の見出し) → (節の後ろに付ける形, 節の動詞の時制[, 否定]) (core/Adverbial.py)
+SUBORDINATORS = {'-ınca': ('と', None), '-ken': ('間に', None), '-ıp': ('て', 'present'), '-madan': ('まま', None, True)}
+
+
 TURKISH = language.Language(
     name='tr',
+    subordinators=SUBORDINATORS, subordinators_follow=True,
     and_words=('ve',),
     or_words=('veya', 'yahut'),
     copulas=frozenset({'imek'}),
