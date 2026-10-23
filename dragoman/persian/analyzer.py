@@ -68,8 +68,13 @@ def prenominal(item):
 
 
 AND = 'و'
+# 副詞節の従属接続詞 (転写の見出し) → (節の後ろに付ける形, 節の動詞の時制) (core/Adverbial.py)
+SUBORDINATORS = {'vaqti': ('とき', None), 'agar': ('なら', None), 'čon': ('ので', None), 'zirâ': ('ので', None),
+                 'agarče': ('けれども', None)}
+
 PERSIAN = language.Language(
     name='fa',
+    subordinators=SUBORDINATORS,
     and_words=(AND,),
     or_words=('یا',),
     copulas=KeySet({morphology.COPULA}),
@@ -124,6 +129,8 @@ def choose_analyses(surfaces):
         cands = morphology.analyses(token)
         nxt = surfaces[i + 1] if i + 1 < len(surfaces) else None
         final = _is_boundary(nxt)
+        prev = morphology.FUNCTION_WORDS.get(surfaces[i - 1]) if i else None
+        after_subordinator = prev is not None and prev[0] == 'conj' and prev[1] in SUBORDINATORS
         nxt_verbal = nxt is not None and any(a.kind in ('verb', 'copula') and a.score >= 0.9
                                              for a in morphology.analyses(nxt)) if nxt not in PUNCTUATION and nxt else False
 
@@ -133,6 +140,8 @@ def choose_analyses(surfaces):
                 item = a.main
                 if final:
                     s *= 1.5
+                elif after_subordinator:
+                    s *= 1.5  # 従属接続詞のすぐ後ろは主語の無い節の動詞 (وقتی آمد「来たとき」)
                 elif not item.get('prefix') and not item.get('negative') and not item.get('participle'):
                     s *= 0.6  # 節の途中の接頭辞の無い過去形 (کرد) は名詞の読みもある
                 if item.get('participle') and nxt is not None and script.key(nxt)[:2] in ('شد', 'شو', 'بو', 'می', 'نش', 'نم'):

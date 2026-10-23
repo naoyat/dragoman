@@ -714,7 +714,19 @@ def detect_verbs(words):
 #            verbs_at.append(i)
 #            verbs[i] = verb
 
+    if not verb_ix:
+        # 動詞が1つも無ければ、最初の読みが定動詞の語を動詞に (Ubi habitās? の habitās: 分詞の読みもある)
+        for i, word in enumerate(words):
+            if isinstance(word, Word) and word.items and word.items[0].pos == 'verb' and \
+                    word.items[0].attrib('mood') in FINITE_MOODS:
+                word.items = [item for item in word.items if item.pos == 'verb']
+                words[i] = Predicate(word)
+                verb_ix.append(i)
+                break
     return (words, verb_ix)
+
+
+FINITE_MOODS = ('indicative', 'subjunctive', 'imperative')
 
 
 # 名詞に係りうる代名詞 (限定詞としても使う): hic, is, ille, iste, ipse, aliquis, quīdam など
@@ -1082,6 +1094,19 @@ def _group_by_verbs(words, verbs_ix, trace):
             trace.append("  NOT WELL: {%d..%d}" % (fr, to))
             # うまく分けられない。とりあえず後の方に入れる
             groups[i+1] = list(range(fr, to+1)) + groups[i+1]
+    # 文の頭の語 (+ カンマ) + 従属接続詞の節 (Caesar, cum id nūntiātum esset, mātūrat …、Perseus ubi haec audīvit,
+    # ex īnsulā discessit): 前に出た語は後ろの主節に (カンマは落とす)
+    first = groups[0]
+    for j in first[1:]:
+        word = words[j]
+        if isinstance(word, Word) and word.items and word.items[0].attrib('clause_suffix'):
+            fronted = [k for k in first[:first.index(j)] if words[k].surface != ',']
+            if fronted and not any(isinstance(words[k], Word) and words[k].items and
+                                   words[k].items[0].pos == 'conj' for k in fronted[1:]):   # 頭の at・sed は主節と
+                groups[1] = fronted + groups[1]
+                groups[0] = first[first.index(j):]
+                trace.append("  FRONTED: {0..%d} -> VERB %d" % (j - 1, verbs_ix[1]))
+            break
     return groups
 
 
@@ -1288,6 +1313,9 @@ def _relative_with_antecedent(word, words_by_index):
                for noun in nouns for _, n2, g2 in noun._)
 
 
+CLAUSE_CORRELATIVES = {'tadā', 'tarhi', 'tab', 'to'}   # 前の副詞節を受ける主節の頭の語 (サンスクリット・ヒンディー語)
+
+
 def detect_adverbial_clauses(clauses, trace):
     """副詞節: 従属接続詞 (解析器が clause_suffix を付けたもの: when → とき) で始まる節を、隣の主節の従属節に。
     文の頭の節は後ろの節に (When she came, I saw her)、ほかは前の節に (I saw her when she came)"""
@@ -1295,14 +1323,27 @@ def detect_adverbial_clauses(clauses, trace):
     out = list(clauses)
     for q in list(clauses):
         conj = q.predicate.conjunction
+        coordinator = None
+        if conj is not None and isinstance(conj, Word) and conj.surface in language.current().and_words:
+            # et + 従属接続詞 (et ubi rem vīdērunt, īrā commōtae sunt): 従属接続詞の節にし、et は主節に
+            inner = next((n for n in q.not_solved if isinstance(n, Word) and n.items and
+                          n.items[0].attrib('clause_suffix')), None)
+            if inner is not None and out.index(q) + 1 < len(out) and out[out.index(q) + 1].predicate.conjunction is None:
+                coordinator, conj = conj, inner
+                q.not_solved.remove(inner)
         if conj is None or not isinstance(conj, Word) or not conj.items or not conj.items[0].attrib('clause_suffix'):
             continue
         k = out.index(q)
-        target = k + 1 if k == 0 else k - 1
+        target = k + 1 if k == 0 or coordinator is not None else k - 1
         if not 0 <= target < len(out):
             continue
         main = out[target].predicate
+        if target > k and main.conjunction is not None and isinstance(main.conjunction, Word) and \
+                (main.conjunction.items[0].attrib('base') if main.conjunction.items else None) in CLAUSE_CORRELATIVES:
+            main.conjunction = None   # 副詞節を受ける相関の語 (yadā … tadā、jab … to) は訳さない (副詞節の訳と重なる)
         q.predicate.conjunction = None
+        if coordinator is not None:
+            main.conjunction = coordinator
         q.predicate.subordinate = True
         main.add_subordinate(AdverbialClause(q.predicate, conj))
         out[target].not_solved.extend(q.not_solved)
@@ -1373,6 +1414,9 @@ def detect_indirect_questions(clauses, trace):
         word = next((n for n in _nodes_in(pred, q.not_solved) if isinstance(n, Word) and is_interrogative(n)), None)
         if word is None or _relative_with_antecedent(word, words_by_index):
             continue   # 先行詞のある関係代名詞 (hominem quem ōrāculum dēmōnstrāvisset) は間接疑問ではない
+        if word is pred.conjunction and out.index(q) == 0 and len(out) > 1 and word.items and \
+                word.items[0].attrib('clause_suffix'):
+            continue   # 文の頭の従属接続詞の節は副詞節 (εἰ ἦλθεν, εἶδον αὐτόν「来たなら」。「来たかどうか」でなく)
         k = out.index(q)
         coordinated = pred.conjunction is not None and pred.conjunction.surface in language.current().and_words
         neighbors = [k + 1, k - 1] if coordinated else [k - 1, k + 1]
@@ -1843,6 +1887,9 @@ def analyze_words(surfaces, words, word_details=None, trace=None):
     if word_details is None:
         word_details = [word.detail() for word in words]
     trace = [] if trace is None else trace
+    if language.current().subordinators:   # 副詞節の従属接続詞 (言語の設定の表。core/Adverbial.py)
+        from .Adverbial import mark_subordinators
+        mark_subordinators(words, language.current().subordinators)
 
     # 並列句・形容詞/属格の係り先
     nodes, visited_ix = detect_and_or([w for w in words if getattr(w, 'attached_to', None) is None], trace)

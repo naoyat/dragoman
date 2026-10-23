@@ -134,7 +134,7 @@ class Predicate (LatinObject):
         person = verb.attrib('person', 0)
 
         if self.conjunction:
-            if self.conjunction.surface in self.language.and_words:
+            if self.conjunction.surface.lower() in self.language.and_words:   # 文の頭の Et も
                 t = 'そして'
             else:
                 t, neg = self.conjunction.translate()

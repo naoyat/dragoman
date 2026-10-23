@@ -14,6 +14,13 @@ def _lexicalized_participle(base, comparatives):
         any(i.get('pos') == 'adj' for i in (latindic.lookup_wiktionary(form) or [])) for form in comparatives)
 
 
+# 副詞節の従属接続詞 → (節の後ろに付ける形, 節の動詞の時制) (core/Adverbial.py。cum・ubi は latin/analyzer.py が接続詞に)
+SUBORDINATORS = {'cum': ('とき', None), 'ubi': ('とき', None), 'postquam': ('後で', None), 'posteāquam': ('後で', None),
+                 'sī': ('なら', None), 'nisi': ('でなければ', None), 'quia': ('ので', None), 'quoniam': ('ので', None),
+                 'dum': ('間に', None), 'etsī': ('けれども', None), 'quamquam': ('けれども', None),
+                 'antequam': ('前に', 'present'), 'priusquam': ('前に', 'present')}
+
+
 LATIN = Language(
     name='la',
     and_words=('et',),
@@ -26,4 +33,5 @@ LATIN = Language(
     lookup=latindic.lookup,
     lexicalized_participle=_lexicalized_participle,
     dictionary=wiktionary,
+    subordinators=SUBORDINATORS,
 )

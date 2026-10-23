@@ -51,8 +51,13 @@ def _root_items(lemma):
             for l in dictionary.lemmas(lemma) if l['pos'] == 'verb']
 
 
+# 副詞節の従属接続詞 (転写の見出し。ウルドゥー語も) → (節の後ろに付ける形, 節の動詞の時制) (core/Adverbial.py)
+SUBORDINATORS = {'jab': ('とき', None), 'agar': ('なら', None), 'yadi': ('なら', None), 'kyõki': ('ので', None),
+                 'jabki': ('一方で', None), 'hālā̃ki': ('けれども', None)}
+
 HINDI = language.Language(
     name='hi',
+    subordinators=SUBORDINATORS,
     and_words=('और', 'तथा', 'एवं'),
     or_words=('या',),
     copulas=KeySet({'होना'}),

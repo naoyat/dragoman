@@ -48,8 +48,14 @@ def _root_items(lemma):
     return []
 
 
+# 副詞節の従属接続詞 → (節の後ろに付ける形, 節の動詞の時制) (core/Adverbial.py)
+SUBORDINATORS = {'nang': ('とき', None), 'noong': ('とき', None), 'kapag': ('とき', None), 'pag': ('とき', None),
+                 'dahil': ('ので', None), 'sapagkat': ('ので', None), 'kasi': ('ので', None), 'bagaman': ('けれども', None),
+                 'kahit': ('けれども', None), 'bago': ('前に', 'present'), 'habang': ('間に', None)}
+
 TAGALOG = language.Language(
     name='tl',
+    subordinators=SUBORDINATORS,
     and_words=('at',),
     or_words=('o',),
     copulas=frozenset({'ay'}),

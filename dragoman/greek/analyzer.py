@@ -14,8 +14,14 @@ from dragoman.core import language
 from dragoman.core.Word import Word
 from . import dictionary, orthography, government, elision, dialect, morpheus
 
+# 副詞節の従属接続詞 → (節の後ろに付ける形, 節の動詞の時制) (core/Adverbial.py)
+SUBORDINATORS = {'ὅτε': ('とき', None), 'ὅταν': ('とき', None), 'ἐπεί': ('ので', None), 'ἐπειδή': ('ので', None),
+                 'διότι': ('ので', None), 'εἰ': ('なら', None), 'ἐάν': ('なら', None), 'ἤν': ('なら', None),
+                 'ἕως': ('まで', 'present'), 'ἵνα': ('ように', 'present')}
+
 GREEK = language.Language(
     name='grc',
+    subordinators=SUBORDINATORS,
     and_words=('καί',),
     nor_words=('οὐδέ', 'μηδέ', 'οὔτε', 'μήτε'),
     or_words=('ἤ',),

@@ -25,8 +25,17 @@ def _root_items(lemma):
             for l in dictionary.lemmas(lemma) if l['pos'] == 'verb']
 
 
+# 副詞節の従属接続詞 → (節の後ろに付ける形, 節の動詞の時制) (core/Adverbial.py)。いくつかの語のものは1語にまとめる
+SUBORDINATORS = {'когда': ('とき', None), 'если': ('なら', None), 'потому что': ('ので', None), 'так как': ('ので', None),
+                 'поскольку': ('ので', None), 'хотя': ('けれども', None), 'пока': ('間に', None),
+                 'после того как': ('後で', 'perfect'), 'до того как': ('前に', 'present'),
+                 'перед тем как': ('前に', 'present'), 'как только': ('とすぐに', None), 'с тех пор как': ('以来', None),
+                 'в то время как': ('一方で', None)}
+
+
 RUSSIAN = language.Language(
     name='ru',
+    subordinators=SUBORDINATORS,
     and_words=('и',),
     nor_words=('ни',),
     or_words=('или',),
@@ -278,6 +287,39 @@ def particle_by(words):
     return out
 
 
+
+def compound_conjunctions(words):
+    """いくつかの語の接続詞 (потому что・после того как …) を1語の接続詞に (後ろの語は落とす。表示は全部の語で)"""
+    compounds = sorted((k.split() for k in SUBORDINATORS if ' ' in k), key=len, reverse=True)
+    out, k = [], 0
+    while k < len(words):
+        lower = [w.surface.lower() for w in words[k:k + 4]]
+        parts = next((c for c in compounds if lower[:len(c)] == c), None)
+        word = words[k]
+        if parts is None or not word.items:
+            out.append(word)
+            k += 1
+            continue
+        item = word.items[0]
+        base = ' '.join(parts)
+        word.items = [type(item)(dict(item.item, pos='conj', base=base, ja='', _=None))]
+        word.surface = ' '.join(w.surface for w in words[k:k + len(parts)])
+        out.append(word)
+        k += len(parts)
+    return out
+
+
+def question_when(words):
+    """疑問文の頭の когда は疑問詞「いつ」(Когда он пришёл?。接続詞「〜するとき」でなく)"""
+    marks = [w.surface for w in words if w.surface.strip()]
+    if not marks or marks[-1] != '?' or ',' in marks:
+        return
+    first = words[0]
+    if first.surface.lower() == 'когда' and first.items:
+        item = first.items[0]
+        first.items = [type(item)(dict(item.item, pos='adv', ja='いつ', gloss_lang='ja', _=None))]
+
+
 def lookup_all(surfaces):
     words = [_word(s) for s in surfaces]
     choose_est(words)
@@ -290,6 +332,8 @@ def lookup_all(surfaces):
     words = negative_existence(words)
     words = supply_copula(words)
     mark_existential(words)
+    words = compound_conjunctions(words)
+    question_when(words)
     for i, word in enumerate(words):
         word.index = i
     return words

@@ -34,8 +34,13 @@ def _root_items(lemma):
     return []
 
 
+# 副詞節の従属接続詞 → (節の後ろに付ける形, 節の動詞の時制) (core/Adverbial.py)
+SUBORDINATORS = {'kun': ('とき', None), 'jos': ('なら', None), 'koska': ('ので', None), 'vaikka': ('けれども', None),
+                 'kunnes': ('まで', 'present'), 'jotta': ('ように', 'present')}
+
 FINNISH = language.Language(
     name='fi',
+    subordinators=SUBORDINATORS,
     and_words=('ja', 'sekä'),
     or_words=('tai', 'vai'),
     copulas=frozenset({'olla'}),

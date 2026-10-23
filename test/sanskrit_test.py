@@ -156,7 +156,10 @@ class AnalyzerTestCase(unittest.TestCase):
 
     def test_two_finite_verbs(self):
         a = analyze('यदा मेघः वर्षति तदा मयूरः नृत्यति ।')
-        self.assertEqual(len(a.clauses), 2)
+        # yadā の節は主節の副詞節に (tadā は訳さない): {雲が 雨を降らす}とき / 孔雀が / 踊る
+        self.assertEqual(len(a.clauses), 1)
+        tr = a.clauses[0].predicate.translate()[0]
+        self.assertTrue(tr.startswith('{') and '}とき / ' in tr and 'そのとき' not in tr, tr)
 
 
 

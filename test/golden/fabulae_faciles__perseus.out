@@ -383,21 +383,15 @@ Postquam arca ad lītus appulsa est , Danaē in harēnā quiētem capiēbat .
   12  .         
   --- 
 
+// ADVERBIAL est (Postquam) -> VERB capiēbat
 
 2 VERBS FOUND: est, capiēbat
-
-  est (indicative 3sg)
-    (Postquam)
-    prep:
-      ad <Acc>
-
-  →  〜したのち / {彼,彼女,それ}は / {(?) (?)}[の方へ,のところまで] / 〜である
 
   capiēbat (indicative 3sg)
     prep:
       in <Acc>
 
-  →  {彼,彼女,それ}が / {(?) (?)}[へ,の中へ,の上へ,に向かって,に対して] / 捕えていた
+  →  {{彼,彼女,それ}が {(?) (?)}[の方へ,のところまで] 〜である}後で / {彼,彼女,それ}が / {(?) (?)}[へ,の中へ,の上へ,に向かって,に対して] / 捕えていた
 
 
 Post breve tempus ā piscātōre quōdam reperta est , et ad domum rēgis Polydectis adducta est .
@@ -849,7 +843,7 @@ Perseus ubi haec audīvit , ex īnsulā discessit , et postquam ad continentem v
    7  discessit    (?)
    8  ,            
    9  et           conj 〜と〜,そして〜,〜も {}
-  10  postquam     conj 〜したのち {}
+  10  postquam     conj 〜したのち {'clause_suffix':'後で'}
   11  ad           prep<Acc> 〜の方へ,〜のところまで
   12  continentem  (?)
   13  vēnit        (veniō) v.来る 3sg 直説法.能動.完了
@@ -1033,7 +1027,7 @@ Tum postquam tālāria pedibus induit , in āera ascendit .
 
   --- 
    0  Tum       adv その時,その頃,当時 {}
-   1  postquam  conj 〜したのち {}
+   1  postquam  conj 〜したのち {'clause_suffix':'後で'}
    2  tālāria   (?)
    3  pedibus   (pēs) 足 [Dat.pl.m|Abl.pl.m] // []
    4  induit    (?)
@@ -1390,6 +1384,7 @@ Cēterae Gorgonēs statim ē somnō excitātae sunt , et ubi rem vīdērunt , ī
   15  .              
   --- 
 
+// ADVERBIAL vīdērunt (ubi) -> VERB commōtae sunt
 
 3 VERBS FOUND: sunt, vīdērunt, commōtae sunt
 
@@ -1401,19 +1396,12 @@ Cēterae Gorgonēs statim ē somnō excitātae sunt , et ubi rem vīdērunt , ī
 
   →  {彼ら,彼女ら,それら}は / {睡眠 (?)}(の中)から外へ / たちまち / 〜である
 
-  vīdērunt (indicative 3pl)
-    (et)
-    (ubi)
-    Acc:
-      rem
-
-  →  そして / {彼ら,彼女ら,それら}が / {物,事}を / どこ / 見た
-
   commōtae sunt (indicative 3pl)
+    (et)
     Abl:
       īrā
 
-  →  {彼ら,彼女ら,それら}が / 怒りで / 動かされた
+  →  そして / {{彼ら,彼女ら,それら}が {物,事}を 見た}とき / {彼ら,彼女ら,それら}が / 怒りで / 動かされた
 
 
 Arma rapuērunt , et Perseum occīdere volēbant .
@@ -1491,9 +1479,12 @@ et ubi hōc fēcit , statim ē cōnspectū eārum ēvāsit .
 
 1 VERB FOUND: fēcit
 
+  NOT SOLVED:
+    (ubi)
+    →  〜するとき
+
   fēcit (indicative 3sg)
     (et)
-    (ubi)
     (statim)
     Abl:
       hōc
@@ -1501,7 +1492,7 @@ et ubi hōc fēcit , statim ē cōnspectū eārum ēvāsit .
       ē <Abl>
         eārum
 
-  →  そして / {彼,彼女,それ}が / {この,これ}で / {(?) その,それ (?)}(の中)から外へ / どこ / たちまち / 作った
+  →  そして / {彼,彼女,それ}が / {この,これ}で / {(?) その,それ (?)}(の中)から外へ / たちまち / 作った
 
 
 Post haec Perseus in fīnīs Aethiopum vēnit .
@@ -1890,22 +1881,15 @@ Ubi ea diēs vēnit , Andromeda ad lītus dēducta est , et in cōnspectū omniu
   --- 
 
 // ADJ#14 (omnium) -> no target noun detected
+// ADVERBIAL vēnit (Ubi) -> VERB est
 
 3 VERBS FOUND: vēnit, est, adligāta est
-
-  vēnit (indicative 3sg)
-    (Ubi)
-    Nom:
-      ea
-      diēs
-
-  →  どこ / {その,それ}={日,昼}が / 来た
 
   est (indicative 3sg)
     prep:
       ad <Acc>
 
-  →  {彼,彼女,それ}は / {(?) (?)}[の方へ,のところまで] / 〜である
+  →  {{その,それ}={日,昼}が 来た}とき / {彼,彼女,それ}は / {(?) (?)}[の方へ,のところまで] / 〜である
 
   adligāta est (indicative 3sg)
     (et)
@@ -1957,7 +1941,7 @@ At subitō , dum mōnstrum exspectant , Perseus accurrit ;
    0  At          conj これに反して {}
    1  subitō      adv 突然,だしぬけに {}
    2  ,           
-   3  dum         conj 〜するあいだ,〜するかぎり,〜するまで {} | conj 〜しさえすれば {}
+   3  dum         conj 〜するあいだ,〜するかぎり,〜するまで {'clause_suffix':'間に'} | conj 〜しさえすれば {}
    4  mōnstrum    (mōnstrum) 怪物 [Nom.sg.n|Voc.sg.n|Acc.sg.n] // []
    5  exspectant  (?)
    6  ,           
@@ -1999,14 +1983,17 @@ et ubi lacrimās vīdit , causam dolōris quaerit .
 
 1 VERB FOUND: vīdit
 
+  NOT SOLVED:
+    (ubi)
+    →  〜するとき
+
   vīdit (indicative 3sg)
     (et)
-    (ubi)
     Acc:
       lacrimās
       causam
 
-  →  そして / {彼,彼女,それ}が / 涙=原因を / どこ / 見た
+  →  そして / {彼,彼女,それ}が / 涙=原因を / 見た
 
 
 Illī rem tōtam expōnunt et puellam dēmōnstrant .
@@ -2043,7 +2030,7 @@ Illī rem tōtam expōnunt et puellam dēmōnstrant .
 Dum haec geruntur , fremitus terribilis audītur ;
 
   --- 
-   0  Dum         conj 〜するあいだ,〜するかぎり,〜するまで {} | conj 〜しさえすれば {}
+   0  Dum         conj 〜するあいだ,〜するかぎり,〜するまで {'clause_suffix':'間に'} | conj 〜しさえすれば {}
    1  haec        pronoun この,これ {'person':3, 'desc':'指示代名詞', '_':[('Nom', 'sg', 'f'), ('Nom', 'pl', 'n'), ('Acc', 'pl', 'n')]}
    2  geruntur    (?)
    3  ,           
@@ -2172,7 +2159,7 @@ At Perseus ubi haec vīdit , gladium suum ēdūxit , et postquam tālāria indui
    8  ēdūxit        (?)
    9  ,             
   10  et            conj 〜と〜,そして〜,〜も {}
-  11  postquam      conj 〜したのち {}
+  11  postquam      conj 〜したのち {'clause_suffix':'後で'}
   12  tālāria       (?)
   13  induit        (?)
   14  ,             
@@ -2301,14 +2288,14 @@ Mōnstrum ubi sēnsit vulnus , fremitum horribilem ēdidit , et sine morā tōtu
       in <Acc>
         aquam
 
-  →  どこ / 怪物が / {遅れ,間}なしに / {水 (?)}[へ,の中へ,の上へ,に向かって,に対して] / 全体の=身体を / 思った
+  →  〜するとき / 怪物が / {遅れ,間}なしに / {水 (?)}[へ,の中へ,の上へ,に向かって,に対して] / 全体の=身体を / 思った
 
 
 Perseus dum circum lītus volat , reditum ēius exspectābat .
 
   --- 
    0  Perseus      (?)
-   1  dum          conj 〜するあいだ,〜するかぎり,〜するまで {} | conj 〜しさえすれば {}
+   1  dum          conj 〜するあいだ,〜するかぎり,〜するまで {'clause_suffix':'間に'} | conj 〜しさえすれば {}
    2  circum       prep<Acc> 〜のまわりに
    3  lītus        (?)
    4  volat        (?)
@@ -2452,7 +2439,7 @@ Perseus postquam ad lītus dēscendit , prīmum tālāria exuit ;
 
   --- 
    0  Perseus    (?)
-   1  postquam   conj 〜したのち {}
+   1  postquam   conj 〜したのち {'clause_suffix':'後で'}
    2  ad         prep<Acc> 〜の方へ,〜のところまで
    3  lītus      (?)
    4  dēscendit  (?)
@@ -2536,16 +2523,18 @@ Ea autem omnem spem salūtis dēposuerat , et ubi Perseus adiit , terrōre paene
     (et)
     →  〜と〜,そして〜,〜も
 
+    (ubi)
+    →  〜するとき
+
   erat (indicative 3sg)
     (autem)
-    (ubi)
     Nom:
       Ea
     Acc:
       spem
         omnem
 
-  →  ところで / {彼,彼女,それ}は / すべての希望を / どこ / それであった
+  →  ところで / {彼,彼女,それ}は / すべての希望を / それであった
 
 
 Ille vīncula statim solvit , et puellam patrī reddidit .
@@ -2822,7 +2811,7 @@ NO VERB FOUND.
 Postquam Perseus ad īnsulam nāvem appulit , sē ad locum contulit ubi māter ōlim habitāverat , sed domum invēnit vacuam et omnīnō dēsertam .
 
   --- 
-   0  Postquam     conj 〜したのち {}
+   0  Postquam     conj 〜したのち {'clause_suffix':'後で'}
    1  Perseus      (?)
    2  ad           prep<Acc> 〜の方へ,〜のところまで
    3  īnsulam      (īnsula) 島 [Acc.sg.f] // []
@@ -3017,9 +3006,12 @@ ad rēgiam Polydectis sine morā contendit , et ubi eō vēnit , statim in ātri
 
   →  {彼,彼女,それ}が / {(?) (?)}[の方へ,のところまで] / {遅れ,間}なしに / 張る,力む
 
+  NOT SOLVED:
+    (ubi)
+    →  〜するとき
+
   vēnit (indicative 3sg)
     (et)
-    (ubi)
     (statim)
     Abl:
       eō
@@ -3027,7 +3019,7 @@ ad rēgiam Polydectis sine morā contendit , et ubi eō vēnit , statim in ātri
       in <Acc>
         ātrium
 
-  →  そして / {彼,彼女,それ}が / {その,それ}で / {広間,前室 (?)}[へ,の中へ,の上へ,に向かって,に対して] / どこ / たちまち / 来た
+  →  そして / {彼,彼女,それ}が / {その,それ}で / {広間,前室 (?)}[へ,の中へ,の上へ,に向かって,に対して] / たちまち / 来た
 
 
 Polydectēs māgnō timōre adfectus est et fugere volēbat .
@@ -3063,7 +3055,7 @@ Polydectēs māgnō timōre adfectus est et fugere volēbat .
 Dum tamen ille fugit , Perseus caput Medūsae mōnstrāvit ;
 
   --- 
-   0  Dum         conj 〜するあいだ,〜するかぎり,〜するまで {} | conj 〜しさえすれば {}
+   0  Dum         conj 〜するあいだ,〜するかぎり,〜するまで {'clause_suffix':'間に'} | conj 〜しさえすれば {}
    1  tamen       conj しかしながら,それでも {}
    2  ille        pronoun あの,あれ {'person':3, 'desc':'指示代名詞', '_':[('Nom', 'sg', 'm')]}
    3  fugit       (fugiō) v.逃げる 3sg 直説法.能動.現在
@@ -3075,6 +3067,7 @@ Dum tamen ille fugit , Perseus caput Medūsae mōnstrāvit ;
    9  ;           
   --- 
 
+// ADVERBIAL fugit (Dum) -> VERB mōnstrāvit
 
 2 VERBS FOUND: fugit, mōnstrāvit
 
@@ -3082,16 +3075,9 @@ Dum tamen ille fugit , Perseus caput Medūsae mōnstrāvit ;
     (tamen)
     →  しかしながら,それでも
 
-  fugit (indicative 3sg)
-    (Dum)
-    Nom:
-      ille
-
-  →  〜するあいだ,〜するかぎり,〜するまで / {あの,あれ}が / 逃げる
-
   mōnstrāvit (indicative 3sg)
 
-  →  {彼,彼女,それ}が / 示した,見せた
+  →  {{あの,あれ}が 逃げる}間に / {彼,彼女,それ}が / 示した,見せた
 
 
 ille autem simul atque hōc vīdit , in saxum versus est .
@@ -3189,13 +3175,16 @@ Ille autem ubi Perseum vīdit , māgnō terrōre adfectus est ;
 
 2 VERBS FOUND: vīdit, est
 
+  NOT SOLVED:
+    (ubi)
+    →  〜するとき
+
   vīdit (indicative 3sg)
     (autem)
-    (ubi)
     Nom:
       Ille
 
-  →  ところで / {あの,あれ}が / どこ / 見た
+  →  ところで / {あの,あれ}が / 見た
 
   est (indicative 3sg)
     Dat:
@@ -3424,7 +3413,7 @@ At dum discum conicit , avum suum cāsū occīdit ;
 
   --- 
    0  At       conj これに反して {}
-   1  dum      conj 〜するあいだ,〜するかぎり,〜するまで {} | conj 〜しさえすれば {}
+   1  dum      conj 〜するあいだ,〜するかぎり,〜するまで {'clause_suffix':'間に'} | conj 〜しさえすれば {}
    2  discum   (?)
    3  conicit  (?)
    4  ,        

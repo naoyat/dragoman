@@ -138,6 +138,43 @@ def attach_praenomina(words):
             following.add_modifier(word)
 
 
+def _clause_initial(words, ix):
+    """節の頭の語か (文の頭、句読点・et の後ろ。前に出た主語の後ろも: Perseus ubi haec audīvit, …)"""
+    k = ix
+    while k > 0 and words[k - 1].items and words[k - 1].items[0].pos == 'noun' and \
+            any(c == 'Nom' for i in words[k - 1].items for c, _, _ in i._ or []):
+        k -= 1
+    if k > 0 and words[k - 1].surface.lower() == 'at':
+        k -= 1
+    return k == 0 or words[k - 1].items is None or words[k - 1].surface.lower() in ('et', 'sed', 'nam', 'autem')
+
+
+def subordinating_cum_ubi(words):
+    """節の頭の cum・ubi を従属接続詞「〜するとき」に (Cum vēnit, eum vīdī.)。cum は奪格の語より先に定動詞が来るときだけ
+    (cum amīcīs vēnit「友と」は前置詞)、ubi は疑問文でなく名詞の後ろでもないとき (locus ubi …「そこで」は関係の副詞)"""
+    question = any(w.surface in ('?',) for w in words)
+    for ix, word in enumerate(words):
+        lower = word.surface.lower()
+        if lower not in ('cum', 'ubi') or not word.items or not _clause_initial(words, ix):
+            continue
+        if lower == 'ubi' and question:
+            continue
+        if lower == 'cum':
+            ablative = False
+            for w in words[ix + 1:]:
+                if w.items is None:
+                    break
+                if any(i.pos == 'verb' and i.attrib('mood') in ('indicative', 'subjunctive') for i in w.items):
+                    break
+                if any(c == 'Abl' for i in w.items for c, _, _ in i._ or []):
+                    ablative = True
+                    break
+            if ablative:
+                continue
+        item = word.items[0]
+        word.items = [type(item)(dict(item.item, pos='conj', ja='〜するとき', base=lower, _=None))]
+
+
 def analyze_sentence(surfaces, tags=None):
     """文 (語の列) を解析する。tags は語ごとの品詞タグ (省略するとこの文だけでタガーを呼ぶ)"""
     words = lookup_all(surfaces)
@@ -147,6 +184,7 @@ def analyze_sentence(surfaces, tags=None):
             tags, = rftagger.tag_sentences([list(surfaces)])
         apply_tags(words, _word_tags(words, tags))
     attach_praenomina(words)
+    subordinating_cum_ubi(words)
     with language.using(profile.LATIN):
         return analyze_words(surfaces, words, word_details)
 

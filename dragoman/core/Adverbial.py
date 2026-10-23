@@ -54,5 +54,7 @@ def mark_subordinators(words, table):
         if base in table:
             suffix, tense = table[base][:2]
             items[0].item['clause_suffix'] = suffix
-            items[0].item['clause_tense'] = tense
-            items[0].item['clause_negate'] = len(table[base]) > 2 and table[base][2]
+            if tense:
+                items[0].item['clause_tense'] = tense
+            if len(table[base]) > 2 and table[base][2]:
+                items[0].item['clause_negate'] = True

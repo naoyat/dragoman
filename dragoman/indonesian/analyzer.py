@@ -45,8 +45,17 @@ def predicative_adjective(adj, noun):
     return bool(getattr(adj, 'after_demonstrative', False))
 
 
+# 副詞節の従属接続詞 (マレー語も) → (節の後ろに付ける形, 節の動詞の時制) (core/Adverbial.py)
+SUBORDINATORS = {'ketika': ('とき', None), 'apabila': ('とき', None), 'waktu': ('とき', None), 'saat': ('とき', None),
+                 'karena': ('ので', None), 'kerana': ('ので', None), 'sebab': ('ので', None), 'jika': ('なら', None),
+                 'kalau': ('なら', None), 'jikalau': ('なら', None), 'meskipun': ('けれども', None),
+                 'walaupun': ('けれども', None), 'biarpun': ('けれども', None), 'sebelum': ('前に', 'present'),
+                 'sesudah': ('後で', 'perfect'), 'setelah': ('後で', 'perfect'), 'sementara': ('間に', None),
+                 'selama': ('間に', None), 'agar': ('ように', 'present'), 'supaya': ('ように', 'present')}
+
 INDONESIAN = language.Language(
     name='id',
+    subordinators=SUBORDINATORS,
     and_words=('dan', 'serta'),
     or_words=('atau',),
     copulas=frozenset({'adalah'}),

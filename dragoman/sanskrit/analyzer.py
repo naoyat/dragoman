@@ -26,8 +26,12 @@ def _root_items(root):
             for l in dictionary.lemmas(script.to_slp1(root)) if l['pos'] in ('root', 'verb')]
 
 
+# 副詞節の従属接続詞 → (節の後ろに付ける形, 節の動詞の時制) (core/Adverbial.py)
+SUBORDINATORS = {'yadā': ('とき', None), 'yadi': ('なら', None), 'yatas': ('ので', None)}
+
 SANSKRIT = language.Language(
     name='sa',
+    subordinators=SUBORDINATORS,
     and_words=('ca',),
     or_words=('vā',),
     copulas=frozenset({'as', 'bhū'}),

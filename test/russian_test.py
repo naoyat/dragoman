@@ -126,6 +126,15 @@ class AnalyzerTestCase(unittest.TestCase):
         a = analyze('Я хочу есть.')
         self.assertNotIn('ある', a.clauses[0].predicate.translate()[0])
 
+    def test_adverbial_clauses(self):
+        def tr(text):
+            return ' // '.join(c.predicate.translate()[0] for c in analyze(text).clauses)
+        self.assertTrue(tr('Когда он пришёл, я увидел его.').startswith('{彼が 来た'))
+        self.assertIn('}とき / 私が / 彼を / 見た', tr('Когда он пришёл, я увидел его.'))
+        self.assertIn('}ので / 私が', tr('Я остался дома, потому что шёл дождь.'))   # потому что を1語に
+        self.assertIn('}後で', tr('После того как он ушёл, мы ели.'))
+        self.assertEqual(tr('Когда он пришёл?').split(' / ')[0], 'いつ')   # 疑問文の когда
+
     def test_stressed_form(self):
         self.assertEqual(morphology.stressed('книги'), 'кни́ги')
 

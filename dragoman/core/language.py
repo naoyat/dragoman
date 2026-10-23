@@ -42,6 +42,8 @@ class Language:
     possessor_cases: tuple = ('Dat',)  # 繋辞の文で所有者を表す格 (mihi est liber「私には本がある」。サンスクリットは属格)
     question_moods: tuple = ('subjunctive',)  # 間接疑問の節の動詞の法 (ギリシア語は直説法・希求法も)
     infinitive_objects_follow: bool = False  # 不定詞の目的語が不定詞の後ろに来る (フランス語の pour établir le baromètre)
+    subordinators: dict = field(default_factory=dict)  # 副詞節の従属接続詞の見出し → (節の後ろに付ける形, 時制[, 否定])
+    # (core/Adverbial.mark_subordinators。共通の解析器の入口で印を付ける)
     relatives_before_head: bool = False  # 関係節が名詞の前に来る (トルコ語の分詞の節: Kitap okuyan çocuk「本を読む子供」)。
     # 先行詞は節の後ろの最初の名詞 (前の名詞は探さない)
 
