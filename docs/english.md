@@ -61,6 +61,10 @@ spaCy の品詞（Penn Treebank）・原形・依存関係で語の項目を作�
 
 docs/katakana.md の「英語」を見よ。米音（既定）は CMUdict、英音は `--kana-accent=gb`（espeak-ng）。
 
+## 音読（`-s`）
+
+macOS の say の Samantha（米音）。無ければ espeak-ng の en-us。
+
 ## まだできないこと
 
 * 評価（UD English-EWT）はまだ

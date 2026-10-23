@@ -73,7 +73,7 @@ SETTINGS = [('kana', 'カナ'), ('ruby', 'ルビ'), ('romanize', '転写'), ('ex
 
 def _speech_tables():
     from dragoman.core import speech
-    return set(speech.SAY_VOICES) | set(speech.ESPEAK_VOICES) | set(speech.LANGUAGE_BACKENDS) | set(speech.MMS_MODELS)
+    return set(speech.LANGUAGE_BACKENDS) | set(speech.MBROLA_LANGUAGES)   # 声を選ぶ表のある言語 (無ければ読まない)
 
 
 def settings(lang):
