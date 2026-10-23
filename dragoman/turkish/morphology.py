@@ -31,7 +31,9 @@ CONVERBS = {'AfterDoingSo': ('te', '', '-ıp「〜して」'), 'ByDoingSo': ('te
             'WithoutHavingDoneSo': ('neg', 'ずに', '-madan「〜せずに」'), 'WithoutBeingAbleToHaveDoneSo': ('neg', 'ずに', '-amadan'),
             'SinceDoingSo': ('te', '以来', '-alı「〜して以来」'), 'AsIf': ('plain', 'かのように', '-casına'),
             'AsLongAs': ('plain', '限り', '-dıkça「〜する限り」'), 'FeelLike': ('masu', 'たそうに', '-ası'),
-            'Adamantly': ('plain', 'ばかり', '-asıya'), 'EverSince': ('te', '以来', '-alı')}
+            'Adamantly': ('plain', 'ばかり', '-asıya'), 'EverSince': ('te', '以来', '-alı'),
+            # 解析器が作る副動詞 (形態素の並びから): 分詞 + 所有 + 位格 (geldiğinde)、定動詞の条件 (yağarsa)
+            'WhenPart': ('plain', 'とき', '-dığında「〜したとき」'), 'Cond': ('plain', 'なら', '-sa「〜なら」')}
 NOMINALIZERS = {'Inf1': 'こと', 'Inf2': 'こと', 'Inf3': 'こと', 'PastPart': 'こと', 'FutPart': 'こと',
                 'NarrPart': 'こと', 'AorPart': 'こと', 'PresPart': '者'}
 PARTICIPLES = {'PastPart': 'past', 'FutPart': 'future', 'PresPart': 'present', 'NarrPart': 'past', 'AorPart': 'present'}

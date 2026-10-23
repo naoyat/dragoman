@@ -61,6 +61,7 @@ VERB_ENDINGS = [
     ('хөөр', 'converb', 'purpose'),
     ('саар', 'converb', 'while'), ('сээр', 'converb', 'while'), ('соор', 'converb', 'while'), ('сөөр', 'converb', 'while'),
     ('магц', 'converb', 'as_soon'), ('мэгц', 'converb', 'as_soon'),
+    ('хад', 'converb', 'when'), ('хэд', 'converb', 'when'), ('ход', 'converb', 'when'), ('хөд', 'converb', 'when'),
     ('ж', 'converb', 'and'), ('ч', 'converb', 'and'), ('н', 'converb', 'manner'),
 ]
 NEGATION_SUFFIX = 'гүй'
@@ -68,7 +69,7 @@ NEGATION_SUFFIX = 'гүй'
 CONVERBS = {'and': ('te', '', '-ж / -ч「〜して」'), 'after': ('te', '', '-аад「〜してから」'), 'if': ('plain', 'なら', '-вал「〜なら」'),
             'until': ('plain', 'まで', '-тал「〜するまで」'), 'purpose': ('masu', 'に', '-хаар「〜しに」'),
             'while': ('te', 'いて', '-саар「〜しながら」'), 'as_soon': ('plain', 'とすぐ', '-магц「〜するとすぐ」'),
-            'manner': ('te', '', '-н「〜して」')}
+            'manner': ('te', '', '-н「〜して」'), 'when': ('plain', 'とき', '-хад「〜するとき」')}
 
 # 代名詞: 形 → (訳, 人称, 数, 格)
 PRONOUNS = {

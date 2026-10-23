@@ -95,10 +95,13 @@ class AdverbialTestCase(unittest.TestCase):
         self.check('turkish', 'Eve gelince yemek yedim.', 'と')
         self.check('turkish', 'Okula giderken onu gördüm.', '間に')
         self.assertTrue(translate('turkish', 'Eve gelip yemek yedim.').startswith('{家に 来て} / '))   # て形
+        self.check('turkish', 'Eve geldiğimde yemek yedim.', 'とき')   # 分詞 + 所有 + 位格
+        self.check('turkish', 'Yağmur yağarsa evde kalırım.', 'なら')   # 定動詞の条件
 
     def test_mongolian(self):
         self.check('mongolian', 'Бороо орвол би гэртээ байна.', 'なら')
         self.assertIn('来て} / ', translate('mongolian', 'Би гэртээ ирээд хоол идсэн.'))
+        self.check('mongolian', 'Тэр ирэхэд би түүнийг харсан.', 'とき')   # -хад
 
     def test_russian(self):
         self.check('russian', 'Когда он пришёл, я увидел его.', 'とき')

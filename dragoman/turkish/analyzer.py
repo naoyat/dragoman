@@ -44,7 +44,8 @@ def _root_items(lemma):
 
 
 # 副詞節の副動詞の語尾 (切り出した語の見出し) → (節の後ろに付ける形, 節の動詞の時制[, 否定]) (core/Adverbial.py)
-SUBORDINATORS = {'-ınca': ('と', None), '-ken': ('間に', None), '-ıp': ('て', 'present'), '-madan': ('まま', None, True)}
+SUBORDINATORS = {'-ınca': ('と', None), '-ken': ('間に', None), '-ıp': ('て', 'present'), '-madan': ('まま', None, True),
+                 '-dığında': ('とき', None), '-sa': ('なら', None)}
 
 
 TURKISH = language.Language(
@@ -224,6 +225,14 @@ def record(token, analysis, k, prev_kind=None):
         return rec
     if verbal and converb:
         rec.update(kind='converb', converb=converb, **features)
+        return rec
+    if verbal and participle in ('PastPart', 'FutPart') and last[:1] == ['Noun'] and _case(last) == 'Loc':
+        # 分詞 + 所有 + 位格 (geldiğinde「彼が来たとき」): 副動詞「〜したとき」
+        rec.update(kind='converb', converb='WhenPart', **dict(
+            features, tense='perfect' if participle == 'PastPart' else 'future'))
+        return rec
+    if verbal and last[:1] == ['Verb'] and 'Cond' in ms and _finite(ms) and lemma not in ('i', 'imek'):
+        rec.update(kind='converb', converb='Cond', **features)   # 定動詞の条件 (yağarsa「降るなら」)
         return rec
     if verbal and participle and last[:1] == ['Adj']:
         rec.update(kind='participle', participle=participle, subject=_possessive(last), **features)
