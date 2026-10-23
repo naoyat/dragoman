@@ -132,7 +132,7 @@ def _consonant(ph):
 
 
 def kana(phonemes, long='phonemic', wa='ワ', final_sokuon=False, si='スィ', liquid_sokuon=False, labial_glide=False,
-         oe='エ', accent=None, small=None, kobun=None):
+         oe='エ', accent=None, small=None, kobun=None, hebrew=None):
     """IPA の音素の列 (または IPA の文字列) → カタカナ。long='phonemic' なら ː だけ「ー」、'phonetic' なら ˑ も「ー」。
     wa は [wa] の書き方 (「ワ」か「ウァ」)。si は [si]・[zi] の書き方 (「スィ」「ズィ」か、慣用の「シ」「ジ」)。final_sokuon なら、短い母音の後ろの語末の無声閉鎖音の前に「ッ」
     (Juliette → ジュリエット。日本語の耳に近い書き方。ラテン語の amat は「アマト」のまま)。liquid_sokuon なら重子音の l・r も

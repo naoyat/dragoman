@@ -275,12 +275,14 @@ class SpellingKanaTestCase(unittest.TestCase):
         for word, expected in cases.items():
             self.assertEqual(katakana(word), expected, word)
 
-    def test_hebrew(self):   # 聖書時代の再建音
+    def test_hebrew(self):   # 聖書の時代の再建音: 既定は摩擦音化の前の古い時代、tiberian で母音記号どおり
         from dragoman.hebrew.katakana import word_katakana
-        cases = {'בְּרֵאשִׁית': 'ベレーシース', 'אֱלֹהִים': 'エローヒーム', 'הַשָּׁמַיִם': 'ハッシャーマイム', 'דָּבָר': 'ダーヴァール',
-                 'מֶלֶךְ': 'メレフ', 'שָׁלוֹם': 'シャーローム', 'רוּחַ': 'ルーアフ'}
-        for word, expected in cases.items():
-            self.assertEqual(word_katakana(word), expected, word)
+        cases = {'בְּרֵאשִׁית': ('ベレーシート', 'ベレーシース'), 'אֱלֹהִים': ('エローヒーム', 'エローヒーム'),
+                 'הַשָּׁמַיִם': ('ハッシャーマイム', 'ハッシャーマイム'), 'דָּבָר': ('ダーバール', 'ダーヴァール'),
+                 'מֶלֶךְ': ('メレク', 'メレフ'), 'שָׁלוֹם': ('シャーローム', 'シャーローム'), 'רוּחַ': ('ルーアフ', 'ルーアフ')}
+        for word, (early, tiberian) in cases.items():
+            self.assertEqual(word_katakana(word), early, word)
+            self.assertEqual(word_katakana(word, hebrew='tiberian'), tiberian, word)
 
     def test_tibetan(self):   # ラサ発音
         from dragoman.tibetan.katakana import word_katakana

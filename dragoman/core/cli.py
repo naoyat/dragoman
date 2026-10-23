@@ -136,6 +136,8 @@ def parse(command, argv):
             options.kana_options['small'] = arg
         elif option == '--kana-kobun':
             options.kana_options['kobun'] = arg
+        elif option == '--kana-hebrew':
+            options.kana_options['hebrew'] = arg
         elif option == '--no-explain':
             options.explain = False
         elif option in ('-l', '--sentence-per-line'):

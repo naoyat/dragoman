@@ -55,7 +55,8 @@ def available():
 
 
 def katakana(analysis, kana_options):
-    """カタカナ読み (--kana): 聖書時代の再建音で語ごとに (hebrew/katakana.py。神の名は朗読の読み アドーナーイ)"""
+    """カタカナ読み (--kana): 聖書の時代の再建音で語ごとに (hebrew/katakana.py。既定は古い時代、--kana-hebrew=tiberian で
+    ティベリア式。神の名は朗読の読み アドーナーイ)"""
     from .katakana import sentence
     return sentence(original_text(analysis), **kana_options)
 

@@ -2,14 +2,16 @@
 # -*- coding: utf-8 -*-
 #
 # 聖書ヘブライ語 (と聖書アラム語) の語をカタカナで書く: 母音記号付きの綴りの転写 (hebrew/script.translit。begadkefat の
-# 摩擦音も書き分けた形) → 音素 → 共通の規則 (core/kana.py)。読みは聖書時代の再建音 (現代イスラエルの読みでなく)
+# 摩擦音の書き分けは読みの時代で) → 音素 → 共通の規則 (core/kana.py)。読みは聖書の時代の再建音 (現代イスラエルの読みでなく)。
+# hebrew='early' (既定。--kana-hebrew=early): begadkefat の摩擦音化の前の古い時代の読み (6字とも閉鎖音: בְּרֵאשִׁית →
+# ベレーシート、דָּבָר → ダーバール、מֶלֶךְ → メレク)。hebrew='tiberian': 母音記号の体系どおりのティベリア式の読み
+# (母音の後ろでダゲシュの無い6字は摩擦音: ベレーシース・ダーヴァール・メレフ)
 #
-#   בְּרֵאשִׁית (bərēʾšîṯ) → ベレーシーサ、דָּבָר (dāḇār) → ダーヴァール、מֶלֶךְ (meleḵ) → メレフ、שָׁלוֹם → シャーローム、
-#   אֱלֹהִים → エローヒーム、רוּחַ → ルーアハ
+#   שָׁלוֹם → シャーローム、אֱלֹהִים → エローヒーム、הַשָּׁמַיִם → ハッシャーマイム、רוּחַ → ルーアフ
 #
 #   - 長母音 (ā ē ō î û ê ô â) は「ー」、有声のシェヴァ ə と短いハテフ (ă ĕ ŏ) は短い母音 (ə はエ段)
-#   - 弱いダゲシュの無い begadkefat は摩擦音: ḇ [v] はヴ行、ḡ [ɣ] はガ行、ḏ [ð] はザ行、ḵ [x] はハ行、f はファ行、
-#     ṯ [θ] はサ行。強いダゲシュの重子音 (haššāmayim) は「ッ」
+#   - ティベリア式の摩擦音: ḇ [v] はヴ行、ḡ [ɣ] はガ行、ḏ [ð] はザ行、ḵ [x] はハ行、f はファ行、ṯ [θ] はサ行。
+#     強いダゲシュの重子音 (haššāmayim) は「ッ」(どちらの読みでも)
 #   - ʾ (א) と ʿ (ע) は書かない、ḥ (ח) はハ行、ṭ (ט) は t、ṣ (צ) は s、q (ק) は k、š はシャ行、ś・s はサ行、w はワ行
 #   - 神の名 יהוה は朗読の読み (qere) で (既定 アドーナーイ。音読の --divine-name と同じ)
 #
@@ -39,10 +41,15 @@ def katakana(roman, long='phonemic', **options):
     return kana(phonemes(roman), long=long, **options)
 
 
-def word_katakana(word, divine_name='adonai', **options):
+STYLES = {'early': 'none', 'tiberian': 'all'}   # 読みの時代 → 転写の摩擦音の書き分け (script.SPIRANTS)
+
+
+def word_katakana(word, divine_name='adonai', hebrew='early', **options):
     """母音記号付きのヘブライ文字の語 → カタカナ"""
     from . import script
-    return katakana(script.translit(script.qere(word, divine_name), all_spirants=True), **options)
+    if hebrew not in STYLES:
+        raise ValueError('--kana-hebrew は %s のどれか' % '|'.join(STYLES))
+    return katakana(script.translit(script.qere(word, divine_name), spirants=STYLES[hebrew]), **options)
 
 
 def sentence(text, divine_name='adonai', **options):
