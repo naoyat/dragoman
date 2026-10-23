@@ -64,8 +64,14 @@ def predicative_adjective(adj, noun):
 
 
 AND = 'وَ'
+# 副詞節の従属接続詞 (見出しの転写) → (節の後ろに付ける形, 節の動詞の時制) (core/Adverbial.py)
+SUBORDINATORS = {'ʿindamā': ('とき', None), 'baynamā': ('間に', None), 'lammā': ('とき', None), 'iḏā': ('なら', None),
+                 'in': ('なら', None), 'law': ('なら', None)}
+
+
 ARABIC = language.Language(
     name='ar',
+    subordinators=SUBORDINATORS,
     and_words=(AND,),
     or_words=('أَوْ', 'أَو'),
     copulas=BareSet({'كان'}),

@@ -860,8 +860,11 @@ Perseus ubi haec audīvit , ex īnsulā discessit , et postquam ad continentem v
     (ubi)
     Nom:
       haec
+    prep:
+      ex <Abl>
+        īnsulā
 
-  →  どこ / {この,これ}が / 聞いた
+  →  どこ / {この,これ}が / {島 (?)}(の中)から外へ / 聞いた
 
   NOT SOLVED:
     (postquam)
@@ -870,12 +873,9 @@ Perseus ubi haec audīvit , ex īnsulā discessit , et postquam ad continentem v
   vēnit (indicative 3sg)
     (et)
     prep:
-      ex <Abl>
-        īnsulā
-    prep:
       ad <Acc>
 
-  →  そして / {彼,彼女,それ}が / {島 (?)}(の中)から外へ / (?)[の方へ,のところまで] / 来た
+  →  そして / {彼,彼女,それ}が / (?)[の方へ,のところまで] / 来た
 
 
 Diū frūstrā quaerēbat ;
@@ -2178,24 +2178,22 @@ At Perseus ubi haec vīdit , gladium suum ēdūxit , et postquam tālāria indui
     (ubi)
     Nom:
       haec
+    Acc:
+      gladium
+        suum
 
-  →  これに反して / {この,これ}が / どこ / 見た
+  →  これに反して / {この,これ}が / 自分の剣を / どこ / 見た
 
   NOT SOLVED:
-    (et)
-    →  〜と〜,そして〜,〜も
-
     (postquam)
     →  〜したのち
 
   sublātus est (indicative 3sg)
-    Acc:
-      gladium
-        suum
+    (et)
     prep:
       in <Acc>
 
-  →  {彼,彼女,それ}が / (?)[へ,の中へ,の上へ,に向かって,に対して] / 自分の剣を / 取り去られた
+  →  そして / {彼,彼女,それ}が / (?)[へ,の中へ,の上へ,に向かって,に対して] / 取り去られた
 
 
 Tum dēsuper in mōnstrum impetum subitō fēcit , et gladiō suō collum ēius graviter vulnerāvit .

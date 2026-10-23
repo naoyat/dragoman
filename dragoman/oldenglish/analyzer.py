@@ -42,8 +42,18 @@ def _root_items(lemma):
     return [{'pos': 'verb', 'ja': ja, 'gloss_lang': gloss_lang}]
 
 
+# 副詞節の従属接続詞 → (節の後ろに付ける形, 節の動詞の時制) (core/Adverbial.py。þa・þonne は「その時」とも読むので入れない)
+ADVERBIAL_SUBORDINATORS = {'gif': ('なら', None), 'þeah': ('けれども', None), 'forþam': ('ので', None),
+                           'forþæm': ('ので', None), 'forþon': ('ので', None), 'forþi': ('ので', None),
+                           'siþþan': ('後で', None), 'syþþan': ('後で', None), 'oþ': ('まで', 'present'),
+                           'ær': ('前に', 'present'), 'þenden': ('間に', None), 'hwonne': ('とき', None),
+                           'butan': ('でなければ', None), 'buton': ('でなければ', None)}
+CONJUNCTIONAL_PREPOSITIONS = ('siþþan', 'syþþan', 'ær', 'oþ')   # 前置詞にも接続詞にもなる語
+
+
 OLD_ENGLISH = language.Language(
     name='ang',
+    subordinators=ADVERBIAL_SUBORDINATORS,
     and_words=('and',),
     or_words=('oþþe',),
     copulas=frozenset({'wesan', 'bēon'}),
@@ -899,9 +909,23 @@ def spelled(analysis):
     return out
 
 
+def conjunctional_prepositions(words):
+    """前置詞にも接続詞にもなる語 (siþþan・ær・oþ) は、後ろが与格の語でなければ接続詞 (Siþþan he com「彼が来た後で」)"""
+    for k, word in enumerate(words):
+        key = orthography.key(word.surface)
+        if key not in CONJUNCTIONAL_PREPOSITIONS or not word.items or word.items[0].pos != 'preposition':
+            continue
+        nxt = words[k + 1] if k + 1 < len(words) else None
+        if nxt is not None and nxt.items and any(c == 'Dat' for i in nxt.items for c, _, _ in i._ or []):
+            continue
+        item = word.items[0]
+        word.items = [type(item)(dict(item.item, pos='conj', ja=morphology.CONJUNCTIONS[key], base=key, _=None))]
+
+
 def analyze_sentence(surfaces):
     trace = []
     words = lookup_all(surfaces, trace)
+    conjunctional_prepositions(words)
     word_details = [word.detail() for word in words]
     attach_articles(words, trace)
     choose_verbs(words)

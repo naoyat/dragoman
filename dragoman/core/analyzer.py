@@ -1020,9 +1020,9 @@ def _apposition_case(word, target):
 
 
 def _clause_start(node):
-    """解析器が節の頭の印 (clause_start) を付けた語か、その語で始まる前置詞句"""
+    """解析器が節の頭の印 (clause_start) を付けた語か、その語で始まる前置詞句。副詞節の従属接続詞 (clause_suffix) も"""
     if isinstance(node, Word):
-        return bool(node.items) and bool(node.items[0].attrib('clause_start'))
+        return bool(node.items) and bool(node.items[0].attrib('clause_start') or node.items[0].attrib('clause_suffix'))
     if isinstance(node, PrepClause):
         return bool(node.item.attrib('clause_start')) or any(_clause_start(w) for w in node.words[:1])
     return False
@@ -1060,8 +1060,11 @@ def _group_by_verbs(words, verbs_ix, trace):
         for j in range(fr, to+1):
             if _clause_start(words[j]):
                 # 解析器が節の頭と決めた語 (英語の I know | what you want、フランス語の témoigne | que la puissance, qui …)。
-                # カンマより先に (節の頭の後ろのカンマは挿入句の区切り)
+                # カンマより先に (節の頭の後ろのカンマは挿入句の区切り)。前の et も後ろの節に (…, et | postquam …)
                 well_divided_at = j-1
+                if j > fr and isinstance(words[j-1], Word) and \
+                        words[j-1].surface.lower() in language.current().and_words:
+                    well_divided_at = j-2
                 break
         if well_divided_at is None:
             for j in range(fr, to+1):
@@ -1313,7 +1316,7 @@ def _relative_with_antecedent(word, words_by_index):
                for noun in nouns for _, n2, g2 in noun._)
 
 
-CLAUSE_CORRELATIVES = {'tadā', 'tarhi', 'tab', 'to'}   # 前の副詞節を受ける主節の頭の語 (サンスクリット・ヒンディー語)
+CLAUSE_CORRELATIVES = {'tadā', 'tarhi', 'tab', 'to', 'فَ'}   # 前の副詞節を受ける主節の頭の語 (サンスクリット・ヒンディー語、アラビア語の帰結の fa)
 
 
 def detect_adverbial_clauses(clauses, trace):

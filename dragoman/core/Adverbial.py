@@ -51,6 +51,8 @@ def mark_subordinators(words, table):
         if not items or items[0].pos != 'conj':
             continue
         base = (items[0].attrib('base') or word.surface).lower()
+        # 見出しが「転写 原綴り」のもの (アラビア語の ʿindamā عِنْدَما) は転写でも引く
+        base = next((k for k in (base, base.split(' ')[0]) if k in table), base)
         if base in table:
             suffix, tense = table[base][:2]
             items[0].item['clause_suffix'] = suffix

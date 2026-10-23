@@ -429,6 +429,12 @@ def stem_item(a, reading, surface):
         item['definite'] = True
     states = {a2.get('stt') for a2 in reading.analyses}
     item['states'] = sorted(s for s in states if s)
+    whole = _lookup(FUNCTION_WORDS, a['diac']) if a.get('enc0') == 'mA_sub' else None
+    if whole and whole[0] == 'conj':
+        # 前置詞・名詞 + ما の接続詞 (عِنْدَما「〜するとき」): 語の形で引けたら接続詞に (عِنْد + ما でなく)
+        diac = a['diac']
+        return dict(item, surface=diac, diac=diac, pos='conj', ja=whole[1], gloss_lang='ja', lex=diac,
+                    base='%s %s' % (script.translit(diac), script.isolate(diac)), xlit=script.translit(diac))
     preposition = _lookup(PREPOSITIONS, lex)
     if preposition or pos == 'prep':
         return dict(item, pos='preposition', dominates='Gen', ja=preposition or ja,
@@ -519,7 +525,8 @@ def segments(reading):
             if code in ('mA_neg', 'lA_neg'):
                 item['particle'] = base
             out.append((surface, item))
-    out.append((stem, stem_item(a, reading, stem)))
+    item = stem_item(a, reading, stem)
+    out.append((item['surface'], item))   # عِنْدَما は ما も含めた形 (stem_item)
     if suffix:
         code, surface = suffix
         if code.split('_')[0][0].isdigit():

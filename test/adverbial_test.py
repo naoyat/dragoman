@@ -71,6 +71,19 @@ class AdverbialTestCase(unittest.TestCase):
     def test_finnish(self):
         self.check('finnish', 'Kun hän tuli, näin hänet.', 'とき')
 
+    def test_hebrew(self):
+        self.check('hebrew', 'כַּאֲשֶׁר בָּא רָאִיתִי אֹתוֹ.', 'とき')   # כַּ + אֲשֶׁר を1語に
+        self.assertIn('}とき / ', translate('hebrew', 'וַיְהִי כַּאֲשֶׁר שָׁמַע הָאִישׁ וַיֵּלֶךְ.').split(' // ')[0])
+
+    def test_arabic(self):
+        self.check('arabic', 'عندما جاء رأيته.', 'とき')   # عِنْد + ما でなく عِنْدَما
+        self.check('arabic', 'إذا جاء الولد فرحت.', 'なら')   # 帰結の fa は訳さない
+
+    def test_old_english(self):
+        self.check('oldenglish', 'Siþþan he com, ic hine geseah.', '後で')   # 後ろが与格でない siþþan は接続詞
+        self.check('oldenglish', 'Gif he cymþ, ic hine geseo.', 'なら')
+        self.assertIn('以来', translate('oldenglish', 'Siþþan þæm dæge he com.'))
+
     def test_russian(self):
         self.check('russian', 'Когда он пришёл, я увидел его.', 'とき')
         self.check('russian', 'Я остался дома, потому что шёл дождь.', 'ので')

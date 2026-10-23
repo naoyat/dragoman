@@ -30,8 +30,14 @@ def _root_items(lemma):
     return []
 
 
+# 副詞節の従属接続詞 (見出し) → (節の後ろに付ける形, 節の動詞の時制) (core/Adverbial.py。כִּי は「〜ということ」とも
+# 読むので入れない)
+SUBORDINATORS = {'כַּאֲשֶׁר': ('とき', None), 'אִם': ('なら', None)}
+
+
 HEBREW = language.Language(
     name='he',
+    subordinators=SUBORDINATORS,
     and_words=AND_WORDS,
     copulas=frozenset({'הָיָה'}),
     negations=frozenset({'לֹא', 'אַל', 'לֹא־', 'אַל־'}),
@@ -359,9 +365,21 @@ def _has_emphatic(words, i):
     return nxt is not None and bool(nxt.items) and bool(nxt.items[0].attrib('emphatic'))
 
 
+def merge_kaasher(words):
+    """כַּאֲשֶׁר「〜するとき」: 切り分けた前置詞 כַּ と接続詞 אֲשֶׁר (見出しは כַּאֲשֶׁר) を1語に"""
+    out = []
+    for word in words:
+        if out and word.items and word.items[0].pos == 'conj' and word.items[0].attrib('base') == 'כַּאֲשֶׁר' and \
+                out[-1].items and out[-1].items[0].pos == 'preposition':
+            word.surface = out.pop().surface + word.surface
+        out.append(word)
+    return out
+
+
 def lookup_all(surfaces):
     langs = choose_languages(surfaces)
     words = [w for ix, s in enumerate(surfaces) for w in _words(s, ix, langs[ix])]
+    words = merge_kaasher(words)
     mark_vocatives(words)
     choose_construct(words)
     attach_markers(words)
