@@ -1599,7 +1599,7 @@ def _antecedent_after(pronoun, clause):
 
     def agrees(word, demonstrative):
         for item in word.items:
-            is_demonstrative = item.attrib('desc') == '指示代名詞' or \
+            is_demonstrative = item.attrib('desc') == '指示代名詞' or item.attrib('correlative') or \
                 (item.attrib('base') or '') in CORRELATIVES
             if item.pos in ('noun', 'pronoun', 'adj' if demonstrative else 'noun') and item._ and \
                     is_demonstrative == demonstrative and \
@@ -1697,7 +1697,19 @@ def detect_relative_clauses(clauses, trace, sentence_words=()):
                     if not pred.case_slot[case]:
                         del pred.case_slot[case]
                     for o in moving:
-                        out[target].predicate.add_nominal(case, o)
+                        main = out[target].predicate
+                        moved_case = case
+                        nominal_subject = any(isinstance(n, Word) and n.items and n.items[0].pos in ('noun', 'pronoun')
+                                              for n in main.case_slot.get('Nom', []))
+                        if o is antecedent and case == 'Acc' and not nominal_subject and \
+                                main.person() not in (1, 2) and isinstance(o, Word) and o.items and \
+                                o.items[0].pos == 'noun' and not o.items[0].attrib('definite_object'):
+                            # 関係節の目的語の位置にあった先行詞は、名詞の主語の無い主節では主語 (کتابی که خواندم خوب بود
+                            # 「私が読んだ本は 良かった」。補語の形容詞 خوب は主語でない)
+                            moved_case = 'Nom'
+                            o.items = [type(i)(dict(i.item, _=[('Nom',) + c[1:] for c in i._ or []]))
+                                       for i in o.items[:1]] + o.items[1:]
+                        main.add_nominal(moved_case, o)
             if antecedent in q.not_solved:
                 q.not_solved.remove(antecedent)
         if not before and slot_obj != 'conjunction' and pred.conjunction is not None and k + 1 < len(out):
@@ -1735,6 +1747,8 @@ def detect_relative_clauses(clauses, trace, sentence_words=()):
             gap = _gap_by_agreement(pronoun, antecedent, pred)
         if isinstance(gap, tuple) and slot_obj not in (None, 'conjunction'):
             gap = (gap, slot_obj)   # 前置詞句: (('prep', 'in'), PrepClause)
+        if before and not prenominal and antecedent.items and antecedent.items[0].pos == 'pronoun':
+            _internal_head(pronoun, pred, q.not_solved, antecedent)   # 相関の代名詞が先行詞のとき
         pred.subordinate = True
         pred.gap = gap if not isinstance(gap, tuple) else gap[0]
         relative = RelativeClause(pred, antecedent, pronoun, gap)
@@ -1748,6 +1762,27 @@ def detect_relative_clauses(clauses, trace, sentence_words=()):
         relatives.append(relative)
         trace.append('// RELATIVE %s (%s) -> %s' % (pred.surface, pronoun.surface, antecedent.surface))
     return out, relatives
+
+
+def _internal_head(pronoun, pred, not_solved, antecedent):
+    """前に来る関係節の、関係代名詞のすぐ後ろの名詞 (yaḥ naraḥ āgacchat saḥ …、जो आदमी आया उसने …「来た男が」) は
+    節の中の先行詞: 節から外し、後ろの相関の代名詞 (saḥ・उसने) の訳をその名詞の訳に"""
+    if pronoun.index is None or not isinstance(antecedent, Word) or not antecedent.items:
+        return
+    pronoun_cases = {c for i in pronoun.items for c, _, _ in i._ or []}
+    for case, objs in list(pred.case_slot.items()):
+        for obj in objs:
+            # 関係代名詞と格の合う名詞だけ (Quem puella amat, eum … の puella は節の主語で、先行詞ではない)
+            if isinstance(obj, Word) and obj.index == pronoun.index + 1 and obj.items and obj.items[0].pos == 'noun' \
+                    and any(c in pronoun_cases for c, _, _ in obj.items[0]._ or []):
+                pred.case_slot[case] = [o for o in objs if o is not obj]
+                if not pred.case_slot[case]:
+                    del pred.case_slot[case]
+                head = obj.items[0]
+                # 指示代名詞の印は外す (Word.translate の「人」「もの」にしない)
+                antecedent.items = [type(i)(dict(i.item, ja=head.ja, gloss_lang=head.attrib('gloss_lang'), desc=None))
+                                    for i in antecedent.items[:1]] + antecedent.items[1:]
+                return
 
 
 def _agreeing_with_verb(cngs, pred):

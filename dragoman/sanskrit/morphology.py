@@ -170,7 +170,9 @@ def _subanta(e, surface):
             'ja': gloss[0] if gloss else script.iast(text), 'gloss_lang': gloss[1] if gloss else 'en'}
     if gloss and gloss[2] == 'name':
         item['name'] = True
-    if text in DETERMINERS:
+    if text == 'yad':
+        item.update(desc='関係代名詞', ja='〜するところの', gloss_lang='ja')   # yaḥ … saḥ の関係代名詞
+    elif text in DETERMINERS:
         item['desc'] = '指示代名詞'  # 名詞に掛かりうる (sarve janāḥ「すべての人々」, sa rājā「その王」)
     rank = 0 if gloss or text in PRONOUNS else 2
     lemmas = [l for l in dictionary.lemmas(text) if l['pos'] != 'root'] if pos == 'noun' else []

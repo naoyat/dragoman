@@ -287,7 +287,8 @@ def analyses(token):
         cases = {'direct': ['Nom', 'Acc'], 'oblique': ['Obl'], 'ergative': ['Nom'], 'dative': ['Dat', 'Acc']}[kind]
         out.append({'surface': word, 'pos': 'pronoun', 'lemma': lemma, 'base': roman, 'roman': roman, 'compact': True,
                     'ja': PRONOUN_GLOSSES.get(lemma, lemma), 'gloss_lang': 'ja', 'person': person,
-                    'pronoun_case': kind, '_': [(c, number, g) for c in cases for g in ('m', 'f')]})
+                    'pronoun_case': kind, '_': [(c, number, g) for c in cases for g in ('m', 'f')],
+                    **({'correlative': True} if lemma == 'वह' else {})})   # जो … वह の相関の語 (前の関係節の先行詞)
     for stem, (roman, ja) in POSSESSIVES.items():
         for ending, gender, numbers, cases in (('ा', 'm', ['sg'], ['Nom', 'Acc']), ('ी', 'f', ['sg', 'pl'], ['Nom', 'Acc', 'Obl']),
                                                 ('े', 'm', ['sg', 'pl'], ['Nom', 'Acc', 'Obl'])):

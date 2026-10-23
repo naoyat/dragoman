@@ -117,6 +117,9 @@ def _verb_data(token, feats, lemma=None):
     return data
 
 
+RELATIVE_FORMS = {'der', 'die', 'das', 'dem', 'den', 'dessen', 'deren', 'denen'}
+
+
 def item_of(token, doc):
     """spaCy の語 → 項目 (dict)。扱わない語は None (句読点)"""
     tag, lemma, text = token.tag_, token.lemma_, token.text
@@ -139,6 +142,9 @@ def item_of(token, doc):
         pos = 'article' if not ja else 'adj'
         return {'surface': text, 'pos': pos, 'base': base, 'ja': ja, 'gloss_lang': 'ja', '_': morphology.cngs(feats),
                 'compact': True}
+    if tag == 'PDS' and lower in RELATIVE_FORMS and token.i >= 2 and doc[token.i - 1].text == ',' and \
+            doc[token.i - 2].pos_ in ('NOUN', 'PROPN'):
+        tag = 'PRELS'   # 名詞 + カンマの後ろの d- の代名詞は関係代名詞 (Der Mann, der kam。spaCy は指示代名詞 PDS にすることがある)
     if tag in ('PPER', 'PRF', 'PDS', 'PIS', 'PWS', 'PPOSS', 'PRELS', 'PWAV'):
         if tag == 'PRELS':
             return {'surface': text, 'pos': 'pronoun', 'base': lemma, 'ja': '〜するところの', 'gloss_lang': 'ja',

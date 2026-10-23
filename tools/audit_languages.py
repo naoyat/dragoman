@@ -122,8 +122,9 @@ def works(feature, analysis):
         return any(getattr(p, 'question', False) for p in _predicates(analysis))
     if feature == 'adverbial':
         return any(isinstance(s, AdverbialClause) for c in analysis.clauses for s in c.predicate.subordinates)
-    if feature == 'relative':
-        return bool(getattr(analysis, 'relatives', None))
+    if feature == 'relative':   # 共通の関係節か、解析器が名詞の訳に組み込んだ連体節 (インドネシア語の yang・タガログ語の繋ぎ)
+        return bool(getattr(analysis, 'relatives', None)) or \
+            any(w.items and w.items[0].attrib('relative') for w in getattr(analysis, 'words', []) or [])
     if feature == 'indirect':
         return bool(getattr(analysis, 'questions', None))
     if feature == 'context':

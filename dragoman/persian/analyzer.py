@@ -129,8 +129,9 @@ def choose_analyses(surfaces):
         cands = morphology.analyses(token)
         nxt = surfaces[i + 1] if i + 1 < len(surfaces) else None
         final = _is_boundary(nxt)
+        before_ke = nxt == 'که' and token.endswith('ی')   # 関係節の先行詞の -i (مردی که …「…する男」)
         prev = morphology.FUNCTION_WORDS.get(surfaces[i - 1]) if i else None
-        after_subordinator = prev is not None and prev[0] == 'conj' and prev[1] in SUBORDINATORS
+        after_subordinator = prev is not None and prev[0] == 'conj' and (prev[1] in SUBORDINATORS or prev[1] == 'ke')
         nxt_verbal = nxt is not None and any(a.kind in ('verb', 'copula') and a.score >= 0.9
                                              for a in morphology.analyses(nxt)) if nxt not in PUNCTUATION and nxt else False
 
@@ -148,6 +149,9 @@ def choose_analyses(surfaces):
                     s = s * 2 + 0.5  # 過去分詞 + شد (受動) / بود (過去完了)
             elif a.kind == 'nominal' and final and len(a.segments) == 1:
                 s *= 0.8
+            if before_ke:   # 不定・関係の -i の付いた名詞 (مرد + ی) を、-i で終わる別の名詞 (mardi「男らしさ」)・動詞より先に
+                s *= (3 if a.main.get('indefinite') else 1.5 if len(a.segments) == 1 else 1) \
+                    if a.kind == 'nominal' else 0.5
             return s
         out.append(max(cands, key=score))
     return prefer_adjectives(surfaces, out)
@@ -523,6 +527,20 @@ def choose_subject(words):
 
 # ----------------------------------------------------------------------
 
+def relative_ke(words):
+    """名詞の後ろの که は関係代名詞 (کتابی که خواندم「私が読んだ本」)。形は変わらないので性・数はどれにも読み、空所の格は
+    共通の解析器が節の空きで決める"""
+    for k, word in enumerate(words):
+        item = _item(word)
+        if item is None or item.pos != 'conj' or word.surface != 'که' or k == 0:
+            continue
+        prev = next((w for w in reversed(words[:k]) if _item(w) is not None and _item(w).pos not in ('article',)), None)
+        if prev is None or _item(prev).pos != 'noun':
+            continue
+        word.items = [type(item)(dict(item.item, pos='pronoun', desc='関係代名詞', ja='〜するところの',
+                                      _=[(c, n, 'c') for c in ('Nom', 'Acc') for n in ('sg', 'pl')]))]
+
+
 def lookup_all(surfaces):
     analyses = choose_analyses(surfaces)
     words = [w for ix, (s, a) in enumerate(zip(surfaces, analyses)) for w in _words(s, a, ix)]
@@ -533,6 +551,7 @@ def lookup_all(surfaces):
     mark_prepositions(words)
     mark_ra(words)
     choose_subject(words)
+    relative_ke(words)   # 主語を決めた後で (関係代名詞の格は節の空きで決める)
     for i, word in enumerate(words):
         word.index = i
     return words

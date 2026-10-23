@@ -154,6 +154,9 @@ def choose(token, k, surfaces, prev):
             s += 1     # 属格の後ろの -ı は所有 (Ali'nin kitabı)
         if pos == 'Postp' and k == 0:
             s += 2
+        if pos == 'Adj' and morphemes == ('Adj',) and any('PresPart' in m or 'PastPart' in m for _, _, m in found) \
+                and not final:
+            s += 1   # 分詞と同じ形の形容詞 (gelen「次の」) より分詞「来た」(Gelen adam「来た男」) を先に
         if pos == 'Adj' and morphemes == ('Adj',) and not dictionary.lemmas(lemma, ('adj',)) and \
                 dictionary.lemmas(lemma, ('noun',)):
             s += 2   # 辞書に名詞しか無い語の形容詞の読み (çocuk) は後ろに

@@ -123,8 +123,11 @@ def choose(token, k, surfaces):
         if r['kind'] == 'noun' and r.get('case') not in (None, 'Nom') and r.get('pos') is None and \
                 not any(x.get('lemma') == token.lower() and x['kind'] in ('adj', 'noun', 'adv') for x in readings):
             s -= 0.3   # 格の接尾辞を分けた読みを、同じ綴りの別の見出しより先に (語そのものが見出しなら見出しを)
-        if r.get('lemma') == token.lower() and r['kind'] in ('adj', 'adv'):
-            s -= 0.5   # 見出しそのものの形容詞・副詞 (сайхан「美しい」。сайх + 属格でなく)
+        if r.get('lemma') == token.lower() and r['kind'] in ('adj', 'adv') and r.get('pos') != 'intj':
+            s -= 0.5   # 見出しそのものの形容詞・副詞 (сайхан「美しい」。сайх + 属格でなく。間投詞の хүн は除く)
+        if r['kind'] == 'verb' and r.get('form') == 'participle' and not r.get('case') and nxt_readings and \
+                any(x['kind'] == 'noun' for x in nxt_readings):
+            s -= 1   # 名詞の前の分詞は関係節 (Ирсэн хүн「来た人」。形容詞になった ирсэн「訪問の」でなく)
         return s
     return sorted(readings, key=score)[0]
 
@@ -453,9 +456,12 @@ def supply_copula(words):
 
 
 def bare_objects(words):
-    """動詞の直前の、格の接尾辞の無い名詞 (文の最初の名詞類でないもの) は不定の目的語 (ном өгсөн「本を与えた」)"""
+    """動詞の直前の、格の接尾辞の無い名詞 (文の最初の名詞類でないもの) は不定の目的語 (ном өгсөн「本を与えた」)。
+    分詞のすぐ後ろの名詞 (関係節の先行詞: Номыг уншсан хүүхэд ирсэн の хүүхэд) は主語のまま"""
     first = next((w for w in words if _pos(w) in ('noun', 'pronoun')), None)
     for i, w in enumerate(words[:-1]):
+        if i > 0 and getattr(words[i - 1], 'attributive', False):
+            continue
         nxt = next((x for x in words[i + 1:] if x.surface not in MONGOLIAN.negations), words[i + 1])
         item = _item(w)
         if item is None or item.pos != 'noun' or w is first or not item._ or item._[0][0] != 'Nom':

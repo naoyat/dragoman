@@ -78,6 +78,7 @@ FUNCTION_WORDS = {
 PRONOUNS = {'من': ('man', 1, 'sg'), 'تو': ('to', 2, 'sg'), 'او': ('u', 3, 'sg'), 'وی': ('vey', 3, 'sg'),
             'ما': ('mâ', 1, 'pl'), 'شما': ('šomâ', 2, 'pl'), 'آنها': ('ânhâ', 3, 'pl'), 'آن‌ها': ('ânhâ', 3, 'pl'),
             'ایشان': ('išân', 3, 'pl'), 'خود': ('xod', 3, 'sg')}
+OBJECT_PRONOUNS = {script.key('مرا'): ('marâ', 1, 'sg'), script.key('ترا'): ('torâ', 2, 'sg')}   # 代名詞 + را
 PRONOUN_GLOSSES = {'وی': '彼', 'خود': '自分', 'شما': 'あなた(たち)'}
 DEMONSTRATIVES = {'این': ('in', 'この', 'これ'), 'آن': ('ân', 'その', 'それ'), 'اینها': ('inhâ', 'これらの', 'これら'),
                   'همین': ('hamin', 'まさにこの', 'まさにこれ'), 'همان': ('hamân', 'まさにその', 'まさにそれ'),
@@ -508,6 +509,11 @@ def analyses(token):
         out.append(Analysis(2.0, [(word, _item(word, pos='pronoun', base=roman, ja=PRONOUN_GLOSSES.get(word) or
                                                 PERSONAL[(person, number)], gloss_lang='ja', roman=roman, main=True,
                                                 person=person, _=_nominal_cngs(number)))], 'pronoun'))
+    if key in OBJECT_PRONOUNS:   # مرا = من + را「私を」(Wiktionary の語義の訳でなく)
+        roman, person, number = OBJECT_PRONOUNS[key]
+        out.append(Analysis(3.0, [(word, _item(word, pos='pronoun', base=roman, ja=PERSONAL[(person, number)],
+                                                gloss_lang='ja', roman=roman, main=True, person=person,
+                                                definite_object=True, _=[('Acc', number, 'c')]))], 'pronoun'))
     if key in DEMONSTRATIVES:
         roman, adj, pron = DEMONSTRATIVES[key]
         out.append(Analysis(2.0, [(word, _item(word, pos='adj', base=roman, ja=adj, ja_pronoun=pron,

@@ -531,11 +531,18 @@ def mark_relatives(words):
         demonstrative = span[-1] if span and _item(span[-1]).attrib('demonstrative') else None
         if demonstrative is not None:
             span = span[:-1]
+        agent = None
+        if len(span) == 1 and _pos(span[0]) in ('noun', 'pronoun') and j < len(words) and _pos(words[j]) == 'verb':
+            # yang + 動作主 + 語幹の動詞 (受動の第2形: buku yang saya baca「私が読む本」)
+            agent, span = span[0], [words[j]]
+            j += 1
         if head is None or not span:
             i += 1
             continue
         first = _item(span[0])
-        if first.pos == 'verb':
+        if agent is not None:
+            clause = _ja(_item(agent), 'noun') + 'が' + (_ja(first, 'verb') or first.attrib('pres1sg'))
+        elif first.pos == 'verb':
             verb = _ja(first, 'verb') or first.attrib('pres1sg')
             if first.attrib('voice') == 'passive':
                 try:

@@ -524,8 +524,13 @@ def choose_subject(words):
                            for c in it._)
             subject = next((w for w in direct if agrees(w)), direct[0] if direct and (copula or not dative) else None)
         for w in direct:
+            k = words.index(w)
+            after_relative = k > 0 and _item(words[k - 1]) is not None and \
+                _item(words[k - 1]).attrib('desc') == '関係代名詞'
             if w is subject:
                 _restrict(w, ('Nom',))
+            elif after_relative and any(c[0] == 'Nom' for c in _item(w)._ or []):
+                _restrict(w, ('Nom',))   # जो आदमी आया「来た男」の आदमी は関係代名詞と同じ格 (移動の行き先でなく)
             elif copula:
                 _restrict(w, ('Nom',))
             elif item.attrib('lemma') in MOTION_VERBS and _pos(w) == 'noun':

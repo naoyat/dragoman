@@ -377,10 +377,25 @@ def merge_kaasher(words):
     return out
 
 
+def relative_asher(words):
+    """名詞の後ろの関係の小辞 אֲשֶׁר は関係代名詞 (הָאִישׁ אֲשֶׁר בָּא「来た男」)。形は変わらないので、性・数はどれにも読み、
+    空所の格は共通の解析器が節の空きで決める"""
+    for k, word in enumerate(words):
+        item = word.items[0] if word.items else None
+        if item is None or item.pos != 'conj' or script.consonants(word.surface) != 'אשר' or k == 0:
+            continue
+        prev = next((w for w in reversed(words[:k]) if w.items and w.items[0].pos != 'article'), None)
+        if prev is None or prev.items[0].pos not in ('noun', 'pronoun'):
+            continue
+        word.items = [type(item)(dict(item.item, pos='pronoun', desc='関係代名詞', ja='〜するところの',
+                                      _=[(c, n, g) for c in ('Nom', 'Acc') for n in ('sg', 'pl') for g in ('m', 'f')]))]
+
+
 def lookup_all(surfaces):
     langs = choose_languages(surfaces)
     words = [w for ix, s in enumerate(surfaces) for w in _words(s, ix, langs[ix])]
     words = merge_kaasher(words)
+    relative_asher(words)
     mark_vocatives(words)
     choose_construct(words)
     attach_markers(words)
