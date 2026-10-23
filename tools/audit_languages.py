@@ -71,6 +71,9 @@ SETTINGS = [('kana', 'カナ'), ('ruby', 'ルビ'), ('romanize', '転写'), ('ex
             ('generate', '生成'), ('docs', '説明'), ('tests', 'テスト')]
 
 
+DOCS = {'ms': 'indonesian', 'ur': 'urdu'}   # 説明を別の言語と一緒に書いているもの
+
+
 def _speech_tables():
     from dragoman.core import speech
     return set(speech.LANGUAGE_BACKENDS) | set(speech.MBROLA_LANGUAGES)   # 声を選ぶ表のある言語 (無ければ読まない)
@@ -91,7 +94,7 @@ def settings(lang):
         out['speech'] = (command.speech_lang or lang) in _speech_tables()
     out['ruby'] = ruby.available(lang)
     out['generate'] = os.path.exists(os.path.join(ROOT, 'dragoman', 'generate', module + '.py'))
-    out['docs'] = os.path.exists(os.path.join(ROOT, 'docs', module + '.md'))
+    out['docs'] = os.path.exists(os.path.join(ROOT, 'docs', DOCS.get(lang, module) + '.md'))
     out['tests'] = any(re.match(r'%s(_\w+)?_test\.py$' % module, f) for f in os.listdir(os.path.join(ROOT, 'test')))
     return out
 
@@ -136,7 +139,10 @@ def _unknown(analysis):
     """辞書に無い語 (訳の無い語: 項目が無いか、どの項目の訳も表層形のままのもの。句読点は除く)"""
     out = []
     for w in getattr(analysis, 'words', []) or []:
-        glosses = [i.attrib('ja') for i in (getattr(w, 'items', None) or [])]
+        items = getattr(w, 'items', None) or []
+        if any(i.pos == 'article' for i in items):
+            continue   # 訳に出さない冠詞 (古英語の se、ヘブライ語の הַ)
+        glosses = [i.attrib('ja') for i in items]
         if re.search(r'\w', w.surface) and not any(g and g.lower() != w.surface.lower() for g in glosses):
             out.append(w.surface)
     return out

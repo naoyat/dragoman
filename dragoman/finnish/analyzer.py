@@ -103,12 +103,18 @@ def _case_of(token, feats):
     return case
 
 
+QUESTION_ADVERBS = {'missä': 'どこで', 'mistä': 'どこから', 'mihin': 'どこへ', 'minne': 'どこへ', 'milloin': 'いつ',
+                    'miksi': 'なぜ', 'miten': 'どのように', 'kuinka': 'どのように'}
+
+
 def item_of(token):
     feats = morphology.morph(token)
     text, lemma, pos = token.text, token.lemma_, token.pos_
     lower = text.lower()
     if pos == 'PUNCT':
         return None
+    if lower in QUESTION_ADVERBS:   # 疑問の副詞 (missä「どこで」。mikä の格の形「何で」・文頭の大文字の見出しでなく)
+        return {'surface': text, 'pos': 'adv', 'base': lower, 'ja': QUESTION_ADVERBS[lower], 'gloss_lang': 'ja'}
     number = morphology.NUMBERS.get(feats.get('Number'), 'sg')
     if pos in ('NOUN', 'PROPN', 'NUM', 'X') or pos == 'PRON' and feats.get('PronType') != 'Rel':
         case = _case_of(token, feats)

@@ -61,7 +61,9 @@ ENCLITICS = {'na': ('もう', 'adv'), 'pa': ('まだ', 'adv'), 'ba': ('か', 'qu
              'nga': ('本当に', 'adv'), 'pala': ('なんと', 'adv'), 'kasi': ('〜なので', 'adv'), 'yata': ('たぶん', 'adv'),
              'sana': ('〜ならいいのに', 'adv'), 'muna': ('まず', 'adv'), 'man': ('〜でも', 'adv')}
 # 訳語を決めておく語 (Wiktionary の最初の語義が外れるもの)
-GLOSSES = {'bata': ('子供', 'noun'), 'lalaki': ('男', 'noun'), 'babae': ('女', 'noun'), 'isda': ('魚', 'noun'),
+GLOSSES = {'saan': ('どこ', 'adv'), 'kailan': ('いつ', 'adv'), 'bakit': ('なぜ', 'adv'), 'paano': ('どのように', 'adv'),
+           'ilan': ('いくつ', 'adv'), 'gaano': ('どれほど', 'adv'),   # 疑問の副詞
+           'bata': ('子供', 'noun'), 'lalaki': ('男', 'noun'), 'babae': ('女', 'noun'), 'isda': ('魚', 'noun'),
            'bahay': ('家', 'noun'), 'aso': ('犬', 'noun'), 'pusa': ('猫', 'noun'), 'libro': ('本', 'noun'),
            'aklat': ('本', 'noun'), 'tindahan': ('店', 'noun'), 'paaralan': ('学校', 'noun'), 'guro': ('先生', 'noun'),
            'estudyante': ('学生', 'noun'), 'tubig': ('水', 'noun'), 'kanin': ('ご飯', 'noun'), 'pera': ('お金', 'noun'),
@@ -86,7 +88,7 @@ VERB_GLOSSES = {'bili': '買う', 'kain': '食べる', 'inom': '飲む', 'sulat'
                 'sabi': '言う', 'gawa': '作る', 'dala': '持って行く', 'kuha': '取る', 'bukas': '開ける',
                 'sara': '閉める', 'hanap': '探す', 'tulong': '助ける', 'lakad': '歩く', 'takbo': '走る',
                 'upo': '座る', 'tayo': '立つ', 'laro': '遊ぶ', 'sayaw': '踊る', 'kanta': '歌う', 'dinig': '聞く',
-                'rinig': '聞く', 'alam': '知る', 'gusto': '好む', 'mahal': '愛する', 'uwi': '帰る', 'balik': '戻る',
+                'rinig': '聞く', 'alam': '知る', 'tira': '住む', 'gusto': '好む', 'mahal': '愛する', 'uwi': '帰る', 'balik': '戻る',
                 'isip': '思う', 'ikot': '回る', 'hinto': '止まる', 'tanto': '悟る', 'sagot': '答える', 'iyak': '泣く',
                 'tawa': '笑う', 'ngiti': '微笑む', 'hintay': '待つ', 'alala': '思い出す', 'limot': '忘れる',
                 'damdam': '感じる', 'patak': '滴る', 'pangarap': '夢見る', 'ngarap': '夢見る', 'kilala': '知る',
