@@ -240,7 +240,8 @@ def choose_subject(words):
                        len(words))
             prv = next((j for j in range(i - 1, -1, -1) if _finite_word(words[j]) or words[j].items is None), -1)
             for j in free:
-                if prv < j < nxt and words[j].items[0].pos == 'noun':
+                if prv < j < nxt and (words[j].items[0].pos == 'noun' or words[j].items[0].attrib('interrogative')):
+                    # 疑問代名詞も (מָה עָשִׂיתָ「何を したか」)
                     item = words[j].items[0]
                     accusative = [c for c in item._ or [] if c[0] == 'Acc']
                     if accusative and not any(c[0] == 'Voc' for c in item._):

@@ -49,6 +49,11 @@ PREPOSITIONS = {'b': '〜で,〜の中で,〜によって', 'l': '〜に,〜の�
                 '3644': '〜のように', '5048': '〜の前に'}
 PARTICLES = {'a': ('adv', '実に'), 'e': ('adv', 'どうか'), 'i': ('adv', '〜か (疑問)'), 'j': ('adv', '見よ'),
              'm': ('adv', '〜'), 'n': ('adv', '〜ない'), 'o': ('object', ''), 'r': ('conj', '〜するところの')}
+# 疑問詞 (OSHB では疑問の小辞 Ti と同じ符号): 子音 → (品詞, 訳)。疑問の小辞 הֲ はそのまま「〜か」
+INTERROGATIVES = {'מי': ('pronoun', '誰'), 'מה': ('pronoun', '何'), 'מה־': ('pronoun', '何'), 'איה': ('adv', 'どこに'),
+                  'איפה': ('adv', 'どこに'), 'אנה': ('adv', 'どこへ'), 'למה': ('adv', 'なぜ'), 'מדוע': ('adv', 'なぜ'),
+                  'איך': ('adv', 'どのように'), 'איכה': ('adv', 'どのように'), 'מתי': ('adv', 'いつ'),
+                  'אי': ('adv', 'どこに')}
 PERSONAL = {(1, 'sg'): '私', (2, 'sg'): 'あなた', (3, 'sg'): '彼', (1, 'pl'): '私たち', (2, 'pl'): 'あなたたち',
             (3, 'pl'): '彼ら'}
 NOMINAL_CASES = ('Nom', 'Acc')
@@ -109,6 +114,11 @@ def segment_item(code, lemma, surface, language='H'):
             # 目的語の標識 אֵת: 後ろの名詞を対格にして、冠詞と同じく名詞に付け、訳には出さない
             return dict(item, pos='article', base='אֵת', ja=OBJECT_MARKER_NOTE, gloss_lang='ja', desc='目的語の標識')
         word, gloss, lang, _ = _lemma(lemma)
+        interrogative = INTERROGATIVES.get(script.consonants(surface)) if code[1:2] == 'i' else None
+        if interrogative:   # מִי「誰」・מָה「何」・אַיֵּה「どこに」(疑問の小辞「〜か」でなく)
+            pos, ja = interrogative
+            return dict(item, pos=pos, base=word, ja=ja, gloss_lang='ja', interrogative=True,
+                        **({'_': [('Nom', 'sg', 'm'), ('Acc', 'sg', 'm')], 'desc': '疑問代名詞', 'person': 3} if pos == 'pronoun' else {}))
         return dict(item, pos=pos, base=word, ja=ja or gloss, gloss_lang='ja' if ja else lang)
     if kind == 'D':
         word, gloss, lang, _ = _lemma(lemma)

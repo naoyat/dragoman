@@ -196,6 +196,12 @@ class AnalyzerTestCase(unittest.TestCase):
         a = self.analyze('שְׁמַ֖ע יִשְׂרָאֵ֑ל יְהוָ֥ה אֱלֹהֵ֖ינוּ יְהוָ֥ה ׀ אֶחָֽד׃')[0]
         self.assertTrue(a.clauses[0].predicate.translate()[0].startswith('イスラエルよ'))
 
+    def test_interrogatives(self):
+        # 疑問詞 (OSHB では疑問の小辞と同じ符号) は「誰」「何」で、疑問の小辞「〜か」でない
+        self.assertEqual(self.analyze('מִי אַתָּה?')[0].clauses[0].predicate.translate()[0], 'あなたは / 誰であるか')
+        tr = self.analyze('מָה עָשִׂיתָ?')[0].clauses[0].predicate.translate()[0]
+        self.assertTrue(tr.startswith('あなたは / 何を / した'), tr)   # 2人称の動詞の前の疑問代名詞は目的語
+
 
 if __name__ == '__main__':
     unittest.main()
