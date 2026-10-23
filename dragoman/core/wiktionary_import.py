@@ -99,6 +99,8 @@ def english_glosses(entry, senses=None, limit=3, per_sense=None):
     for sense in senses if senses is not None else entry.get('senses', []):
         for gloss in sense.get('glosses', [])[:1]:
             gloss = re.sub(r'\s*\(.*?\)', '', gloss)
+            # 「語: 説明」の形の語義は語だけ ('know: to be familiar with … a person, place' → 'know'。place を訳語にしない)
+            gloss = re.sub(r'^([^:;,]{1,30}):\s.*$', r'\1', gloss)
             for chunk in re.split(r'[;,]', gloss)[:per_sense]:
                 chunk = re.sub(r'^(to|a|an|the) ', '', chunk.strip().rstrip('.:'), flags=re.I).strip()
                 if chunk and chunk not in glosses:

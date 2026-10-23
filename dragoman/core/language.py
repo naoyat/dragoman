@@ -41,6 +41,9 @@ class Language:
     topic_first: bool = False      # 主題 (「は」の句) を訳の先頭に置く (タガログ語の焦点)
     possessor_cases: tuple = ('Dat',)  # 繋辞の文で所有者を表す格 (mihi est liber「私には本がある」。サンスクリットは属格)
     question_moods: tuple = ('subjunctive',)  # 間接疑問の節の動詞の法 (ギリシア語は直説法・希求法も)
+    question_verbs: frozenset = frozenset()   # 間接疑問を取る動詞の見出し (知る・問う …。core/Question.py の表に加えて)
+    interrogatives: dict = field(default_factory=dict)   # 疑問詞 (語形の小文字か見出しの転写) → 間接疑問での訳
+    # (wo → どこで。'' は「〜かどうか」の ob・ли、None は辞書の訳のまま)
     infinitive_objects_follow: bool = False  # 不定詞の目的語が不定詞の後ろに来る (フランス語の pour établir le baromètre)
     subordinators: dict = field(default_factory=dict)  # 副詞節の従属接続詞の見出し → (節の後ろに付ける形, 時制[, 否定])
     # (core/Adverbial.mark_subordinators。共通の解析器の入口で印を付ける)

@@ -69,8 +69,17 @@ def _particle(case, obj, predicate):
     return None
 
 
+# 間接疑問: 節の動詞の法、疑問詞を取る動詞、疑問の副詞 (core/analyzer.detect_indirect_questions)
+QUESTION_MOODS = ('indicative', 'subjunctive', 'conditional')
+QUESTION_VERBS = frozenset({'savoir', 'demander', 'ignorer', 'dire', 'comprendre', 'voir', 'expliquer', 'montrer',
+                            'oublier', 'apprendre', 'découvrir', 'raconter', 'se demander', 'deviner', 'indiquer'})
+INTERROGATIVES = {'où': 'どこで', 'quand': 'いつ', 'comment': 'どのように', 'pourquoi': 'なぜ', 'combien': 'どれだけ',
+                  'si': '', "s'": ''}   # 疑問詞 → 間接疑問での訳 (空は「〜かどうか」)
+
+
 FRENCH = language.Language(
     name='fr',
+    question_moods=QUESTION_MOODS, question_verbs=QUESTION_VERBS, interrogatives=INTERROGATIVES,
     and_words=('et',),
     nor_words=('ni',),
     or_words=('ou',),

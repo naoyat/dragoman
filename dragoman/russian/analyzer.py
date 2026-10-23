@@ -33,8 +33,18 @@ SUBORDINATORS = {'когда': ('とき', None), 'если': ('なら', None), '
                  'в то время как': ('一方で', None)}
 
 
+# 間接疑問: 節の動詞の法、疑問詞を取る動詞、疑問詞 (core/analyzer.detect_indirect_questions。что は補文の「〜ということ」とも
+# 読むので入れない)
+QUESTION_MOODS = ('indicative',)
+QUESTION_VERBS = frozenset({'знать', 'спрашивать', 'спросить', 'понимать', 'понять', 'сказать', 'говорить', 'видеть',
+                            'увидеть', 'объяснить', 'объяснять', 'помнить', 'забыть', 'узнать', 'узнавать', 'интересоваться'})
+INTERROGATIVES = {'где': 'どこで', 'когда': 'いつ', 'как': 'どのように', 'почему': 'なぜ', 'куда': 'どこへ',
+                  'откуда': 'どこから', 'кто': None, 'зачем': 'なぜ', 'сколько': 'どれだけ', 'ли': ''}   # 疑問詞 → 間接疑問での訳 (空は「〜かどうか」、None は辞書の訳のまま)
+
+
 RUSSIAN = language.Language(
     name='ru',
+    question_moods=QUESTION_MOODS, question_verbs=QUESTION_VERBS, interrogatives=INTERROGATIVES,
     subordinators=SUBORDINATORS,
     and_words=('и',),
     nor_words=('ни',),

@@ -38,8 +38,18 @@ def _root_items(lemma):
 SUBORDINATORS = {'kun': ('とき', None), 'jos': ('なら', None), 'koska': ('ので', None), 'vaikka': ('けれども', None),
                  'kunnes': ('まで', 'present'), 'jotta': ('ように', 'present')}
 
+# 間接疑問: 節の動詞の法、疑問詞を取る動詞、疑問詞 (core/analyzer.detect_indirect_questions)
+QUESTION_MOODS = ('indicative', 'conditional')
+QUESTION_VERBS = frozenset({'tietää', 'kysyä', 'ymmärtää', 'sanoa', 'nähdä', 'muistaa', 'unohtaa', 'selittää', 'kertoa',
+                            'ihmetellä', 'miettiä'})
+INTERROGATIVES = {'missä': 'どこで', 'mistä': 'どこから', 'mihin': 'どこへ', 'milloin': 'いつ', 'miksi': 'なぜ',
+                  'miten': 'どのように', 'kuinka': 'どのように', 'kuka': None, 'kenet': None, 'paljonko': 'どれだけ',
+                  'mitä': None, 'mikä': None}   # 疑問詞 → 間接疑問での訳 (None は辞書の訳のまま)
+
+
 FINNISH = language.Language(
     name='fi',
+    question_moods=QUESTION_MOODS, question_verbs=QUESTION_VERBS, interrogatives=INTERROGATIVES,
     subordinators=SUBORDINATORS,
     and_words=('ja', 'sekä'),
     or_words=('tai', 'vai'),

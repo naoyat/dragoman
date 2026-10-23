@@ -69,8 +69,16 @@ SUBORDINATORS = {'ʿindamā': ('とき', None), 'baynamā': ('間に', None), 'l
                  'in': ('なら', None), 'law': ('なら', None)}
 
 
+# 間接疑問: 節の動詞の法、疑問詞を取る動詞、疑問詞 (見出しの転写。core/analyzer.detect_indirect_questions)
+QUESTION_MOODS = ('indicative',)
+QUESTION_VERBS = frozenset({'عَرَف', 'سَأَل', 'عَلِم', 'فَهِم', 'قال', 'رَأَى', 'نَسِي', 'تَذَكَّر', 'شَرَح', 'دَرَى'})
+INTERROGATIVES = {'ayna': None, 'matā': None, 'kayfa': None, 'limāḏā': None, 'man': None, 'māḏā': None, 'hal': '',
+                  'kam': None}   # 疑問詞 → 間接疑問での訳 (空は「〜かどうか」、None は辞書の訳のまま)
+
+
 ARABIC = language.Language(
     name='ar',
+    question_moods=QUESTION_MOODS, question_verbs=QUESTION_VERBS, interrogatives=INTERROGATIVES,
     subordinators=SUBORDINATORS,
     and_words=(AND,),
     or_words=('أَوْ', 'أَو'),

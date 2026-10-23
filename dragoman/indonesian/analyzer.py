@@ -53,8 +53,17 @@ SUBORDINATORS = {'ketika': ('とき', None), 'apabila': ('とき', None), 'waktu
                  'sesudah': ('後で', 'perfect'), 'setelah': ('後で', 'perfect'), 'sementara': ('間に', None),
                  'selama': ('間に', None), 'agar': ('ように', 'present'), 'supaya': ('ように', 'present')}
 
+# 間接疑問: 節の動詞の法、疑問詞を取る動詞、疑問詞 (core/analyzer.detect_indirect_questions)
+QUESTION_MOODS = ('indicative',)
+QUESTION_VERBS = frozenset({'tahu', 'tanya', 'mengerti', 'paham', 'lihat', 'ingat', 'lupa', 'jelaskan', 'katakan',
+                            'kata', 'beri tahu', 'beritahu'})
+INTERROGATIVES = {'mana': None, 'di mana': None, 'ke mana': None, 'dari mana': None, 'kapan': None, 'bagaimana': None, 'mengapa': None, 'kenapa': None, 'siapa': None,
+                  'apa': None, 'apakah': '', 'berapa': None}   # 疑問詞 → 間接疑問での訳 (空は「〜かどうか」、None は辞書の訳のまま)
+
+
 INDONESIAN = language.Language(
     name='id',
+    question_moods=QUESTION_MOODS, question_verbs=QUESTION_VERBS, interrogatives=INTERROGATIVES,
     subordinators=SUBORDINATORS,
     and_words=('dan', 'serta'),
     or_words=('atau',),
@@ -394,7 +403,8 @@ def choose_subject(words):
     start = 0
     for i, word in enumerate(words + [None]):
         item = _item(word) if word is not None else None
-        boundary = word is None or word.items is None or (item is not None and item.pos in ('conj', 'relative'))
+        boundary = word is None or word.items is None or (item is not None and item.pos in ('conj', 'relative')) or \
+            (i > start and word.surface.lower() in INTERROGATIVES)   # 間接疑問の頭 (tahu | di mana dia tinggal)
         if not boundary:
             continue
         clause = words[start:i]
@@ -571,8 +581,28 @@ def mark_relatives(words):
     return out
 
 
+PLACE_QUESTIONS = {'di': 'どこで', 'ke': 'どこへ', 'dari': 'どこから'}   # 前置詞 + mana
+
+
+def place_questions(words):
+    """di mana・ke mana・dari mana を1語の疑問詞「どこで」「どこへ」「どこから」に (前置詞 + mana「場所」でなく)"""
+    out = []
+    for word in words:
+        prev = out[-1] if out else None
+        if prev is not None and word.surface.lower() == 'mana' and prev.surface.lower() in PLACE_QUESTIONS and \
+                _item(prev) is not None and _item(prev).pos == 'preposition':
+            item = _item(prev)
+            prev.items = [type(item)(dict(item.item, pos='adv', base='mana', ja=PLACE_QUESTIONS[prev.surface.lower()],
+                                          gloss_lang='ja', dominates=None, _=None))]
+            prev.surface = prev.surface + ' ' + word.surface
+            continue
+        out.append(word)
+    return out
+
+
 def lookup_all(surfaces):
     words = _words(surfaces)
+    words = place_questions(words)
     mark_reporting(words)
     ensure_verbs(words)
     words = apply_aspects(words)

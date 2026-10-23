@@ -368,7 +368,8 @@ class Predicate (LatinObject):
             from .japanese import japanese_form
             verb_tr = ','.join(japanese_form(ja, False, 'volitional', 'present', False) for ja in jas)
         else:
-            verb_tr = ','.join([JaVerb(ja).form(flag, negated and not self.is_sum) for ja in jas])
+            # 活用して同じ形になる訳語は1つに (知る,知っている → 知らない)
+            verb_tr = ','.join(dict.fromkeys(JaVerb(ja).form(flag, negated and not self.is_sum) for ja in jas))
         if is_existential:
             # 存在・所有: 「ある / いる」(否定は「ない / いない」)
             verb_tr = JaVerb('いる' if is_existential in ('animate', 'personal') else 'ある').form(flag & ~Verb.ING,

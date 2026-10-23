@@ -19,7 +19,7 @@ from .PrepClause import PrepClause
 from .Absolute import AblativeAbsolute
 from .Participle import ParticiplePhrase, participle_kind, participle_item
 from .Infinitive import InfinitiveClause, governor_kind, takes_accusative_subject
-from .Question import QuestionClause, QUESTION_VERBS, is_interrogative
+from .Question import QuestionClause, is_interrogative, is_question_verb, interrogative_gloss
 from .Relative import RelativeClause, is_relative
 
 
@@ -1022,6 +1022,8 @@ def _apposition_case(word, target):
 def _clause_start(node):
     """解析器が節の頭の印 (clause_start) を付けた語か、その語で始まる前置詞句。副詞節の従属接続詞 (clause_suffix) も"""
     if isinstance(node, Word):
+        if node.items and language.current().interrogatives and is_interrogative(node):
+            return True   # 言語の設定の疑問詞は間接疑問の節の頭 (Ich weiß nicht, | wo er wohnt)
         return bool(node.items) and bool(node.items[0].attrib('clause_start') or node.items[0].attrib('clause_suffix'))
     if isinstance(node, PrepClause):
         return bool(node.item.attrib('clause_start')) or any(_clause_start(w) for w in node.words[:1])
@@ -1065,6 +1067,11 @@ def _group_by_verbs(words, verbs_ix, trace):
                 if j > fr and isinstance(words[j-1], Word) and \
                         words[j-1].surface.lower() in language.current().and_words:
                     well_divided_at = j-2
+                # 前に補文の接続詞があればその前で (जानता | कि वह कहाँ रहता है)
+                conj = next((k for k in range(j - 1, fr - 1, -1) if isinstance(words[k], Word) and words[k].items and
+                             words[k].items[0].pos == 'conj'), None)
+                if conj is not None and language.current().interrogatives:
+                    well_divided_at = conj - 1
                 break
         if well_divided_at is None:
             for j in range(fr, to+1):
@@ -1423,6 +1430,30 @@ def mark_direct_question(surfaces, clauses):
     clauses[-1].predicate.question = True
 
 
+def _as_interrogative(pred, word):
+    """言語の設定の疑問詞を間接疑問の疑問詞の訳に (où の関係代名詞「〜するところの」・когда の接続詞「〜するとき」を
+    「どこで」「いつ」に。ob・ли「〜かどうか」は訳さずに節の後ろの「かどうか」で)"""
+    gloss = interrogative_gloss(word)
+    if gloss is None or not word.items:
+        return
+    item = word.items[0]
+    word.items = [type(item)(dict(item.item, pos='adv', ja=gloss, gloss_lang='ja', desc=None, _=None,
+                                  clause_suffix=None))]
+    if gloss == '':
+        word.whether = True
+    for case in list(pred.case_slot):   # 格の枠 (où の Loc) から外して修飾語に
+        if any(o is word for o in pred.case_slot[case]):
+            pred.case_slot[case] = [o for o in pred.case_slot[case] if o is not word]
+            if not pred.case_slot[case]:
+                del pred.case_slot[case]
+            if gloss:
+                pred.add_modifier(word)
+    if pred.conjunction is word:
+        pred.conjunction = None
+        if gloss:
+            pred.add_modifier(word)
+
+
 def detect_indirect_questions(clauses, trace):
     """間接疑問: 疑問詞を含み動詞が接続法 (ギリシア語は直説法・希求法も) の節を、隣の節の「問う・知る・教える・言う」動詞の格の枠 'Q' に入れる。
     節が et などで始まれば前の節と並列なので、支配する動詞は後ろの節 (…, et quid fierī vellet docuit)、
@@ -1452,9 +1483,15 @@ def detect_indirect_questions(clauses, trace):
                 continue
             # 支配する動詞: 隣の節の述語か、その中の不定詞 (nē … cōgnōscere posset quō in locō …)
             candidates = [out[g].predicate] + [i.predicate for i in out[g].predicate.case_slot.get('Inf', [])]
-            governor = next((c for c in candidates if c.first_item.attrib('pres1sg') in QUESTION_VERBS), None)
+            governor = next((c for c in candidates if is_question_verb(c.first_item.attrib('pres1sg'))), None)
             if governor is None:
                 continue
+            _as_interrogative(pred, word)
+            if pred.conjunction is not None and pred.conjunction is not word and isinstance(pred.conjunction, Word) and \
+                    pred.conjunction.items and pred.conjunction.items[0].pos == 'conj' and \
+                    pred.conjunction.surface.lower() not in language.current().and_words and \
+                    language.current().interrogatives:
+                pred.conjunction = None   # 補文の接続詞 (जानता कि वह कहाँ …「〜ということ」) は訳さない
             question = QuestionClause(pred, governor, word)
             pred.subordinate = True
             if coordinated and g > k and governor.conjunction is None:
@@ -1888,7 +1925,29 @@ def _attach_to_predicate(words, group, verb_ix):
                 not_solved.append(word)
     if pred.is_sum:
         _promote_complement(pred)
+    else:
+        _second_nominative_as_object(pred)
     return not_solved
+
+
+def _second_nominative_as_object(pred):
+    """主格の枠に、主格にしか読めない語 (Она) と対格にも読める語 (мать) があれば、後者は目的語
+    (Она любит мать「彼女が 母を 愛する」。「彼女=母が」でなく)"""
+    noms = pred.case_slot.get('Nom', [])
+    if len(noms) < 2 or pred.first_item.attrib('voice') == 'passive':
+        return   # 受動の動詞は目的語を取らない (主格の2つの語は主語と同格・補語)
+
+    def cases(o):
+        return {c[0] for c in o.items[0]._ or []} if isinstance(o, Word) and o.items else set()
+    if not any(cases(o) == {'Nom'} for o in noms):
+        return
+    objects = [o for o in noms if cases(o) != {'Nom'} and 'Acc' in cases(o) and not is_relative(o)]
+    if len(objects) != len(noms) - 1:
+        return   # 主格にしか読めない語が2つ (並んだ主語・同格) なら触らない
+    for o in objects:
+        pred.case_slot['Nom'] = [x for x in pred.case_slot['Nom'] if x is not o]
+        o.restrict_cases(('Acc',))
+        pred.add_nominal('Acc', o)
 
 
 def _second_person(pred):

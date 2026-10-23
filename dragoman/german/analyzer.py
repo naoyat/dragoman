@@ -36,8 +36,18 @@ def _root_items(lemma):
     return [{'pos': 'verb', 'ja': ja, 'gloss_lang': gloss_lang}] if ja else []
 
 
+# 間接疑問: 節の動詞の法、疑問詞を取る動詞、疑問詞 (core/analyzer.detect_indirect_questions)
+QUESTION_MOODS = ('indicative', 'subjunctive')
+QUESTION_VERBS = frozenset({'wissen', 'fragen', 'sagen', 'verstehen', 'sehen', 'erklären', 'zeigen', 'vergessen',
+                            'erfahren', 'herausfinden', 'überlegen', 'wundern', 'erzählen', 'begreifen'})
+INTERROGATIVES = {'wo': 'どこで', 'wann': 'いつ', 'wie': 'どのように', 'warum': 'なぜ', 'wohin': 'どこへ', 'woher': 'どこから',
+                  'ob': '', 'was': None, 'wer': None, 'wen': None, 'wem': None, 'weshalb': 'なぜ', 'wieso': 'なぜ',
+                  'weswegen': 'なぜ'}   # 疑問詞 → 間接疑問での訳 (空は「〜かどうか」、None は辞書の訳のまま)
+
+
 GERMAN = language.Language(
     name='de',
+    question_moods=QUESTION_MOODS, question_verbs=QUESTION_VERBS, interrogatives=INTERROGATIVES,
     and_words=('und',),
     nor_words=('noch',),
     or_words=('oder',),

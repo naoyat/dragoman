@@ -45,7 +45,32 @@ def is_interrogative(word):
         return True
     if any(item.attrib('base') == 'ὅστις' for item in items):
         return True   # ギリシア語の不定関係代名詞は間接疑問の疑問詞にも (ἤρετο ὅστις εἴη)。先行詞があれば関係節
-    return getattr(word, 'surface', '').lower() in INTERROGATIVES and bool(items)
+    if not items:
+        return False
+    surface = getattr(word, 'surface', '').lower()
+    if surface in INTERROGATIVES:
+        return True
+    from . import language
+    own = language.current().interrogatives if language.current() is not None else ()
+    base = (items[0].attrib('base') or '').lower()
+    return bool(own) and (surface in own or base in own or base.split(' ')[0] in own)
+
+
+def interrogative_gloss(word):
+    """言語の設定の疑問詞の、間接疑問での訳 (無ければ None。'' は「〜かどうか」)"""
+    from . import language
+    own = language.current().interrogatives if language.current() is not None else {}
+    items = getattr(word, 'items', None) or []
+    surface = getattr(word, 'surface', '').lower()
+    base = (items[0].attrib('base') or '').lower() if items else ''
+    key = next((k for k in (surface, base, base.split(' ')[0]) if k in own), None)
+    return None if key is None else own[key]
+
+
+def is_question_verb(pres1sg):
+    """間接疑問を取る動詞 (知る・問う …) の見出しか (共通の表と言語の設定の表)"""
+    from . import language
+    return pres1sg in QUESTION_VERBS or language.current() is not None and pres1sg in language.current().question_verbs
 
 
 class QuestionClause(LatinObject):
@@ -59,6 +84,7 @@ class QuestionClause(LatinObject):
 
     def translate(self):
         inner, _ = self.predicate.translate()
-        whether = getattr(self.word, 'surface', '').lower() in ('whether', 'if', 'εἰ')
+        whether = getattr(self.word, 'surface', '').lower() in ('whether', 'if', 'εἰ') or \
+            getattr(self.word, 'whether', False)
         inner = ' '.join(part for part in inner.split(' / ') if part.strip())
         return ('{' + inner + ('}かどうかを' if whether else '}かを'), False)

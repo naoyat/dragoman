@@ -55,8 +55,16 @@ def _root_items(lemma):
 SUBORDINATORS = {'jab': ('とき', None), 'agar': ('なら', None), 'yadi': ('なら', None), 'kyõki': ('ので', None),
                  'jabki': ('一方で', None), 'hālā̃ki': ('けれども', None)}
 
+# 間接疑問: 節の動詞の法、疑問詞を取る動詞、疑問詞 (転写の見出し。core/analyzer.detect_indirect_questions)
+QUESTION_MOODS = ('indicative', 'subjunctive')
+QUESTION_VERBS = frozenset({'जानना', 'पूछना', 'समझना', 'बताना', 'कहना', 'देखना', 'भूलना', 'सोचना'})
+INTERROGATIVES = {'kahā̃': None, 'kab': None, 'kyõ': None, 'kaise': None, 'kaun': None, 'kyā': None, 'kitnā': None,
+                  'kidhar': None}   # 疑問詞 → 間接疑問での訳 (None は辞書の訳のまま)
+
+
 HINDI = language.Language(
     name='hi',
+    question_moods=QUESTION_MOODS, question_verbs=QUESTION_VERBS, interrogatives=INTERROGATIVES,
     subordinators=SUBORDINATORS,
     and_words=('और', 'तथा', 'एवं'),
     or_words=('या',),
