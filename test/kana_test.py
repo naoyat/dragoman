@@ -298,8 +298,9 @@ class SpellingKanaTestCase(unittest.TestCase):
             self.skipTest('ainu-utils が無い')
         from dragoman.ainu.katakana import katakana
         self.assertEqual(katakana('cep'), 'チェㇷ゚')
-        self.assertEqual(katakana('cep', small='off'), 'チェプ')
-        self.assertEqual(katakana('pirka', small='off'), 'ピリカ')
+        self.assertEqual(katakana('cep', small='off'), 'チェッ')     # 閉鎖音は「ッ」
+        self.assertEqual(katakana('pirka', small='off'), 'ピリカ')   # r は前の母音の段
+        self.assertEqual(katakana('kor', small='off'), 'コロ')
 
     def test_kobun(self):
         from dragoman.kobun import mecab

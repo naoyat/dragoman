@@ -39,7 +39,8 @@ COMMON = (
     Option('kana-si', value='KANA', help='カタカナ読みの [si]・[zi]: スィ (既定。[ʃi] の「シ」と分ける) / シ (慣用)'),
     Option('kana-oe', value='KANA', help='カタカナ読みの [ø]・[œ] (ö・eu): エ (既定: Niinistö → ニーニステ) / オ (ニーニスト)'),
     Option('kana-accent', value='ACCENT', help='英語のカタカナ読みの発音: us (既定。米音、CMUdict) / gb (英音、espeak-ng)'),
-    Option('kana-small', value='ON|OFF', help='アイヌ語のカタカナの音節末の子音: on (既定。小書きの ㇰ・ㇼ・ㇷ゚ …) / off (ク・リ・プ)'),
+    Option('kana-small', value='ON|OFF', help='アイヌ語のカタカナの音節末の子音: on (既定。小書きの ㇰ・ㇼ・ㇷ゚ …) / off (閉鎖音は ッ、\n'
+                                         'r・h は前の母音の段: チェッ・ピリカ)'),
     Option('kana-hebrew', value='STYLE', help='聖書ヘブライ語のカタカナ読み: early (既定。摩擦音化の前の古い時代: ベレーシート)\n'
                                             '/ tiberian (母音記号どおりのティベリア式: ベレーシース・ダーヴァール)'),
     Option('kana-kobun', value='STYLE', help='古文のカタカナ読み: modern (既定。今の発音: オモウ・サブライ) / historical\n'
