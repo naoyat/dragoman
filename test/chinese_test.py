@@ -41,7 +41,7 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(tr('月亮代表我的心。'), '月が / 私の心を / 表す,代表する')
 
     def test_ba_bei_and_prepositions(self):
-        self.assertEqual(tr('他把书放在桌子上。'), '彼が / 机の上に / 本を / 置く')
+        self.assertEqual(tr('他把书放在桌子上。'), '彼が / 本を / 机の上に / 置く')   # 把の目的語を先に
         self.assertEqual(tr('书被他拿走了。'), '本が / 彼によって / 持ち去られた')
         self.assertEqual(tr('他在图书馆看书。'), '彼が / 図書館で / 本を / 見る,読む')
 
@@ -50,6 +50,20 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(tr('我知道他住在哪儿。'), '私が / {彼が どこに 住む}かを / 知っている')
         self.assertEqual(tr('你吃饭了吗？'), 'あなたが / 食事をしたか')
         self.assertEqual(tr('这个问题很难。'), 'この問題は / とても難しい')
+
+
+    def test_complements(self):   # 結果・方向・可能・様態の補語
+        self.assertEqual(tr('我看完了这本书。'), '私が / この本を / 見終えた,読み終えた')
+        self.assertEqual(tr('他走进来了。'), '彼が / 歩いて入って来た')
+        self.assertEqual(tr('我听得懂中文。'), '私が / 中国語を / 聞いて分かることができる')
+        self.assertEqual(tr('我看不懂这本书。'), '私が / この本を / 読んで分かることができない')
+        self.assertEqual(tr('他跑得很快。'), '彼が / とても速く走る')
+        self.assertEqual(tr('我想起来了。'), '私が / 思い出した')
+
+    def test_subject_adverbs_and_people(self):
+        self.assertEqual(tr('如果你去，我也去。'), '{あなたが 行く}なら / 私も / 行く')
+        self.assertEqual(tr('我们都是学生。'), '私たちはみな / 学生である')
+        self.assertEqual(tr('我有两个朋友。'), '私が / 二人の友人を / 持つ,ある')   # 人を数える 个
 
 
 @unittest.skipUnless(HAVE_DATA, '中国語のデータが無い')

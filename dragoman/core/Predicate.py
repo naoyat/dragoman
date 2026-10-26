@@ -123,6 +123,23 @@ class Predicate (LatinObject):
             return False
         return 'animate' if _animate(noms[0]) else True
 
+    def _accusative(self, case_slot, tr):
+        """対格の枠の訳を tr に足す (枠は空にする)。否定の語があれば True"""
+        acc_objs = case_slot['Acc']
+        case_slot['Acc'] = []
+        accs, negated = [], False
+        for obj in acc_objs:
+            t, neg = obj.translate()
+            if neg: negated = True
+            accs.append(t)
+        accs = [braced(acc[:-1] if acc[-1:] == 'が' else acc) for acc in accs]
+        particles = [self._particle('Acc', obj) for obj in acc_objs]
+        if any(particles):
+            tr.append('='.join(t + (p or 'を') for t, p in zip(accs, particles)))  # 時の対格「〜の間」など
+        else:
+            tr.append('='.join(accs) + 'を')
+        return negated
+
     def translate(self):
         # 訳の組み立てで格スロットを並べ替えるので、作業用のコピーを使う
         # (self.case_slot を書き換えると、表示や再度の translate() の結果が変わってしまう)
@@ -270,6 +287,10 @@ class Predicate (LatinObject):
             if getattr(clause, 'adverbial', False):
                 tr.append(clause.translate()[0])
 
+        if verb.attrib('object_first') and case_slot.get('Acc'):
+            # 目的語を先に (中国語の把構文: 他把书放在桌子上「彼が / 本を / 机の上に / 置く」)
+            negated = self._accusative(case_slot, tr) or negated
+
         for case, objs in list(case_slot.items()):
             if case in ('Nom', 'Nom/Acc', 'Acc', 'Inf', 'Q'): continue
             if not objs: continue
@@ -301,20 +322,8 @@ class Predicate (LatinObject):
                 tr.append('='.join(trs) + case_ja)
 
         # Accusative
-        if 'Acc' in case_slot:
-            acc_objs = case_slot['Acc']
-            case_slot['Acc'] = []
-            accs = []
-            for obj in acc_objs:
-                t, neg = obj.translate()
-                if neg: negated = True
-                accs.append(t)
-            accs = [braced(acc[:-1] if acc[-1:] == 'が' else acc) for acc in accs]
-            particles = [self._particle('Acc', obj) for obj in acc_objs]
-            if any(particles):
-                tr.append('='.join(t + (p or 'を') for t, p in zip(accs, particles)))  # 時の対格「〜の間」など
-            else:
-                tr.append('='.join(accs) + 'を') #[acc for acc in accs]))
+        if case_slot.get('Acc'):
+            negated = self._accusative(case_slot, tr) or negated
 
         # 不定詞句 ({少年が 遊ぶ}と / {本を 読む}ことが)
         for clause in case_slot.get('Inf', []):

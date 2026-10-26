@@ -56,6 +56,8 @@ def explain(word):
     out = []
     if item.attrib('form'):
         out.append(item.attrib('form'))
+    if item.attrib('ba_object'):
+        out.append('把 の目的語 (動詞の前に出した目的語)')
     if item.attrib('relative'):
         out.append('連体修飾節: %s (名詞に掛ける)' % item.attrib('relative'))
     return out
