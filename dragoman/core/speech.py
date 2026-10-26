@@ -53,13 +53,13 @@ MMS_SENTENCE_PAUSE = 0.4  # 秒 (区切り記号 ། ごと)
 # macOS の say の言語ごとの音声 (現代語の読み方になる)
 SAY_VOICES = {'ru': 'Milena', 'sa': 'Lekha', 'grc': 'Melina', 'he': 'Carmit', 'ar': 'Majed', 'hi': 'Lekha', 'ja': 'Kyoko',
               'id': 'Damayanti', 'ms': 'Amira', 'ain': 'Kyoko', 'ko': 'Yuna', 'de': 'Anna', 'fr': 'Thomas', 'tr': 'Yelda', 'fi': 'Satu',
-              'en': 'Samantha', 'pt': 'Luciana'}
+              'en': 'Samantha', 'pt': 'Luciana', 'zh': 'Tingting'}
 # 方式を指定しないときに試す順 (言語ごと。無ければ DEFAULT_BACKEND → FALLBACK_BACKEND)
 LANGUAGE_BACKENDS = {'ru': ('say', 'espeak'), 'he': ('say', 'espeak'), 'ar': ('say', 'espeak'), 'fa': ('espeak',),
                      'hi': ('say', 'espeak'), 'ur': ('espeak',), 'ja': ('say',), 'bo': ('mms', 'espeak'),
                      'id': ('say', 'espeak'), 'ms': ('say', 'espeak'), 'tl': ('espeak',), 'ko': ('say', 'espeak'), 'de': ('say', 'espeak'), 'fr': ('say', 'espeak'), 'tr': ('say', 'espeak'), 'fi': ('say', 'espeak'),
                      'ain': ('espeak', 'say'), 'ang': ('espeak',), 'haw': ('espeak',), 'en': ('say', 'espeak'),
-                     'mn': ('espeak',), 'pt': ('say', 'espeak')}
+                     'mn': ('espeak',), 'pt': ('say', 'espeak'), 'zh': ('say', 'espeak')}
 # MBROLA の声で読む言語 (表に無いほかの言語を MBROLA のラテン語の声で読まない)
 MBROLA_LANGUAGES = ('la', 'grc', 'sa')
 DEFAULT_BACKEND = 'mbrola'
@@ -75,7 +75,7 @@ pronunciation = 'attic'  # ギリシア語の発音の流儀 (attic / koine / er
 ESPEAK_VOICES = {'la': 'la', 'grc': 'grc', 'sa': 'hi', 'ru': 'ru', 'he': 'he', 'ar': 'ar', 'fa': 'fa', 'hi': 'hi', 'ur': 'ur',
                  'bo': 'cmn', 'id': 'id', 'ms': 'ms', 'ko': 'ko', 'de': 'de', 'fr': 'fr', 'tr': 'tr', 'fi': 'fi',
                  'tl': 'id', 'ain': 'id', 'ang': 'de', 'haw': 'haw', 'en': 'en-us',
-                 'mn': 'ky', 'pt': 'pt-br'}  # モンゴル語の音声が無いので、キリル文字の読みの近いキルギス語の音声で。タガログ語の音声が無いので、綴りと発音の近いインドネシア語の音声で  # チベット語は普通話の音声に音素 ([[...]]。tibetan/phonology.py) で渡す
+                 'mn': 'ky', 'pt': 'pt-br', 'zh': 'cmn'}  # モンゴル語の音声が無いので、キリル文字の読みの近いキルギス語の音声で。タガログ語の音声が無いので、綴りと発音の近いインドネシア語の音声で  # チベット語は普通話の音声に音素 ([[...]]。tibetan/phonology.py) で渡す
 # サンスクリットを読む MBROLA のヒンディー語音声 (in1 男声 / in2 女声)
 SANSKRIT_VOICE = os.path.join(MBROLA_HOME, 'voices', 'in1', 'in1')
 # 現代ギリシア語式 (--pron=modern) で読む MBROLA の現代ギリシア語音声 (gr1 / gr2)

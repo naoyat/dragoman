@@ -71,7 +71,21 @@ def kobun_segments(text, **options):
     return [{'text': s, 'start': a, 'end': b, 'kana': k} for s, a, b, k in tokens(text, **options)]
 
 
-SEGMENTED = {'bo': tibetan_segments, 'kobun': kobun_segments}   # 空白で語を区切らない言語: 言語 → (文 → 区切りの列)
+def chinese_segments(text, **options):
+    """中国語: 語に切り分けて (chinese/segment.py)、語ごとに拼音から"""
+    from dragoman.chinese.segment import segment
+    from dragoman.chinese.katakana import katakana
+    out, pos = [], 0
+    for word in segment(text):
+        start = text.find(word, pos)
+        if start < 0:
+            continue
+        pos = start + len(word)
+        out.append({'text': word, 'start': start, 'end': pos, 'kana': katakana(word)})
+    return out
+
+
+SEGMENTED = {'bo': tibetan_segments, 'kobun': kobun_segments, 'zh': chinese_segments}   # 空白で語を区切らない言語: 言語 → (文 → 区切りの列)
 
 
 def tokens(text):

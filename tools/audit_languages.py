@@ -64,6 +64,8 @@ PROBES = {
     'haw': {'question': 'Aia i hea ʻoe e noho ai?'},
     'pt': {'question': 'Onde você mora?', 'adverbial': 'Quando ele chegou, eu o vi.', 'relative': 'O homem que veio me viu.',
            'indirect': 'Eu não sei onde ele mora.'},
+    'zh': {'question': '你住在哪儿？', 'adverbial': '因为下雨，我没去。', 'relative': '我买的书很有意思。',
+           'indirect': '我知道他住在哪儿。'},
     'en': {'question': 'Where do you live?', 'adverbial': 'When he came, I saw him.', 'relative': 'The man who came saw me.',
            'indirect': "I don't know where he lives."},
 }

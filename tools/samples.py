@@ -28,6 +28,7 @@
 #   python3 tools/samples.py --lang=de       # ドイツ語 (samples/german.txt。グリム童話の古い綴りも)
 #   python3 tools/samples.py --lang=fr       # フランス語 (samples/french.txt)
 #   python3 tools/samples.py --lang=pt       # ポルトガル語 (samples/portuguese.txt)
+#   python3 tools/samples.py --lang=zh       # 中国語 (samples/chinese.txt)
 #   python3 tools/samples.py --lang=tr       # トルコ語 (samples/turkish.txt)。語順のままの訳 (≒) も
 #   python3 tools/samples.py --lang=mn       # モンゴル語 (samples/mongolian.txt)。語順のままの訳 (≒) も
 #   python3 tools/samples.py --lang=fi       # フィンランド語 (samples/finnish.txt)
@@ -68,10 +69,10 @@ LANG_FILES = {'la': DEFAULT_FILE, 'grc': os.path.join(ROOT, 'samples', 'greek.tx
               'fi': os.path.join(ROOT, 'samples', 'finnish.txt'), 'fr': os.path.join(ROOT, 'samples', 'french.txt'),
               'ang': os.path.join(ROOT, 'samples', 'oldenglish.txt'),
               'haw': os.path.join(ROOT, 'samples', 'hawaiian.txt'),
-              'pt': os.path.join(ROOT, 'samples', 'portuguese.txt')}
+              'pt': os.path.join(ROOT, 'samples', 'portuguese.txt'), 'zh': os.path.join(ROOT, 'samples', 'chinese.txt')}
 # 解析器のモジュール名 (dragoman.<名前>.analyzer の analyze_text をそのまま使う言語)
 ANALYZER_MODULES = {'ko': 'korean', 'de': 'german', 'fr': 'french', 'tr': 'turkish', 'mn': 'mongolian', 'fi': 'finnish',
-                    'ang': 'oldenglish', 'haw': 'hawaiian', 'pt': 'portuguese'}
+                    'ang': 'oldenglish', 'haw': 'hawaiian', 'pt': 'portuguese', 'zh': 'chinese'}
 
 
 def analyzer_for(lang):

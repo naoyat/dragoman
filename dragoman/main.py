@@ -25,7 +25,7 @@
 #                 フランス語らしい語 (le, est, que …) かアクセント記号・エリジオン → fr、
 #                 ğ・ı・ş か トルコ語らしい語 → tr、フィンランド語らしい語 (ja, on, ei …) → fi、ドイツ語らしい語
 #                 (der, und, ist …) かウムラウト・ß → de、the か英語らしい語 (and, of, you …) → en、
-#                 ө・ү のあるキリル文字 → mn、ハングル → ko、かな交じりの日本語 → kobun)
+#                 ө・ү のあるキリル文字 → mn、ハングル → ko、かな交じりの日本語 → kobun、かなの無い漢字 → zh)
 #   -e, --text=TEXT       引数の文を入力にする (何度でも。ファイル・標準入力の代わりに)
 #   -L, --languages       対応している言語の一覧を出す
 #
@@ -43,11 +43,11 @@ import tempfile
 LANGUAGES = {'la': 'latin', 'grc': 'greek', 'sa': 'sanskrit', 'ru': 'russian', 'he': 'hebrew', 'ar': 'arabic',
              'fa': 'persian', 'hi': 'hindi', 'ur': 'urdu', 'bo': 'tibetan', 'id': 'indonesian', 'ms': 'malay',
              'tl': 'tagalog', 'ko': 'korean', 'de': 'german', 'fr': 'french', 'tr': 'turkish', 'mn': 'mongolian', 'fi': 'finnish', 'ang': 'oldenglish', 'haw': 'hawaiian', 'ain': 'ainu', 'kobun': 'kobun', 'en': 'english',
-             'pt': 'portuguese'}
+             'pt': 'portuguese', 'zh': 'chinese'}
 NAMES = {'la': 'ラテン語', 'grc': '古典ギリシア語', 'sa': 'サンスクリット', 'ru': 'ロシア語',
          'he': '聖書ヘブライ語 (聖書アラム語も)', 'ar': 'アラビア語 (現代標準アラビア語)', 'fa': 'ペルシア語',
          'hi': 'ヒンディー語', 'ur': 'ウルドゥー語', 'bo': '古典チベット語', 'id': 'インドネシア語', 'ms': 'マレー語', 'tl': 'タガログ語', 'ko': '韓国語', 'de': 'ドイツ語', 'fr': 'フランス語', 'tr': 'トルコ語', 'mn': 'モンゴル語', 'fi': 'フィンランド語', 'ang': '古英語', 'haw': 'ハワイ語', 'ain': 'アイヌ語', 'kobun': '古文 (平安の和文。現代語に組み立て直す)', 'en': '英語 (現代英語)',
-         'pt': 'ポルトガル語 (ブラジル・ポルトガル)'}
+         'pt': 'ポルトガル語 (ブラジル・ポルトガル)', 'zh': '中国語 (普通話。簡体字・繁体字)'}
 CODE = re.compile('^[a-z]{2,5}$')
 INDONESIAN_WORDS = {'yang', 'dan', 'di', 'ini', 'itu', 'dengan', 'untuk', 'tidak', 'adalah', 'akan', 'dari', 'ke', 'pada',
                     'saya', 'mereka', 'ada', 'sudah', 'juga', 'dalam', 'oleh', 'bahwa', 'bahawa', 'kami', 'kita'}
@@ -92,6 +92,7 @@ def detect(text):
         'ko': len(re.findall('[\uac00-\ud7a3\u1100-\u11ff\u3130-\u318f]', text)) * 3,  # ハングル
         'la': len(re.findall('[A-Za-zāēīōūȳĀĒĪŌŪ]', text)),
         'kobun': len(re.findall('[\u3040-\u30ff]', text)) * 2,  # かな (日本語の文は古文として)
+        'zh': len(re.findall('[\u3400-\u9fff]', text)) if not re.search('[\u3040-\u30ff]', text) else 0,   # かなの無い漢字
     }
     best = max(counts, key=counts.get)
     if counts[best] == 0:

@@ -63,7 +63,7 @@ class SamplesTestCase(unittest.TestCase):
         import importlib
         for lang, module in (('ko', 'korean'), ('de', 'german'), ('tr', 'turkish'), ('mn', 'mongolian'),
                              ('fi', 'finnish'), ('fr', 'french'), ('ms', 'indonesian'), ('ang', 'oldenglish'),
-                             ('haw', 'hawaiian'), ('pt', 'portuguese')):
+                             ('haw', 'hawaiian'), ('pt', 'portuguese'), ('zh', 'chinese')):
             try:
                 langs.append((lang, importlib.import_module('dragoman.%s.command' % module).available()))
             except ImportError:

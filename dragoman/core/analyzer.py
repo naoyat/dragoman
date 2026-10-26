@@ -1032,6 +1032,9 @@ def _clause_start(node):
     return False
 
 
+COMMAS = (',', '，', '、', '،')   # 節を分けるカンマ (中国語・日本語の全角、アラビア文字)
+
+
 def _group_by_verbs(words, verbs_ix, trace):
     """動詞が複数あるとき、語を動詞ごとのグループに分ける"""
     M = len(words)
@@ -1074,14 +1077,14 @@ def _group_by_verbs(words, verbs_ix, trace):
                              words[k].items[0].pos == 'conj'), None)
                 if conj is not None and language.current().interrogatives:
                     well_divided_at = conj - 1
-                comma = next((k for k in range(j - 1, fr - 1, -1) if words[k].surface == ','), None)
+                comma = next((k for k in range(j - 1, fr - 1, -1) if words[k].surface in COMMAS), None)
                 if comma is not None and isinstance(words[j], Word) and words[j].items and \
                         words[j].items[0].attrib('proclitic'):
                     well_divided_at = comma   # 前の接語の前にカンマがあればそこで (Quando ele chegou, | eu o vi)
                 break
         if well_divided_at is None:
             for j in range(fr, to+1):
-                if words[j].surface == ',':
+                if words[j].surface in COMMAS:
                     well_divided_at = j
                     break
         if well_divided_at is None:
@@ -1116,7 +1119,7 @@ def _group_by_verbs(words, verbs_ix, trace):
     for j in first[1:]:
         word = words[j]
         if isinstance(word, Word) and word.items and word.items[0].attrib('clause_suffix'):
-            fronted = [k for k in first[:first.index(j)] if words[k].surface != ',']
+            fronted = [k for k in first[:first.index(j)] if words[k].surface not in COMMAS]
             if fronted and not any(isinstance(words[k], Word) and words[k].items and
                                    words[k].items[0].pos == 'conj' for k in fronted[1:]):   # 頭の at・sed は主節と
                 groups[1] = fronted + groups[1]
