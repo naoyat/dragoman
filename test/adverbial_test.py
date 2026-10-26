@@ -103,6 +103,11 @@ class AdverbialTestCase(unittest.TestCase):
         self.assertIn('来て} / ', translate('mongolian', 'Би гэртээ ирээд хоол идсэн.'))
         self.check('mongolian', 'Тэр ирэхэд би түүнийг харсан.', 'とき')   # -хад
 
+    def test_shared_subject(self):   # 主語の無い節の人称・数が主節と同じなら、主語は補わない
+        self.assertEqual(translate('portuguese', 'Ela disse que me ama.'), '{彼女,それ}が / {私を 愛する}と / 言った')
+        self.assertTrue(translate('latin', 'Cum vēnit, eum vīdit.').startswith('{来た}とき / '))
+        self.assertTrue(translate('latin', 'Cum vēnit, eum vīdī.').startswith('{{彼,彼女,それ}が 来た}とき / '))   # 人称が違う
+
     def test_russian(self):
         self.check('russian', 'Когда он пришёл, я увидел его.', 'とき')
         self.check('russian', 'Я остался дома, потому что шёл дождь.', 'ので')

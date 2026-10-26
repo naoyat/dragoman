@@ -16,9 +16,10 @@ from .LatinObject import LatinObject
 class AdverbialClause(LatinObject):
     adverbial = False   # 主節の訳の頭に置く (Predicate.translate の従属節)
 
-    def __init__(self, predicate, conjunction):
+    def __init__(self, predicate, conjunction, main=None):
         self.predicate = predicate
         self.conjunction = conjunction
+        self.main = main   # 主節の述語 (主語を共有するかを見る)
         # 目的語の働きの節 (補文「〜ことを」) は主語の後ろに (私が / {君が 来る}ことを / 知っている)
         self.adverbial = (conjunction.items[0].attrib('clause_suffix') or '') in ('ことを', 'ことも') or \
             bool(conjunction.items[0].attrib('complement'))   # 補文「〜と」(ポルトガル語の disse que …)
@@ -35,6 +36,8 @@ class AdverbialClause(LatinObject):
             verb.item['tense'] = tense
         if item.attrib('clause_negate') and not self.predicate._negative():
             verb.item['negative'] = True   # sans que「〜しないまま」(否定の無い節を否定に。ne の付いた節はそのまま)
+        if self._shares_subject():
+            verb.item['shared_subject'] = True   # 主語の無い節の人称・数が主節と同じなら、主語は補わない
         try:
             inner, _ = self.predicate.translate()
         finally:
@@ -48,6 +51,25 @@ class AdverbialClause(LatinObject):
             verb = ','.join(attach_auxiliary(v, suffix) for v in verb.split(','))
             return ('{' + (head + ' ' if head else '') + verb + '}', False)
         return ('{' + inner + '}' + suffix, False)
+
+
+def _subject_words(predicate):
+    return [o for o in predicate.case_slot.get('Nom', []) + predicate.case_slot.get('Nom/Acc', [])]
+
+
+def _shares(self):
+    main = self.main
+    pred = self.predicate
+    if main is None or _subject_words(pred) or getattr(pred, 'gap', None) in ('Nom', 'Nom/Acc'):
+        return False
+    try:
+        return pred.person() == main.person() and pred.number() == main.number() and \
+            pred.first_item.attrib('mood') not in ('imperative', 'infinitive')
+    except Exception:
+        return False
+
+
+AdverbialClause._shares_subject = _shares
 
 
 def mark_subordinators(words, table):

@@ -247,6 +247,8 @@ class Predicate (LatinObject):
                        '1pl':'我々', '2pl':'あなた方', '3pl':'彼ら,彼女ら,それら'}
             if verb.attrib('subject_ja'):
                 noms.append(verb.attrib('subject_ja'))   # 解析器が決めた補う主語 (前の節の nous「私たち」)
+            elif verb.attrib('shared_subject'):
+                pass   # 主節と同じ主語は補わない (Ela disse que me ama「彼女が {私を 愛する}と 言った」。core/Adverbial.py)
             elif pn in subj_ja:
                 noms.append(subj_ja[pn])
 

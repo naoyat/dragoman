@@ -1344,7 +1344,7 @@ def _adverbial_clauses_before(clauses, trace):
             continue
         main.conjunction = None
         sub.predicate.subordinate = True
-        main.add_subordinate(AdverbialClause(sub.predicate, conj))
+        main.add_subordinate(AdverbialClause(sub.predicate, conj, main))
         clauses[k].not_solved.extend(sub.not_solved)
         out.remove(sub)
         trace.append('// ADVERBIAL %s (%s) -> VERB %s' % (sub.predicate.surface, conj.surface, main.surface))
@@ -1385,7 +1385,7 @@ def detect_adverbial_clauses(clauses, trace):
         if coordinator is not None:
             main.conjunction = coordinator
         q.predicate.subordinate = True
-        main.add_subordinate(AdverbialClause(q.predicate, conj))
+        main.add_subordinate(AdverbialClause(q.predicate, conj, main))
         out[target].not_solved.extend(q.not_solved)
         out.remove(q)
         trace.append('// ADVERBIAL %s (%s) -> VERB %s' % (q.predicate.surface, conj.surface, main.surface))
