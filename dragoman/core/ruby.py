@@ -30,7 +30,7 @@ WORD_KANA = {
     'id': ('dragoman.indonesian.katakana', 'katakana'), 'ms': ('dragoman.indonesian.katakana', 'katakana'),
     'tl': ('dragoman.tagalog.katakana', 'katakana'), 'hi': ('dragoman.hindi.katakana', 'word_katakana'),
     'ur': ('dragoman.urdu.katakana', 'word_katakana'), 'he': ('dragoman.hebrew.katakana', 'word_katakana'),
-    'ain': ('dragoman.ainu.katakana', 'katakana'),
+    'ain': ('dragoman.ainu.katakana', 'katakana'), 'pt': ('dragoman.portuguese.katakana', 'katakana'),
 }
 RUBY_WORDS = {'fr': 'dragoman.french.katakana', 'en': 'dragoman.english.katakana', 'ru': 'dragoman.core.ruby', 'la': 'dragoman.core.ruby',
               'ar': 'dragoman.core.ruby', 'fa': 'dragoman.core.ruby'}

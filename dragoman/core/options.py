@@ -41,6 +41,8 @@ COMMON = (
     Option('kana-accent', value='ACCENT', help='英語のカタカナ読みの発音: us (既定。米音、CMUdict) / gb (英音、espeak-ng)'),
     Option('kana-small', value='ON|OFF', help='アイヌ語のカタカナの音節末の子音: on (既定。小書きの ㇰ・ㇼ・ㇷ゚ …) / off (閉鎖音は ッ、\n'
                                          'r・h は前の母音の段: チェッ・ピリカ)'),
+    Option('kana-pt', value='BR|PT', help='ポルトガル語のカタカナ読みの発音: br (既定。ブラジル: ノイチ・スィダジ) / pt\n'
+                                          '(ポルトガル: ノイト・スィダド)'),
     Option('kana-hebrew', value='STYLE', help='聖書ヘブライ語のカタカナ読み: early (既定。摩擦音化の前の古い時代: ベレーシート)\n'
                                             '/ tiberian (母音記号どおりのティベリア式: ベレーシース・ダーヴァール)'),
     Option('kana-kobun', value='STYLE', help='古文のカタカナ読み: modern (既定。今の発音: オモウ・サブライ) / historical\n'
@@ -68,7 +70,7 @@ COMMON = (
 # ラテン語のコマンド (latin/main.py) が受け付ける共通のオプション (-r・--no-explain などはラテン語では使わない。
 # --sentence-per-line は入口 main.py が処理する) と、ラテン語だけのもの
 LATIN_COMMON = ('no-word-detail', 'descendants', 'etymology', 'speech', 'tts', 'html', 'pdf', 'marks', 'legend',
-                'provenance', 'compare', 'gaps', 'help', 'kana', 'kana-only', 'kana-long', 'kana-wa', 'kana-si', 'kana-oe', 'kana-accent', 'kana-small', 'kana-kobun', 'kana-hebrew', 'kana-json',
+                'provenance', 'compare', 'gaps', 'help', 'kana', 'kana-only', 'kana-long', 'kana-wa', 'kana-si', 'kana-oe', 'kana-accent', 'kana-small', 'kana-kobun', 'kana-hebrew', 'kana-pt', 'kana-json',
                 'kana-liaison')
 LATIN = tuple(o for o in COMMON if o.long in LATIN_COMMON) + (
     Option('no-translation', 'q', help='訳 (日本語) を表示しない'),
@@ -80,6 +82,9 @@ LATIN = tuple(o for o in COMMON if o.long in LATIN_COMMON) + (
 
 # 言語ごとのコマンド (<言語>/command.py) だけのもの。入口 main.py が解析器を読み込まずに集められるよう、ここに置く
 LANGUAGE = {
+    'pt': (   # ポルトガル語
+        Option('variety', value='BR|PT', help='ブラジル (br。既定) / ポルトガル (pt): 音読の声とカタカナ読みの発音'),
+    ),
     'he': (   # ヘブライ語
         Option('divine-name', value='MODE', help='音読での神の名 יְהוָה の読み方: adonai (既定。ヒリクの形はエロヒム) /\n'
                                                  'hashem「ハシェム」/ literal (字面のまま)'),

@@ -138,6 +138,8 @@ def parse(command, argv):
             options.kana_options['kobun'] = arg
         elif option == '--kana-hebrew':
             options.kana_options['hebrew'] = arg
+        elif option == '--kana-pt':
+            options.kana_options['pt'] = arg
         elif option == '--no-explain':
             options.explain = False
         elif option in ('-l', '--sentence-per-line'):

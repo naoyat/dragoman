@@ -1,0 +1,31 @@
+# ポルトガル語のサンプル (python3 tools/samples.py --lang=pt で表示する)
+#
+# 自作の文。「## 見出し」で節を分ける。ブラジルとポルトガルの両方の言い方を入れる
+
+## 基本の語順 (主語-動詞-目的語)、冠詞・前置詞の縮約形
+O menino leu o livro da professora na escola.
+A menina mora no Rio de Janeiro.
+Eu quero falar português.
+
+## 接語の代名詞 (動詞の前・後ろ)
+Você me deu o livro?
+Dei-lhe o livro.
+Ela me disse a verdade.
+
+## 動詞の組 (完了・受動・進行・未来)
+Ela tinha comido o bolo.
+A casa foi construída pelo pai.
+Estou lendo um livro.
+Estou a ler um livro.
+Vou comer no restaurante.
+Tenho que estudar.
+
+## 節 (副詞節・補文・関係節・間接疑問)
+Quando ele chegou, eu o vi.
+Ela disse que me ama.
+O homem que veio me viu.
+Eu não sei onde ele mora.
+
+## 存在・所有
+Há muitas pessoas aqui.
+O livro dele é bonito.

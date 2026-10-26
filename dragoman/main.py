@@ -21,7 +21,8 @@
 #                 チベット文字 → bo、インドネシア語らしい語 (yang, dan, di, ini, itu …) が2つ以上あるラテン文字 → id
 #                 (マレー語らしい語 kerana, sahaja, bahawa … があれば ms)、タガログ語らしい語 (ang, ng, mga, ay …) → tl、
 #                 アイヌ語らしい語 (kamuy, kotan, wa, kor, ne …) → ain、ʻokina か長音符とハワイ語の字だけ → haw、
-#                 þ・ð・ƿ・ġ・ċ → ang、フランス語らしい語 (le, est, que …) かアクセント記号・エリジオン → fr、
+#                 þ・ð・ƿ・ġ・ċ → ang、ã・õ・-ção・lh・nh かポルトガル語らしい語 (não, você, um, com …) → pt、
+#                 フランス語らしい語 (le, est, que …) かアクセント記号・エリジオン → fr、
 #                 ğ・ı・ş か トルコ語らしい語 → tr、フィンランド語らしい語 (ja, on, ei …) → fi、ドイツ語らしい語
 #                 (der, und, ist …) かウムラウト・ß → de、the か英語らしい語 (and, of, you …) → en、
 #                 ө・ү のあるキリル文字 → mn、ハングル → ko、かな交じりの日本語 → kobun)
@@ -41,10 +42,12 @@ import tempfile
 
 LANGUAGES = {'la': 'latin', 'grc': 'greek', 'sa': 'sanskrit', 'ru': 'russian', 'he': 'hebrew', 'ar': 'arabic',
              'fa': 'persian', 'hi': 'hindi', 'ur': 'urdu', 'bo': 'tibetan', 'id': 'indonesian', 'ms': 'malay',
-             'tl': 'tagalog', 'ko': 'korean', 'de': 'german', 'fr': 'french', 'tr': 'turkish', 'mn': 'mongolian', 'fi': 'finnish', 'ang': 'oldenglish', 'haw': 'hawaiian', 'ain': 'ainu', 'kobun': 'kobun', 'en': 'english'}
+             'tl': 'tagalog', 'ko': 'korean', 'de': 'german', 'fr': 'french', 'tr': 'turkish', 'mn': 'mongolian', 'fi': 'finnish', 'ang': 'oldenglish', 'haw': 'hawaiian', 'ain': 'ainu', 'kobun': 'kobun', 'en': 'english',
+             'pt': 'portuguese'}
 NAMES = {'la': 'ラテン語', 'grc': '古典ギリシア語', 'sa': 'サンスクリット', 'ru': 'ロシア語',
          'he': '聖書ヘブライ語 (聖書アラム語も)', 'ar': 'アラビア語 (現代標準アラビア語)', 'fa': 'ペルシア語',
-         'hi': 'ヒンディー語', 'ur': 'ウルドゥー語', 'bo': '古典チベット語', 'id': 'インドネシア語', 'ms': 'マレー語', 'tl': 'タガログ語', 'ko': '韓国語', 'de': 'ドイツ語', 'fr': 'フランス語', 'tr': 'トルコ語', 'mn': 'モンゴル語', 'fi': 'フィンランド語', 'ang': '古英語', 'haw': 'ハワイ語', 'ain': 'アイヌ語', 'kobun': '古文 (平安の和文。現代語に組み立て直す)', 'en': '英語 (現代英語)'}
+         'hi': 'ヒンディー語', 'ur': 'ウルドゥー語', 'bo': '古典チベット語', 'id': 'インドネシア語', 'ms': 'マレー語', 'tl': 'タガログ語', 'ko': '韓国語', 'de': 'ドイツ語', 'fr': 'フランス語', 'tr': 'トルコ語', 'mn': 'モンゴル語', 'fi': 'フィンランド語', 'ang': '古英語', 'haw': 'ハワイ語', 'ain': 'アイヌ語', 'kobun': '古文 (平安の和文。現代語に組み立て直す)', 'en': '英語 (現代英語)',
+         'pt': 'ポルトガル語 (ブラジル・ポルトガル)'}
 CODE = re.compile('^[a-z]{2,5}$')
 INDONESIAN_WORDS = {'yang', 'dan', 'di', 'ini', 'itu', 'dengan', 'untuk', 'tidak', 'adalah', 'akan', 'dari', 'ke', 'pada',
                     'saya', 'mereka', 'ada', 'sudah', 'juga', 'dalam', 'oleh', 'bahwa', 'bahawa', 'kami', 'kita'}
@@ -70,6 +73,10 @@ ENGLISH_WORDS = {'the', 'and', 'of', 'to', 'that', 'it', 'you', 'was', 'for', 'a
                  'would', 'about', 'which', 'their', 'been', 'an', 'or', 'but', 'by', 'at', 'on', "don't", "it's",
                  'he', 'his', 'her', 'him', 'them', 'our', 'is', 'very', 'gave', 'does', 'did', 'had', 'said', 'do', 'like',
                  'please', 'some', 'give', 'want', 'go', 'how', 'why', 'where', 'who', 'when', 'if', 'yes', 'know'}
+PORTUGUESE_WORDS = {'o', 'os', 'de', 'que', 'em', 'e', 'não', 'você', 'vocês', 'um', 'uma', 'com', 'para', 'está', 'eu', 'ele', 'ela', 'muito', 'mais',
+                    'mas', 'como', 'isso', 'isto', 'meu', 'minha', 'pelo', 'pela', 'do', 'da', 'dos', 'das', 'no', 'na',
+                    'nos', 'nas', 'ao', 'aos', 'também', 'são', 'foi', 'tem', 'há', 'sim', 'obrigado', 'obrigada',
+                    'seu', 'sua', 'até', 'quando', 'onde', 'porque', 'então', 'agora', 'aqui', 'ainda', 'já', 'nós'}
 HINDI_WORDS = {'है', 'हैं', 'का', 'की', 'के', 'में', 'नहीं', 'को', 'से', 'ने', 'था', 'थी', 'और', 'पर', 'भी'}
 
 
@@ -111,6 +118,10 @@ def detect(text):
         if re.search('[þðƿȜȝ]|[ġċ]', text.lower()) or 'æ' in text.lower() and len(oe & OLD_ENGLISH_WORDS) >= 2:
             return 'ang'  # 古英語 (þ ð ƿ ġ ċ、æ と and・se・wæs …。ラテン語の æ (Cæsar) は除く)
         whole = set(re.findall(r"[a-zà-öø-ÿāēīōūȳœæ]+", text.lower()))   # 長音符の字で切らない (dīvīsa の sa を数えない)
+        portuguese = len(whole & PORTUGUESE_WORDS)
+        if re.search('[ãõ]|ção|ções|lh[aeiou]|nh[aeiou]', text.lower()) and not re.search('[äöüßëœ]', text.lower()) or \
+                portuguese >= 2 and portuguese > len(whole & FRENCH_WORDS):
+            return 'pt'  # ラテン文字のポルトガル語 (ã・õ・-ção・lh・nh か não, você, um, com, para …)
         french = len(whole & FRENCH_WORDS)
         if french >= 2 and french > len(words & GERMAN_WORDS) and french > len(words & TURKISH_WORDS) or \
                 re.search("[éèêàœùâîôû]|\\b[ldjmtsnc]'|\\bqu'", text.lower()) and not re.search('[äöüğış]', text.lower()):
@@ -162,7 +173,7 @@ def value_short():
 
 KANA_VALUE_OPTIONS = {'--kana-long': 'long', '--kana-wa': 'wa', '--kana-si': 'si', '--kana-oe': 'oe',
                       '--kana-accent': 'accent', '--kana-small': 'small', '--kana-kobun': 'kobun',
-                      '--kana-hebrew': 'hebrew'}
+                      '--kana-hebrew': 'hebrew', '--kana-pt': 'pt'}
 
 
 def kana_json(lang, args, texts):

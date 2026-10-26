@@ -1024,6 +1024,8 @@ def _clause_start(node):
     if isinstance(node, Word):
         if node.items and language.current().interrogatives and is_interrogative(node):
             return True   # 言語の設定の疑問詞は間接疑問の節の頭 (Ich weiß nicht, | wo er wohnt)
+        if node.items and node.items[0].attrib('proclitic'):
+            return True   # 動詞の前の接語は後ろの動詞の節 (ポルトガル語の O homem que veio | me viu)
         return bool(node.items) and bool(node.items[0].attrib('clause_start') or node.items[0].attrib('clause_suffix'))
     if isinstance(node, PrepClause):
         return bool(node.item.attrib('clause_start')) or any(_clause_start(w) for w in node.words[:1])
@@ -1072,6 +1074,10 @@ def _group_by_verbs(words, verbs_ix, trace):
                              words[k].items[0].pos == 'conj'), None)
                 if conj is not None and language.current().interrogatives:
                     well_divided_at = conj - 1
+                comma = next((k for k in range(j - 1, fr - 1, -1) if words[k].surface == ','), None)
+                if comma is not None and isinstance(words[j], Word) and words[j].items and \
+                        words[j].items[0].attrib('proclitic'):
+                    well_divided_at = comma   # 前の接語の前にカンマがあればそこで (Quando ele chegou, | eu o vi)
                 break
         if well_divided_at is None:
             for j in range(fr, to+1):
