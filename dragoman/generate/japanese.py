@@ -77,6 +77,23 @@ def gloss(lex):
     return ja.split(',')[0] if ja else (lex.surface or lex.lemma)
 
 
+# 数詞 (ラテン語の見出し) → 漢数字。人は「〜人」、ほかは「〜つ」(十以上は数だけ)
+NUMERALS = {'ūnus': '一', 'duo': '二', 'trēs': '三', 'quattuor': '四', 'quīnque': '五', 'sex': '六', 'septem': '七',
+            'octō': '八', 'novem': '九', 'decem': '十', 'centum': '百', 'mīlle': '千'}
+
+
+def _numeral(np):
+    return next((m for m in np.modifiers if not hasattr(m, 'members') and m.lemma in NUMERALS), None)
+
+
+def count(numeral, np):
+    """数詞 + 助数詞 (二人・三つ・十)"""
+    n = NUMERALS[numeral.lemma]
+    if np.animate:
+        return {'一': '一人', '二': '二人'}.get(n, n + '人')
+    return n + 'つ' if numeral.lemma not in ('decem', 'centum', 'mīlle') else n
+
+
 def noun_phrase(np):
     if np.members:
         return 'と'.join(noun_phrase(m) for m in np.members)
@@ -93,8 +110,8 @@ def noun_phrase(np):
         word = DEMONSTRATIVE_NOUNS[head.lemma]
     else:
         word = gloss(head)
-        if np.number == 'pl' and np.animate and not word.endswith('たち'):
-            word += 'たち'
+        if np.number == 'pl' and np.animate and not word.endswith('たち') and _numeral(np) is None:
+            word += 'たち'   # 数詞が付けば付けない (二人の友人)
     before = []
     for gen in np.genitives:
         before.append(noun_phrase(gen) + 'の')
@@ -103,6 +120,8 @@ def noun_phrase(np):
     for m in np.modifiers:
         if hasattr(m, 'members'):
             before.append('、'.join(gloss(x.head) for x in m.members))
+        elif m.lemma in NUMERALS:
+            before.append(count(m, np) + 'の')   # 二人の友人・三つの町
         elif m.pos == 'pronoun' and m.lemma in DEMONSTRATIVE_ADJ:
             # 指示詞は関係節・属格の後ろ (メドゥーサが住んでいたその場所)、形容詞の前
             before.insert(len(np.genitives) + len(np.relatives), DEMONSTRATIVE_ADJ[m.lemma])
@@ -261,12 +280,18 @@ def clause_text(clause, final=True, attributive=False):
     # (Há um livro na mesa「テーブルに 本が ある」、我有一本书「私には 本が ある」)
     # 疑問代名詞の主語も同じ (Quid eī est?・他有什么「彼には 何が あるか」)
     existential = clause.copula and not clause.role('complement') and bool(subjects) and \
-        (subjects[0].definite is False or subjects[0].interrogative)
+        (subjects[0].definite is False or subjects[0].interrogative or _numeral(subjects[0]) is not None)
     late = []
     for np in subjects:
         if attributive and clause.gap == 'subject':
             continue
         wh = np.head is not None and np.head.lemma in ('quis', 'quid')   # 疑問詞の主語は「が」(誰が来るか)
+        numeral = _numeral(np) if existential and not np.members else None
+        if numeral is not None:   # 数量は述語の前に (私には 友人が 二人 いる)
+            import dataclasses
+            bare = dataclasses.replace(np, modifiers=[m for m in np.modifiers if m is not numeral], number='sg')
+            late.append(noun_phrase(bare) + 'が' + count(numeral, np))
+            continue
         (late if existential else parts).append(NEGATIVE_PRONOUNS[np.head.lemma] if _negative_pronoun(np) else
                                                 noun_phrase(np) + ('は' if topic and not wh and not existential else 'が'))
     for p in clause.adjuncts:

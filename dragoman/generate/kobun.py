@@ -304,8 +304,9 @@ def noun_phrase(np):
         word = DEMONSTRATIVE_NOUNS[head.lemma]
     else:
         word = word_of(head)
-        if np.number == 'pl' and np.animate and not word.endswith(('ども', 'たち', 'ら')):
-            word += 'ども'
+        if np.number == 'pl' and np.animate and not word.endswith(('ども', 'たち', 'ら')) and \
+                japanese._numeral(np) is None:
+            word += 'ども'   # 数詞が付けば付けない (二人の友)
     before = []
     for gen in np.genitives:
         before.append(noun_phrase(gen) + 'の')
@@ -314,6 +315,8 @@ def noun_phrase(np):
     for m in np.modifiers:
         if hasattr(m, 'members'):
             before.append('、'.join(_attributive_adj(x.head) for x in m.members))
+        elif m.lemma in japanese.NUMERALS:
+            before.append(japanese.count(m, np) + 'の')   # 二人の友・三つの花
         elif m.pos == 'pronoun' and m.lemma in DEMONSTRATIVE_ADJ:
             before.insert(len(np.genitives) + len(np.relatives), DEMONSTRATIVE_ADJ[m.lemma])
         else:

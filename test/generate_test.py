@@ -230,6 +230,8 @@ class SmallFixesTestCase(unittest.TestCase):
         from dragoman.generate import urdu
         self.assertIn('بَنَاتی', self.out(urdu, 'ur', 'Puella librum facit.'))   # 母音記号の付いた不定詞 بَنَانَا の語幹
         self.assertEqual(self.out(greek, 'grc', 'Quid facit puella?'), 'τί ἡ κόρη ποιεῖ;')   # 縮約形を先に
+        self.assertEqual(self.out(japanese, 'ja', 'Duo amīcī veniunt.'), '二人の友人は来る。')   # 数詞 (たちを付けない)
+        self.assertEqual(self.out(japanese, 'ja', 'Mihi sunt duo amīcī.'), '私には友人が二人いる。')   # 数量は述語の前
 
     def test_other_sources(self):
         from dragoman.russian import analyzer as ru
