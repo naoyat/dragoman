@@ -531,7 +531,7 @@ def realize(clause, gap=None, subordinate=False, infinitive=False):
                 middle.append(_contract('mit', noun_phrase(np, 'Dat')))
             elif role == 'possessor':
                 middle.append(noun_phrase(np, 'Gen'))
-            else:
+            elif noun_phrase(np, 'Dat'):   # 中身の分からない句 (辞書に無い語) は書かない
                 middle.append(_contract('in', noun_phrase(np, 'Dat')))
         verb, tail = verb_parts(clause, person, number, subordinate, infinitive)
         if clause.negated:
