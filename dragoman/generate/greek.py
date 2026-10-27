@@ -281,6 +281,9 @@ def _negation(next_word):
 def realize(clause, capitalize=False):
     from .frame import lexical_negation, dative_as_object
     clause = dative_as_object(lexical_negation(clause), 'grc')   # nesciō → οὐ + γιγνώσκω、miserēre nōbīs → ἐλέησον ἡμᾶς
+    if clause.question and clause.question_word and clause.mood == 'indicative':
+        import dataclasses
+        return _question(dataclasses.replace(clause, question=False))   # 直接の疑問文: 疑問詞を頭に (πότε ἔρχεται)
     subjects = clause.role('subject')
     subject = subjects[0] if subjects else None
     person, number = clause.person, clause.number

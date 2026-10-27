@@ -414,6 +414,10 @@ def clause_text(clause, name='終止', attributive=False, topic=None):
         parts.append(infinitive(inner, clause))
     for inner in clause.questions:
         parts.append(question(inner))
+    if clause.question and clause.question_word and not any(np.interrogative for _, np in clause.args):
+        # 直接の疑問文: 疑問詞 + か を述語の前に、述語は連体形 (係り結び: 童はいつか来る)
+        parts.append(('いづこに' if clause.question_word == 'ubi' and _existence(clause) else
+                      WH.get(clause.question_word, '')) + 'か')
     for adv in clause.adverbs:
         word = word_of(adv)
         if word in CLAUSE_INITIAL:
@@ -434,6 +438,18 @@ def infinitive(inner, governor):
     if kind == 'saying':
         return clause_text(finite, name='終止', topic=False) + 'と'
     return clause_text(finite, name='連体', topic=False) + 'を'   # 歌ふを聞く・行くを望む
+
+
+def direct_question(clause):
+    """直接の疑問文: 疑問詞があれば 疑問詞 + か … 連体形 (誰か来る、童はいつか来る)、無ければ 連体形 + か (乙女はをるか)"""
+    if not clause.question_word:
+        return clause_text(clause, name='連体', topic=True) + 'か'
+    text = clause_text(clause, name='連体', topic=True)
+    if any(np.interrogative for _, np in clause.args):
+        for wh, to in (('誰は', '誰か'), ('何は', '何か'), ('誰を', '誰をか'), ('何を', '何をか'), ('誰に', '誰にか')):
+            if wh in text:
+                return text.replace(wh, to, 1)
+    return text
 
 
 def question(inner):
@@ -522,6 +538,9 @@ def sentence(clauses):
             continue
         if not last and 'sed' in clauses[i + 1].connectives:
             out += clause_text(clause, name='已然', topic=True) + 'ど、'
+            continue
+        if last and clause.question and clause.mood == 'indicative':
+            out += direct_question(clause) + '。'
             continue
         out += clause_text(clause, name='終止') + ('。' if last else '、')
     return out

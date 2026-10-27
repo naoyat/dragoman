@@ -335,6 +335,8 @@ def realize(clause, gap=None, subordinate=False):
     out = []
     if subject is not None and gap != 'subject':
         out.append(noun_phrase(subject, 'Gen' if gap is not None else 'Nom'))   # 関係節の主語は属格 (Батын бичсэн)
+    if clause.question and clause.question_word and gap is None and not any(np.interrogative for _, np in clause.args):
+        out.append(QUESTION_WORDS.get(clause.question_word, ''))   # 疑問の副詞は主語の後ろ (Хүү яагаад гүйнэ вэ?)
     for adv in clause.adverbs:
         if adv.lemma not in ('nōn',):
             out.append(word(adv, 'adv'))
@@ -352,7 +354,9 @@ def realize(clause, gap=None, subordinate=False):
         out.append(noun_phrase(np, 'Dat'))
     obj = (clause.role('object') or [None])[0]
     if obj is not None and gap != 'object':
-        out.append(noun_phrase(obj, 'Acc'))
+        # 疑問の「何を」は対格の語尾なし (Охин юу хийнэ вэ?)
+        out.append('юу' if obj.interrogative and obj.head is not None and obj.head.lemma == 'quid' else
+                   noun_phrase(obj, 'Acc'))
     for role, np in clause.args:
         if role in ('subject', 'object', 'recipient', 'complement', 'address'):
             continue
@@ -366,6 +370,22 @@ def realize(clause, gap=None, subordinate=False):
         out.append(noun_phrase(np, case))
     out.append(verb_form(clause, gap))
     return [w for w in out if w]
+
+
+# 直接の疑問文の疑問の副詞
+QUESTION_WORDS = {'quandō': 'хэзээ', 'ubi': 'хаана', 'cūr': 'яагаад', 'quārē': 'яагаад', 'quōmodo': 'яаж',
+                  'unde': 'хаанаас', 'quō': 'хаашаа', 'quotiēns': 'хэдэн удаа'}
+
+
+def question_particle(word_, wh):
+    """疑問の小辞: 疑問詞があれば вэ (в・м・н の後ろは бэ)、無ければ уу / үү (長母音・二重母音の後ろは юу / юү)。
+    母音調和は前の語の母音 (ирнэ үү、байна уу)"""
+    lower = word_.lower()
+    if wh:
+        return 'бэ' if lower[-1:] in 'вмн' else 'вэ'
+    back = next((c in 'аоу' for c in reversed(lower) if c in 'аоуэөүи' and c != 'и'), False)
+    long_vowel = len(lower) >= 2 and lower[-1] in 'аоуэөүийы' and (lower[-2] == lower[-1] or lower[-1] in 'йи')
+    return ('юу' if back else 'юү') if long_vowel else ('уу' if back else 'үү')
 
 
 def vocative(np):
@@ -388,6 +408,8 @@ def sentence(clauses):
         if chain:   # 同じ主語の続く動作は -аад で次の節に (Гэрт ирээд хоол идсэн)
             rest = dataclasses.replace(rest, subordinator='et')
         words += realize(rest, subordinate=k + 1 < len(clauses))
+        if k + 1 == len(clauses) and rest.question and rest.mood == 'indicative' and words:
+            words.append(question_particle(words[-1], bool(rest.question_word)))   # Хэзээ ирнэ вэ?・Хүү ирнэ үү?
         text = ' '.join(w for w in words if w)
         parts.append(text + (' ' if chain else ', ') if k + 1 < len(clauses) else text)
         chained = chain

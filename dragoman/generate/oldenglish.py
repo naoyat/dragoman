@@ -375,9 +375,30 @@ def _modal(clause, gap, subordinate):
     return words + inner_words
 
 
+# 直接の疑問文の疑問の副詞
+QUESTION_WORDS = {'quandō': 'hwonne', 'ubi': 'hwǣr', 'cūr': 'hwȳ', 'quārē': 'hwȳ', 'quōmodo': 'hū', 'unde': 'hwanon',
+                  'quō': 'hwider', 'quotiēns': 'hū oft'}
+
+
+def direct_question(clause):
+    """疑問詞のある直接の疑問文: 疑問詞 + 定動詞 + 主語 … (Hwonne cymþ hē?・Hwǣr is sēo mæġeþ?)。
+    疑問代名詞が主語なら語順はそのまま (Hwā cymþ?)"""
+    from .frame import interrogative_np, without_interrogative
+    owner, role, wh = interrogative_np(clause)
+    plain = dataclasses.replace(clause, question_word='', question=False, invert=True)
+    if wh is None:
+        return [QUESTION_WORDS.get(clause.question_word, clause.question_word)] + realize(plain)
+    if owner is clause and role == 'subject':
+        return realize(dataclasses.replace(plain, invert=False))
+    first = prepositional(wh) if role == 'prep' else noun_phrase(wh, {'recipient': 'Dat', 'possessor': 'Gen'}.get(role, 'Acc'))
+    return [first] + realize(without_interrogative(plain))
+
+
 def realize(clause, gap=None, subordinate=False, infinitive=False):
     from .frame import lexical_negation, periphrastic
     clause = lexical_negation(periphrastic(clause))
+    if clause.question and clause.question_word and clause.mood == 'indicative' and gap is None and not subordinate:
+        return direct_question(clause)
     modal = _modal(clause, gap, subordinate)
     if modal is not None:
         return modal
@@ -419,7 +440,7 @@ def realize(clause, gap=None, subordinate=False, infinitive=False):
                 tail.append(' and '.join(word(m.head, 'adj') for m in comp.members))   # langsum and wīd (冠詞なし)
             else:
                 tail.append(noun_phrase(comp, 'Nom'))
-        elif not clause.role('prep') and subject is not None:   # 存在の文: þǣr is + 主格
+        elif not clause.role('prep') and subject is not None and not clause.invert:   # 存在の文: þǣr is + 主格
             head_words = ['þǣr']
             tail.append(noun_phrase(subject, 'Nom'))
     else:
@@ -452,6 +473,8 @@ def realize(clause, gap=None, subordinate=False, infinitive=False):
         return [w for w in [('ne ' if clause.negated else '') + form] + middle if w]
     if subordinate or infinitive:   # 関係節・従属節: 動詞を最後に
         return [w for w in head_words + middle + tail + [verb] if w]
+    if clause.invert:   # 疑問詞の後ろは定動詞 + 主語 (Hwonne cymþ hē?)
+        return [w for w in [verb] + head_words + middle + tail if w]
     return [w for w in head_words + [verb] + middle + tail if w]
 
 

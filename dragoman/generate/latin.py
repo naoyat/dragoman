@@ -291,6 +291,13 @@ def relative_clause(r, np):
 
 
 def realize(clause, capitalize=True):
+    if clause.question and clause.question_word and clause.mood == 'indicative':
+        # 直接の疑問文: 疑問詞を頭に (Quandō venit?・Quem videt puer?)
+        import dataclasses
+        _, _, wh = frame.interrogative_np(clause)
+        plain = dataclasses.replace(frame.without_interrogative(clause), question_word='')
+        text = (noun_phrase(wh) if wh is not None else clause.question_word) + ' ' + realize(plain, capitalize=False)
+        return text[:1].upper() + text[1:] if capitalize else text
     out = [participial(p) for p in clause.adjuncts if p.kind == 'absolute']
     subjects = clause.role('subject')
     # 不定詞句の主語は対格 (dīcit puerōs lūdere)。補足の不定詞 (legere potest) は主語を持たない

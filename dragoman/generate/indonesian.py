@@ -354,6 +354,8 @@ def realize(clause, verb_override=None, finite=False, aspect=True):
     """節 → インドネシア語の語の列。verb_override は動詞の形を決めて渡すとき (関係節の受動など)"""
     from .frame import lexical_negation, periphrastic
     clause = lexical_negation(periphrastic(clause))
+    if clause.question and clause.question_word and clause.mood == 'indicative' and verb_override is None:
+        return _question(clause)   # 直接の疑問文: 間接疑問と同じ形 (Kapan dia datang?・Siapa yang datang?)
     out = []
     for p in clause.adjuncts:
         if p.kind == 'absolute':
@@ -444,9 +446,11 @@ def _infinitive(inner):
 def _question(inner):
     """間接疑問: siapa yang … (主語の疑問)、apa yang … (目的語)、疑問の副詞 + 節"""
     import dataclasses
-    from .frame import interrogative_np, without_interrogative
+    from .frame import interrogative_np, without_interrogative, where_is
     owner, role, wh = interrogative_np(inner)
     finite = dataclasses.replace(inner, mood='indicative', question_word='')
+    if wh is None and where_is(inner) is not None:
+        return QUESTION_WORDS[inner.question_word] + ' ' + noun_phrase(where_is(inner))   # Di mana gadis? (ada を付けない)
     if wh is None:
         word_ = QUESTION_WORDS.get(inner.question_word, inner.question_word)
         return word_ + ' ' + realize(finite, finite=True)

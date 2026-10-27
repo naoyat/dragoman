@@ -574,6 +574,9 @@ def realize(clause, capitalize=True):
     from .frame import periphrastic, lexical_negation, dative_as_object
     clause = lexical_negation(periphrastic(clause))   # prōgressus est → 完了の能動 (advanced / продвинулся)
     clause = dative_as_object(clause, 'ru')   # miserēre nōbīs → помилуй нас (対格)
+    if clause.question and clause.question_word and clause.mood == 'indicative':
+        text = question_phrase(clause)[2:]   # 直接の疑問文: 間接疑問と同じく疑問詞を頭に (Когда он приходит?)
+        return text[:1].upper() + text[1:] if capitalize else text
     subjects = clause.role('subject')
     subject = subjects[0] if subjects else None
     gender, person, number = _subject_agreement(subject, clause)

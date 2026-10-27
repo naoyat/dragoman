@@ -739,10 +739,54 @@ def question_phrase(inner):
     return word + ' ' + realize(without_interrogative(finite), capitalize=False)
 
 
+AUXILIARIES = {'am', 'is', 'are', 'was', 'were', 'will', 'had', 'did', 'does', 'do', 'may', 'might', 'can', 'could',
+               'must', 'should', 'would', 'have', 'has'}
+
+
+def direct_question(clause):
+    """疑問詞のある直接の疑問文: 疑問詞を頭に、主語と助動詞を倒置 (When does he come?・Where is the girl?)。
+    疑問代名詞が主語なら語順はそのまま (Who comes?)"""
+    from .frame import interrogative_np, without_interrogative, NP, question_idiom
+    from . import connectives
+    plain = _replace(clause, question_word='', invert=True)
+    idiom, stripped = question_idiom(clause)
+    if idiom:
+        return idiom + ' ' + realize(_replace(stripped, question_word='', invert=True), capitalize=False)
+    owner, role, wh = interrogative_np(clause)
+    if wh is None:
+        entry = connectives.interrogative(clause.question_word)
+        if entry and entry[0] == 'from where':
+            return 'where ' + realize(plain, capitalize=False) + ' from'   # Where do you come from?
+        return (entry[0] if entry else clause.question_word) + ' ' + realize(plain, capitalize=False)
+    word_ = 'who' if clause.question_word in WHO else 'what'
+    if owner is clause and role == 'subject' and clause.copula and clause.role('recipient') and \
+            not clause.role('complement'):
+        # 所有の与格 (Quid eī est?・他有什么?) → What does he have?
+        have = _replace(clause, verb=frame_lex('habeō', 'verb', ''), copula=False,
+                        args=[('subject', clause.role('recipient')[0]), ('object', wh)])
+        return direct_question(have)
+    if owner is clause and role == 'subject':
+        return realize(without_interrogative(_replace(clause, question_word=''), NP(Lex(word_, 'noun', proper=True))),
+                       capitalize=False)
+    return word_ + ' ' + realize(without_interrogative(plain), capitalize=False)
+
+
+def _inverted(subject, vp, verb, clause):
+    """主語と動詞の倒置: 助動詞があれば助動詞 + 主語 + 残り、無ければ do + 主語 + 原形 (comes → does he come)"""
+    if vp[0] in ('am', 'is', 'are', 'was', 'were') or len(vp) > 1 and vp[0] in AUXILIARIES:
+        return [vp[0], subject] + vp[1:]   # 本動詞の do・have (What do you do?) は do で倒置
+    if clause.tense == 'perfect':
+        return ['did', subject, verb]
+    return ['does' if vp[0] != verb else 'do', subject, verb]
+
+
 def realize(clause, capitalize=True):
     from .frame import periphrastic, lexical_negation, dative_as_object
     clause = lexical_negation(periphrastic(clause))   # prōgressus est → 完了の能動 (advanced / продвинулся)
     """Clause → 英語の文"""
+    if clause.question and clause.question_word and clause.mood == 'indicative':
+        text = direct_question(clause)
+        return text[:1].upper() + text[1:] if capitalize else text
     clause = dative_as_object(clause, 'en')   # miserēre nōbīs → have mercy on us
     subjects = clause.role('subject')
     subject = subjects[0] if subjects else None
@@ -777,7 +821,7 @@ def realize(clause, capitalize=True):
             noun_phrase(subject, objective=True).replace('the ', 'a ' if subject.number == 'sg' else '', 1)
         return text[:1].upper() + text[1:] if capitalize else text
     if clause.copula and subject is not None and len(clause.args) == 1 and not clause.infinitives \
-            and clause.mood == 'indicative':
+            and clause.mood == 'indicative' and not clause.invert:
         # 補語も場所も無い繋辞は存在 (Vir magnus est「偉大な人がいる」→ There is a great man)
         there = _replace(clause, args=[])
         be = verb_phrase('be', there, 3, subject.number)
@@ -795,7 +839,10 @@ def realize(clause, capitalize=True):
     for p in clause.adjuncts:
         if p.kind != 'absolute':
             out.append(', ' + participial(p) + ',')
-    out += verb_phrase(verb, clause, person, number)
+    if clause.invert and out and clause.mood == 'indicative' and not (subject is None and clause.gap == 'subject'):
+        out[-1:] = _inverted(out[-1], verb_phrase(verb, clause, person, number), verb, clause)
+    else:
+        out += verb_phrase(verb, clause, person, number)
     for np in clause.role('complement'):
         if not np.members and np.head.pos in ('adj', 'participle') and not np.modifiers:
             out.append(word(np.head))   # 補語の形容詞には冠詞を付けない (is happy)

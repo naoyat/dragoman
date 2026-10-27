@@ -54,7 +54,7 @@ SOURCE_PRONOUNS.update({
            '이': ('hic', ''), '저것': ('ille', ''), '이런': ('tālis', ''), '그런': ('tālis', ''), '모든': ('omnis', '')},
     'de': {'ich': ('ego', 'sg'), 'du': ('tū', 'sg'), 'er': ('is', 'sg'), 'sie': ('is', ''), 'es': ('is', 'sg'),
            'wir': ('ego', 'pl'), 'ihr': ('tū', 'pl'), 'dieser': ('hic', ''), 'jener': ('ille', ''), 'sich': ('sē', ''),
-           'wer': ('quis', ''), 'was': ('quid', ''), 'mein': ('meus', ''), 'dein': ('tuus', ''), 'sein': ('suus', ''),
+           'wer': ('quis', ''), 'wen': ('quis', ''), 'wem': ('quis', ''), 'wessen': ('quis', ''), 'was': ('quid', ''), 'mein': ('meus', ''), 'dein': ('tuus', ''), 'sein': ('suus', ''),
            'unser': ('noster', ''), 'euer': ('vester', ''), 'all': ('omnis', ''), 'jeder': ('omnis', '')},
     'fr': {'je': ('ego', 'sg'), "j'": ('ego', 'sg'), 'me': ('ego', 'sg'), "m'": ('ego', 'sg'), 'moi': ('ego', 'sg'),
            'tu': ('tū', 'sg'), 'te': ('tū', 'sg'), "t'": ('tū', 'sg'), 'toi': ('tū', 'sg'), 'il': ('is', 'sg'),
@@ -278,7 +278,37 @@ SOURCE_QUESTION_WORDS = {'grc': {'πῶς': 'quōmodo', 'ὅπως': 'quōmodo',
 
 # 直接の疑問文の疑問の副詞 (解析で conjunction に入るもの) → ラテン語の疑問詞
 SOURCE_QUESTION_ADVERBS = {'pt': {'quando': 'quandō', 'onde': 'ubi', 'aonde': 'quō', 'como': 'quōmodo', 'porque': 'cūr',
-                                  'por que': 'cūr'}}
+                                  'por que': 'cūr'},
+                           'de': {'wann': 'quandō', 'wo': 'ubi', 'warum': 'cūr', 'weshalb': 'cūr', 'wieso': 'cūr',
+                                  'wie': 'quōmodo', 'woher': 'unde', 'wohin': 'quō'},
+                           'fr': {'quand': 'quandō', 'où': 'ubi', 'pourquoi': 'cūr', 'comment': 'quōmodo', "d'où": 'unde'},
+                           'ru': {'когда': 'quandō', 'где': 'ubi', 'почему': 'cūr', 'зачем': 'cūr', 'как': 'quōmodo',
+                                  'откуда': 'unde', 'куда': 'quō'},
+                           'fi': {'milloin': 'quandō', 'missä': 'ubi', 'miksi': 'cūr', 'miten': 'quōmodo',
+                                  'kuinka': 'quōmodo', 'mistä': 'unde', 'minne': 'quō'},
+                           'ang': {'hwonne': 'quandō', 'hwǣr': 'ubi', 'hwær': 'ubi', 'hwȳ': 'cūr', 'hwi': 'cūr',
+                                   'hwy': 'cūr', 'hū': 'quōmodo', 'hu': 'quōmodo', 'hwanon': 'unde', 'hwider': 'quō'},
+                           'tr': {'nerede': 'ubi', 'neden': 'cūr', 'niçin': 'cūr', 'niye': 'cūr', 'nasıl': 'quōmodo',
+                                  'nereden': 'unde', 'nereye': 'quō', 'ne zaman': 'quandō'},
+                           'mn': {'хэзээ': 'quandō', 'хаана': 'ubi', 'яагаад': 'cūr', 'яаж': 'quōmodo',
+                                  'хаанаас': 'unde', 'хаашаа': 'quō'},
+                           'ko': {'언제': 'quandō', '어디서': 'ubi', '어디에서': 'ubi', '어디에': 'ubi', '왜': 'cūr',
+                                  '어떻게': 'quōmodo', '어디로': 'quō'},
+                           'hi': {'कब': 'quandō', 'कहाँ': 'ubi', 'कहां': 'ubi', 'क्यों': 'cūr', 'कैसे': 'quōmodo'},
+                           'ur': {'کب': 'quandō', 'کہاں': 'ubi', 'کیوں': 'cūr', 'کیسے': 'quōmodo'},
+                           'fa': {'کجا': 'ubi', 'چرا': 'cūr', 'چگونه': 'quōmodo', 'چطور': 'quōmodo'},
+                           'ar': {'متى': 'quandō', 'أين': 'ubi', 'لماذا': 'cūr', 'كيف': 'quōmodo'},
+                           'he': {'מתי': 'quandō', 'איפה': 'ubi', 'איפוא': 'ubi', 'למה': 'cūr', 'מדוע': 'cūr',
+                                  'איך': 'quōmodo', 'מאין': 'unde'},
+                           'id': {'kapan': 'quandō', 'di mana': 'ubi', 'mengapa': 'cūr', 'kenapa': 'cūr',
+                                  'bagaimana': 'quōmodo', 'dari mana': 'unde', 'ke mana': 'quō'},
+                           'tl': {'kailan': 'quandō', 'saan': 'ubi', 'bakit': 'cūr', 'paano': 'quōmodo'},
+                           'sa': {'kadā': 'quandō', 'kutra': 'ubi', 'kimartham': 'cūr', 'katham': 'quōmodo',
+                                  'kutaḥ': 'unde'},
+                           'zh': {'什么时候': 'quandō', '为什么': 'cūr', '怎么': 'quōmodo', '怎样': 'quōmodo',
+                                  '怎么样': 'quōmodo', '哪里': 'ubi', '哪儿': 'ubi', '什么地方': 'ubi'}}
+# 場所を問う名詞 (中国語: 在哪里・从哪里・去哪里) → 前置詞で ubi / unde / quō
+SOURCE_PLACE_QUESTIONS = {'zh': {'哪里', '哪儿', '什么地方'}}
 
 _lang = ''   # 解析中の文の言語 (clause_of で述語の言語から)
 
@@ -354,8 +384,9 @@ class Clause:
     complementizer: bool = False   # 補文の接続詞 (フランス語の que・ドイツ語の dass) で始まる節。frames で主節の不定詞の節に
     question: bool = False   # 直接の疑問文 (文が ? で終わる: Quis venit?・Est-ce que tu viens ?)。文末の印は punctuate で
     questions: list = field(default_factory=list)  # 間接疑問 (Clause。question_word に疑問詞)
-    question_word: str = ''   # 間接疑問の節なら疑問詞 (quid, cūr …。副詞の疑問詞は adverbs から除いてある)
+    question_word: str = ''   # 間接疑問の節・疑問詞のある直接の疑問文なら疑問詞 (quid, cūr …。副詞の疑問詞は adverbs から除いてある)
     question_source: str = ''   # ほかの言語の疑問詞 (πῶς)。元の言語に戻すとき
+    invert: bool = False     # 直接の疑問文の主語と動詞の倒置 (英語 When does he come?・ドイツ語 Wann kommt er?)。出口で付ける
     source_mood: str = ''   # 間接疑問の元の法 (ギリシア語の直説法・希求法。枠では接続法に)
     gap: str = ''             # 関係節なら空所の役割: subject / object / recipient / means / possessor / place / prep
     gap_prep: object = None   # 空所が前置詞句なら前置詞 (Lex) と格: (Lex, 'Abl')  (locus in quō)
@@ -366,6 +397,7 @@ class Clause:
     subordinator: str = ''   # 従属節の接続詞 (ubi, postquam, dum …)。あれば従属節
     previous_subordinator: str = ''   # 前の節を従属節にする接続詞 (副動詞の印 -ınca が後ろの節に付いて来たもの)
     after_main: bool = False   # 従属節が主節の後ろにある (ubi「〜するところの」と読む)
+    subordinator_source: str = ''   # 従属の接続詞の元の綴り (когда・quand。直接の疑問文なら疑問詞に)
     surface: str = ''
 
     def role(self, name):
@@ -669,6 +701,8 @@ def clause_of(predicate, lang=None):
                                   Lex(key, 'adv', surface=key))   # tum, tandem, statim … (tadā → tum)
         else:
             _add_connective(clause, conn.normalize(predicate.conjunction.surface, _lang))
+            if clause.subordinator:
+                clause.subordinator_source = predicate.conjunction.surface.lower()   # когда (直接の疑問文なら疑問詞)
     elif _converb_key(predicate.conjunction):
         # 副動詞・連結語尾の印 (gelince の -ınca、와서 の -어서): 前の節の従属の接続詞か、この節のつなぎの語に
         key = _converb_key(predicate.conjunction)
@@ -770,6 +804,8 @@ def clause_of(predicate, lang=None):
             clause.number = 'pl'   # 数詞で複数にした主語 (kaksi kissaa → duo cattī) に繋辞を合わせる (sunt)
     if _lang == 'fr' and predicate.first_item.attrib('experiencer'):
         _swap_experiencer(clause)
+    if _lang == 'fr':
+        _french_inversion(clause)
     if _lang in ('pt', 'zh'):
         _portuguese_chinese_frame(clause, verb_item)
     if verb_item.attrib('modal') in SOURCE_MODALS:
@@ -785,6 +821,16 @@ def clause_of(predicate, lang=None):
 
 
 PT_DATIVE_PREPOSITIONS = ('a', 'à', 'ao', 'aos', 'às')
+
+
+def _french_inversion(clause):
+    """複合倒置 (Pourquoi le garçon court-il ?) の重なった主語: 名詞の主語があれば後ろの代名詞 il・elle を除く"""
+    subjects = clause.role('subject')
+    nouns = [np for np in subjects if np.head is not None and np.head.pos != 'pronoun']
+    if len(subjects) < 2 or not nouns:
+        return
+    clause.args = [(r, np) for r, np in clause.args if not (r == 'subject' and np.head is not None and
+                                                           np.head.pos == 'pronoun' and np.head.lemma == 'is')]
 
 
 def _portuguese_chinese_frame(clause, verb_item):
@@ -814,6 +860,20 @@ def _portuguese_chinese_frame(clause, verb_item):
         first = clause.args[objects[0]][1]
         if first.animate or first.head is not None and first.head.pos == 'pronoun':
             clause.args[objects[0]] = ('recipient', dataclasses.replace(first, case='Dat'))
+    if _lang == 'zh' and clause.verb.lemma == '在' and not clause.copula:
+        # 存在の動詞の 在 (女孩在花园里「少女は庭にいる」) → 場所の繋辞: sum + in (方位詞で sub …) + 奪格
+        for k, (role, np) in enumerate(clause.args):
+            if role in ('object', 'recipient') and np.head is not None:
+                surface = np.surface or ''
+                localizer = next((x for x in sorted(ZH_LOCALIZERS, key=len, reverse=True) + ['里', '上', '中']
+                                  if surface.endswith(x) and surface != x), '')
+                latin = ZH_LOCALIZERS.get(localizer, ('in', 'Abl'))
+                np.prep = Lex(latin[0], 'preposition', '〜に', surface='在', lang='zh',
+                              desc='localizer:' + localizer if localizer else '')
+                np.case = latin[1]
+                clause.args[k] = ('prep', np)
+                break
+        clause.verb, clause.copula = Lex('sum', 'verb', 'ある,いる', surface='在'), True
     if _lang == 'zh' and (verb_item.attrib('form') or '').startswith('補語 到') and objects:
         np = clause.args[objects[0]][1]
         np.prep = Lex('ad', 'preposition', '〜へ', surface='到', lang='zh')
@@ -1031,6 +1091,81 @@ def question_of(question):
         if inner.mood != 'subjunctive':
             inner.source_mood, inner.mood = inner.mood, 'subjunctive'   # ラテン語の間接疑問は接続法
     return inner
+
+
+# 直接の疑問文の疑問の副詞 (ラテン語の見出し。num・utrum の諾否の疑問、quam・quō のほかの読みのある語は除く)
+DIRECT_QUESTION_ADVERBS = {'quandō', 'ubi', 'cūr', 'quārē', 'quōmodo', 'unde', 'quotiēns'}
+QUESTION_PRONOUNS = {'quis', 'quid'}
+
+
+def _direct_question(clause, alone):
+    """直接の疑問文の疑問詞 (Quandō venit?・Quem videt puer?) に間接疑問と同じ印を付ける: question_word に疑問詞、
+    疑問代名詞の名詞句は interrogative、疑問の副詞は adverbs から除く。ひとつだけの節の従属の接続詞に読んだ ubi・quandō
+    (Ubi est puella?) も疑問詞に"""
+    import dataclasses
+    from .english import _flat
+    flat = {_flat(w): w for w in DIRECT_QUESTION_ADVERBS}
+    source = SOURCE_QUESTION_ADVERBS.get(_lang, {}) if _lang not in ('', 'la') else {}
+    if _lang == 'grc':
+        source = SOURCE_QUESTION_WORDS['grc']
+    for adv in clause.adverbs:
+        latin = flat.get(_flat(adv.lemma.lower())) if _lang in ('', 'la') or adv.lemma in DIRECT_QUESTION_ADVERBS else \
+            _source_question_word(adv.surface or adv.lemma, source) or _source_question_word(adv.lemma, source)
+        if latin:
+            clause.question_word = latin
+            clause.adverbs = [a for a in clause.adverbs if a is not adv]
+            return
+    if alone and clause.subordinator and not clause.connectives and _lang not in ('', 'la') and \
+            _source_question_word(clause.subordinator_source, source):
+        # 接続詞に読んだ文頭の疑問詞 (Когда он приходит?・Quand vient-il ?)
+        clause.question_word, clause.subordinator = _source_question_word(clause.subordinator_source, source), ''
+        return
+    for k, (role, np) in enumerate(clause.args):
+        if np.head is not None and (np.head.surface or np.head.lemma) in SOURCE_PLACE_QUESTIONS.get(_lang, ()):
+            # 在哪里 → ubi、从哪里 → unde、到哪里・去哪里 → quō
+            prep = np.prep.lemma if np.prep is not None else ''
+            clause.question_word = 'unde' if prep in ('ab', 'ex', 'ē') else \
+                'quō' if prep == 'ad' or role == 'object' and clause.verb.lemma in ('去', '到') else 'ubi'
+            del clause.args[k]
+            return
+    if alone and _flat(clause.subordinator) in flat and not clause.connectives and _lang in ('', 'la'):
+        clause.question_word, clause.subordinator = flat[_flat(clause.subordinator)], ''
+        return
+    for _, np in clause.args:
+        head = np.head
+        if head is None or np.members or head.pos not in ('pronoun', 'noun') or \
+                not (head.lemma in QUESTION_PRONOUNS or head.lemma == 'quī' and not np.relatives):
+            continue
+        np.interrogative = True
+        if head.lemma == 'quī':   # 疑問代名詞として quis / quid に (関係代名詞の yad・который にしない)
+            np.head = dataclasses.replace(head, lemma='quid' if np.gender == 'n' else 'quis', pos='pronoun')
+        word = (np.surface or head.surface or head.lemma).split(' ')[0].lower()
+        clause.question_word = word if _lang in ('', 'la') else np.head.lemma   # ほかの言語からは quis / quid
+        return
+
+
+def _source_question_word(word, table):
+    """ほかの言語の疑問の副詞 → ラテン語の疑問詞 (母音記号・アクセントの有無は問わない: أَيْنَ = أين、πότε)"""
+    if not word:
+        return None
+    key = unicodedata.normalize('NFC', word.lower())
+    if key in table:
+        return table[key]
+    if _lang not in ('ar', 'he', 'fa', 'ur', 'grc'):
+        return None
+    bare = ''.join(c for c in unicodedata.normalize('NFD', key) if not unicodedata.combining(c))
+    return next((v for k, v in table.items()
+                 if ''.join(c for c in unicodedata.normalize('NFD', k) if not unicodedata.combining(c)) == bare), None)
+
+
+def where_is(clause):
+    """「〜はどこにいるか」の疑問文 (Ubi est puella?: 場所の疑問詞 + 主語だけの繋辞) なら主語の名詞句。
+    主語だけの繋辞は出口で存在の文 (There is a girl) にするので、その前に見る"""
+    if clause.question and clause.question_word in ('ubi', 'unde', 'quō') and clause.copula and \
+            clause.mood == 'indicative' and len(clause.args) == 1 and clause.args[0][0] == 'subject' and \
+            not clause.infinitives:
+        return clause.args[0][1]
+    return None
 
 
 def interrogative_np(clause):
@@ -1284,21 +1419,23 @@ def _converb_key(word):
     return CONVERB_KEYS[_lang].get(head, '')
 
 
-QUESTION_MARKS = {'ar': '؟', 'fa': '؟', 'ur': '؟', 'fr': ' ?', 'zh': '？'}   # フランス語は ? の前を空ける
+QUESTION_MARKS = {'ar': '؟', 'fa': '؟', 'ur': '؟', 'fr': ' ?', 'zh': '？', 'grc': ';'}   # フランス語は ? の前を空ける。ギリシア語の疑問符は ;
 
 
 def punctuate(text, clauses, lang):
     """疑問文の文末: ? (アラビア文字の言語は ؟)、日本語・古文は「〜か。」"""
-    if not text or not any(c.question for c in clauses):
-        return text
+    if not text or not any(c.question for c in clauses) or lang == 'bo':
+        return text   # チベット語は疑問の助詞 (ngam・dam …) とシャドで終わる
     first, newline, rest = text.partition('\n')   # 転写の行 (2行目) も同じに
     def mark(line):
         line = line.rstrip()
         if lang in ('ja', 'kobun'):
             line = line.rstrip('。')
+            if lang == 'kobun' and any(c.question and c.question_word for c in clauses):
+                return line + '。'   # 係り結び (誰か来る。) には か を足さない
             return line + ('。' if line.endswith('か') else 'か。')
-        if line[-1:] in '.。؟?!':
-            line = line[:-1]
+        if line[-1:] in '.。؟?!।۔':   # サンスクリット・ヒンディー語の । とウルドゥー語の ۔ も
+            line = line[:-1].rstrip()
         return line + QUESTION_MARKS.get(lang, '?')
     return mark(first) + (newline + mark(rest) if rest.strip() and lang not in ('ja', 'kobun') else newline + rest)
 
@@ -1389,6 +1526,7 @@ def frames(analysis):
                     analysis.text.rstrip().endswith(('?', '？', '؟'))):
         main = [c for c in clauses if not c.subordinator] or clauses
         main[-1].question = True   # 直接の疑問文 (ギリシア語の疑問符は ;)
+        _direct_question(main[-1], len(clauses) == 1)
     for clause in clauses:   # 辞書に無い語 (補った名詞句) にも
         if _lang == 'he':
             _hebrew_bare_object(clause)
@@ -1493,6 +1631,8 @@ def describe(clause, indent='  '):
         lines.append('%s  %s: %s' % (indent, name, describe_np(np)))
     for adv in clause.adverbs:
         lines.append('%s  副詞: %s' % (indent, adv.lemma))
+    if clause.question and clause.question_word:
+        lines.append('%s  疑問詞: %s' % (indent, clause.question_word))
     for inner in clause.infinitives:
         lines.append('%s  不定詞句 (%s):' % (indent, inner.infinitive_kind))
         lines.extend(describe(inner, indent + '    ').splitlines())

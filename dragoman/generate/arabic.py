@@ -437,6 +437,8 @@ def realize(clause, gap=None, antecedent=None):
     """節 → アラビア語の語の列。gap は関係節の空所の役割 (目的語なら動詞に代名詞の接尾辞)"""
     from .frame import lexical_negation, periphrastic, dative_as_object
     clause = dative_as_object(lexical_negation(periphrastic(clause)), 'ar')
+    if clause.question and clause.question_word and clause.mood == 'indicative' and gap is None:
+        return _question(clause)   # 直接の疑問文: 間接疑問と同じ形 (مَتَى يَجِيء)
     if clause.voice == 'passive' and not clause.copula and gap is None and not passive_possible(clause):
         clause = to_active(clause)   # 受動の形が無い動詞 (مَدَح): مَدَحَ المُعَلِّمُ الوَلَدَ
     out = []
@@ -551,9 +553,11 @@ def _nominal_from(clause):
 def _question(inner):
     """間接疑問: مَنْ・ماذا・لِماذا・أَيْنَ … + 節 (主語の疑問は مَنْ + 動詞)"""
     import dataclasses
-    from .frame import interrogative_np, without_interrogative
+    from .frame import interrogative_np, without_interrogative, where_is
     owner, role, wh = interrogative_np(inner)
     finite = dataclasses.replace(inner, mood='indicative', question_word='')
+    if wh is None and where_is(inner) is not None:
+        return QUESTION_WORDS[inner.question_word] + ' ' + noun_phrase(where_is(inner))   # أَيْنَ البِنْتُ (繋辞なし)
     if wh is None:
         return QUESTION_WORDS.get(inner.question_word, 'هَلْ') + ' ' + realize(finite)
     pronoun = 'مَنْ' if inner.question_word in ('quis', 'quem', 'cui', 'cūius', 'cuius') and wh.gender != 'n' \

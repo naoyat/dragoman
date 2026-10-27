@@ -480,6 +480,10 @@ def realize(clause, gap=None, final=True, subordinate=False):
             out.append(word(adv, 'adv'))
     if subject is not None and gap != 'subject':
         out.append(_subject_particle(noun_phrase(subject)))
+    if clause.question and clause.question_word and gap is None and not any(np.interrogative for _, np in clause.args):
+        # 直接の疑問文の疑問の副詞は主語の後ろ (소년이 왜 달리니?・소녀가 어디에 있니?)
+        out.append('어디에' if clause.question_word == 'ubi' and clause.copula else
+                   QUESTION_WORDS.get(clause.question_word, ''))
     if clause.copula:
         complements = clause.role('complement')
         for role, np in clause.args:
@@ -526,6 +530,23 @@ def realize(clause, gap=None, final=True, subordinate=False):
     return out
 
 
+# 直接の疑問文の疑問の副詞
+QUESTION_WORDS = {'quandō': '언제', 'ubi': '어디서', 'cūr': '왜', 'quārē': '왜', 'quōmodo': '어떻게', 'unde': '어디에서',
+                  'quō': '어디로', 'quotiēns': '몇 번'}
+
+
+def interrogative_ending(text):
+    """終止形の -다 を疑問の -니 に (온다 → 오니、먹는다 → 먹니、있다 → 있니、왔다 → 왔니、학생이다 → 학생이니)"""
+    if not text.endswith('다') or len(text) < 2:
+        return text
+    if text.endswith('는다'):
+        return text[:-2] + '니'
+    last = ord(text[-2]) - 0xAC00
+    if 0 <= last < 11172 and last % 28 == 4 and not text.endswith(('인다', '않는다')):   # 받침 ㄴ の 〜ㄴ다 (온다・만든다)
+        return text[:-2] + chr(0xAC00 + last - 4) + '니'
+    return text[:-1] + '니'
+
+
 def vocative(np):
     text = noun_phrase(np)
     return particle(text, '아', '야') if np.head is not None and np.head.proper else text + '여'
@@ -549,6 +570,8 @@ def sentence(clauses):
         if chain:   # 同じ主語の続く動作は -고 で次の節に (문을 열고 안으로 들어갔다)
             rest = dataclasses.replace(rest, subordinator='et')
         words += realize(rest, subordinate=k + 1 < len(clauses))
+        if k + 1 == len(clauses) and rest.question and rest.mood == 'indicative' and words:
+            words[-1] = interrogative_ending(words[-1])   # 疑問文の終わりは -니 (오니?)
         text = ' '.join(w for w in words if w)
         parts.append(text + (' ' if chain else ', ') if k + 1 < len(clauses) else text)
         chained = chain

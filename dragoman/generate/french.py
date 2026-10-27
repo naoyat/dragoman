@@ -490,9 +490,52 @@ def _modal(clause, gap, antecedent, subjunctive):
     return words + inner_words
 
 
+# 直接の疑問文の疑問の副詞
+QUESTION_WORDS = {'quandō': 'quand', 'ubi': 'où', 'cūr': 'pourquoi', 'quārē': 'pourquoi', 'quōmodo': 'comment',
+                  'unde': "d'où", 'quō': 'où', 'quotiēns': 'combien de fois'}
+WHO = {'quis', 'quem', 'cui', 'cūius', 'cuius', 'quibus'}
+
+
+def direct_question(clause):
+    """疑問詞のある直接の疑問文: 疑問詞 + est-ce que + 平叙の語順 (Quand est-ce qu'il vient ?・Qu'est-ce que la fille fait ?)。
+    「どこにいるか」は倒置 (Où est la fille ?)、疑問代名詞が主語なら語順はそのまま (Qui vient ?)"""
+    from .frame import interrogative_np, without_interrogative, where_is
+    owner, role, wh = interrogative_np(clause)
+    plain = dataclasses.replace(clause, question_word='', question=False)
+    if wh is None and where_is(clause) is not None:
+        subject = where_is(clause)
+        return [QUESTION_WORDS[clause.question_word], _copula(clause, *_person(clause)), noun_phrase(subject, 'Nom')]
+    if wh is None:
+        first, rest = QUESTION_WORDS.get(clause.question_word, clause.question_word), realize(plain)
+    elif owner is clause and role == 'subject':
+        return realize(plain)
+    else:
+        first = 'qui' if clause.question_word in WHO and wh.gender != 'n' else 'que'
+        if role == 'prep':
+            first = prepositional(dataclasses.replace(wh, head=dataclasses.replace(wh.head, lemma='quis' if first == 'qui'
+                                                                                  else 'quid')))
+        rest = realize(without_interrogative(plain))
+    return [first] + (_inverted(rest) or ['est-ce', 'que'] + rest)
+
+
+SUBJECT_PRONOUNS = {'tu', 'il', 'elle', 'on', 'nous', 'vous', 'ils', 'elles'}
+
+
+def _inverted(words):
+    """代名詞の主語の倒置 (il vient → vient-il、il a → a-t-il)。主語が名詞・je のとき、否定・接語のあるときは None"""
+    if len(words) < 2 or words[0] not in SUBJECT_PRONOUNS or ' ' in words[1] or \
+            words[1] in ('ne', "n'", 'me', 'te', 'se', 'le', 'la', 'les', 'lui', 'leur', 'y', 'en', 'nous', 'vous') or \
+            words[1].endswith("'"):
+        return None
+    t = '-t' if words[1][-1:] in 'ae' and words[0] in ('il', 'elle', 'on') else ''
+    return [words[1] + t + '-' + words[0]] + words[2:]
+
+
 def realize(clause, gap=None, antecedent=None, subjunctive=False, infinitive=False):
     from .frame import lexical_negation, periphrastic, Lex
     clause = lexical_negation(periphrastic(clause))
+    if clause.question and clause.question_word and clause.mood == 'indicative' and gap is None and not infinitive:
+        return direct_question(clause)
     modal = _modal(clause, gap, antecedent, subjunctive)
     if modal is not None:
         return modal

@@ -81,6 +81,7 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(tr('他在桌子下面睡觉。'), '彼が / 机の下で / 寝る')   # 2字の方位詞
         self.assertEqual(tr('我爸爸住在北京。'), '私の父が / 北京に / 住む')   # 代名詞 + 名詞、地名は漢字
         self.assertEqual(tr('男孩给女孩一本书。'), '少年が / 少女に / 一冊の本を / 与える')   # 二重目的語
+        self.assertEqual(tr('他什么时候来？'), 'いつ / 彼が / 来るか')   # 什么 / 时候 を1語に
 
     def test_complement_clauses(self):   # 補文 (接続詞なし)
         self.assertEqual(tr('教堂完成了主体大修工程。'), '教会が / 本体のリニューアルの{エンジニアリング,計画}を / 完成させた,成し遂げた')

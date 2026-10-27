@@ -259,7 +259,9 @@ def clause_text(clause, final=True, attributive=False):
     topic = final and not attributive and not clause.subordinator
     # 不定の主語の存在・所有の文 (冠詞・一 + 量詞のある言語から): 場所・所有者を先に、主語は「が」で述語の前
     # (Há um livro na mesa「テーブルに 本が ある」、我有一本书「私には 本が ある」)
-    existential = clause.copula and not clause.role('complement') and bool(subjects) and subjects[0].definite is False
+    # 疑問代名詞の主語も同じ (Quid eī est?・他有什么「彼には 何が あるか」)
+    existential = clause.copula and not clause.role('complement') and bool(subjects) and \
+        (subjects[0].definite is False or subjects[0].interrogative)
     late = []
     for np in subjects:
         if attributive and clause.gap == 'subject':
@@ -284,8 +286,8 @@ def clause_text(clause, final=True, attributive=False):
                 parts.append(noun_phrase(np) + 'に')   # 受動の動作主
             else:
                 particle = PREPOSITIONS.get((np.prep.lemma, np.case), 'で')
-                if particle == 'で' and _existence(clause):
-                    particle = 'に'   # 家にいる・都に住む (存在・居住の動詞の場所)
+                if particle.endswith('で') and _existence(clause):
+                    particle = particle[:-1] + 'に'   # 家にいる・都に住む・机の下にある (存在・居住の動詞の場所)
                 parts.append(noun_phrase(np) + particle)
         elif attributive and clause.gap == role:
             continue
@@ -295,6 +297,9 @@ def clause_text(clause, final=True, attributive=False):
         parts.append(infinitive(inner, clause))
     for inner in clause.questions:
         parts.append(question(inner))
+    if clause.question and clause.question_word and not any(np.interrogative for _, np in clause.args):
+        # 直接の疑問文の疑問の副詞は述語の前 (いつ来るか、少女はどこにいるか)
+        parts.append('どこに' if clause.question_word == 'ubi' and _existence(clause) else WH.get(clause.question_word, ''))
     for adv in clause.adverbs:
         parts.append(gloss(adv))
     parts += late

@@ -317,6 +317,8 @@ def realize(clause, gap=None):
     """節 → タガログ語。gap は関係節の空所の役割 (その名詞句は出さない)"""
     from .frame import lexical_negation, periphrastic
     clause = lexical_negation(periphrastic(clause))
+    if clause.question and clause.question_word and clause.mood == 'indicative' and gap is None:
+        return _question(clause).replace('kung ', '', 1)   # 直接の疑問文: 間接疑問と同じ形 (間接疑問の kung を除く: Sino ang dumarating)
     out = [_absolute(p) + ',' for p in clause.adjuncts if p.kind == 'absolute']
     head = len(out)
     if clause.negated:
@@ -450,9 +452,11 @@ def _infinitive(inner):
 def _question(inner):
     """間接疑問: kung sino ang … (主語の疑問)、kung ano ang …、kung bakit …"""
     import dataclasses
-    from .frame import interrogative_np, without_interrogative
+    from .frame import interrogative_np, without_interrogative, where_is
     owner, role, wh = interrogative_np(inner)
     finite = dataclasses.replace(inner, mood='indicative', question_word='')
+    if wh is None and where_is(inner) is not None and inner.question_word == 'ubi':
+        return 'kung nasaan ' + noun_phrase(where_is(inner))   # Nasaan ang dalaga? (may の存在の文にしない)
     if wh is None:
         return QUESTION_WORDS.get(inner.question_word, 'kung') + ' ' + realize(finite)
     pronoun = 'sino' if inner.question_word in ('quis', 'quem', 'cui', 'cūius', 'cuius') and wh.gender != 'n' else 'ano'

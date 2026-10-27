@@ -45,7 +45,12 @@ PRONOUNS = {('ego', 'sg'): ('मैं', 'maiṃ', 'میں', 'मुझ', 'mujh'
             ('tū', 'sg'): ('तुम', 'tum', 'تم', 'तुम', 'tum', 'تم'), ('tū', 'pl'): ('तुम', 'tum', 'تم', 'तुम', 'tum', 'تم'),
             ('is', 'sg'): ('वह', 'vah', 'وہ', 'उस', 'us', 'اس'), ('is', 'pl'): ('वे', 've', 'وہ', 'उन', 'un', 'ان'),
             ('hic', 'sg'): ('यह', 'yah', 'یہ', 'इस', 'is', 'اس'), ('hic', 'pl'): ('ये', 'ye', 'یہ', 'इन', 'in', 'ان'),
-            ('ille', 'sg'): ('वह', 'vah', 'وہ', 'उस', 'us', 'اس'), ('ille', 'pl'): ('वे', 've', 'وہ', 'उन', 'un', 'ان')}
+            ('ille', 'sg'): ('वह', 'vah', 'وہ', 'उस', 'us', 'اس'), ('ille', 'pl'): ('वे', 've', 'وہ', 'उन', 'un', 'ان'),
+            ('quis', 'sg'): ('कौन', 'kaun', 'کون', 'किस', 'kis', 'کس'), ('quid', 'sg'): ('क्या', 'kyā', 'کیا', 'किस', 'kis', 'کس')}
+# 直接の疑問文の疑問の副詞
+QUESTION_WORDS = {'quandō': ('कब', 'kab', 'کب'), 'ubi': ('कहाँ', 'kahāṃ', 'کہاں'), 'cūr': ('क्यों', 'kyoṃ', 'کیوں'),
+                  'quārē': ('क्यों', 'kyoṃ', 'کیوں'), 'quōmodo': ('कैसे', 'kaise', 'کیسے'),
+                  'unde': ('कहाँ से', 'kahāṃ se', 'کہاں سے'), 'quō': ('कहाँ', 'kahāṃ', 'کہاں')}
 POSTPOSITIONS = {('in', 'Abl'): ('में', 'meṃ', 'میں'), ('in', 'Acc'): ('को', 'ko', 'کو'), ('ad', 'Acc'): ('को', 'ko', 'کو'),
                  ('ex', 'Abl'): ('से', 'se', 'سے'), ('ē', 'Abl'): ('से', 'se', 'سے'), ('ab', 'Abl'): ('से', 'se', 'سے'),
                  ('ā', 'Abl'): ('से', 'se', 'سے'), ('cum', 'Abl'): ('के साथ', 'ke sāth', 'کے ساتھ'),
@@ -352,6 +357,8 @@ def verb_words(clause, subject, obj):
 
 def _takes_ko(np):
     """को の付く目的語 (人・代名詞)"""
+    if np is not None and np.head is not None and np.head.lemma == 'quid':
+        return False   # 疑問の「何を」は को なし (लड़की क्या बनाती है)
     return np is not None and (np.animate or (np.head is not None and np.head.pos == 'pronoun'))
 
 
@@ -380,6 +387,7 @@ def realize(clause, gap=None):
         for role, np in clause.args:
             if role == 'prep':
                 out += prepositional(np)
+        out += _question_word(clause, gap)   # लड़की कहाँ है
         if clause.negated:
             out.append(('नहीं', 'nahīṃ', 'نہیں'))
         past = clause.tense in ('perfect', 'imperfect', 'past-perfect')
@@ -415,7 +423,14 @@ def realize(clause, gap=None):
             place = noun_phrase(np, True)
             if any(w[0].strip('[]?') for w in place):   # 中身の分からない句は書かない
                 out += place + [('में', 'meṃ', 'میں')]
-    return out + words
+    return out + _question_word(clause, gap) + words
+
+
+def _question_word(clause, gap):
+    """直接の疑問文の疑問の副詞 (動詞の前: वह कब आता है)"""
+    if clause.question and clause.question_word and gap is None and not any(np.interrogative for _, np in clause.args):
+        return [QUESTION_WORDS[clause.question_word]] if clause.question_word in QUESTION_WORDS else []
+    return []
 
 
 def prepositional(np, passive=False):

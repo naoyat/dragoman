@@ -25,7 +25,16 @@ SUBJECT = {(1, 'sg'): 'ku=', (2, 'sg'): 'e=', (3, 'sg'): '', (1, 'pl'): 'ci=', (
 OBJECT = {(1, 'sg'): 'en=', (1, 'pl'): 'un=', (2, 'sg'): 'e=', (2, 'pl'): 'eci='}
 CONNECTIVES = {'et': 'wa', 'sed': 'korka', 'autem': 'wa', 'ubi': 'hike', 'cum': 'hike', 'postquam': 'wa',
                'sī': 'yakun', 'quod': 'kusu', 'quia': 'kusu', 'ut': 'kuni'}
-PRONOUNS = {('ego', 'sg'): 'kani', ('ego', 'pl'): 'ciokay', ('tū', 'sg'): 'eani', ('tū', 'pl'): 'ecioka'}
+PRONOUNS = {('ego', 'sg'): 'kani', ('ego', 'pl'): 'ciokay', ('tū', 'sg'): 'eani', ('tū', 'pl'): 'ecioka',
+            ('quis', 'sg'): 'nen', ('quid', 'sg'): 'hemanta'}
+# 直接の疑問文の疑問の副詞 (動詞の前: Matkaci hunak ta an?)
+QUESTION_WORDS = {'quandō': 'hempara', 'ubi': 'hunak ta', 'cūr': 'hemanta kusu', 'quārē': 'hemanta kusu',
+                  'quōmodo': 'makanak', 'unde': 'hunak wa', 'quō': 'hunak un'}
+
+
+def _shown(np):
+    """名詞句を書くか (人称の代名詞は動詞の接辞で表すので書かない。疑問代名詞 nen・hemanta は書く)"""
+    return np.head is None or np.head.pos != 'pronoun' or np.interrogative
 
 
 @functools.lru_cache(maxsize=1)
@@ -175,8 +184,10 @@ def realize(clause, gap=None):
     subject = (clause.role('subject') or [None])[0]
     obj = (clause.role('object') or [None])[0]
     out = []
-    if subject is not None and gap != 'subject' and not (subject.head is not None and subject.head.pos == 'pronoun'):
+    if subject is not None and gap != 'subject' and _shown(subject):
         out += noun_phrase(subject)
+    wh = QUESTION_WORDS.get(clause.question_word, '').split() if clause.question and gap is None and \
+        not any(np.interrogative for _, np in clause.args) else []
     if clause.copula:
         complements = clause.role('complement')
         from .frame import adjective_members
@@ -192,14 +203,14 @@ def realize(clause, gap=None):
             out += noun_phrase(np)
         if clause.negated:
             out.append('somo')
-        out.append('ne' if complements else 'an')
+        out += wh + ['ne' if complements else 'an']
         for role, np in clause.args:
             if role == 'prep':
                 out[-1:-1] = noun_phrase(np) + [POSTPOSITIONS.get((np.prep.lemma, np.case), 'ta')]
         return out
     for np in clause.role('recipient'):   # 与える相手は目的語の前 (kore「与える」は二つの目的語を取る)
         out += noun_phrase(np)
-    if obj is not None and gap != 'object' and not (obj.head is not None and obj.head.pos == 'pronoun'):
+    if obj is not None and gap != 'object' and _shown(obj):
         out += noun_phrase(obj)
     for role, np in clause.args:
         if role in ('subject', 'object', 'recipient', 'complement', 'address'):
@@ -214,7 +225,7 @@ def realize(clause, gap=None):
             out += noun_phrase(np) + ['ari']
         else:
             out += noun_phrase(np) + ['ta']
-    return out + verb_words(clause, subject, obj)
+    return out + wh + verb_words(clause, subject, obj)
 
 
 def sentence(clauses):

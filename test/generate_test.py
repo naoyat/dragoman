@@ -123,6 +123,88 @@ class QuestionTestCase(unittest.TestCase):
         self.assertFalse(any('Q' in c.predicate.case_slot for c in analysis.clauses))
 
 
+class WhQuestionTestCase(unittest.TestCase):
+    """疑問詞のある直接の疑問文: 枠では question_word (間接疑問と同じ印)。出口ごとに疑問詞の位置と倒置"""
+
+    def out(self, module, lang, text):
+        cs = clauses(text)
+        return frame.punctuate(module.sentence(cs), cs, lang)
+
+    def need(self, module):
+        if hasattr(module, 'available') and not module.available():
+            self.skipTest('%s の辞書が無い' % module.__name__)
+
+    def test_frame(self):
+        main, = clauses('Quandō venit?')
+        self.assertEqual((main.question_word, main.adverbs), ('quandō', []))
+        main, = clauses('Ubi est puella?')   # 解析で従属の接続詞にした ubi
+        self.assertEqual((main.question_word, main.subordinator), ('ubi', ''))
+        self.assertIs(frame.where_is(main), main.role('subject')[0])
+        main, = clauses('Quem videt puer?')   # 関係代名詞の見出し quī → 疑問代名詞 quis
+        self.assertEqual((main.question_word, main.role('object')[0].head.lemma), ('quem', 'quis'))
+
+    def test_latin_english(self):
+        self.assertEqual(self.out(latin, 'la', 'Quem videt puer?'), 'Quem puer videt?')
+        self.assertEqual(self.out(english, 'en', 'Quandō venit?'), 'When does he come?')
+        self.assertEqual(self.out(english, 'en', 'Quandō vēnit?'), 'When did he come?')
+        self.assertEqual(self.out(english, 'en', 'Ubi est puella?'), 'Where is the girl?')   # There is … にしない
+        self.assertEqual(self.out(english, 'en', 'Quem videt puer?'), 'Who does the boy see?')
+        self.assertEqual(self.out(english, 'en', 'Quis venit?'), 'Who comes?')
+
+    def test_verb_second(self):
+        from dragoman.generate import german, oldenglish, french, portuguese as pt
+        for module in (german, oldenglish, french, pt):
+            self.need(module)
+        self.assertEqual(self.out(german, 'de', 'Quandō venit?'), 'Wann kommt er?')
+        self.assertEqual(self.out(german, 'de', 'Quem videt puer?'), 'Wen sieht der Junge?')
+        self.assertEqual(self.out(german, 'de', 'Ubi est puella?'), 'Wo ist das Mädchen?')
+        self.assertEqual(self.out(oldenglish, 'ang', 'Quandō venit?'), 'Hwonne cymþ hē?')
+        self.assertEqual(self.out(french, 'fr', 'Quandō venit?'), 'Quand vient-il ?')   # 代名詞の主語は倒置
+        self.assertEqual(self.out(french, 'fr', 'Quid facit puella?'), "Qu'est-ce que la fille fait ?")
+        self.assertEqual(self.out(french, 'fr', 'Ubi est puella?'), 'Où est la fille ?')
+        self.assertEqual(self.out(pt, 'pt', 'Ubi est puella?'), 'Onde está a menina?')
+        self.assertEqual(self.out(pt, 'pt', 'Quem videt puer?'), 'Quem o menino vê?')
+
+    def test_in_situ(self):
+        from dragoman.generate import korean, turkish, mongolian
+        for module in (korean, turkish, mongolian, hindi):
+            self.need(module)
+        self.assertEqual(self.out(japanese, 'ja', 'Ubi est puella?'), '少女はどこにいるか。')
+        self.assertEqual(self.out(kobun, 'kobun', 'Quis venit?'), '誰か来る。')   # 係り結び
+        self.assertEqual(self.out(kobun, 'kobun', 'Puer venit?'), '童は来るか。')   # 連体形 + か
+        self.assertEqual(self.out(chinese, 'zh', 'Quandō venit?'), '他什么时候来？')   # 疑問の副詞は主語の後ろ
+        self.assertEqual(self.out(chinese, 'zh', 'Ubi est puella?'), '女孩在哪里？')
+        self.assertEqual(self.out(korean, 'ko', 'Ubi est puella?'), '소녀가 어디에 있니?')
+        self.assertEqual(self.out(turkish, 'tr', 'Ubi est puella?'), 'Kız nerede?')
+        self.assertEqual(self.out(turkish, 'tr', 'Puer venit?'), 'Oğlan geliyor mu?')   # 諾否の疑問は mI
+        self.assertEqual(self.out(mongolian, 'mn', 'Quandō venit?'), 'Хэзээ ирнэ вэ?')
+        self.assertEqual(self.out(mongolian, 'mn', 'Puer venit?'), 'Хүү ирнэ үү?')
+        self.assertEqual(self.out(hindi, 'hi', 'Ubi est puella?').split('\n')[1].strip(), 'laṛkī kahāṃ hai?')
+
+    def test_other_sources(self):
+        from dragoman.portuguese import analyzer as pt
+        from dragoman.chinese import analyzer as zh
+        if not (portuguese.available() and chinese.available()):
+            self.skipTest('pt/en-index.tsv か zh/en-index.tsv が無い')
+
+        def frames_of(module, text):
+            analysis, = module.analyze_text(text)
+            return frame.frames(analysis)
+        cs = frames_of(pt, 'Por que o menino corre?')   # 2語の por que
+        self.assertEqual(frame.punctuate(latin.sentence(cs), cs, 'la'), 'Cūr puer currit?')
+        cs = frames_of(pt, 'Quem vem?')   # ほかに主語が無ければ疑問代名詞が主語
+        self.assertEqual(frame.punctuate(english.sentence(cs), cs, 'en'), 'Who comes?')
+        cs = frames_of(zh, '他什么时候来？')   # 什么 / 时候 を1語に
+        self.assertEqual(frame.punctuate(english.sentence(cs), cs, 'en'), 'When does he come?')
+        cs = frames_of(zh, '女孩在哪里？')   # 存在の動詞の 在 + 哪里
+        self.assertEqual(frame.punctuate(english.sentence(cs), cs, 'en'), 'Where is the girl?')
+        self.assertEqual(frame.punctuate(chinese.sentence(cs), cs, 'zh'), '女孩在哪里？')
+        cs = frames_of(zh, '你从哪里来？')   # 从哪里 → unde
+        self.assertEqual(frame.punctuate(english.sentence(cs), cs, 'en'), 'Where do you come from?')
+        cs = frames_of(zh, '女孩在花园里。')
+        self.assertEqual(latin.sentence(cs), 'Puella in hortō est.')
+
+
 class RelativeTestCase(unittest.TestCase):
     """関係節: 先行詞の名詞に付き、関係代名詞の格を空所の役割として持つ"""
 

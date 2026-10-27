@@ -494,6 +494,12 @@ def realize(clause, gap=None, subordinate=False):
     for adv in clause.adverbs:
         if adv.lemma not in ('nōn',):
             out.append(word(adv, 'adv'))
+    from .frame import where_is
+    if where_is(clause) is not None and clause.question_word == 'ubi' and gap is None:
+        # 「どこにいるか」: 場所の疑問詞 + 繋辞 (Kız nerede?・Kız neredeydi?)
+        return out + ['neredeydi' if clause.tense in ('perfect', 'imperfect') else 'nerede']
+    if clause.question and clause.question_word and gap is None and not any(np.interrogative for _, np in clause.args):
+        out.append(QUESTION_WORDS.get(clause.question_word, ''))   # 疑問の副詞は動詞の前 (Oğlan neden koşuyor?)
     if clause.copula:
         for role, np in clause.args:
             if role == 'prep':
@@ -521,7 +527,9 @@ def realize(clause, gap=None, subordinate=False):
         out.append(noun_phrase(np, 'Dat'))
     obj = (clause.role('object') or [None])[0]
     if obj is not None and gap != 'object':
-        out.append(noun_phrase(obj, 'Acc'))
+        # 疑問の「何を」は不定の目的語 (Kız ne yapıyor?。neyi にしない)
+        out.append('ne' if obj.interrogative and obj.head is not None and obj.head.lemma == 'quid' else
+                   noun_phrase(obj, 'Acc'))
     for role, np in clause.args:
         if role in ('subject', 'object', 'recipient', 'complement', 'address'):
             continue
@@ -535,6 +543,17 @@ def realize(clause, gap=None, subordinate=False):
         out.append(noun_phrase(np, case))
     out.append(verb_form(clause, gap, possessor))
     return [w for w in out if w]
+
+
+# 直接の疑問文の疑問の副詞
+QUESTION_WORDS = {'quandō': 'ne zaman', 'ubi': 'nerede', 'cūr': 'neden', 'quārē': 'neden', 'quōmodo': 'nasıl',
+                  'unde': 'nereden', 'quō': 'nereye', 'quotiēns': 'kaç kez'}
+
+
+def question_particle(word_):
+    """疑問の小辞 mI (前の語の最後の母音に合わせる: geliyor mu、var mı、güzel mi)"""
+    vowel = next((c for c in reversed(word_.lower()) if c in 'aıoueiöü'), 'e')
+    return {'a': 'mı', 'ı': 'mı', 'o': 'mu', 'u': 'mu', 'e': 'mi', 'i': 'mi', 'ö': 'mü', 'ü': 'mü'}[vowel]
 
 
 def vocative(np):
@@ -557,6 +576,9 @@ def sentence(clauses):
         if chain:   # 同じ主語の続く動作は -ıp で次の節に (Kapıyı açıp içeri girdi)
             rest = dataclasses.replace(rest, subordinator='et')
         words += realize(rest, subordinate=k + 1 < len(clauses))
+        if k + 1 == len(clauses) and rest.question and not rest.question_word and rest.mood == 'indicative' and \
+                _person(rest)[0] == 3 and words:
+            words.append(question_particle(words[-1]))   # 諾否の疑問: mı / mi / mu / mü (Oğlan geliyor mu?)
         text = ' '.join(w for w in words if w)
         parts.append(text + (' ' if chain else ', ') if k + 1 < len(clauses) else text)
         chained = chain

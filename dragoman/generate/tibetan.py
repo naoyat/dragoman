@@ -37,7 +37,10 @@ POSTPOSITIONS = {('in', 'Abl'): 'na', ('in', 'Acc'): 'la', ('ad', 'Acc'): 'la', 
                  ('sine', 'Abl'): 'med par', ('post', 'Acc'): 'gi rjes su', ('ante', 'Acc'): 'gi snga rol tu'}
 PRONOUNS = {('ego', 'sg'): 'nga', ('ego', 'pl'): 'nga cag', ('tū', 'sg'): 'khyod', ('tū', 'pl'): 'khyed',
             ('is', 'sg'): "de", ('is', 'pl'): 'de dag', ('hic', 'sg'): "'di", ('hic', 'pl'): "'di dag",
-            ('ille', 'sg'): 'de', ('ille', 'pl'): 'de dag'}
+            ('ille', 'sg'): 'de', ('ille', 'pl'): 'de dag', ('quis', 'sg'): 'su', ('quid', 'sg'): 'ci'}
+# 直接の疑問文の疑問の副詞 (動詞の前)
+QUESTION_WORDS = {'quandō': 'nam', 'ubi': 'gang na', 'cūr': "ci'i phyir", 'quārē': "ci'i phyir", 'quōmodo': 'ji ltar',
+                  'unde': 'gang nas', 'quō': 'gang du'}
 CONNECTIVES = {'et': 'yang', 'sed': "'on kyang", 'autem': 'yang', 'ubi': 'na', 'cum': 'na', 'postquam': 'nas',
                'sī': 'na', 'quod': 'phyir', 'quia': 'phyir'}
 TENSES = {'present': 'pres', 'imperfect': 'past', 'perfect': 'past', 'past-perfect': 'past', 'future': 'fut',
@@ -104,7 +107,7 @@ def _final(word):
 
 
 def particle(word, kind):
-    """能格 (erg)・属格 (gen)・終止 (fin)・名詞化 (nom)・命令 (imp) の助詞を付けた形"""
+    """能格 (erg)・属格 (gen)・終止 (fin)・疑問 (q)・名詞化 (nom)・命令 (imp) の助詞を付けた形"""
     f = _final(word)
     vowel = f in ('', "'")
     base = word[:-1] if f == "'" else word   # 語末の ' (a-chung) は付く助詞に置き換わる (dga' → dga's)
@@ -116,6 +119,8 @@ def particle(word, kind):
                                                        's': 'kyi'}.get(f, 'gyi')
     if kind == 'fin':
         return word + "'o" if f == '' else word + ' ' + (f + 'o' if f != "'" else "'o")
+    if kind == 'q':   # 疑問の助詞 (終止の助詞と同じく前の字で: 'ong ngam・yod dam・bzo'am)
+        return word + "'am" if f == '' else word + ' ' + (f + 'am' if f != "'" else "'am")
     if kind == 'nom':
         return word + ' ' + ('ba' if f in ('', 'ng', "'", 'r', 'l') else 'pa')
     if kind == 'imp':
@@ -179,6 +184,9 @@ def realize(clause, gap=None, final=True):
     subject = (clause.role('subject') or [None])[0]
     obj = (clause.role('object') or [None])[0]
     out = []
+    question = clause.question and clause.mood == 'indicative' and gap is None and final
+    wh = QUESTION_WORDS.get(clause.question_word, '') if question and \
+        not any(np.interrogative for _, np in clause.args) else ''
     if clause.copula:
         if subject is not None and gap != 'subject':
             out.append(noun_phrase(subject))
@@ -192,8 +200,9 @@ def realize(clause, gap=None, final=True):
             if role == 'prep':
                 out.append(noun_phrase(np) + ' ' + POSTPOSITIONS.get((np.prep.lemma, np.case), 'na'))
         verb = ('min' if clause.negated else 'yin') if complements else ('med' if clause.negated else 'yod')
-        out.append(particle(verb, 'fin') if final else verb)
-        return ' '.join(out)
+        out.append(wh)
+        out.append(particle(verb, 'q' if question else 'fin') if final else verb)
+        return ' '.join(w for w in out if w)
     if subject is not None and gap != 'subject':
         text = noun_phrase(subject)
         transitive = obj is not None or gap == 'object'   # 関係節の空所が目的語でも他動詞 (dge rgan gyis bstod pa'i bu)
@@ -216,7 +225,8 @@ def realize(clause, gap=None, final=True):
     if not final:
         verb = particle(verb, 'nom')   # 関係節・名詞化 (bstod pa)
     elif clause.mood != 'imperative':
-        verb = particle(verb, 'fin')
+        verb = particle(verb, 'q' if question else 'fin')   # 疑問文は疑問の助詞 (nam 'ong ngam)
+    out.append(wh)
     out.append(verb)
     return ' '.join(w for w in out if w)
 

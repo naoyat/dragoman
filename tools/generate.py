@@ -75,7 +75,7 @@ def run(text):
         if 'la' not in TARGETS:
             print()
             continue
-        regenerated = latin.sentence(clauses)
+        regenerated = frame.punctuate(latin.sentence(clauses), clauses, 'la')
         original, again = _words(analysis.text), _words(regenerated)
         spelled = Counter(map(_spelling, _word_list(analysis.text))), Counter(map(_spelling, _word_list(regenerated)))
         if original != again and spelled[0] == spelled[1]:
@@ -171,8 +171,8 @@ def run_other(text, source):
                 first = out.split('\n')[0]
                 # 解析の表示の文は標識 (ng・ang) を落としたり冠詞・前置詞を切り離したり (הַ מֶּלֶךְ) するので、
                 # インドネシア語・タガログ語・ヘブライ語・韓国語 (助詞を切り離す)・トルコ語・モンゴル語 (副動詞の印を足す)・フランス語 (エリジオンを切る)・
-                # ポルトガル語 (冠詞を落とす)・中国語 (的・了・量詞を落とす) は入力の文と比べる
-                original = _source_words(text if source in ('id', 'tl', 'he', 'ko', 'tr', 'mn', 'fr', 'pt') else
+                # ポルトガル語・ドイツ語 (冠詞を落とす)・中国語 (的・了・量詞を落とす) は入力の文と比べる
+                original = _source_words(text if source in ('id', 'tl', 'he', 'ko', 'tr', 'mn', 'fr', 'pt', 'de') else
                                          ''.join(analysis.original) if source == 'zh' else analysis.text, source)
                 mark = '   ✓ 同じ語' if original == _source_words(first, source) else '   ✗'
             first, _, rest = out.partition('\n')

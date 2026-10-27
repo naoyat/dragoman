@@ -479,6 +479,8 @@ def realize(clause, gap=None):
     """節 → ヘブライ語。gap は関係節の空所の役割 (その名詞句は書かない)"""
     from .frame import lexical_negation, periphrastic, dative_as_object
     clause = dative_as_object(lexical_negation(periphrastic(clause)), 'he')
+    if clause.question and clause.question_word and clause.mood == 'indicative' and gap is None:
+        return _question(clause)   # 直接の疑問文: 間接疑問と同じ形 (מָתַי הוּא בָּא)
     out = []
     for p in clause.adjuncts:
         if p.kind == 'absolute' and p.subject is not None:
@@ -567,6 +569,8 @@ def _question(inner):
     if wh is None:
         return QUESTION_WORDS.get(inner.question_word, 'אִם') + ' ' + realize(finite)
     word = 'מִי' if inner.question_word in ('quis', 'quem', 'cui', 'cūius', 'cuius') and wh.gender != 'n' else 'מָה'
+    if role == 'object' and word == 'מִי':
+        word = 'אֶת־מִי'   # 人を問う目的語は את を付ける
     return word + ' ' + realize(without_interrogative(finite), gap=role if role in ('subject', 'object') else None)
 
 

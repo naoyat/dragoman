@@ -331,9 +331,33 @@ def _copula(clause, complement, person, number):
     return verb, noun_phrase(dataclasses.replace(complement, number=number if adjective else complement.number), case)
 
 
+# 直接の疑問文の疑問の副詞と、疑問代名詞の格
+QUESTION_WORDS = {'quandō': 'milloin', 'ubi': 'missä', 'cūr': 'miksi', 'quārē': 'miksi', 'quōmodo': 'miten',
+                  'unde': 'mistä', 'quō': 'minne', 'quotiēns': 'kuinka usein'}
+QUESTION_PRONOUNS = {'kuka': {'object': 'kenet', 'recipient': 'kenelle', 'means': 'kenellä', 'possessor': 'kenen'},
+                     'mikä': {'object': 'mitä', 'recipient': 'mille', 'means': 'millä', 'possessor': 'minkä'}}
+WHO = {'quis', 'quem', 'cui', 'cūius', 'cuius', 'quibus'}
+
+
+def direct_question(clause):
+    """疑問詞のある直接の疑問文: 疑問詞を頭に、後ろは平叙の語順 (Milloin hän tulee?・Kenet poika näkee?・Missä tyttö on?)"""
+    import dataclasses
+    from .frame import interrogative_np, without_interrogative
+    owner, role, wh = interrogative_np(clause)
+    plain = dataclasses.replace(clause, question_word='', question=False)
+    if wh is None:
+        return [QUESTION_WORDS.get(clause.question_word, clause.question_word)] + realize(plain)
+    if owner is clause and role == 'subject':
+        return realize(plain)
+    pronoun = 'kuka' if clause.question_word in WHO and wh.gender != 'n' else 'mikä'
+    return [QUESTION_PRONOUNS[pronoun].get(role, pronoun)] + realize(without_interrogative(plain))
+
+
 def realize(clause, gap=None):
     from .frame import lexical_negation, periphrastic
     clause = lexical_negation(periphrastic(clause))
+    if clause.question and clause.question_word and clause.mood == 'indicative' and gap is None:
+        return direct_question(clause)
     person, number = _person(clause)
     subject = (clause.role('subject') or [None])[0]
     head = []

@@ -353,6 +353,8 @@ def realize(clause, gap=None):
     """節 → [(文字, 転写)]"""
     from .frame import lexical_negation, periphrastic, dative_as_object
     clause = lexical_negation(periphrastic(clause))
+    if clause.question and clause.question_word and clause.mood == 'indicative' and gap is None:
+        return _direct_question(clause)
     person, number = _person(clause)
     out = []
     for p in clause.adjuncts:
@@ -410,6 +412,32 @@ def realize(clause, gap=None):
         out += ([word] if word else [('که', 'ke')]) + realize(inner)
     out += verb_words(clause, person, number)
     return out
+
+
+def _direct_question(clause):
+    """疑問詞のある直接の疑問文: 疑問詞はその場に (主語なら文頭、ほかは動詞の前: او کی می‌آید、دختر چه می‌کند)。
+    「どこにいるか」は کجاست (دختر کجاست)"""
+    import dataclasses
+    from .frame import interrogative_np, without_interrogative, where_is
+    plain = dataclasses.replace(clause, question_word='')
+    if where_is(clause) is not None and clause.question_word == 'ubi' and clause.tense == 'present':
+        return noun_phrase(where_is(clause)) + [('کجاست', 'kojâst')]
+    _, role, wh = interrogative_np(clause)
+    if wh is not None:
+        word = QUESTION_WORDS['quis' if clause.question_word in ('quis', 'quem', 'cui', 'cūius', 'cuius') and
+                              wh.gender != 'n' else 'quid']
+        rest = realize(without_interrogative(plain))
+        if role == 'subject':
+            return [word] + rest
+        words = [word] + ([('را', 'râ')] if role == 'object' and word[1] == 'če kasi' else [])
+    else:
+        word = QUESTION_WORDS.get(clause.question_word)
+        rest = realize(plain)
+        if word is None:
+            return rest
+        words = [word]
+    verb = len(verb_words(plain, *_person(plain))) if not plain.copula else 1
+    return rest[:len(rest) - verb] + words + rest[len(rest) - verb:]
 
 
 def _absolute_clause(p):

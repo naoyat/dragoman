@@ -264,6 +264,8 @@ def realize(clause, gap=None, infinitive=False):
     """節 → 語の列 (中国語は空白なしでつなぐ)"""
     from .frame import lexical_negation, periphrastic
     clause = lexical_negation(periphrastic(clause))
+    if clause.question and clause.question_word and clause.mood == 'indicative' and gap is None and not infinitive:
+        return [_question(clause)]   # 直接の疑問文 (疑問詞はその場に)
     subject = (clause.role('subject') or [None])[0]
     out = []
     if subject is not None and gap != 'subject' and not infinitive:
@@ -415,17 +417,29 @@ def absolute(p):
     return ''.join(realize(Clause(lex, tense='perfect', voice=voice, args=args))) + '以后'
 
 
+PRONOUN_WORDS = {'我', '你', '他', '她', '它', '我们', '你们', '他们', '她们', '它们'}
+
+
 def _question(inner):
-    """間接疑問: 節のまま (疑問詞は元の位置: 我不知道他住在哪里)。疑問詞の無い節は 是否"""
+    """間接疑問・直接の疑問文: 節のまま (疑問詞は元の位置: 我不知道他住在哪里、他什么时候来、女孩在哪里)。
+    疑問の副詞は主語の後ろ、疑問詞の無い間接疑問は 是否"""
     import dataclasses
+    from .frame import where_is
     word_ = QUESTION_WORDS.get(inner.question_word)
-    finite = dataclasses.replace(inner, mood='indicative', question_word='')
-    text = ''.join(realize(finite))
+    finite = dataclasses.replace(inner, mood='indicative', question_word='', question=False)
+    if word_ and where_is(inner) is not None:
+        return noun_phrase(where_is(inner)) + word_   # 女孩在哪里 (有 の存在の文にしない)
+    words = [w for w in realize(finite) if w]
+    text = ''.join(words)
     if word_ is None:
         return text
     if not word_:
         return '是否' + text
-    return text + word_ if word_.startswith('在') or word_.startswith(('到', '从')) else word_ + text
+    if word_.startswith(('在', '到', '从')) and words[-1:] and words[-1] in POSTVERBAL_ZAI:
+        return text + word_   # 住在哪里
+    subject = 1 if words and (inner.role('subject') and not inner.role('subject')[0].interrogative or
+                              words[0] in PRONOUN_WORDS) else 0
+    return ''.join(words[:subject]) + word_ + ''.join(words[subject:])
 
 
 def wrap(text, clause, last):

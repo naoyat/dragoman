@@ -58,6 +58,10 @@ class RelativeAndParticipleTestCase(unittest.TestCase):
         self.assertEqual(tr('A menina canta enquanto o menino lê um livro.'),
                          '{少年が 本を 読む}間に / 少女が / 歌う')   # spaCy が副詞と読む文中の enquanto
         self.assertEqual(tr('Quando ele vem?'), 'いつ / {彼,それ}が / 来るか')   # 文頭の疑問詞
+        self.assertEqual(tr('Quem o menino vê?'), '少年は / 誰を / 見るか')   # 関係代名詞でなく疑問代名詞
+        self.assertEqual(tr('Quem vem?'), '誰が / 来るか')   # ほかに主語が無ければ主語
+        self.assertEqual(tr('Por que o menino corre?'), 'なぜ / 少年が / 走るか')   # 2語の por que
+        self.assertEqual(tr('Onde mora o menino?'), 'どこで / 少年が / 住むか')   # 倒置した主語
 
     def test_dashes(self):   # 「--」の入った文で落ちない
         self.assertTrue(tr('White -- Acho que sim .'))

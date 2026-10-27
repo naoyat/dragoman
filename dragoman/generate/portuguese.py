@@ -509,9 +509,39 @@ def _modal(clause, gap, antecedent, subjunctive):
     return words + ([preposition] if preposition else []) + inner_words
 
 
+# 直接の疑問文の疑問の副詞
+QUESTION_WORDS = {'quandō': 'quando', 'ubi': 'onde', 'cūr': 'por que', 'quārē': 'por que', 'quōmodo': 'como',
+                  'unde': 'de onde', 'quō': 'aonde', 'quotiēns': 'quantas vezes'}
+WHO = {'quis', 'quem', 'cui', 'cūius', 'cuius', 'quibus'}
+
+
+def direct_question(clause):
+    """疑問詞のある直接の疑問文: 疑問詞 + 平叙の語順 (Quando ele vem?・Quem o menino vê?・O que a menina faz?)。
+    「どこにいるか」は estar + 主語 (Onde está a menina?)"""
+    from .frame import interrogative_np, without_interrogative, where_is
+    owner, role, wh = interrogative_np(clause)
+    plain = dataclasses.replace(clause, question_word='', question=False)
+    if wh is None and where_is(clause) is not None:
+        return [QUESTION_WORDS[clause.question_word], _copula(clause, *_person(clause), location=True),
+                noun_phrase(where_is(clause), 'Nom')]
+    if wh is None:
+        return [QUESTION_WORDS.get(clause.question_word, clause.question_word)] + realize(plain)
+    if owner is clause and role == 'subject':
+        return realize(plain)
+    first = 'quem' if clause.question_word in WHO and wh.gender != 'n' else 'o que'
+    if role == 'prep':
+        first = prepositional(dataclasses.replace(wh, head=dataclasses.replace(wh.head, lemma='quis' if first == 'quem'
+                                                                              else 'quid')))
+    elif role == 'recipient':
+        first = 'a ' + first
+    return [first] + realize(without_interrogative(plain))
+
+
 def realize(clause, gap=None, antecedent=None, subjunctive=False, infinitive=False):
     from .frame import lexical_negation, periphrastic, reflexive_subject
     clause = lexical_negation(periphrastic(clause))
+    if clause.question and clause.question_word and clause.mood == 'indicative' and gap is None and not infinitive:
+        return direct_question(clause)
     modal = _modal(clause, gap, antecedent, subjunctive)
     if modal is not None:
         return modal

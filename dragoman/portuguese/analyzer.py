@@ -93,10 +93,20 @@ def sentences(text):
     for token in tokens(text):
         current.append(token)
         if PUNCTUATION.get(token) in ('period', 'question'):
-            yield current
+            yield _question_word(current)
             current = []
     if current:
-        yield current
+        yield _question_word(current)
+
+
+def _question_word(surfaces):
+    """文頭の2語の疑問詞を1語に: por que / por quê → porque (Por que o menino corre?)、o que → que (O que a menina faz?)"""
+    if len(surfaces) > 2 and surfaces[0].lower() == 'por' and surfaces[1].lower() in ('que', 'quê') and \
+            surfaces[-1] == '?':
+        return [surfaces[0][0] + 'orque'] + surfaces[2:]
+    if len(surfaces) > 2 and surfaces[0].lower() == 'o' and surfaces[1].lower() in ('que', 'quê') and surfaces[-1] == '?':
+        return [surfaces[1][0].upper() + surfaces[1][1:]] + surfaces[2:]
+    return surfaces
 
 
 def _item(word):
@@ -201,6 +211,10 @@ def _case_of(token):
         return ('Gen',)   # 前置詞の目的語
     if dep.startswith('nsubj'):
         return ('Nom',)
+    if dep == 'obj' and token.doc[-1].text == '?' and token.i > token.head.i and \
+            token.doc[0].lower_ in INTERROGATIVES and INTERROGATIVES[token.doc[0].lower_] and \
+            not any(c.dep_.startswith('nsubj') for c in token.head.children):
+        return ('Nom',)   # 疑問の副詞の後ろの倒置した主語 (Onde mora o menino?)
     if dep == 'obj':
         return ('Acc',)
     if dep == 'iobj':
@@ -265,6 +279,13 @@ def item_of(token, doc):
         return {'surface': text, 'pos': 'pronoun', 'base': lower, 'ja': ja, 'gloss_lang': 'ja', 'person': person,
                 'number': number, '_': morphology.cngs(cases, feats), 'compact': True, 'clitic': True,
                 **({'enclitic': True} if enclitic else {})}
+    if lower in ('quem', 'que', 'quê') and token.doc[-1].text == '?' and token.i == 0 and pos != 'VERB':
+        # 文頭の疑問代名詞 (Quem o menino vê?・O que a menina faz?)。関係代名詞にしない。
+        # ほかに主語があれば目的語 (Quem o menino vê?)、無ければ主語 (Quem vem?)
+        other = any(t.dep_.startswith('nsubj') and t.i != token.i for t in token.doc)
+        return {'surface': text, 'pos': 'pronoun', 'base': lower, 'ja': '誰' if lower == 'quem' else '何',
+                'gloss_lang': 'ja', 'desc': '疑問代名詞', '_': morphology.cngs(('Acc',) if other else ('Nom',)),
+                'compact': True}
     host = token.i + 1 < len(doc) and _enclitic_after(token)
     if host and pos not in ('VERB', 'AUX'):
         readings = morphology.verb_forms(lower)   # 接語の付いた語は動詞 (文頭の Dei-lhe を名詞と読む誤り)

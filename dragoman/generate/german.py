@@ -411,9 +411,30 @@ def _modal(clause, gap, subordinate):
     return words + inner_words
 
 
+# 直接の疑問文の疑問の副詞
+QUESTION_WORDS = {'quandō': 'wann', 'ubi': 'wo', 'cūr': 'warum', 'quārē': 'warum', 'quōmodo': 'wie', 'unde': 'woher',
+                  'quō': 'wohin', 'quotiēns': 'wie oft'}
+
+
+def direct_question(clause):
+    """疑問詞のある直接の疑問文: 疑問詞 + 定動詞 + 主語 … (Wann kommt er?・Wen sieht der Junge?・Wo ist das Mädchen?)。
+    疑問代名詞が主語なら語順はそのまま (Wer kommt?)"""
+    from .frame import interrogative_np, without_interrogative
+    owner, role, wh = interrogative_np(clause)
+    plain = dataclasses.replace(clause, question_word='', question=False, invert=True)
+    if wh is None:
+        return [QUESTION_WORDS.get(clause.question_word, clause.question_word)] + realize(plain)
+    if owner is clause and role == 'subject':
+        return realize(dataclasses.replace(plain, invert=False))
+    first = prepositional(wh) if role == 'prep' else noun_phrase(wh, {'recipient': 'Dat', 'possessor': 'Gen'}.get(role, 'Acc'))
+    return [first] + realize(without_interrogative(plain))
+
+
 def realize(clause, gap=None, subordinate=False, infinitive=False):
     from .frame import lexical_negation, periphrastic
     clause = lexical_negation(periphrastic(clause))
+    if clause.question and clause.question_word and clause.mood == 'indicative' and gap is None and not subordinate:
+        return direct_question(clause)
     modal = _modal(clause, gap, subordinate)
     if modal is not None:
         return modal
@@ -449,7 +470,7 @@ def realize(clause, gap=None, subordinate=False, infinitive=False):
             text = noun_phrase(comp, 'Nom') if not (comp.head is not None and comp.head.pos in ('adj', 'participle')) \
                 else (word(comp.head, 'adj') if not comp.members else ' und '.join(word(m.head, 'adj') for m in comp.members))
             tail.append(text)
-        if complements or clause.role('prep'):
+        if complements or clause.role('prep') or clause.invert:
             verb = _copula_words(clause, person, number)
         else:   # 存在の文 (Agricola est.「農夫がいる」): es gibt + 対格
             verb = 'gab' if clause.tense in ('perfect', 'imperfect', 'past-perfect') else 'gibt'
@@ -487,6 +508,8 @@ def realize(clause, gap=None, subordinate=False, infinitive=False):
         return [w for w in [stem + ('t' if number == 'pl' else '')] + middle + (['nicht'] if clause.negated else []) if w]
     if subordinate:   # 関係節・従属節: 動詞を最後に
         return [w for w in head_words + middle + tail + [verb] if w]
+    if clause.invert:   # 疑問詞の後ろは定動詞 + 主語 (Wann kommt er?)
+        return [w for w in [verb] + head_words + middle + tail if w]
     return [w for w in head_words + [verb] + middle + tail if w]
 
 

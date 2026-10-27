@@ -126,6 +126,20 @@ def _name(piece, keys):
     return ''
 
 
+# 2語に切られる疑問の語 (什么 / 时候 → 什么时候「いつ」)
+QUESTION_WORDS = {('什么', '时候'): '什么时候', ('什么', '地方'): '什么地方'}
+
+
+def _join_question_words(words):
+    out = []
+    for w in words:
+        if out and (out[-1], w) in QUESTION_WORDS:
+            out[-1] = QUESTION_WORDS[(out[-1], w)]
+        else:
+            out.append(w)
+    return out
+
+
 def segment(text):
     """文 → 語の列 (元の字のまま)"""
     simple = simplified(text)
@@ -146,6 +160,7 @@ def segment(text):
             words.append(piece)
     words = _split_classifiers(words)
     words = _split_you(words)
+    words = _join_question_words(words)
     out, i = [], 0   # 元の字に戻す
     for w in words:
         k = simple.find(w, i)

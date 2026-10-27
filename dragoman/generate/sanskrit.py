@@ -569,6 +569,8 @@ def question_phrase(inner):
 def realize(clause, capitalize=True):
     from .frame import lexical_negation
     clause = lexical_negation(clause)   # nesciō → na + jYA
+    if clause.question and clause.question_word and clause.mood == 'indicative':
+        return question_phrase(clause)[:-len(' iti')]   # 直接の疑問文: 間接疑問の iti を付けない (kadA Agacchati)
     subjects = clause.role('subject')
     subject = subjects[0] if subjects else None
     gender, person, number = _agreement(subject, clause)
