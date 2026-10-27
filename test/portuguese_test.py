@@ -62,6 +62,7 @@ class RelativeAndParticipleTestCase(unittest.TestCase):
         self.assertEqual(tr('Quem vem?'), '誰が / 来るか')   # ほかに主語が無ければ主語
         self.assertEqual(tr('Por que o menino corre?'), 'なぜ / 少年が / 走るか')   # 2語の por que
         self.assertEqual(tr('Onde mora o menino?'), 'どこで / 少年が / 住むか')   # 倒置した主語
+        self.assertEqual(tr('O menino dorme e a menina canta.'), '少年が / 眠る // そして / 少女が / 歌う')   # 形容詞と読む dorme
 
     def test_dashes(self):   # 「--」の入った文で落ちない
         self.assertTrue(tr('White -- Acho que sim .'))

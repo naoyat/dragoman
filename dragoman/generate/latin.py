@@ -240,9 +240,7 @@ def noun_phrase(np, case=None):
         else:
             text = (' %s ' % conj).join(parts)
     else:
-        gender = np.gender
-        if np.head.lang and np.head.lang != 'la' and np.head.pos == 'noun':
-            gender = latin_gender(to_latin(np.head)) or gender   # 置き換えたラテン語の名詞の性 (сад m → hortus m)
+        gender = np_gender(np)
         words = [decline(np.head, case, np.number, gender)]
         for mod in np.modifiers:
             words.append(agree(mod, case, np.number, gender))  # 形容詞は名詞の格・数・性に一致させる
@@ -259,6 +257,13 @@ def noun_phrase(np, case=None):
     if np.prep is not None and not np.bare_direction:   # Rōmam vēnit (前置詞なしの方向) は書かない
         text = np.prep.lemma + ' ' + text
     return text
+
+
+def np_gender(np):
+    """名詞句の性。ほかの言語の名詞は置き換えたラテン語の名詞の性 (сад m → hortus m、女孩 → puella f)"""
+    if np.head is not None and np.head.lang and np.head.lang != 'la' and np.head.pos == 'noun' and not np.members:
+        return latin_gender(to_latin(np.head)) or np.gender
+    return np.gender
 
 
 def agree(mod, case, number, gender):
@@ -281,12 +286,12 @@ def relative_clause(r, np):
     else:
         case = r.gap_prep[1] if r.gap == 'prep' else GAP_CASES.get(r.gap, 'Nom')
         relative = r.relative or frame.Lex('quī', 'pronoun')
-        word = decline(relative, case, np.number, np.gender)
+        word = decline(relative, case, np.number, np_gender(np))
         if word.startswith('*') and relative.surface:
             word = relative.surface.lower()
         if r.gap == 'prep':
             word = r.gap_prep[0].lemma + ' ' + word
-    r.antecedent_gender, r.antecedent_number = np.gender, np.number   # 主語の空所の分詞の性 (quae … imbūtae erant)
+    r.antecedent_gender, r.antecedent_number = np_gender(np), np.number   # 主語の空所の分詞の性 (quae … imbūtae erant)
     return word + ' ' + realize(r, capitalize=False)
 
 
@@ -312,7 +317,7 @@ def realize(clause, capitalize=True):
             if role == 'complement' and subjects and not np.members and np.head.pos in ('adj', 'participle'):
                 # 補語の形容詞は主語の数・性に一致させる (Vīta brevis est)
                 subject = subjects[0]
-                out.append(decline(np.head, subject_case, subject.number, subject.gender))
+                out.append(decline(np.head, subject_case, subject.number, np_gender(subject)))
                 continue
             out.append(noun_phrase(np))
     for inner in clause.infinitives:
@@ -330,7 +335,7 @@ def realize(clause, capitalize=True):
     if clause.mood == 'infinitive':
         out.append(infinitive(clause.verb, clause.tense, clause.voice))
     else:
-        gender = subjects[0].gender if subjects and not subjects[0].members else \
+        gender = np_gender(subjects[0]) if subjects and not subjects[0].members else \
             getattr(clause, 'antecedent_gender', '') if clause.gap == 'subject' else ''
         out.append(conjugate(clause.verb, clause.person, clause.number, clause.tense, clause.mood, clause.voice,
                              gender))

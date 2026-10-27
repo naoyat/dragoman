@@ -405,6 +405,23 @@ def _clause_ja(tokens, by_i):
     return ''.join(parts) + verb
 
 
+def _relative_frame(verb, sub, by_i):
+    """連体修飾節の動詞・主語・目的語・時制と空所 (文の枠の関係節を作る材料)。主語があれば空所は目的語 (我买的书)、
+    無ければ主語 (唱歌的女孩)。時制は 了・过 があれば完了、無ければ '' (文の枠で主節に合わせる)"""
+    args = []
+    for t in sub:
+        it = _item(by_i[t.i]) if t.i in by_i else None
+        if it is None or it.pos not in ('noun', 'pronoun') or t.head.i != verb.i:
+            continue
+        role = 'subject' if t.dep_.startswith('nsubj') else 'object' if t.dep_ in ('dobj', 'obj') else None
+        if role:
+            args.append([role, dict(it.item)])
+    negated = any(t.i in by_i and _item(by_i[t.i]) is not None and _item(by_i[t.i]).attrib('negation') for t in sub)
+    past = any(t.tag_ == 'AS' and t.text in ('了', '过') for t in sub)
+    return {'verb': dict(_item(by_i[verb.i]).item), 'tense': 'perfect' if past else '', 'negated': negated,
+            'args': args, 'gap': 'object' if any(r == 'subject' for r, _ in args) else 'subject'}
+
+
 def relative_clauses(words, doc):
     """動詞の句 + 的 (DEC) + 名詞: 連体修飾節を名詞の訳に組み込む (我买的书「私が買った本」)。節の語は除く"""
     by_i = {w.doc_i: w for w in words if getattr(w, 'doc_i', None) is not None}
@@ -424,6 +441,8 @@ def relative_clauses(words, doc):
         adjective = [by_i[t.i] for t in sub if t.i in by_i and _pos(by_i[t.i]) in ('adj', 'verb')]
         if len(sub) == 1 and len(adjective) == 1 and sub[0].tag_ == 'VA':
             data['relative_adj'] = dict(_item(adjective[0]).item, pos='adj')   # 美丽的玫瑰: 文の枠では形容詞に
+        elif verb.i in by_i and _pos(by_i[verb.i]) == 'verb':
+            data['relative_clause'] = _relative_frame(verb, sub, by_i)   # 我买的书: 文の枠では関係節に
         noun.items = [type(it)(data)]
         for t in sub + [token]:
             if t.i in by_i:

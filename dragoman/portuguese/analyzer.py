@@ -224,7 +224,7 @@ def _case_of(token):
     return ('Nom', 'Acc')
 
 
-ADVERB_SUBORDINATORS = {'enquanto', 'quando', 'embora', 'caso'}
+ADVERB_SUBORDINATORS = {'enquanto', 'embora'}
 
 
 def _noun_data(token, feats, proper=False):
@@ -261,6 +261,15 @@ def _enclitic_after(token):
     return _ENCLITIC_SURFACES.get(token.i + 1, False)
 
 
+def _table_verb(token, readings):
+    """語形の表の読み (見出し, 印) から定動詞の項目 (直説法・現在を先に)"""
+    lemma, tags = sorted(readings, key=lambda r: ('indicative' not in r[1], 'present' not in r[1]))[0]
+    person = next((k + 1 for k, p in enumerate(('first-person', 'second-person', 'third-person')) if p in tags), 3)
+    tense = next((k for k, v in TABLE_TENSES.items() if v in tags), 'present')
+    return _verb_data(token, {'VerbForm': 'Fin', 'Person': str(person), 'Number': 'Plur' if 'plural' in tags else 'Sing',
+                              'Tense': {v: k for k, v in TENSES.items()}.get(tense, 'Pres')}, lemma)
+
+
 def item_of(token, doc):
     """spaCy の語 → 項目 (dict)。扱わない語は None (句読点)"""
     pos, lemma, text = token.pos_, token.lemma_, token.text
@@ -290,12 +299,7 @@ def item_of(token, doc):
     if host and pos not in ('VERB', 'AUX'):
         readings = morphology.verb_forms(lower)   # 接語の付いた語は動詞 (文頭の Dei-lhe を名詞と読む誤り)
         if readings:
-            lemma, tags = sorted(readings, key=lambda r: ('indicative' not in r[1], 'present' not in r[1]))[0]
-            person = next((k + 1 for k, p in enumerate(('first-person', 'second-person', 'third-person')) if p in tags), 3)
-            tense = next((k for k, v in TABLE_TENSES.items() if v in tags), 'present')
-            return _verb_data(token, {'VerbForm': 'Fin', 'Person': str(person),
-                                      'Number': 'Plur' if 'plural' in tags else 'Sing',
-                                      'Tense': {v: k for k, v in TENSES.items()}.get(tense, 'Pres')}, lemma)
+            return _table_verb(token, readings)
     if pos == 'ADP' or (pos == 'DET' and ' ' in lemma and lemma.split()[0] in morphology.PREPOSITIONS):
         prep = lemma.split()[0] if ' ' in lemma else lower
         return _preposition(text, prep if prep in morphology.PREPOSITIONS else lower)
@@ -344,6 +348,9 @@ def item_of(token, doc):
             ja, gloss_lang, row = morphology.gloss(lower, 'adj')
         if ja is None:
             ja, gloss_lang = _participle_gloss(lower)
+        finite = [(l, t) for l, t in morphology.verb_forms(lower) if 'indicative' in t and t & FINITE_TAGS]
+        if ja is None and finite:
+            return _table_verb(token, finite)   # spaCy が形容詞と読む動詞 (O menino dorme e a menina canta の dorme)
         data = {'surface': text, 'pos': 'adj', 'base': lemma, 'ja': ja or lemma, 'gloss_lang': gloss_lang or 'en',
                 '_': morphology.cngs(morphology.CASES + ('Gen',), feats), 'main': True}
         if token.dep_ == 'ROOT' or any(c.dep_ == 'cop' for c in token.children):
@@ -482,14 +489,16 @@ def merge_verbs(words, doc):
 
 
 def attach_articles(words):
-    """冠詞 (o / um …) を後ろの名詞 (間に形容詞・数詞があってもよい) に掛け、語の列から除く (訳さない)"""
+    """冠詞 (o / um …) を後ろの名詞 (間に形容詞・数詞・所有詞があってもよい: o meu pai) に掛け、語の列から除く (訳さない)"""
     out = []
     for i, word in enumerate(words):
         if _pos(word) != 'article':
             out.append(word)
             continue
         j = i + 1
-        while j < len(words) and _pos(words[j]) == 'adj':
+        while j < len(words) and (_pos(words[j]) == 'adj' or _item(words[j]) is not None and
+                                  _item(words[j]).attrib('possessive') and j + 1 < len(words) and
+                                  _pos(words[j + 1]) in ('noun', 'adj')):
             j += 1
         if j < len(words) and _pos(words[j]) in ('noun', 'pronoun'):
             words[j].add_modifier(word)

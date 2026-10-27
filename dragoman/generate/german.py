@@ -122,7 +122,21 @@ def gender(noun):
         return 'n'
     row = db.execute("SELECT gender FROM lemmas WHERE word = ? AND pos IN ('noun', 'name') AND gender != '' LIMIT 1",
                      (noun,)).fetchone()
-    return row[0] if row and row[0] in ('m', 'f', 'n') else 'n'
+    if row and row[0] in ('m', 'f', 'n'):
+        return row[0]
+    # 見出しの無い女性形 (Lehrerin: Lehrer の語形の行に feminine)
+    tags = [set(t.split(',')) for (t,) in db.execute("SELECT tags FROM forms WHERE form = ? AND pos = 'noun'",
+                                                    (noun.lower(),))]
+    if tags and all('feminine' in t for t in tags):
+        return 'f'
+    # 見出しの行の無い名詞 (Lehrer): 格の付いた語形の性 (lehrern: 複数・与格・男性。女性形 lehrerin の行は格が無い)
+    for (tags,) in db.execute("SELECT tags FROM forms WHERE lemma = ? AND pos = 'noun'", (noun,)):
+        tags = set(tags.split(','))
+        if tags & {'nominative', 'accusative', 'dative', 'genitive'}:
+            for g in ('masculine', 'feminine', 'neuter'):
+                if g in tags:
+                    return g[0]
+    return 'n'
 
 
 # ----------------------------------------------------------------------
@@ -376,6 +390,21 @@ GERMAN_MODALS = {'possum': 'können', 'volō': 'wollen', 'dēbeō': 'müssen', '
                  'sinō': 'lassen'}
 
 
+def _feminine_noun(np):
+    """人の名詞の女性形 (Lehrer → Lehrerin。女性の主語の補語)。辞書に女性形が無ければそのまま"""
+    from .frame import Lex
+    if np.members or np.head is None or np.head.pos != 'noun' or not np.animate or np.head.proper:
+        return np
+    lemma = word(np.head, 'noun')
+    if gender(lemma) == 'f':
+        return np   # もとから女性の名詞 (rainha)
+    fem = find_form(lemma, 'noun', ('feminine',), avoid=('plural',))
+    if not fem or fem.lower() == lemma.lower():
+        return np
+    fem = fem[:1].upper() + fem[1:]
+    return dataclasses.replace(np, head=Lex(fem, 'noun', np.head.ja, lang='de'), gender='f')
+
+
 def _modal(clause, gap, subordinate):
     """話法の助動詞 + 不定詞 (Ich kann das Buch lesen、Man muss gehen、Er lässt mich lachen)。当てはまらなければ None"""
     from .frame import Lex, NP
@@ -467,6 +496,8 @@ def realize(clause, gap=None, subordinate=False, infinitive=False):
                 middle.append(prepositional(np))
         if complements:
             comp = complements[0]
+            if subject is not None and subject.gender == 'f' and not subject.members:
+                comp = _feminine_noun(comp)   # Sie ist die Lehrerin (主語の性は元の言語の性: das Mädchen も女性)
             text = noun_phrase(comp, 'Nom') if not (comp.head is not None and comp.head.pos in ('adj', 'participle')) \
                 else (word(comp.head, 'adj') if not comp.members else ' und '.join(word(m.head, 'adj') for m in comp.members))
             tail.append(text)

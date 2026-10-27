@@ -585,6 +585,8 @@ def np_of(node, case=None):
     if _lang == 'zh' and item.attrib('relative_adj'):   # 美丽的玫瑰: 名詞の訳に組み込んだ形容詞を修飾語に
         from dragoman.core.Item import Item
         np.modifiers.append(lex_of(None, Item(item.attrib('relative_adj'))))
+    if _lang == 'zh' and item.attrib('relative_clause'):   # 我买的书: 名詞の訳に組み込んだ連体修飾節を関係節に
+        np.relatives.append(_chinese_relative(item.attrib('relative_clause')))
     for mod in node.modifiers:
         if isinstance(mod, Word) and mod.items and mod.items[0].pos != 'article':
             np.modifiers.append(lex_of(mod))
@@ -823,6 +825,26 @@ def clause_of(predicate, lang=None):
 PT_DATIVE_PREPOSITIONS = ('a', 'à', 'ao', 'aos', 'às')
 
 
+def _chinese_relative(data):
+    """中国語の解析器の連体修飾節の材料 (chinese/analyzer._relative_frame) → 関係節 (Clause。gap に空所の役割)"""
+    from dragoman.core.Item import Item
+    args = []
+    for role, d in data['args']:
+        it = Item(d)
+        args.append((role, NP(lex_of(None, it), case='Nom' if role == 'subject' else 'Acc', animate=is_animate(it),
+                              surface=it.surface)))
+    subject = next((np for role, np in args if role == 'subject'), None)
+    person = {'ego': 1, 'tū': 2}.get(subject.head.lemma, 3) if subject is not None and subject.head is not None else 3
+    clause = Clause(verb=lex_of(None, Item(data['verb'])), tense=data['tense'] or 'present', negated=data['negated'],
+                    args=args, gap=data['gap'], person=person)
+    if not data['tense']:
+        _UNMARKED_RELATIVES.add(id(clause))
+    return clause
+
+
+_UNMARKED_RELATIVES = set()   # 相の印 (了・过) の無い中国語の関係節: 時制は主節の過去に合わせる (我看了我买的书 → I read the book I bought)
+
+
 def _french_inversion(clause):
     """複合倒置 (Pourquoi le garçon court-il ?) の重なった主語: 名詞の主語があれば後ろの代名詞 il・elle を除く"""
     subjects = clause.role('subject')
@@ -860,6 +882,11 @@ def _portuguese_chinese_frame(clause, verb_item):
         first = clause.args[objects[0]][1]
         if first.animate or first.head is not None and first.head.pos == 'pronoun':
             clause.args[objects[0]] = ('recipient', dataclasses.replace(first, case='Dat'))
+    if _lang == 'zh':
+        for _, np in clause.args:
+            for r in np.relatives:
+                if id(r) in _UNMARKED_RELATIVES and clause.tense in ('perfect', 'imperfect', 'past-perfect'):
+                    r.tense = 'perfect'
     if _lang == 'zh' and clause.verb.lemma == '在' and not clause.copula:
         # 存在の動詞の 在 (女孩在花园里「少女は庭にいる」) → 場所の繋辞: sum + in (方位詞で sub …) + 奪格
         for k, (role, np) in enumerate(clause.args):

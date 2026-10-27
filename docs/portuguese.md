@@ -88,14 +88,14 @@ python3 tools/generate.py --to=pt "Ego tē amō. Mihi est liber. Puellā cantant
   よく使う語の目安は UD の出現数 `tools/build_lemma_counts.py --lang=pt`、教科書の基本の語は transfer.PREFERRED で決めておく:
   agricultor を lavrador より）。名詞の性と、名詞・形容詞・動詞の語形は辞書の語形の表から（表に何度も載る形を先に: saber の
   sei を方言の sabo より）。無ければ規則（複数 -s・-ões・-ns・-is、女性 -a、-ar・-er・-ir の活用）。
-* 名詞句: 定冠詞 o / a / os / as（所有詞の前にも: o meu livro）、不定冠詞 um / uma、前に置く形容詞（bom・grande・outro …）と後ろに
+* 名詞句: 定冠詞 o / a / os / as（所有詞の前は、元の文に冠詞があれば o meu livro、冠詞の分からない言語からは meu livro）、不定冠詞 um / uma、前に置く形容詞（bom・grande・outro …）と後ろに
   置く形容詞（性・数の一致。並列は bom e corajoso）、指示詞 este・esse・aquele（中性は isto・isso）、de + 属格、名詞に掛かる分詞は
   que + 節（o inimigo que foge）。前置詞と冠詞・代名詞の縮約（no・do・ao・pelo・dele・nela・comigo）。
 * 語順: 主語 - não - 接語の代名詞 - 動詞 - 目的語 - a + 受け手 - 前置詞句。主語の代名詞は書き（ブラジルの話し言葉）、2人称は você
   （動詞は3人称）。接語は動詞の前（Eu te amo）、不定詞の後ろの3人称の接語は -lo（posso lê-lo）。
 * 時制: 現在、完了は完全過去（viu）、未完了過去（via）、過去完了 tinha + 過去分詞、単純未来（verá）、受動 ser + 過去分詞。
   否定の代名詞は動詞の後ろでも não（não vi ninguém）。望む・命じる・感情の補文と para que・embora などの後ろは接続法現在。
-* 繋辞: ser（形容詞は主語に一致）、場所は estar（O menino está no jardim）、存在の文は há、所有の与格は ter（Eu tenho um livro）。
+* 繋辞: ser（形容詞は主語に一致、人の名詞は女性の主語なら辞書の女性形: Ela é professora）、場所は estar（O menino está no jardim）、存在の文は há、所有の与格は ter（Eu tenho um livro）。
 * 独立奪格は enquanto + 節（現在）・depois que + 節（過去）、述語的な分詞は動名詞（colhendo as flores）、過去の受動は一致した
   過去分詞（movida pelas palavras）。知覚の動詞 + 不定詞（Eu vejo a menina cantar）。
 
@@ -117,7 +117,10 @@ python3 tools/generate.py --from=pt "Há um livro na mesa."
 * 主語の代名詞から人称、você・vocês は2人称（ほかの言語では「あなた」、ポルトガル語に戻すと3人称の動詞）。
 * 存在の há + 名詞は繋辞 + 主語（不定）。不定の主語の存在の文は、日本語では場所を先に「〜に …がある」、中国語は 〜上有 …。
 * spaCy の読み誤りの手当て: 小文字の普通名詞を固有名詞と読む（rosa）、原形の誤り（rosa → roso: 辞書で引けた語形を見出しに）、
-  文中の enquanto・quando・embora を副詞と読む（従属接続詞に）。
+  文中の enquanto・embora を副詞と読む（従属接続詞に。quando・caso も入れると UD の主語が1ポイント下がる）、
+  辞書に形容詞として無い定動詞を形容詞と読む（O menino dorme e a menina canta の dorme）、冠詞を所有詞に掛ける（o meu pai）。
+* 疑問詞の直接疑問文: 文頭の Quem・Que・O que は疑問代名詞（関係代名詞にしない。ほかに主語が無ければ主語: Quem vem?）、
+  por que・o que は1語に、疑問の副詞の後ろの倒置した主語（Onde mora o menino?）。
 
 ## 評価（`tools/ud_eval.py --lang=pt`）
 
@@ -126,16 +129,15 @@ UD Portuguese-GSD（CC BY-SA 4.0。`$DRAGOMAN_DATA/pt/ud/`）の test 1200 文�
 
 | 項目 | |
 |---|---|
-| 形容詞→名詞 | 再現率 78.0%・適合率 80.1% |
-| 属格→名詞 | 再現率 59.4%・適合率 85.9% |
-| 述語の検出 | 88.3% |
-| 主語 | 74.3% |
-| 目的語 | 65.3% |
+| 形容詞→名詞 | 再現率 77.9%・適合率 80.3% |
+| 属格→名詞 | 再現率 59.4%・適合率 86.0% |
+| 述語の検出 | 88.2% |
+| 主語 | 74.1% |
+| 目的語 | 65.2% |
 
 há + 名詞は訳で「〜がある」の主語なので主語として測る。
 
 ## まだできないこと
 
-* spaCy が動詞を形容詞と読む文（o menino dorme の dorme）は直していない
 * 接続法未来・人称不定詞は語形の表にあるが、訳し分けはまだ
 * ブラジルの口語の主語の a gente「私たち」、tu + 3人称の動詞

@@ -347,7 +347,7 @@ def realize(clause, gap=None, infinitive=False):
             objects.insert(0, noun_phrase(np))
         else:
             before.append('给' + noun_phrase(np))
-    aspect = '了' if perfect and not clause.negated else ''
+    aspect = '了' if perfect and not clause.negated and gap is None else ''   # 関係節には付けない (我买的书)
     if after and verb in ('去', '回'):   # 去罗马・回家 (行き先をそのまま)
         verb_words = [verb + aspect] + after + objects
     elif after:   # 走到城镇・来到别墅 (到 + 行き先)

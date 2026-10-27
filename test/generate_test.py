@@ -508,6 +508,9 @@ class OtherSourceTestCase(unittest.TestCase):
         self.assertEqual(portuguese.sentence(cs), 'Há um livro na mesa.')
         self.assertEqual(chinese.sentence(cs), '桌子上有一本书。')
         self.assertEqual(japanese.sentence(cs), 'テーブルに本がある。')
+        cs = self.frames_of(pt, 'O meu pai vem.')   # 冠詞は所有詞の後ろの名詞に (元に冠詞があれば o meu)
+        self.assertEqual(portuguese.sentence(cs), 'O meu pai vem.')
+        self.assertEqual(portuguese.sentence(clauses('Pater meus venit.')), 'Meu pai vem.')   # 冠詞の分からない言語から
         cs = self.frames_of(pt, 'A menina canta enquanto o menino lê um livro.')   # spaCy が副詞と読む enquanto
         self.assertEqual(portuguese.sentence(cs), 'A menina canta, enquanto o menino lê um livro.')
         self.assertEqual(japanese.sentence(cs), '少年が本を読むあいだ、少女は歌う。')   # 従属節を前に
@@ -530,6 +533,16 @@ class OtherSourceTestCase(unittest.TestCase):
         cs = self.frames_of(zh, '李明住在北京。')   # 辞書に無い人名、名前の綴り、住在
         self.assertEqual(english.sentence(cs), 'Li Ming lives in Beijing.')
         self.assertEqual(chinese.sentence(cs), '李明住在北京。')
+        cs = self.frames_of(zh, '唱歌的女孩很漂亮。')   # 連体修飾節を関係節に (空所は主語)
+        self.assertEqual(english.sentence(cs), 'The girl who sings is pretty.')
+        self.assertEqual(latin.sentence(cs), 'Puella quae cantat pulchra est.')   # 性は置き換えたラテン語の名詞から
+        self.assertEqual(chinese.sentence(cs), '唱歌的女孩很漂亮。')
+        cs = self.frames_of(zh, '我看了我买的书。')   # 空所は目的語。相の印が無ければ主節の過去に合わせる
+        self.assertEqual(portuguese.sentence(cs), 'Eu vi o livro que eu comprei.')
+        self.assertEqual(japanese.sentence(cs), '私は私が買った本を見た。')
+        self.assertEqual(chinese.sentence(cs), '我看了我买的书。')   # 関係節には 了 を付けない
+        cs = self.frames_of(zh, '她是老师。')   # 女性の主語の補語の名詞は女性形
+        self.assertEqual(portuguese.sentence(cs), 'Ela é professora.')
         cs = self.frames_of(zh, '我觉得他会来。')   # 補文の 会 は未来
         self.assertEqual(english.sentence(cs), 'I think that he will come.')
         self.assertEqual(chinese.sentence(cs), '我觉得他会来。')

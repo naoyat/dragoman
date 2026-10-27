@@ -128,7 +128,12 @@ def gender(noun):
     # 辞書の最初の項目 (Wiktionary で先に載る主な語義: livre「本」(男性) を livre「ポンド」(女性) より)
     row = db.execute("SELECT gender FROM lemmas WHERE key = ? AND pos IN ('noun', 'name') AND gender IN ('m', 'f') "
                      "ORDER BY pos = 'name', rowid LIMIT 1", (noun.lower(),)).fetchone()
-    return row[0] if row else 'm'
+    if row:
+        return row[0]
+    # 見出しの無い女性形 (professeure: professeur の語形の行に feminine)
+    tags = [set(t.split(',')) for (t,) in db.execute("SELECT tags FROM forms WHERE form = ? AND pos = 'noun'",
+                                                    (noun.lower(),))]
+    return 'f' if tags and all('feminine' in t for t in tags) else 'm'
 
 
 def _vowel(word):
@@ -456,6 +461,21 @@ FRENCH_MODALS = {'possum': 'pouvoir', 'volō': 'vouloir', 'dēbeō': 'devoir', '
                  'sinō': 'laisser'}
 
 
+def _feminine_noun(np):
+    """人の名詞の女性形 (professeur → professeure。女性の主語の補語)。辞書に女性形が無ければそのまま"""
+    from .frame import Lex
+    if np.members or np.head is None or np.head.pos != 'noun' or not np.animate or np.head.proper:
+        return np
+    lemma = word(np.head, 'noun')
+    if gender(lemma) == 'f':
+        return np   # もとから女性の名詞 (rainha)
+    fem = find_form(lemma, 'noun', ('feminine',), avoid=('plural',))
+    if not fem or fem.lower() == lemma.lower():
+        return np
+    fem = fem
+    return dataclasses.replace(np, head=Lex(fem, 'noun', np.head.ja, lang='fr'), gender='f')
+
+
 def _modal(clause, gap, antecedent, subjunctive):
     """話法の動詞 + 不定詞の節 (Je peux le lire、Il faut partir、Il me fait rire)。当てはまらなければ None"""
     from .frame import Lex
@@ -597,7 +617,7 @@ def realize(clause, gap=None, antecedent=None, subjunctive=False, infinitive=Fal
                     [adjective_form(word(comp.head, 'adj'), g, n)]
                 tail.append(' et '.join(f for f in forms if f))
             else:
-                tail.append(noun_phrase(comp, 'Nom'))
+                tail.append(noun_phrase(_feminine_noun(comp) if agree[0] == 'f' else comp, 'Nom'))   # Elle est la professeure
         return [w for w in words + verb_words + adverbs + tail + preps if w]
     clitics, objects = [], []
     obj = (clause.role('object') or [None])[0]

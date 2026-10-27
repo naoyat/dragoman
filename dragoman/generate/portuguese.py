@@ -307,6 +307,8 @@ def noun_phrase(np, case='Nom', article=True, indefinite=False):
                                                                                  'pouco', 'pouca', 'poucos', 'poucas'):
         if indefinite or np.definite is False:   # 元の言語の不定冠詞 (um livro)
             determiner = _gendered(('um', 'uma', 'uns', 'umas'), g, number)
+        elif possessive and np.definite is None and case != 'Str':
+            pass   # ブラジルでは所有詞の前の冠詞を書かないことが多い (Meu pai vem。前置詞の後ろは ao meu pai、元に冠詞があれば o meu)
         else:
             determiner = _gendered(('o', 'a', 'os', 'as'), g, number)   # 所有詞の前にも冠詞 (o meu livro)
     words = [quantifier, determiner, possessive] + before + [noun_form] + after
@@ -484,6 +486,21 @@ def _enclitic(infinitive, clitic):
     return stem + '-l' + clitic
 
 
+def _feminine_noun(np):
+    """人の名詞の女性形 (professor → professora。女性の主語の補語)。辞書に女性形が無ければそのまま"""
+    from .frame import Lex
+    if np.members or np.head is None or np.head.pos != 'noun' or not np.animate or np.head.proper:
+        return np
+    lemma = word(np.head, 'noun')
+    if gender(lemma) == 'f':
+        return np   # もとから女性の名詞 (rainha)
+    fem = find_form(lemma, 'noun', ('feminine',), avoid=('plural',))
+    if not fem or fem.lower() == lemma.lower():
+        return np
+    fem = fem
+    return dataclasses.replace(np, head=Lex(fem, 'noun', np.head.ja, lang='pt'), gender='f')
+
+
 def _modal(clause, gap, antecedent, subjunctive):
     """話法の動詞 + 不定詞の節 (Eu posso lê-lo、Eu quero ir)。当てはまらなければ None"""
     if clause.copula or len(clause.infinitives) != 1 or clause.verb is None:
@@ -607,6 +624,8 @@ def realize(clause, gap=None, antecedent=None, subjunctive=False, infinitive=Fal
                     [adjective_form(word(comp.head, 'adj'), g, n)]
                 tail.append(' e '.join(f for f in forms if f))
             else:
+                if agree[0] == 'f':
+                    comp = _feminine_noun(comp)   # Ela é professora
                 tail.append(noun_phrase(comp, 'Nom', article=comp.head is not None and comp.head.pos != 'noun' or
                                         bool(comp.modifiers)))
         return [w for w in words + negation + [verb] + adverbs + tail + preps if w]
