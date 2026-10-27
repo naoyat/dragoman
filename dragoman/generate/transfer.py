@@ -520,6 +520,9 @@ for _lang, _lemma in (('de', 'mögen'), ('fi', 'pitää'), ('tr', 'sevmek'), ('k
 # 英語の watch は「見る」(映画・試合を。hüten・vartioida のような「見張る」にしない)
 for _lang, _lemma in (('de', 'ansehen'), ('fi', 'katsoa')):
     PREFERRED.setdefault(_lang, {})[('watch', 'verb')] = (_lemma, '')
+# 英語の lord・master (dominus) はドイツ語の Herr (英語からの借用の Lord にしない)
+for _en in ('lord', 'master'):
+    PREFERRED.setdefault('de', {})[(_en, 'noun')] = ('Herr', 'm')
 PARTICLES = ('to', 'as', 'at', 'on', 'for', 'with', 'into', 'upon', 'in', 'from', 'of', 'out', 'up', 'away',
              'off', 'down', 'by')
 

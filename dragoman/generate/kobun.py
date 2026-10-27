@@ -226,8 +226,8 @@ def predicate(clause, name='終止'):
     """述語の name 形"""
     if clause.copula or clause.verb.lemma == 'sum':   # 日本語の入口の いる・ある (sum) も
         complements = clause.role('complement')
-        if not complements:   # 存在: 人・動物は をり、ほかは あり
-            animate = any(np.animate for np in clause.role('subject'))
+        if not complements:   # 存在: 人・動物は をり、ほかは あり。所有 (我に友あり) は人でも あり
+            animate = any(np.animate for np in clause.role('subject')) and not clause.role('recipient')
             return chain(Verb('を' if animate else 'あ', 'ラ変'), clause, name)
         np = complements[0]
         from .frame import adjective_members
@@ -381,12 +381,27 @@ def clause_text(clause, name='終止', attributive=False, topic=None):
     clause = lexical_negation(periphrastic(clause))   # nesciō → 知らず
     from .frame import dative_as_object
     clause = dative_as_object(clause, 'kobun')
+    clause = japanese.have_as_existence(clause)   # 童に友二人あり (人を「持つ」と訳さない)
     parts = [_participial(p) for p in clause.adjuncts if p.kind == 'absolute']
     subjects = clause.role('subject')
     if topic is None:
         topic = name == '終止' and not attributive and not clause.subordinator
+    # 不定の主語の存在・所有の文: 場所・所有者を先に、主語は助詞なしで述語の前、数量はその後ろ (我に友二人あり・庭に花三つあり)
+    existential = clause.copula and not clause.role('complement') and bool(subjects) and \
+        (subjects[0].definite is False or subjects[0].interrogative or japanese._numeral(subjects[0]) is not None or
+         clause.role('recipient') and subjects[0].definite is not True)   # 所有の与格 (我に書あり)
+    late = []
     for np in subjects:
         if attributive and clause.gap == 'subject':
+            continue
+        if existential and not np.members:
+            numeral = japanese._numeral(np)
+            if numeral is not None:
+                import dataclasses
+                bare = dataclasses.replace(np, modifiers=[m for m in np.modifiers if m is not numeral], number='sg')
+                late.append(noun_phrase(bare) + japanese.count(numeral, np))
+            else:
+                late.append(noun_phrase(np))
             continue
         parts.append(noun_phrase(np) + ('は' if topic else 'の'))
     for p in clause.adjuncts:
@@ -427,6 +442,7 @@ def clause_text(clause, name='終止', attributive=False, topic=None):
             parts.insert(0, word)   # もし雨降らば (節の頭に)
         else:
             parts.append(word)
+    parts += late
     parts.append(predicate(clause, name))
     return ''.join(parts)
 

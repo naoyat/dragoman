@@ -232,6 +232,13 @@ class SmallFixesTestCase(unittest.TestCase):
         self.assertEqual(self.out(greek, 'grc', 'Quid facit puella?'), 'τί ἡ κόρη ποιεῖ;')   # 縮約形を先に
         self.assertEqual(self.out(japanese, 'ja', 'Duo amīcī veniunt.'), '二人の友人は来る。')   # 数詞 (たちを付けない)
         self.assertEqual(self.out(japanese, 'ja', 'Mihi sunt duo amīcī.'), '私には友人が二人いる。')   # 数量は述語の前
+        self.assertEqual(self.out(japanese, 'ja', 'Puer amīcum habet.'), '少年には友人がいる。')   # 人を「持つ」にしない
+        self.assertEqual(self.out(kobun, 'kobun', 'Puer amīcum habet.'), '童に友あり。')   # 所有は人でも あり
+        self.assertEqual(self.out(japanese, 'ja', 'Puer duōs amīcōs habet.'), '少年には友人が二人いる。')   # duo の活用
+        self.assertEqual(self.out(latin, 'la', 'Puer duōs amīcōs habet.'), 'Puer duōs amīcōs habet.')   # 数詞は名詞の前
+        self.assertEqual(self.out(kobun, 'kobun', 'Mihi est liber.'), '我に書あり。')
+        self.assertEqual(self.out(english, 'en', 'Servus dominō pāret.'), 'The slave obeys the lord.')
+        self.assertEqual(self.out(japanese, 'ja', 'Servus dominō pāret.'), '奴隷は主に従う。')   # 与格なら「従う」
 
     def test_other_sources(self):
         from dragoman.russian import analyzer as ru

@@ -808,6 +808,8 @@ def clause_of(predicate, lang=None):
         _swap_experiencer(clause)
     if _lang == 'fr':
         _french_inversion(clause)
+    if _lang in ('', 'la') and clause.verb.lemma in DATIVE_SENSES and clause.role('recipient'):
+        clause.verb = dataclasses.replace(clause.verb, ja=DATIVE_SENSES[clause.verb.lemma])   # dominō pāret「主に従う」
     if _lang in ('pt', 'zh'):
         _portuguese_chinese_frame(clause, verb_item)
     if verb_item.attrib('modal') in SOURCE_MODALS:
@@ -843,6 +845,10 @@ def _chinese_relative(data):
 
 
 _UNMARKED_RELATIVES = set()   # 相の印 (了・过) の無い中国語の関係節: 時制は主節の過去に合わせる (我看了我买的书 → I read the book I bought)
+
+
+# 与格を取るときの意味 (辞書の最初の訳語は別の意味: pāreō「現れる」)
+DATIVE_SENSES = {'pāreō': '従う'}
 
 
 def _french_inversion(clause):

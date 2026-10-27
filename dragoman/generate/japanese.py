@@ -265,11 +265,36 @@ def _fold_modal(clause):
                                adverbs=clause.adverbs + inner.adverbs)
 
 
+OWNER_PRONOUNS = {1: 'ego', 2: 'tū', 3: 'is'}
+
+
+def have_as_existence(clause):
+    """habeō (have) + 人の目的語 → 所有の繋辞 (Puer duōs amīcōs habet・Eu tenho dois amigos →
+    少年には友人が二人いる。人を「持つ」と訳さない)。物の目的語はそのまま (本を持つ)"""
+    import dataclasses
+    from .frame import Lex, NP
+    from . import english
+    objects = clause.role('object')
+    if clause.copula or clause.mood != 'indicative' or clause.gap or len(objects) != 1 or not objects[0].animate or \
+            objects[0].head is None or objects[0].head.pos == 'pronoun':
+        return clause
+    if clause.verb.lemma != 'habeō' and english.word(clause.verb) != 'have':
+        return clause
+    owner = (clause.role('subject') or [None])[0]
+    if owner is None:   # 代名詞の主語の書かれない文 (Frātrem habeō → 私には兄弟がいる)
+        owner = NP(Lex(OWNER_PRONOUNS.get(clause.person, 'is'), 'pronoun'), number=clause.number or 'sg')
+    owned = objects[0] if objects[0].definite is True else dataclasses.replace(objects[0], definite=False)
+    rest = [(r, np) for r, np in clause.args if r not in ('subject', 'object')]
+    return dataclasses.replace(clause, verb=Lex('sum', 'verb', 'ある,いる'), copula=True,
+                               args=[('recipient', owner), ('subject', owned)] + rest)
+
+
 def clause_text(clause, final=True, attributive=False):
     """節 → 日本語 (述語まで)"""
     import dataclasses
     from .frame import dative_as_object, prohibition
     clause = dative_as_object(prohibition(clause), 'ja')   # miserēre nōbīs → 私たちを憐れめ、Nōlī timēre → 恐れるな
+    clause = have_as_existence(clause)
     clause = _complement_verb(_fold_want(_fold_modal(clause)))
     if any(_negative_pronoun(np) for _, np in clause.args):
         clause = dataclasses.replace(clause, negated=True)
@@ -280,7 +305,8 @@ def clause_text(clause, final=True, attributive=False):
     # (Há um livro na mesa「テーブルに 本が ある」、我有一本书「私には 本が ある」)
     # 疑問代名詞の主語も同じ (Quid eī est?・他有什么「彼には 何が あるか」)
     existential = clause.copula and not clause.role('complement') and bool(subjects) and \
-        (subjects[0].definite is False or subjects[0].interrogative or _numeral(subjects[0]) is not None)
+        (subjects[0].definite is False or subjects[0].interrogative or _numeral(subjects[0]) is not None or
+         clause.role('recipient') and subjects[0].definite is not True)   # 所有の与格 (Mihi est liber「私には本がある」)
     late = []
     for np in subjects:
         if attributive and clause.gap == 'subject':

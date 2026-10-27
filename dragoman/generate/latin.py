@@ -249,8 +249,8 @@ def noun_phrase(np, case=None):
         for p in np.participles:
             p.case, p.number, p.gender = case, np.number, np.gender
             words.append(participial(p))
-        if any(m.desc == '指示代名詞' for m in np.modifiers if isinstance(m, frame.Lex)):
-            words = words[1:2] + words[:1] + words[2:]   # 指示代名詞は名詞の前 (haec puella)
+        if any(m.desc == '指示代名詞' or m.lemma in NUMERALS_BEFORE for m in np.modifiers[:1] if isinstance(m, frame.Lex)):
+            words = words[1:2] + words[:1] + words[2:]   # 指示代名詞・数詞は名詞の前 (haec puella・duo amīcī)
         for r in np.relatives:
             words.append(relative_clause(r, np))
         text = ' '.join(words)
@@ -264,6 +264,10 @@ def np_gender(np):
     if np.head is not None and np.head.lang and np.head.lang != 'la' and np.head.pos == 'noun' and not np.members:
         return latin_gender(to_latin(np.head)) or np.gender
     return np.gender
+
+
+NUMERALS_BEFORE = {'ūnus', 'duo', 'trēs', 'quattuor', 'quīnque', 'sex', 'septem', 'octō', 'novem', 'decem', 'centum',
+                   'mīlle'}
 
 
 def agree(mod, case, number, gender):

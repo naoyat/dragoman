@@ -341,7 +341,27 @@ def pronominal_adjectives():
     return util.aggregate_cases(items)
 
 
+# 変化する数詞 duo「2」・trēs「3」(複数だけ。ほかの基数詞は変化しない: other.def)
+NUMERAL_FORMS = {
+    'duo': ('(数詞)2', {'m': ('duo', 'duōs', 'duōrum', 'duōbus', 'duōbus'), 'f': ('duae', 'duās', 'duārum', 'duābus', 'duābus'),
+                       'n': ('duo', 'duo', 'duōrum', 'duōbus', 'duōbus')}),
+    'trēs': ('(数詞)3', {'m': ('trēs', 'trēs', 'trium', 'tribus', 'tribus'), 'f': ('trēs', 'trēs', 'trium', 'tribus', 'tribus'),
+                        'n': ('tria', 'tria', 'trium', 'tribus', 'tribus')}),
+}
+
+
+def numerals():
+    items = []
+    for base, (ja, genders) in NUMERAL_FORMS.items():
+        for gender, forms in genders.items():
+            for case, form in zip(('Nom', 'Acc', 'Gen', 'Dat', 'Abl'), forms):
+                items.append({'pos': 'adj', 'base': base, 'ja': ja, 'surface': form, 'case': case, 'number': 'pl',
+                              'gender': gender})
+    return util.aggregate_cases(items)
+
+
 def load():
     items = ego() + meus() + reflexive_pronouns() + ipse() + is_ea_id() + hic() + ille() + idem() + qui() + quis() + quisque() + quidam()
     items += pronominal_adjectives()
+    items += numerals()
     return items

@@ -819,8 +819,9 @@ def realize(clause, capitalize=True):
     subject = subjects[0] if subjects else None
     person, number = _subject_features(subject, clause)
     verb = word(clause.verb) if not clause.copula else 'be'
-    if not clause.copula and clause.verb.lemma in DATIVE_VERBS:
-        verb = DATIVE_VERBS[clause.verb.lemma]
+    if not clause.copula and clause.verb.lemma in DATIVE_VERBS and \
+            (clause.role('recipient') or clause.role('object') or clause.verb.lemma != 'pāreō'):
+        verb = DATIVE_VERBS[clause.verb.lemma]   # 与格の無い pāreō は「現れる」(Lūna pāret → The moon appears)
     if clause.verb.lemma == 'oportet' and len(clause.infinitives) == 1 and clause.infinitives[0].role('subject'):
         # il faut que je parte → I have to leave (不定詞の節の主語を主語に)
         inner = clause.infinitives[0]
