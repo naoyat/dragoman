@@ -19,7 +19,7 @@ import re
 import unicodedata
 
 from . import english
-from .frame import NP
+from .frame import NP, Lex
 
 ZWNJ = '‌'
 PRESENT_ENDINGS = {(1, 'sg'): ('م', 'am'), (2, 'sg'): ('ی', 'i'), (3, 'sg'): ('د', 'ad'),
@@ -46,6 +46,8 @@ CONNECTIVES = {'et': ('و', 'va'), 'que': ('و', 'va'), 'atque': ('و', 'va'), '
                'ubi': ('وقتی که', 'vaqti ke'), 'cum': ('وقتی که', 'vaqti ke'), 'postquam': ('پس از آنکه', 'pas az ân-ke'),
                'dum': ('در حالی که', 'dar hâli ke'), 'quod': ('چون', 'čun'), 'quia': ('چون', 'čun'),
                'sī': ('اگر', 'agar'), 'ut': ('تا', 'tâ'), 'nē': ('تا نه', 'tâ na')}
+POSSESSIVES = {'meus': ('من', 'man'), 'tuus': ('تو', 'to'), 'suus': ('خود', 'xod'), 'noster': ('ما', 'mâ'),
+               'vester': ('شما', 'šomâ')}
 QUESTION_WORDS = {'quis': ('چه کسی', 'če kasi'), 'quid': ('چه', 'če'), 'cūr': ('چرا', 'čerâ'),
                   'quārē': ('چرا', 'čerâ'), 'ubi': ('کجا', 'kojâ'), 'quō': ('کجا', 'kojâ'), 'quōmodo': ('چگونه', 'čegune'),
                   'quandō': ('کی', 'key')}
@@ -199,10 +201,14 @@ def noun_phrase(np, relative_ok=True):
             attributes += [w for k, x in enumerate(m.members) for w in ([('و', 'va')] if k else []) + [adjective(x.head)]]
         elif m.pos == 'pronoun' and m.lemma in DEMONSTRATIVES:
             demonstrative = DEMONSTRATIVES[m.lemma]
+        elif m.lemma in POSSESSIVES:
+            continue   # 所有は形容詞の後ろ (کتاب بزرگ من)
         else:
             attributes.append(adjective(m))
     for g in np.genitives:
         attributes += noun_phrase(g)
+    # 所有形容詞はエザーフェ + 代名詞 (کتاب من: ketâb-e man。suus「自分の」は خود)
+    attributes += [POSSESSIVES[m.lemma] for m in np.modifiers if isinstance(m, Lex) and m.lemma in POSSESSIVES]
     out = [demonstrative] if demonstrative else []
     if attributes and not bare:
         out.append(_ezafe(word))

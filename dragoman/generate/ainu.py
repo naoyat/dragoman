@@ -16,7 +16,7 @@ import functools
 import re
 
 from . import english
-from .frame import NP
+from .frame import NP, Lex
 
 POSTPOSITIONS = {('in', 'Abl'): 'ta', ('in', 'Acc'): 'un', ('ad', 'Acc'): 'un', ('ex', 'Abl'): 'orowa',
                  ('ē', 'Abl'): 'orowa', ('ab', 'Abl'): 'orowa', ('ā', 'Abl'): 'orowa', ('cum', 'Abl'): 'turano',
@@ -27,6 +27,7 @@ CONNECTIVES = {'et': 'wa', 'sed': 'korka', 'autem': 'wa', 'ubi': 'hike', 'cum': 
                'sī': 'yakun', 'quod': 'kusu', 'quia': 'kusu', 'ut': 'kuni'}
 PRONOUNS = {('ego', 'sg'): 'kani', ('ego', 'pl'): 'ciokay', ('tū', 'sg'): 'eani', ('tū', 'pl'): 'ecioka',
             ('quis', 'sg'): 'nen', ('quid', 'sg'): 'hemanta'}
+POSSESSIVES = {'meus': 'ku=kor', 'tuus': 'e=kor', 'suus': 'kor', 'noster': 'ci=kor', 'vester': 'eci=kor'}
 # 直接の疑問文の疑問の副詞 (動詞の前: Matkaci hunak ta an?)
 QUESTION_WORDS = {'quandō': 'hempara', 'ubi': 'hunak ta', 'cūr': 'hemanta kusu', 'quārē': 'hemanta kusu',
                   'quōmodo': 'makanak', 'unde': 'hunak wa', 'quō': 'hunak un'}
@@ -85,7 +86,8 @@ def to_ainu(lex, pos):
     allowed = {'adj': ('verb', 'adj'), 'verb': ('verb',), 'noun': ('noun',)}.get(pos, (pos,))
     from .japanese import gloss as ja_gloss
     first = ja_gloss(lex).split(',')[0].strip() if lex.ja else ''
-    for word, p in _by_japanese().get(first, []) + _by_japanese().get(first.rstrip('い') + 'い', []):
+    keys = [first, first.rstrip('い') + 'い'] + ([first[:-1] + 'い'] if first.endswith('な') else [])   # 大きな → 大きい
+    for word, p in [x for key in keys for x in _by_japanese().get(key, [])]:
         if p in allowed or pos == 'adj':
             return word
     best = None
@@ -139,12 +141,15 @@ def noun_phrase(np):
     out = []
     for g in np.genitives:   # 所有: 持ち主 + kor + 名詞 (「〜の持つ」)
         out += noun_phrase(g) + ['kor']
+    for m in np.modifiers:   # 所有形容詞: 人称の接辞 + kor (ku=kor kampisos「私の本」。suus は3人称で kor だけ)
+        if isinstance(m, Lex) and m.lemma in POSSESSIVES:
+            out.append(POSSESSIVES[m.lemma])
     for r in np.relatives:   # 関係節は名詞の前 (kamuy nukar aynu)
         out += realize(r, gap=r.gap)
     for m in np.modifiers:   # 形容詞 (状態の動詞) も名詞の前 (pirka matkaci)
         if isinstance(m, NP):
             out += [w for k, x in enumerate(m.members) for w in (['wa'] if k else []) + [to_ainu(x.head, 'adj') or '?']]
-        elif m.pos != 'pronoun':
+        elif m.pos != 'pronoun' and m.lemma not in POSSESSIVES:
             out.append(to_ainu(m, 'adj') or '[%s]' % english.word(m))
     return out + [word]
 

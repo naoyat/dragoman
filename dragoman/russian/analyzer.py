@@ -129,6 +129,9 @@ def _nominative(word):
         any(cng[0] == 'Nom' for cng in word.items[0]._ or [])
 
 
+PLACE_QUESTIONS = {'где', 'откуда', 'куда'}
+
+
 def supply_copula(words):
     """現在形の繋辞は書かない (Он студент「彼は学生だ」, Москва — столица「モスクワは首都だ」)。
     定動詞が無く、主格の名詞類が2つ以上 (か短語尾形容詞が) あれば、見えない繋辞 быть を補う。
@@ -137,7 +140,11 @@ def supply_copula(words):
         return words
     noms = [i for i, w in enumerate(words) if _nominative(w)]
     short = [i for i, w in enumerate(words) if w.items and w.items[0].attrib('desc') == '短語尾']
-    if len(noms) < 2 and not (noms and short):
+    # 主格が1つでも、場所の句・場所の疑問詞があれば場所の繋辞 (Девочка в саду「少女は庭にいる」・Где девочка?)
+    place = any(w.surface.lower() in PLACE_QUESTIONS for w in words) or \
+        any(w.items and w.items[0].pos == 'preposition' and i + 1 < len(words) and i + 1 not in noms
+            for i, w in enumerate(words) if noms and i > noms[0])
+    if len(noms) < 2 and not (noms and (short or place)):
         return words
     dash = next((i for i, w in enumerate(words) if w.surface in ('—', '–') and noms[0] < i), None)
     copula = Word('(есть)', [dict(COPULA, surface='(есть)')])

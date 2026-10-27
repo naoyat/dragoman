@@ -720,6 +720,19 @@ def question_particles(words, surfaces):
     return [w for w in words if not (_tag(w) == 'SP' and w.surface in ('吗', '嗎', '吧', '呢', '啊', '嘛', '呀', '啦'))]
 
 
+# 看 の目的語が読むもの (看书「本を読む」) なら訳を「読む」に (ほかは「見る」: 看电影)
+READING = {'书', '报', '报纸', '小说', '杂志', '信', '课文', '文章', '诗'}
+
+
+def reading_objects(words, doc):
+    by_i = {w.doc_i: w for w in words if getattr(w, 'doc_i', None) is not None}
+    for token in doc:
+        if token.text == '看' and token.i in by_i and _pos(by_i[token.i]) == 'verb' and \
+                any(c.dep_ in ('dobj', 'obj') and c.text in READING for c in token.children):
+            it = _item(by_i[token.i])
+            by_i[token.i].items = [type(it)(dict(it.item, ja='読む'))]
+
+
 def lookup_all(surfaces):
     simple = [segment.simplified(s) for s in surfaces]
     doc = morphology.parse(simple)
@@ -732,6 +745,7 @@ def lookup_all(surfaces):
         words.append(word)
     global _display
     _display = list(words)
+    reading_objects(words, doc)
     words = relative_clauses(words, doc)
     words = complement_clauses(words, doc)
     words = complements(words)

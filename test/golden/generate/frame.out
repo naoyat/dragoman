@@ -24,7 +24,7 @@ Puerī puellaeque cantant .
   述語: cantō [現在 3pl 直説法 能動]
   ドイツ語: Sie singen.
   フランス語: Ils chantent.
-  フィンランド語: Laulavat.
+  フィンランド語: He laulavat.
   トルコ語:  Ötüyorlar.
   モンゴル語: Дуулна.
   韓国語:   부른다.
@@ -44,7 +44,7 @@ Bonus et fortis vir pugnat .
   (述語が見つからない)
 Haec puella illum puerum videt .
   述語: videō [現在 3sg 直説法 能動]
-    主語 (Nom/Voc): puella sg f + hīc
+    主語 (Nom/Voc): puella sg f + hic
     目的語 (Acc): puer sg m + ille
   ドイツ語: Dieses Mädchen sieht jenen Jungen.
   フランス語: Cette fille voit ce garçon.
@@ -166,7 +166,7 @@ Servī epistulās portāvērunt .
     目的語 (Acc): epistula pl f ← 属格 servus sg m
   ドイツ語: Sie trugen die Briefe des Sklaven.
   フランス語: Ils ont porté les lettres de l'esclave.
-  フィンランド語: Kantoivat orjan kirjeet.
+  フィンランド語: He kantoivat orjan kirjeet.
   トルコ語:  Kulun mektuplarını götürdüler.
   モンゴル語: Боолын захиаг өмссөн.
   韓国語:   노비의 편지를 날랐다.
@@ -175,7 +175,7 @@ Nautae mare nōn timent .
     目的語 (Nom/Voc/Acc): mare sg n ← 属格 nauta sg m
   ドイツ語: Sie fürchten das Meer des Seemannes nicht.
   フランス語: Ils ne craignent pas la mer du matelot.
-  フィンランド語: Eivät pelkää merimiehen merta.
+  フィンランド語: He eivät pelkää merimiehen merta.
   トルコ語:  Bahriyelinin denizini korkmuyorlar.
   モンゴル語: Далайчины далайг айхгүй.
   韓国語:   해원의 바다를 안 겁낸다.
@@ -211,7 +211,7 @@ Cum amīcīs ad oppidum ambulāmus .
   韓国語:   친구들과 함께 도시에 걷는다.
 Hīs rēbus cognitīs agricola ad vīllam vēnit .
   述語: veniō [完了 3sg 直説法 能動]
-    受け手 (Dat/Abl): rēs pl f + hīc
+    受け手 (Dat/Abl): rēs pl f + hic
     主語 (Nom/Voc): agricola sg m
     前置詞句 (ad + Acc): ? sg
     辞書に無い語 (): cognitīs sg
@@ -245,10 +245,10 @@ Rēge mortuō populus flēvit .
   韓国語:   군집이 왕에게 울었다.
 Cum hīs rēbus cognitīs vēnit .
   述語: veniō [完了 3sg 直説法 能動]
-    前置詞句 (cum + Abl): rēs pl f + hīc
+    前置詞句 (cum + Abl): rēs pl f + hic
   ドイツ語: Er kam mit diesen Gegenständen.
   フランス語: Il est venu avec ces objets.
-  フィンランド語: Tuli tämän kappaleiden kanssa.
+  フィンランド語: Hän tuli tämän kappaleiden kanssa.
   トルコ語:  Bu nesnelerle geldi.
   モンゴル語: Энэ объекттой ирсэн.
   韓国語:   이 적과 함께 왔다.
@@ -419,14 +419,13 @@ Puella nautae rosam dat .
   韓国語:   해원의 소녀가 장미를 준다.
 Hic servus dominum suum amat .
   述語: amō [現在 3sg 直説法 能動]
-    主語 (Nom): servus sg m
+    主語 (Nom): servus sg m + hic
     目的語 (Acc): dominus sg m + suus
-    辞書に無い語 (): Hic sg
-  ドイツ語: Der Sklave liebt seinen Lord in Hic.
-  フランス語: L'esclave aime son seigneur dans Hic.
-  フィンランド語: Orja rakastaa isäntäään Hicissä.
-  トルコ語:  Kul ağasını Hik'te seviyor.
-  モンゴル語: Боол өөрийн эзэнийг Хикд хайрлана.
-  韓国語:   노비가 자기의 주를 히크에서 사랑한다.
+  ドイツ語: Dieser Sklave liebt seinen Lord.
+  フランス語: Cet esclave aime son seigneur.
+  フィンランド語: Tämä orja rakastaa isäntäään.
+  トルコ語:  Bu kul ağasını seviyor.
+  モンゴル語: Энэ боол өөрийн эзэнийг хайрлана.
+  韓国語:   이 노비가 자기의 주를 사랑한다.
 Mīles hostem gladiō acūtō vulnerāvit .
   (述語が見つからない)

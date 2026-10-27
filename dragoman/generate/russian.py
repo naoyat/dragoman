@@ -582,6 +582,18 @@ def realize(clause, capitalize=True):
     gender, person, number = _subject_agreement(subject, clause)
     out = []
     places = [np for r, np in clause.args if r == 'prep'] if clause.copula and not clause.role('complement') else []
+    if places and subject is not None and clause.mood == 'indicative' and subject.definite is not False and \
+            [np for _, np in clause.args].index(subject) < [np for _, np in clause.args].index(places[0]):
+        # 場所の文 (主語が先で不定でない: Puella in hortō est → Девочка в саду、過去は была)
+        verb = ''
+        if clause.tense in ('perfect', 'imperfect', 'past-perfect'):
+            verb = _inflect('быть', 'INFN', {'past', 'plur' if number == 'pl' else 'sing'} |
+                            ({gender} if number != 'pl' else set()))
+        elif clause.tense == 'future':
+            verb = _inflect('быть', 'INFN', {'futr', '3per', 'plur' if number == 'pl' else 'sing'})
+        text = ' '.join(w for w in [noun_phrase(subject, 'Nom'), 'не' if clause.negated else '', verb] +
+                        [prepositional(np) for np in places] if w)
+        return text[:1].upper() + text[1:] if capitalize else text
     if places and subject is not None and clause.mood == 'indicative':
         # 存在・所有 (場所・所有者を先に): В комнате есть стол、У меня есть книга、нет + 生格、было / не было
         before = ' '.join(prepositional(np) for np in places)

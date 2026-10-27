@@ -47,6 +47,9 @@ PRONOUNS = {('ego', 'sg'): ('मैं', 'maiṃ', 'میں', 'मुझ', 'mujh'
             ('hic', 'sg'): ('यह', 'yah', 'یہ', 'इस', 'is', 'اس'), ('hic', 'pl'): ('ये', 'ye', 'یہ', 'इन', 'in', 'ان'),
             ('ille', 'sg'): ('वह', 'vah', 'وہ', 'उस', 'us', 'اس'), ('ille', 'pl'): ('वे', 've', 'وہ', 'उन', 'un', 'ان'),
             ('quis', 'sg'): ('कौन', 'kaun', 'کون', 'किस', 'kis', 'کس'), ('quid', 'sg'): ('क्या', 'kyā', 'کیا', 'किस', 'kis', 'کس')}
+# 所有形容詞の語幹 (語尾 -ā / -e / -ī は名詞に一致)。suus「自分の」は अपना
+POSSESSIVES = {'meus': ('मेर', 'mer', 'میر'), 'tuus': ('तुम्हार', 'tumhār', 'تمہار'), 'suus': ('अपन', 'apn', 'اپن'),
+               'noster': ('हमार', 'hamār', 'ہمار'), 'vester': ('तुम्हार', 'tumhār', 'تمہار')}
 # 直接の疑問文の疑問の副詞
 QUESTION_WORDS = {'quandō': ('कब', 'kab', 'کب'), 'ubi': ('कहाँ', 'kahāṃ', 'کہاں'), 'cūr': ('क्यों', 'kyoṃ', 'کیوں'),
                   'quārē': ('क्यों', 'kyoṃ', 'کیوں'), 'quōmodo': ('कैसे', 'kaise', 'کیسے'),
@@ -153,7 +156,8 @@ def _roman(word):
 # 語形 (三つ組)
 
 def _word(row):
-    return (row[0], row[2], row[4] or row[0])
+    from dragoman.urdu.script import deva_to_urdu
+    return (row[0], row[2], row[4] or deva_to_urdu(row[0]))   # ウルドゥー文字の綴りの無い語は写す
 
 
 def _strip_final(word, deva, roman, urdu):
@@ -167,12 +171,35 @@ def _strip_final(word, deva, roman, urdu):
         if u.endswith(ending):
             u = u[:-len(ending)]
             break
+        cut = _cut_marked(u, ending)
+        if cut is not None:   # 母音記号の付いた綴り (بَنَانَا → بَنَا)
+            u = cut
+            break
     return d, r, u
+
+
+def _cut_marked(word, ending):
+    """母音記号を無視して語末の ending を除いた形 (一致しなければ None)"""
+    i, k = len(word), len(ending)
+    while k > 0 and i > 0:
+        if unicodedata.combining(word[i - 1]):
+            i -= 1
+            continue
+        if word[i - 1] != ending[k - 1]:
+            return None
+        i, k = i - 1, k - 1
+    if k:
+        return None
+    while i > 0 and unicodedata.combining(word[i - 1]):
+        i -= 1   # 除いた字に付いていた母音記号も
+    return word[:i]
 
 
 def attach(stem, suffix):
     """語幹 + 語尾 (母音で終わる語幹の後ろは独立の母音字: गाया・گایا)"""
     d, r, u = stem
+    if suffix == 'oṃ' and r.endswith('ī') and d.endswith('ी'):
+        return d[:-1] + 'ियों', r[:-1] + 'iyoṃ', u + 'وں'   # ī の後ろ: क़ुलियों・قلیوں (कुलीओं にしない)
     after_vowel = bool(r) and r[-1] in 'aāiīuūeo'
     deva, urdu = SUFFIXES[suffix]
     return d + deva[after_vowel], r + suffix, u + urdu[after_vowel]
@@ -268,6 +295,10 @@ def noun_phrase(np, oblique=False):
         elif m.pos == 'pronoun' and m.lemma in ('hic', 'ille', 'is'):
             p = PRONOUNS[('hic' if m.lemma == 'hic' else 'ille', number)]
             out.append(p[3:] if oblique else p[:3])
+        elif m.lemma in POSSESSIVES:   # मेरा / मेरे / मेरी (名詞の性・数・斜格に一致。suus は अपना)
+            d, r, u = POSSESSIVES[m.lemma]
+            ending = 2 if gender == 'f' else 1 if number == 'pl' or oblique else 0
+            out.append((d + ('ा', 'े', 'ी')[ending], r + ('ā', 'e', 'ī')[ending], u + ('ا', 'ے', 'ی')[ending]))
         else:
             out.append(adjective(m, gender, number, oblique))
     out.append(noun_form(row, number, oblique))
@@ -283,7 +314,8 @@ def _verb_row(clause):
         return None, []
     parts = row[0].split(' ')
     if len(parts) > 1:   # 複合動詞 (प्यार करना): 前の語はそのまま
-        roman, urdu = row[2].split(' '), (row[4] or row[0]).split(' ')
+        from dragoman.urdu.script import deva_to_urdu
+        roman, urdu = row[2].split(' '), (row[4] or deva_to_urdu(row[0])).split(' ')
         head = [(parts[0], roman[0] if roman else parts[0], urdu[0] if urdu else parts[0])]
         main = _rows().get((parts[-1], 'verb')) or (parts[-1], 'verb', roman[-1], 'm', urdu[-1], '', 1, '')
         return main, head
@@ -398,8 +430,9 @@ def realize(clause, gap=None):
         out += noun_phrase(subject, oblique=ergative)
         if ergative:
             out.append(('ने', 'ne', 'نے'))
-    elif subject is None and gap is None and clause.mood != 'imperative' and clause.person in (1, 2):
-        pronoun = PRONOUNS[({1: 'ego', 2: 'tū'}[clause.person], clause.number)]
+    elif subject is None and gap is None and clause.mood != 'imperative' and \
+            (clause.person in (1, 2) or clause.person == 3 and clause.verb.lemma not in english.IMPERSONAL):
+        pronoun = PRONOUNS[({1: 'ego', 2: 'tū', 3: 'is'}[clause.person], clause.number)]   # 3人称も वह (वह कब आता है)
         out.append(pronoun[3:] if ergative else pronoun[:3])
         if ergative:
             out.append(('ने', 'ne', 'نے'))
@@ -423,7 +456,24 @@ def realize(clause, gap=None):
             place = noun_phrase(np, True)
             if any(w[0].strip('[]?') for w in place):   # 中身の分からない句は書かない
                 out += place + [('में', 'meṃ', 'میں')]
-    return out + _question_word(clause, gap) + words
+    return _ergative_pronouns(out) + _question_word(clause, gap) + words
+
+
+# 代名詞の斜格 + ने は1語に (मैंने・उसने・उन्होंने。ウルドゥー語は離して書く: میں نے)
+ERGATIVE_PRONOUNS = {'मुझ': ('मैंने', 'maiṃne', 'میں نے'), 'हम': ('हमने', 'hamne', 'ہم نے'), 'तुम': ('तुमने', 'tumne', 'تم نے'),
+                     'उस': ('उसने', 'usne', 'اس نے'), 'उन': ('उन्होंने', 'unhoṃne', 'انہوں نے'),
+                     'इस': ('इसने', 'isne', 'اس نے'), 'इन': ('इन्होंने', 'inhoṃne', 'انہوں نے'),
+                     'किस': ('किसने', 'kisne', 'کس نے')}
+
+
+def _ergative_pronouns(words):
+    out = []
+    for w in words:
+        if w[0] == 'ने' and out and out[-1][0] in ERGATIVE_PRONOUNS:
+            out[-1] = ERGATIVE_PRONOUNS[out[-1][0]]
+            continue
+        out.append(w)
+    return out
 
 
 def _question_word(clause, gap):
@@ -469,6 +519,8 @@ def sentence_words(clauses):
             for r in np.relatives:
                 words += [(',', ',', '،')] + relative(np, r)
         out += words
+    if clauses and clauses[-1].question and not clauses[-1].question_word and clauses[-1].mood == 'indicative':
+        out.insert(0, ('क्या', 'kyā', 'کیا'))   # 諾否の疑問は文頭に क्या (क्या लड़का आता है?)
     return out
 
 

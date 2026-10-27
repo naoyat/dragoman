@@ -90,7 +90,7 @@ LEXICON = {
     'pirka': ('良い', 'adj'), 'wen': ('悪い', 'adj'), 'poro': ('大きい', 'adj'), 'pon': ('小さい', 'adj'),
     'sirpirka': ('天気が良い', 'adj'), 'sirwen': ('天気が悪い', 'adj'), 'retar': ('白い', 'adj'),
     'kunne': ('黒い', 'adj'), 'hure': ('赤い', 'adj'), 'tanne': ('長い', 'adj'), 'takne': ('短い', 'adj'),
-    'nupe': ('涙', 'noun'), 'sipirka': ('美しい', 'adj'), 'pewre': ('若い', 'adj'), 'onne': ('年老いた', 'adj'),
+    'kampisos': ('本', 'noun'), 'nupe': ('涙', 'noun'), 'sipirka': ('美しい', 'adj'), 'pewre': ('若い', 'adj'), 'onne': ('年老いた', 'adj'),
     # 代名詞・指示・数
     'kani': ('私', 'pron'), 'eani': ('あなた', 'pron'), 'ciokay': ('私たち', 'pron'), 'aokay': ('私たち', 'pron'),
     'tapan': ('この', 'det'), 'taan': ('この', 'det'), 'tan': ('この', 'det'), 'toan': ('あの', 'det'),

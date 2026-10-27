@@ -259,6 +259,9 @@ def noun_phrase(np, case='Nom', article=True, indefinite=False):
         parts = [noun_phrase(m, case, article, indefinite) for m in np.members]
         conj = ' ou ' if np.conj in ('aut', 'vel') else ' et '
         return ', '.join(parts[:-1]) + conj + parts[-1] if len(parts) > 2 else conj.join(parts)
+    if np.gender == 'f' and np.head is not None and np.head.pos == 'noun' and \
+            (np.animate or english.female_counterpart(np.head)):
+        np = _feminine_noun(np, force=True)   # 女性の人の名詞 (magistra・professora) は女性形
     head = np.head
     if head is None:
         return ''
@@ -461,10 +464,10 @@ FRENCH_MODALS = {'possum': 'pouvoir', 'volō': 'vouloir', 'dēbeō': 'devoir', '
                  'sinō': 'laisser'}
 
 
-def _feminine_noun(np):
+def _feminine_noun(np, force=False):
     """人の名詞の女性形 (professeur → professeure。女性の主語の補語)。辞書に女性形が無ければそのまま"""
     from .frame import Lex
-    if np.members or np.head is None or np.head.pos != 'noun' or not np.animate or np.head.proper:
+    if np.members or np.head is None or np.head.pos != 'noun' or not (np.animate or force) or np.head.proper:
         return np
     lemma = word(np.head, 'noun')
     if gender(lemma) == 'f':
@@ -535,7 +538,20 @@ def direct_question(clause):
             first = prepositional(dataclasses.replace(wh, head=dataclasses.replace(wh.head, lemma='quis' if first == 'qui'
                                                                                   else 'quid')))
         rest = realize(without_interrogative(plain))
-    return [first] + (_inverted(rest) or ['est-ce', 'que'] + rest)
+    subject = (clause.role('subject') or [None])[0]
+    complex_ = _complex_inverted(rest, subject) if first != 'que' else None
+    return [first] + (_inverted(rest) or complex_ or ['est-ce', 'que'] + rest)
+
+
+def _complex_inverted(words, subject):
+    """名詞の主語の複合倒置: 主語 + 動詞-代名詞 (Pourquoi le garçon court-il ?・Quand la fille vient-elle ?)"""
+    if subject is None or subject.head is None or subject.head.pos == 'pronoun' or subject.members or \
+            not words or words[0] != noun_phrase(subject, 'Nom'):
+        return None
+    plural = subject.number == 'pl'
+    pronoun = ('elles' if plural else 'elle') if gender_of(subject) == 'f' else ('ils' if plural else 'il')
+    inverted = _inverted([pronoun] + words[1:])
+    return [words[0]] + inverted if inverted else None
 
 
 SUBJECT_PRONOUNS = {'tu', 'il', 'elle', 'on', 'nous', 'vous', 'ils', 'elles'}

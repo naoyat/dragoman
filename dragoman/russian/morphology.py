@@ -95,7 +95,7 @@ def available():
 
 
 # 訳語を決めておく語 (英語の語義から日本語に直すとぎこちないもの: обман の deception →「騙すこと」)
-GLOSSES = {'обман': '欺瞞,ごまかし'}
+GLOSSES = {'обман': '欺瞞,ごまかし', 'мальчик': '少年,男の子', 'сад': '庭,果樹園'}
 
 
 def _gloss(lemma, kinds):
@@ -284,6 +284,10 @@ def _analyze(key):
         return table
     if key in NOMINAL_FIRST:
         parses = sorted(parses, key=lambda p: not _nominal_pronoun(p))
+    present = {p.normal_form for p in parses if p.tag.POS == 'VERB' and p.tag.aspect == 'impf' and p.tag.tense == 'pres'}
+    if present:   # 両体動詞の同じ形 (бежит: 完了体の未来 / 不完了体の現在) は現在を先に
+        parses = sorted(parses, key=lambda p: p.tag.POS == 'VERB' and p.tag.aspect == 'perf' and
+                        p.tag.tense == 'futr' and p.normal_form in present)
     best = max(p.score for p in parses)
     merged = {}
     for parse in parses:

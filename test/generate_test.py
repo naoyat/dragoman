@@ -205,6 +205,53 @@ class WhQuestionTestCase(unittest.TestCase):
         self.assertEqual(latin.sentence(cs), 'Puella in hortō est.')
 
 
+class SmallFixesTestCase(unittest.TestCase):
+    """出口・入口の小さな手当て: 3人称の主語の代名詞、倒置、否定の縮約、場所の文、女性の人の名詞 …"""
+
+    def out(self, module, lang, text):
+        cs = clauses(text)
+        return frame.punctuate(module.sentence(cs), cs, lang)
+
+    def need(self, *modules):
+        for module in modules:
+            if hasattr(module, 'available') and not module.available():
+                self.skipTest('%s の辞書が無い' % module.__name__)
+
+    def test_latin_source(self):
+        from dragoman.generate import finnish, french
+        self.need(finnish, french, hindi, greek)
+        self.assertEqual(self.out(english, 'en', 'Quandō nōn venīs?'), "When don't you come?")   # 否定の縮約
+        self.assertEqual(self.out(english, 'en', 'Hic servus dominum suum amat.'), 'This slave loves his own lord.')
+        self.assertEqual(self.out(finnish, 'fi', 'Quandō venit?'), 'Milloin hän tulee?')   # 3人称の主語
+        self.assertEqual(self.out(french, 'fr', 'Quandō puella venit?'), 'Quand la fille vient-elle ?')   # 複合倒置
+        self.assertEqual(self.out(hindi, 'hi', 'Puer venit?').split('\n')[1].strip(), 'kyā laṛkā ātā hai?')
+        self.assertEqual(self.out(hindi, 'hi', 'Quandō venit?').split('\n')[1].strip(), 'vah kab ātā hai?')
+        self.assertEqual(self.out(russian, 'ru', 'Puella in hortō est.'), 'Девочка в саду.')   # 場所の文 (存在の文にしない)
+        from dragoman.generate import urdu
+        self.assertIn('بَنَاتی', self.out(urdu, 'ur', 'Puella librum facit.'))   # 母音記号の付いた不定詞 بَنَانَا の語幹
+        self.assertEqual(self.out(greek, 'grc', 'Quid facit puella?'), 'τί ἡ κόρη ποιεῖ;')   # 縮約形を先に
+
+    def test_other_sources(self):
+        from dragoman.russian import analyzer as ru
+        from dragoman.chinese import analyzer as zh
+        if not (russian.available() and chinese.available()):
+            self.skipTest('ru/en-index.tsv か zh/en-index.tsv が無い')
+
+        def frames_of(module, text):
+            analysis, = module.analyze_text(text)
+            return frame.frames(analysis)
+        cs = frames_of(ru, 'Где девочка?')   # 見えない繋辞を場所の疑問詞・場所の句でも補う
+        self.assertEqual(frame.punctuate(english.sentence(cs), cs, 'en'), 'Where is the girl?')
+        cs = frames_of(ru, 'Книга на столе.')   # на → on
+        self.assertEqual(english.sentence(cs), 'The book is on the table.')
+        self.assertEqual(russian.sentence(cs), 'Книга на столе.')
+        cs = frames_of(ru, 'Мальчик бежит.')   # 両体動詞の同じ形は現在を先に
+        self.assertEqual(english.sentence(cs), 'The boy runs.')
+        cs = frames_of(zh, '我看书。')   # 看 + 読むもの → 読む
+        self.assertEqual(english.sentence(cs), 'I read the book.')
+        self.assertEqual(japanese.sentence(cs), '私は本を読む。')
+
+
 class RelativeTestCase(unittest.TestCase):
     """関係節: 先行詞の名詞に付き、関係代名詞の格を空所の役割として持つ"""
 
@@ -538,8 +585,8 @@ class OtherSourceTestCase(unittest.TestCase):
         self.assertEqual(latin.sentence(cs), 'Puella quae cantat pulchra est.')   # 性は置き換えたラテン語の名詞から
         self.assertEqual(chinese.sentence(cs), '唱歌的女孩很漂亮。')
         cs = self.frames_of(zh, '我看了我买的书。')   # 空所は目的語。相の印が無ければ主節の過去に合わせる
-        self.assertEqual(portuguese.sentence(cs), 'Eu vi o livro que eu comprei.')
-        self.assertEqual(japanese.sentence(cs), '私は私が買った本を見た。')
+        self.assertEqual(portuguese.sentence(cs), 'Eu li o livro que eu comprei.')
+        self.assertEqual(japanese.sentence(cs), '私は私が買った本を読んだ。')
         self.assertEqual(chinese.sentence(cs), '我看了我买的书。')   # 関係節には 了 を付けない
         cs = self.frames_of(zh, '她是老师。')   # 女性の主語の補語の名詞は女性形
         self.assertEqual(portuguese.sentence(cs), 'Ela é professora.')

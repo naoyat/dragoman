@@ -230,8 +230,25 @@ def candidates(lex):
     found = list(dict.fromkeys(en for en in found if not DESCRIPTION.search(en)))
     if not found:
         return []
+    female = female_counterpart(lex, found) if pos == 'noun' else None
+    if female:   # 女性の人の名詞 (magistra: mistress, female teacher) は teacher を先に
+        return [female] + [en for en in found if en != female]
     best = _matching(tuple(found), lex.ja, pos)
     return [best] + [en for en in found if en != best]
+
+
+def female_counterpart(lex, found=None):
+    """ラテン語の女性の人の名詞の「female X」の X (男性形 magister の訳語にもあるもの: magistra → teacher)。
+    女性形はほかの言語の出口で作る (Ela é professora)。日本語の訳語 (主婦) に合う mistress にしない"""
+    if lex.lang not in ('', 'la') or lex.pos != 'noun' or not lex.lemma.endswith('a'):
+        return None
+    if found is None:
+        found = list(_homograph(_entries(lex.lemma, 'noun'), lex.ja, 'noun', lex.surface))
+    female = next((en[len('female '):] for en in found if en.startswith('female ') and ' ' not in en[7:]), None)
+    masculine = [lex.lemma[:-1] + 'us', lex.lemma[:-2] + 'er']
+    if female and any(female in _homograph(_entries(m, 'noun'), '', 'noun', m) for m in masculine):
+        return female
+    return None
 
 
 def _source_dictionary_english(lex, pos):
@@ -594,6 +611,9 @@ def noun_phrase(np, objective=False, passive=False):
         prep = LATIN_PREPS.get((np.prep.lemma, np.case)) or gloss(np.prep) or '[%s]' % np.prep.ja
         if np.bare_direction:
             prep = 'to'   # Rōmam vēnit → came to Rome (into でなく)
+        if (np.prep.lemma, np.case) == ('in', 'Abl') and (np.prep.surface.lower() in ON_SURFACES or
+                                                          np.prep.desc in ('localizer:上', 'localizer:上面')):
+            prep = 'on'   # 元の前置詞が「上に」(на столе・auf dem Tisch・桌子上) → on the table
         if passive and np.prep.lemma in ('ā', 'ab', 'abs'):
             prep = 'by'   # 受動の動作主 (ā duce laudantur「指揮官によって褒められる」)
         text = prep + ' ' + text
@@ -771,8 +791,15 @@ def direct_question(clause):
     return word_ + ' ' + realize(without_interrogative(plain), capitalize=False)
 
 
+# 元の言語の「〜の上に」の前置詞 (ラテン語の in + 奪格に写したもの)
+ON_SURFACES = {'на', 'auf', 'sur', 'sobre', 'em cima de', 'üzerinde'}
+
+
 def _inverted(subject, vp, verb, clause):
     """主語と動詞の倒置: 助動詞があれば助動詞 + 主語 + 残り、無ければ do + 主語 + 原形 (comes → does he come)"""
+    if len(vp) > 1 and vp[1] == 'not' and vp[0] in AUXILIARIES and vp[0] != 'am':
+        # 否定は縮約して主語の前に (Why didn't the boy read?・Isn't she here?)
+        return [{'will': "won't", 'can': "can't", 'shall': "shan't"}.get(vp[0], vp[0] + "n't"), subject] + vp[2:]
     if vp[0] in ('am', 'is', 'are', 'was', 'were') or len(vp) > 1 and vp[0] in AUXILIARIES:
         return [vp[0], subject] + vp[1:]   # 本動詞の do・have (What do you do?) は do で倒置
     if clause.tense == 'perfect':

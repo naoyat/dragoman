@@ -230,7 +230,10 @@ def generate(lex, feats, pick=0):
     if pick == 'short':
         return min(forms, key=len)   # 要求法 (لَمْ يَرَ)
     if pick == 'long':
-        return max(forms, key=len)   # 直説法 (يُغَنِّي。要求法の短い形と同じ特徴で返る)
+        # 直説法 (يُغَنِّي。要求法の短い形と同じ特徴で返る)。重子音の動詞は要求法の解いた形 (يُحْبِب) でなく يُحِبّ
+        if any('\u0651' in f for f in forms):
+            forms = [f for f in forms if not (len(_bare(f)) > 1 and _bare(f)[-1] == _bare(f)[-2])] or forms
+        return max(forms, key=len)
     return forms[0]
 
 
@@ -252,6 +255,10 @@ def is_human(np):
 
 # ----------------------------------------------------------------------
 # 名詞句
+
+# 所有形容詞 → 名詞の所有の接尾辞 (CAMeL の enc0。suus は主語を指すので3人称男性単数に)
+POSSESSIVE_SUFFIXES = {'meus': '1s_poss', 'tuus': '2ms_poss', 'suus': '3ms_poss', 'noster': '1p_poss', 'vester': '2mp_poss'}
+
 
 def noun_phrase(np, case='n', definite=True, prc1='0'):
     """名詞句: 名詞 (格・数・定冠詞) + 形容詞 (性・数・格・定の一致) + 属格 + 関係節"""
@@ -276,9 +283,15 @@ def noun_phrase(np, case='n', definite=True, prc1='0'):
     if not found:
         return '[%s]' % english.word(head)
     num = 'p' if np.number == 'pl' else 's'
+    possessive = next((POSSESSIVE_SUFFIXES[m.lemma] for m in np.modifiers
+                       if isinstance(m, Lex) and m.lemma in POSSESSIVE_SUFFIXES), None)
     definite = definite and not np.genitives and np.definite is not False   # 元の文で不定 (冠詞なし) なら不定
     feats = {'pos': 'noun', 'num': num, 'cas': case, 'stt': 'd' if definite else ('c' if np.genitives else 'i')}
-    if definite:
+    if possessive:   # 所有の接尾辞 (كِتابُهُ・كِتابِي)。名詞は構成形で冠詞なし、形容詞は定
+        feats.update(stt='c', enc0=possessive)
+        if possessive == '1s_poss':
+            feats['cas'] = 'u'   # كِتابِي は格の母音が出ない
+    elif definite:
         feats['prc0'] = 'Al_det'
     if prc1 != '0':
         feats['prc1'] = prc1
@@ -298,13 +311,16 @@ def noun_phrase(np, case='n', definite=True, prc1='0'):
         out.append(noun_phrase(g, 'g'))
     for m in np.modifiers:
         if isinstance(m, NP):
-            out.append(' وَ'.join(adjective(x.head, case, agree_gender, agree_num, definite or bool(np.genitives))
+            out.append(' وَ'.join(adjective(x.head, case, agree_gender, agree_num,
+                                             definite or bool(np.genitives) or bool(possessive))
                                    for x in m.members))
+        elif isinstance(m, Lex) and m.lemma in POSSESSIVE_SUFFIXES:
+            continue
         elif m.pos == 'pronoun' and m.lemma in ('hic', 'ille'):
             demo = DEMONSTRATIVES.get((m.lemma, agree_gender, agree_num)) or DEMONSTRATIVES[(m.lemma, 'm', 's')]
             out.insert(0, demo)   # هٰذا الكِتابُ
         else:
-            out.append(adjective(m, case, agree_gender, agree_num, definite or bool(np.genitives)))
+            out.append(adjective(m, case, agree_gender, agree_num, definite or bool(np.genitives) or bool(possessive)))
     for r in np.relatives:
         out.append(relative_clause(r, agree_gender, agree_num, definite))
     return ' '.join(w for w in out if w)

@@ -517,6 +517,9 @@ FIRST_GLOSSES.setdefault('fr', {})['content'] = 'glad'
 # 英語の like は人を主語にした「好む」(plaire à を入れ替えた枠。gefallen・piacere のような物が主語の動詞にしない)
 for _lang, _lemma in (('de', 'mögen'), ('fi', 'pitää'), ('tr', 'sevmek'), ('ko', '좋아하다')):
     PREFERRED.setdefault(_lang, {})[('like', 'verb')] = (_lemma, '')
+# 英語の watch は「見る」(映画・試合を。hüten・vartioida のような「見張る」にしない)
+for _lang, _lemma in (('de', 'ansehen'), ('fi', 'katsoa')):
+    PREFERRED.setdefault(_lang, {})[('watch', 'verb')] = (_lemma, '')
 PARTICLES = ('to', 'as', 'at', 'on', 'for', 'with', 'into', 'upon', 'in', 'from', 'of', 'out', 'up', 'away',
              'off', 'down', 'by')
 
@@ -565,6 +568,8 @@ def candidates(lex, lang, pos=None):
             gender, gana = (extra, '') if pos != 'verb' else ('', extra)
             return [(-100, Target(lemma, pos, (en,), gender, gana))]
     wanted = [j.strip() for j in (lex.ja or '').split(',') if j.strip()]
+    if pos == 'noun' and english.female_counterpart(lex):
+        wanted = []   # 女性の人の名詞 (magistra) は英語の teacher から。日本語の訳語 (主婦) で選ばない
     if (lex.lang or 'la') == 'la':   # 日本語の訳語が手作りの辞書のもの (ほかの言語の語の日本語は英語から作ったもの)
         sources = _with_japanese(sources[:6], wanted)
     scored, matched = {}, {}

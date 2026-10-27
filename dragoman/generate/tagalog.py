@@ -239,11 +239,12 @@ def noun_phrase(np, marker='ang'):
         text = 'ang' if marker == 'ang' else marker
         return ' '.join(x for x in (MARKERS[marker][0] if marker else '', relative_clause(np.relatives[0], None)) if x)
     main = word(head, 'noun')
+    demonstrative = None
     for m in np.modifiers:
         if isinstance(m, NP):
             main = link(' at '.join(_adjective(x.head) for x in m.members), main)
         elif m.pos == 'pronoun' and m.lemma in DEMONSTRATIVES:
-            main = link(DEMONSTRATIVES[m.lemma], main)   # itong aklat
+            demonstrative = DEMONSTRATIVES[m.lemma]   # 標識の代わり (itong aklat・nitong aklat)
         elif m.lemma in POSSESSIVES:
             main = main + ' ' + POSSESSIVES[m.lemma]
         else:
@@ -252,6 +253,13 @@ def noun_phrase(np, marker='ang'):
         main += ' ' + noun_phrase(g, 'ng')
     for r in np.relatives:
         main = link(main, relative_clause(r, None))   # ang rosas na nakita ng babae
+    if demonstrative:
+        # 指示詞が標識を兼ねる: ang → itong alipin、ng → nitong alipin、sa → sa aliping ito
+        if np.number == 'pl' and not head.proper:
+            main = 'mga ' + main
+        if marker == 'sa':
+            return 'sa ' + link(main, demonstrative)
+        return link('n' + demonstrative if marker == 'ng' else demonstrative, main)
     if not marker:
         return main
     proper = head.proper

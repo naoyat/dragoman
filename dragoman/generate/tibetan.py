@@ -18,7 +18,7 @@ import os
 import sqlite3
 
 from . import english
-from .frame import NP
+from .frame import NP, Lex
 from dragoman.core import paths
 
 PREFERRED = {('girl', 'noun'): 'bu mo', ('boy', 'noun'): 'bu', ('child', 'noun'): 'bu', ('son', 'noun'): 'bu',
@@ -38,6 +38,7 @@ POSTPOSITIONS = {('in', 'Abl'): 'na', ('in', 'Acc'): 'la', ('ad', 'Acc'): 'la', 
 PRONOUNS = {('ego', 'sg'): 'nga', ('ego', 'pl'): 'nga cag', ('tū', 'sg'): 'khyod', ('tū', 'pl'): 'khyed',
             ('is', 'sg'): "de", ('is', 'pl'): 'de dag', ('hic', 'sg'): "'di", ('hic', 'pl'): "'di dag",
             ('ille', 'sg'): 'de', ('ille', 'pl'): 'de dag', ('quis', 'sg'): 'su', ('quid', 'sg'): 'ci'}
+POSSESSIVES = {'meus': "nga'i", 'tuus': 'khyod kyi', 'suus': 'rang gi', 'noster': 'nga cag gi', 'vester': 'khyed kyi'}
 # 直接の疑問文の疑問の副詞 (動詞の前)
 QUESTION_WORDS = {'quandō': 'nam', 'ubi': 'gang na', 'cūr': "ci'i phyir", 'quārē': "ci'i phyir", 'quōmodo': 'ji ltar',
                   'unde': 'gang nas', 'quō': 'gang du'}
@@ -141,7 +142,9 @@ def noun_phrase(np):
     if head.proper:   # ラテン文字の名前は [ ] に入れてチベット文字に変換しない
         return '[%s]' % english.word(head)
     word = to_tibetan(head, 'noun') or '[%s]' % english.word(head)
-    before = [particle(noun_phrase(g), 'gen') for g in np.genitives]
+    # 所有形容詞は属格の代名詞を前に (nga'i dpe cha「私の本」、suus は rang gi「自分の」)
+    before = [POSSESSIVES[m.lemma] for m in np.modifiers if isinstance(m, Lex) and m.lemma in POSSESSIVES]
+    before += [particle(noun_phrase(g), 'gen') for g in np.genitives]
     before += [particle(realize(r, gap=r.gap, final=False), 'gen') for r in np.relatives]
     after = []
     for m in np.modifiers:
@@ -149,6 +152,8 @@ def noun_phrase(np):
             after.append(' dang '.join(to_tibetan(x.head, 'adj') or '?' for x in m.members))
         elif m.pos == 'pronoun' and m.lemma in ('hic', 'ille', 'is'):
             after.append("'di" if m.lemma == 'hic' else 'de')
+        elif isinstance(m, Lex) and m.lemma in POSSESSIVES:
+            continue
         else:
             after.append(to_tibetan(m, 'adj') or '[%s]' % english.word(m))
     if np.number == 'pl' and head.pos != 'pronoun':

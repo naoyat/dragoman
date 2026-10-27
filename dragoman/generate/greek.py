@@ -111,12 +111,21 @@ DIPHTHONGS = {'αι', 'ει', 'οι', 'υι', 'αυ', 'ευ', 'ηυ', 'ου', '�
 
 
 def _hiatus(surface):
-    """母音が続く (縮約していない) 形なら 1。方言の印が無いので、ἐπαινέει (イオニア方言) より ἐπαινεῖ を先に"""
+    """縮約していない母音の連続の数。方言の印が無いので、ἐπαινέει (イオニア方言) より ἐπαινεῖ を先に。
+    二重母音を先に読む (ποιεῖ の ποι-εῖ は連続でない、ποιέει は ε-ει の1つ)"""
     d = unicodedata.normalize('NFD', surface.lower())
     if '\u0308' in d:
         return 1   # 分音符の母音の連続 (κλαΐει): 縮約形 (κλαίει) を先に
     base = ''.join(c for c in d if not unicodedata.combining(c))
-    return int(any(a in VOWELS and b in VOWELS and a + b not in DIPHTHONGS for a, b in zip(base, base[1:])))
+    count, i = 0, 0
+    while i < len(base) - 1:
+        if base[i:i + 2] in DIPHTHONGS:
+            i += 2
+            continue
+        if base[i] in VOWELS and base[i + 1] in VOWELS:
+            count += 1
+        i += 1
+    return count
 
 
 def decline(lex, case, number, gender):
@@ -214,6 +223,8 @@ def noun_phrase(np, case):
             adjectives.append(' καὶ '.join(_adjective(x.head, case, number, gender) for x in m.members))
         elif m.pos == 'pronoun' and m.lemma in ('hic', 'hīc', 'ille', 'is'):
             demonstrative = decline(Lex(PRONOUNS[m.lemma], 'pronoun'), case, number, gender)
+        elif m.lemma == 'suus':
+            adjectives.append('ἑαυτοῦ')   # 再帰の所有は冠詞と名詞の間の属格 (τὸ ἑαυτοῦ βιβλίον)
         else:
             adjectives.append(_adjective(m, case, number, gender))
     genitives = [noun_phrase(g, 'Gen') for g in np.genitives]

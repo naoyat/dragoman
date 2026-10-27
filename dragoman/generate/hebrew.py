@@ -40,6 +40,7 @@ PREFERRED = {('friend', 'noun'): '7453', ('male friend', 'noun'): '7453', ('only
              ('beautiful', 'adj'): '3303', ('good', 'adj'): '2896a', ('bad', 'adj'): '7451a', ('evil', 'adj'): '7451a',
              ('great', 'adj'): '1419a', ('big', 'adj'): '1419a', ('large', 'adj'): '1419a', ('small', 'adj'): '6996b',
              ('wise', 'adj'): '2450', ('old', 'adj'): '2205', ('new', 'adj'): '2319',
+             ('brother', 'noun'): '251', ('sister', 'noun'): '269', ('read', 'verb'): ('7121', 'q'),
              ('see', 'verb'): ('7200', 'q'), ('praise', 'verb'): ('1984b', 'p'), ('give', 'verb'): ('5414', 'q'),
              ('sing', 'verb'): ('7891', 'q'), ('write', 'verb'): ('3789', 'q'), ('say', 'verb'): ('559', 'q'),
              ('go', 'verb'): ('1980', 'q'), ('walk', 'verb'): ('1980', 'q'), ('come', 'verb'): ('935', 'q'),
@@ -108,6 +109,9 @@ def _gloss_index():
             continue
         for rank, g in enumerate(glosses):
             index.setdefault(g.lower(), []).append((aug, p, rank, None))
+            bare = re.sub(r'^(?:a|an|the) ', '', g.lower())
+            if bare != g.lower():   # 冠詞の付いた訳語 (a brother) は冠詞なしでも引く
+                index.setdefault(bare, []).append((aug, p, rank + 0.5, None))
         for stem, glosses_ in stems.items():
             for rank, g in enumerate(glosses_):
                 index.setdefault(g.lower(), []).append((aug, p, rank, STEM_CODES.get(stem)))
@@ -204,6 +208,27 @@ def _noun_form(aug, number, definite, kind):
         return '[%s]' % aug, 'm'   # 表の番号の誤り (語形を作らない)
     word = entry[0]
     return (article(word) if definite else word), 'm'
+
+
+# 所有形容詞 → 代名詞の接尾辞の符号 (OSHB の Sp1cs …。suus は主語を指すので3人称男性単数に)
+POSSESSIVE_SUFFIXES = {'meus': '1cs', 'tuus': '2ms', 'suus': '3ms', 'noster': '1cp', 'vester': '2mp'}
+SHEL = {'1cs': 'שֶׁלִּי', '2ms': 'שֶׁלְּךָ', '3ms': 'שֶׁלּוֹ', '1cp': 'שֶׁלָּנוּ', '2mp': 'שֶׁלָּכֶם'}
+PLURAL_OF_MAJESTY = {'113', '430'}   # אֲדֹנָיו「彼の主人」・אֱלֹהָיו は複数の形で単数の意味
+
+
+def suffixed_form(aug, number, owner):
+    """OSHB に現れた接尾辞付きの名詞の形 (前置詞・接続詞の付かないもの、多いものを先に)。無ければ None"""
+    best = None
+    for wanted in [number] + (['p'] if number == 's' and aug in PLURAL_OF_MAJESTY else []):
+        for segments, morph, count in _noun_forms(aug):
+            parts = _morph_parts(morph)
+            if len(parts) != 2 or not parts[0].startswith('N') or len(parts[0]) < 5 or parts[1] != 'Sp' + owner:
+                continue
+            if parts[0][-2] == wanted and parts[0][-1] == 'c' and (best is None or count > best[1]):
+                best = (''.join(segments), count)
+        if best:
+            return best[0]
+    return None
 
 
 def article(word):
@@ -321,8 +346,15 @@ def noun_phrase(np, prep=None, definite=True):
         word = english.word(head)
         return ('[%s]' % word if word else ''), 'm', 's'
     number = 'p' if np.number == 'pl' else 's'
+    owner = next((POSSESSIVE_SUFFIXES[m.lemma] for m in np.modifiers
+                  if isinstance(m, Lex) and m.lemma in POSSESSIVE_SUFFIXES), None)
     definite = definite and not np.genitives and np.definite is not False   # 元の文で不定なら不定 (לֶחֶם)
+    if owner:
+        definite = True   # 所有のある名詞は定 (形容詞に冠詞: סִפְרוֹ הַגָּדוֹל)
     word, gender = noun_form(found[0], number, definite)
+    suffixed = suffixed_form(found[0], number, owner) if owner else None
+    if suffixed:
+        word = suffixed   # 名詞の所有の接尾辞 (סִפְרִי「私の本」・אֲדֹנָיו「彼の主人」)
     if gender == 'b':
         gender = 'm'   # 両性 (גַּן)
     if gender not in ('m', 'f'):
@@ -335,6 +367,9 @@ def noun_phrase(np, prep=None, definite=True):
             words.append(and_join([adjective(x.head, gender, number, definite) for x in m.members]))
         elif m.pos == 'pronoun' and m.lemma in ('hic', 'ille'):
             words.append(DEMONSTRATIVES.get((m.lemma, gender, number)) or DEMONSTRATIVES[(m.lemma, 'm', 's')])
+        elif isinstance(m, Lex) and m.lemma in POSSESSIVE_SUFFIXES:
+            if not suffixed:   # OSHB に接尾辞の形が無ければ שֶׁל + 接尾辞 (後期の言い方: הַסֵּפֶר שֶׁלּוֹ)
+                words.append(SHEL[owner])
         else:
             words.append(adjective(m, gender, number, definite))
     for r in np.relatives:

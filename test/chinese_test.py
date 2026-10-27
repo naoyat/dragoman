@@ -45,7 +45,7 @@ class AnalyzerTestCase(unittest.TestCase):
     def test_ba_bei_and_prepositions(self):
         self.assertEqual(tr('他把书放在桌子上。'), '彼が / 本を / 机の上に / 置く')   # 把の目的語を先に
         self.assertEqual(tr('书被他拿走了。'), '本が / 彼によって / 持ち去られた')
-        self.assertEqual(tr('他在图书馆看书。'), '彼が / 図書館で / 本を / 見る,読む')
+        self.assertEqual(tr('他在图书馆看书。'), '彼が / 図書館で / 本を / 読む')
 
     def test_clauses_and_questions(self):
         self.assertEqual(tr('因为下雨，我没去。'), '{雨が降る}ので / 私が / 行かなかった')
@@ -55,7 +55,7 @@ class AnalyzerTestCase(unittest.TestCase):
 
 
     def test_complements(self):   # 結果・方向・可能・様態の補語
-        self.assertEqual(tr('我看完了这本书。'), '私が / この本を / 見終えた,読み終えた')
+        self.assertEqual(tr('我看完了这本书。'), '私が / この本を / 読み終えた')
         self.assertEqual(tr('他走进来了。'), '彼が / 歩いて入って来た')
         self.assertEqual(tr('我听得懂中文。'), '私が / 中国語を / 聞いて分かることができる')
         self.assertEqual(tr('我看不懂这本书。'), '私が / この本を / 読んで分かることができない')

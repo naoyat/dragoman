@@ -132,7 +132,7 @@ def hic():
 
     common_tags = {'pos':'pronoun', 'person':3, 'ja':'この,これ', 'desc':'指示代名詞'}
 
-    forms = ['hīc', 'hunc', 'hūjus', 'huīc', 'hōc',
+    forms = ['hic', 'hunc', 'hūjus', 'huīc', 'hōc',
              'hī', 'hōs', 'hōrum', 'hīs', 'hīs']
     common_tags['gender'] = 'm'
     items += decline('', common_tags, forms, latin_noun.case_tags_5x2)
@@ -147,6 +147,8 @@ def hic():
     common_tags['gender'] = 'n'
     items += decline('', common_tags, forms, latin_noun.case_tags_5x2)
 
+    # hīc と書く文法書もある (i は短いが音節は重い)。副詞 hīc「ここに」とは別
+    items += [dict(item, surface='hīc') for item in items if item['surface'] == 'hic']
     return util.aggregate_cases(items)
 
 

@@ -257,6 +257,9 @@ def noun_phrase(np, case='Nom', article=True, indefinite=False):
         parts = [noun_phrase(m, case, article, indefinite) for m in np.members]
         conj = ' ou ' if np.conj in ('aut', 'vel') else ' e '
         return ', '.join(parts[:-1]) + conj + parts[-1] if len(parts) > 2 else conj.join(parts)
+    if np.gender == 'f' and np.head is not None and np.head.pos == 'noun' and \
+            (np.animate or english.female_counterpart(np.head)):
+        np = _feminine_noun(np, force=True)   # 女性の人の名詞 (magistra・professora) は女性形
     head = np.head
     if head is None:
         return ''
@@ -486,10 +489,10 @@ def _enclitic(infinitive, clitic):
     return stem + '-l' + clitic
 
 
-def _feminine_noun(np):
+def _feminine_noun(np, force=False):
     """人の名詞の女性形 (professor → professora。女性の主語の補語)。辞書に女性形が無ければそのまま"""
     from .frame import Lex
-    if np.members or np.head is None or np.head.pos != 'noun' or not np.animate or np.head.proper:
+    if np.members or np.head is None or np.head.pos != 'noun' or not (np.animate or force) or np.head.proper:
         return np
     lemma = word(np.head, 'noun')
     if gender(lemma) == 'f':

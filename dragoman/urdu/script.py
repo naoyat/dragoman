@@ -86,3 +86,39 @@ def skeleton_deva(word):
         elif c in DEVA_VOWELS:
             out += DEVA_VOWELS[c] if k == 0 else DEVA_VOWELS[c].lstrip('A') or 'A'
     return _finish(out)
+
+
+# デーヴァナーガリー → ウルドゥー文字 (辞書にウルドゥー文字の綴りの無い語を写す。短母音は書かない)
+DEVA_TO_URDU = {'क': 'ک', 'ख': 'کھ', 'ग': 'گ', 'घ': 'گھ', 'च': 'چ', 'छ': 'چھ', 'ज': 'ج', 'झ': 'جھ', 'ट': 'ٹ',
+                'ठ': 'ٹھ', 'ड': 'ڈ', 'ढ': 'ڈھ', 'ण': 'ن', 'त': 'ت', 'थ': 'تھ', 'द': 'د', 'ध': 'دھ', 'न': 'ن',
+                'प': 'پ', 'फ': 'پھ', 'ब': 'ب', 'भ': 'بھ', 'म': 'م', 'य': 'ی', 'र': 'ر', 'ल': 'ل', 'व': 'و',
+                'श': 'ش', 'ष': 'ش', 'स': 'س', 'ह': 'ہ', 'ङ': 'ن', 'ञ': 'ن', 'ळ': 'ل'}
+DEVA_TO_URDU_NUKTA = {'क': 'ق', 'ख': 'خ', 'ग': 'غ', 'ज': 'ز', 'फ': 'ف', 'ड': 'ڑ', 'ढ': 'ڑھ', 'झ': 'ژ'}
+DEVA_SIGNS_TO_URDU = {'ा': 'ا', 'ि': '', 'ी': 'ی', 'ु': '', 'ू': 'و', 'ृ': 'ر', 'े': 'ی', 'ै': 'ی', 'ो': 'و',
+                      'ौ': 'و', 'ॉ': 'ا', 'ॅ': 'ی', '्': '', 'ः': 'ہ'}
+DEVA_INITIAL_TO_URDU = {'अ': 'ا', 'आ': 'آ', 'इ': 'ا', 'ई': 'ای', 'उ': 'ا', 'ऊ': 'او', 'ऋ': 'ر', 'ए': 'ای',
+                        'ऐ': 'ای', 'ओ': 'او', 'औ': 'او', 'ऑ': 'ا'}
+DEVA_MEDIAL_TO_URDU = {'अ': 'ا', 'आ': 'ا', 'इ': 'ئ', 'ई': 'ئی', 'उ': 'ؤ', 'ऊ': 'ؤ', 'ए': 'ئی', 'ऐ': 'ئی',
+                       'ओ': 'ؤ', 'औ': 'ؤ'}
+
+
+def deva_to_urdu(word):
+    """デーヴァナーガリーの語 → ウルドゥー文字 (पहुँचाना → پہنچانا、पहुँचाईं → پہنچائیں)。語末の e・ai は ے、
+    鼻音の記号は語末で ں、語中で ن"""
+    chars = unicodedata.normalize('NFD', word)
+    out = ''
+    for k, c in enumerate(chars):
+        last = k == len(chars) - 1 or k == len(chars) - 2 and chars[-1] in 'ंँ'
+        nukta = k + 1 < len(chars) and chars[k + 1] == '़'
+        if c in DEVA_TO_URDU:
+            out += DEVA_TO_URDU_NUKTA.get(c, DEVA_TO_URDU[c]) if nukta else DEVA_TO_URDU[c]
+        elif c in 'ंँ':
+            out += 'ں' if k == len(chars) - 1 else 'ن'
+        elif c in DEVA_SIGNS_TO_URDU:
+            out += 'ے' if k == len(chars) - 1 and c in 'ेै' else DEVA_SIGNS_TO_URDU[c]   # करें → کریں
+        elif c in DEVA_INITIAL_TO_URDU:
+            if k == 0:
+                out += DEVA_INITIAL_TO_URDU[c]
+            else:
+                out += 'ئے' if k == len(chars) - 1 and c in 'एऐ' else DEVA_MEDIAL_TO_URDU.get(c, '')   # जाएँ → جائیں
+    return unicodedata.normalize('NFC', out)

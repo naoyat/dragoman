@@ -453,7 +453,7 @@ def _question(inner):
         return QUESTION_WORDS[inner.question_word] + ' ' + noun_phrase(where_is(inner))   # Di mana gadis? (ada を付けない)
     if wh is None:
         word_ = QUESTION_WORDS.get(inner.question_word, inner.question_word)
-        return word_ + ' ' + realize(finite, finite=True)
+        return word_ + ' ' + realize(finite, finite=not inner.question)   # 直接の疑問文は3人称の dia も書く (Kapan dia datang?)
     pronoun = 'siapa' if inner.question_word in ('quis', 'quem', 'cui', 'cūius', 'cuius') and wh.gender != 'n' \
         else 'apa'
     rest = without_interrogative(finite)

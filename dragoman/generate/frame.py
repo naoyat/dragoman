@@ -1185,6 +1185,22 @@ def _source_question_word(word, table):
                  if ''.join(c for c in unicodedata.normalize('NFD', k) if not unicodedata.combining(c)) == bare), None)
 
 
+DEMONSTRATIVE_LEMMAS = {'hic', 'ille', 'iste', 'īdem'}
+
+
+def _demonstrative_subject(clause):
+    """指示代名詞の主語のすぐ後ろに同じ数・性の名詞の主語 (Hic servus …: 解析で別の主語になったもの) → 名詞の修飾語に
+    (This slave loves …。「これ、奴隷は」にしない)"""
+    for k in range(len(clause.args) - 1):
+        (r1, a), (r2, b) = clause.args[k], clause.args[k + 1]
+        if r1 == r2 == 'subject' and a.head is not None and b.head is not None and a.head.pos == 'pronoun' and \
+                a.head.lemma in DEMONSTRATIVE_LEMMAS and not a.modifiers and not a.members and b.head.pos == 'noun' and \
+                a.number == b.number and (not a.gender or not b.gender or a.gender == b.gender) and a.prep is None:
+            b.modifiers.insert(0, dataclasses.replace(a.head, desc='指示代名詞'))
+            del clause.args[k]
+            return
+
+
 def where_is(clause):
     """「〜はどこにいるか」の疑問文 (Ubi est puella?: 場所の疑問詞 + 主語だけの繋辞) なら主語の名詞句。
     主語だけの繋辞は出口で存在の文 (There is a girl) にするので、その前に見る"""
@@ -1558,6 +1574,7 @@ def frames(analysis):
         if _lang == 'he':
             _hebrew_bare_object(clause)
         _second_person_address(clause)
+        _demonstrative_subject(clause)
         _mark_apposed(clause)
         _bare_direction(clause)
     return clauses
