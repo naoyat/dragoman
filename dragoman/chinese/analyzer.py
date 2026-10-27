@@ -54,7 +54,7 @@ CHINESE = language.Language(
     subordinators=morphology.SUBORDINATORS,
     and_words=('和', '跟', '与', '及', '以及'),
     or_words=('或者', '还是', '或'),
-    copulas=frozenset({'是', '(是)'}),
+    copulas=frozenset({'是', '(是)', '有'}),   # 有 は所有・存在の文 (私には本がある) として繋辞と同じ扱い
     negations=frozenset({'不', '没', '没有', '别', '(不)'}),
     case_particles={'Nom': 'が', 'Acc': 'を', 'Dat': 'に', 'Gen': 'の'},
     absolute_case=None,
@@ -92,6 +92,14 @@ def _cngs(cases):
 
 def _case_of(token):
     dep = token.dep_
+    head = token.head
+    if head.text in ('有', '没有') and head.tag_ in ('VE', 'VV') and head.i != token.i:
+        # 有 の前の所有者・場所と、後ろの有るもの (我有两个朋友「私には 二人の友人が いる」、桌子上有书「机の上に 本が ある」)
+        if token.i > head.i and dep in ('dobj', 'obj'):
+            return ('Nom',)
+        if token.i < head.i and (dep.startswith('nsubj') or dep in ('dep', 'advmod:loc', 'nmod:tmod')):
+            place = dep == 'advmod:loc' or token.text in PLACE_PRONOUNS or any(c.tag_ == 'LC' for c in token.children)
+            return ('Loc',) if place else ('Dat',)
     if dep in ('nmod:prep', 'pobj') or token.i > 0 and token.doc[token.i - 1].tag_ == 'P':
         return ('Gen',)   # 介詞 (前置詞) の目的語 (在图书馆)
     if token.head.tag_ in ('VV', 'VE') and token.head.text in MOTION_VERBS and dep in ('dobj', 'obj'):
@@ -109,6 +117,7 @@ def _case_of(token):
     return ('Nom', 'Acc')
 
 
+PLACE_PRONOUNS = {'这里', '那里', '这儿', '那儿', '哪里', '哪儿'}
 MOTION_VERBS = {'去', '来', '回', '到', '上', '进', '出', '走'}
 
 
@@ -138,6 +147,9 @@ def item_of(token, doc, text):
                 word not in ('没有',) or tag == 'AD':
             return {'surface': text, 'pos': 'adv', 'base': word, 'ja': morphology.NEGATIONS[word], 'gloss_lang': 'ja',
                     'negation': True, 'neg_past': word in ('没', '没有')}
+    if word in ('有人', '有的人'):   # 有人说「ある人が 言う」(節の終わりの 有人 は segment で 有 / 人 に分ける)
+        return {'surface': text, 'pos': 'pronoun', 'base': word, 'ja': 'ある人', 'gloss_lang': 'ja', 'person': 3,
+                'number': 'sg', '_': _cngs(('Nom',)), 'compact': True}
     if word in morphology.PRONOUNS and tag in ('PN', 'NN', 'DT') and not (tag == 'DT' and word in morphology.DETERMINERS):
         ja, person, number = morphology.PRONOUNS[word]
         data = {'surface': text, 'pos': 'pronoun', 'base': word, 'ja': ja, 'gloss_lang': 'ja', 'person': person,
@@ -150,6 +162,9 @@ def item_of(token, doc, text):
     if tag == 'DT' or word in morphology.DETERMINERS and tag not in ('VV', 'NN'):
         return {'surface': text, 'pos': 'adj', 'base': word, 'ja': morphology.DETERMINERS.get(word, word), 'gloss_lang': 'ja',
                 '_': _cngs(ALL_CASES), 'determiner': True}
+    if tag in ('CD', 'OD') and word in morphology.DETERMINERS:
+        return {'surface': text, 'pos': 'adj', 'base': word, 'ja': morphology.DETERMINERS[word], 'gloss_lang': 'ja',
+                '_': _cngs(ALL_CASES), 'determiner': True}   # 很多「たくさんの」
     if tag in ('CD', 'OD'):
         ja = ''.join(morphology.NUMBERS_JA.get(c, c) for c in word)
         return {'surface': text, 'pos': 'adj', 'base': word, 'ja': ja, 'gloss_lang': 'ja', '_': _cngs(ALL_CASES),
@@ -163,7 +178,7 @@ def item_of(token, doc, text):
         if word == '因为' or word in morphology.SUBORDINATORS and token.head.tag_ in ('VV', 'VA', 'VE', 'VC'):
             return {'surface': text, 'pos': 'conj', 'base': word, 'ja': morphology.CONJUNCTIONS.get(word, word),
                     'gloss_lang': 'ja'}
-        if word == '在' and token.dep_ == 'ROOT':
+        if word == '在' and (token.dep_ == 'ROOT' or not any(t.tag_ in ('VV', 'VE', 'VC', 'VA') for t in doc)):
             data = _verb(text, '在')   # 存在の 在 (书在桌子上「本が 机の上に ある」)
             data.update(ja='ある,いる', gloss_lang='ja', existential=True, place_dative=True)
             return data
@@ -174,8 +189,17 @@ def item_of(token, doc, text):
     if tag in ('CC', 'CS'):
         return {'surface': text, 'pos': 'conj', 'base': word, 'ja': morphology.CONJUNCTIONS.get(word, word),
                 'gloss_lang': 'ja'}
+    if tag in ('VV', 'VE', 'VC') and word in ('有', '没有'):
+        data = _verb(text, '有', tag)   # 所有・存在の 有 (我有两个朋友「私には 二人の友人が いる」)、没有 + 名詞「ない」
+        data.update(ja='ある,いる', gloss_lang='ja', existential=True, form='所有・存在 (有)')
+        if word == '没有':
+            data.update(negative=True, form='所有・存在の否定 (没有 + 名詞)')
+        return data
     if tag in ('VV', 'VE', 'VC'):
-        return _verb(text, word, tag)
+        data = _verb(text, word, tag)
+        if word in ('说', '講', '讲') and any(c.dep_ == 'dobj' and c.text[-1:] in '语文話话' for c in token.children):
+            data['ja'] = '話す'   # 言葉を話す (说中文「中国語を 話す」)
+        return data
     if tag == 'VA':
         ja, gloss_lang, _ = morphology.gloss(word, 'adj')
         return {'surface': text, 'pos': 'adj', 'base': word, 'ja': ja or word, 'gloss_lang': gloss_lang or 'en',
@@ -202,6 +226,35 @@ def item_of(token, doc, text):
 
 
 # ----------------------------------------------------------------------
+
+# 補文 (主語のある節) を取る「言う・思う」の動詞 → 節の後ろに付ける形
+COMPLEMENT_VERBS = {'说': 'と', '讲': 'と', '告诉': 'と', '觉得': 'と', '认为': 'と', '想': 'と', '以为': 'と', '相信': 'と',
+                    '听说': 'と', '表示': 'と', '知道': 'ことを', '希望': 'ことを', '发现': 'ことを', '记得': 'ことを',
+                    '忘了': 'ことを', '担心': 'ことを'}
+
+
+def complement_clauses(words, doc):
+    """「言う・思う」の動詞の補文 (他说他是老师「彼は {彼が 先生である}と 言った」) の前に見えない接続詞を入れる。
+    中国語には補文の接続詞 (英語の that) が無い。疑問詞のある補文 (我知道他住在哪儿) は間接疑問として共通の解析器で"""
+    out = list(words)
+    for token in reversed(list(doc)):
+        if token.dep_ != 'ccomp' or token.head.text not in COMPLEMENT_VERBS:
+            continue
+        subtree = sorted(t.i for t in token.subtree)
+        if not any(doc[i].dep_.startswith('nsubj') for i in subtree) or \
+                any(doc[i].text in INTERROGATIVES for i in subtree):
+            continue
+        k = next((n for n, w in enumerate(out) if getattr(w, 'doc_i', None) == subtree[0]), None)
+        if k is None:
+            continue
+        conj = Word('(that)', [{'surface': '(that)', 'pos': 'conj', 'base': '(that)', 'ja': '〜ということ', 'gloss_lang': 'ja',
+                                'clause_suffix': COMPLEMENT_VERBS[token.head.text], 'clause_start': True,
+                                'complement': True, 'desc': '補文 (中国語では接続詞を使わない)'}])
+        conj.token_ix = None
+        conj.doc_i = None
+        out.insert(k, conj)
+    return out
+
 
 def _tag(word):
     item = _item(word)
@@ -472,6 +525,8 @@ def modals(words):
             m = _item(nxt)
             from dragoman.core.japanese import attach_auxiliary
             suffix = morphology.MODALS[item.attrib('lemma')]
+            if item.attrib('lemma') == '会' and any(_item(w) is not None and _item(w).attrib('complement') for w in out):
+                suffix = 'だろう'   # 補文の 会 は見込み (我觉得他会来「{彼が 来るだろう}と 思う」)
             ja = ','.join(attach_auxiliary(j, suffix) for j in m.ja.split(',')[:1]) if m.attrib('gloss_lang') == 'ja' else m.ja
             data = dict(m.item, ja=ja, surface=word.surface + nxt.surface, modal=item.attrib('lemma'),
                         form='助動詞 %s + 動詞' % item.attrib('lemma'), tense=item.attrib('tense'))
@@ -530,11 +585,18 @@ COPULA = {'surface': '(是)', 'pos': 'verb', 'lemma': '是', 'pres1sg': '是', '
 def hen_adjectives(words):
     """很 + 形容詞の述語は1語に (很难「とても難しい」)。很を先に出さない"""
     out = []
-    for word in words:
+    for k, word in enumerate(words):
         item = _item(word)
         if item is not None and item.pos == 'adj' and out and out[-1].surface in ('很', '非常', '太', '真', '挺', '比较', '最', '更'):
             adv = _item(out[-1])
-            if adv is not None and adv.pos == 'adv' and item.attrib('gloss_lang') == 'ja':
+            together = out[-1].surface + word.surface
+            if adv is not None and adv.pos == 'adv' and segment.simplified(together) in morphology.DETERMINERS and \
+                    k + 1 < len(words) and _pos(words[k + 1]) == 'noun':
+                word.items = [type(item)(dict(item.item, ja=morphology.DETERMINERS[segment.simplified(together)],
+                                              surface=together, determiner=True, predicative=False))]   # 很多书「たくさんの本」
+                word.surface = together
+                _drop(out.pop())
+            elif adv is not None and adv.pos == 'adv' and item.attrib('gloss_lang') == 'ja':
                 word.items = [type(item)(dict(item.item, ja=','.join(adv.ja.split(',')[0] + j for j in item.ja.split(',')[:2]),
                                               surface=out[-1].surface + word.surface))]
                 word.surface = out[-1].surface + word.surface
@@ -609,6 +671,7 @@ def lookup_all(surfaces):
     global _display
     _display = list(words)
     words = relative_clauses(words, doc)
+    words = complement_clauses(words, doc)
     words = complements(words)
     words = classifiers(words)
     words = localizers(words)

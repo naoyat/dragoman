@@ -68,6 +68,18 @@ def _split_classifiers(words):
     return out
 
 
+def _split_you(words):
+    """節の終わりの有人 (这里有人吗「ここに 人が いるか」) は 有 / 人 に。有人说「ある人が言う」の有人はそのまま"""
+    out = []
+    for k, w in enumerate(words):
+        nxt = words[k + 1] if k + 1 < len(words) else ''
+        if w in ('有人', '没有人') and (not nxt or nxt in PUNCTUATION or nxt in ('吗', '嗎', '吧', '呢', '啊')):
+            out += [w[:-1], '人']
+            continue
+        out.append(w)
+    return out
+
+
 _t2s = None
 
 
@@ -105,6 +117,7 @@ def segment(text):
         else:
             words.append(piece)
     words = _split_classifiers(words)
+    words = _split_you(words)
     out, i = [], 0   # 元の字に戻す
     for w in words:
         k = simple.find(w, i)

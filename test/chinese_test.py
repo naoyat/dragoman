@@ -63,7 +63,22 @@ class AnalyzerTestCase(unittest.TestCase):
     def test_subject_adverbs_and_people(self):
         self.assertEqual(tr('如果你去，我也去。'), '{あなたが 行く}なら / 私も / 行く')
         self.assertEqual(tr('我们都是学生。'), '私たちはみな / 学生である')
-        self.assertEqual(tr('我有两个朋友。'), '私が / 二人の友人を / 持つ,ある')   # 人を数える 个
+        self.assertEqual(tr('我有两个朋友。'), '私には / 二人の友人が / いる')   # 人を数える 个
+
+    def test_you(self):   # 所有・存在の 有、没有 + 名詞
+        self.assertEqual(tr('桌子上有一本书。'), '机の上に / 一冊の本が / ある')
+        self.assertEqual(tr('我没有钱。'), '私には / {硬貨,金銭}が / ない')
+        self.assertEqual(tr('他有很多书。'), '彼には / たくさんの本が / ある')
+        self.assertEqual(tr('这里有人吗？'), 'ここに / 人が / いるか')
+        self.assertEqual(tr('屋里没有人。'), '家の中には / 人が / いない')
+        self.assertEqual(tr('人很多。'), '人は / とても多い')
+        self.assertEqual(tr('书在桌子上。'), '本が / 机の上に / ある,いる')
+
+    def test_complement_clauses(self):   # 補文 (接続詞なし)
+        self.assertEqual(tr('有人说他是老师。'), 'ある人が / {彼が 先生である}と / 言う,話す')
+        self.assertEqual(tr('我觉得他会来。'), '私が / {彼が 来るだろう}と / 思う,感じる')
+        self.assertEqual(tr('我希望你来。'), '私が / {あなたが 来る}ことを / 望む,願う')
+        self.assertEqual(tr('他会说中文。'), '彼が / 中国語を / 話すことができる')
 
 
 @unittest.skipUnless(HAVE_DATA, '中国語のデータが無い')
