@@ -110,6 +110,8 @@ def _case_of(token):
         return ('Acc',)
     if dep == 'iobj':
         return ('Dat',)
+    if dep == 'compound:nn' and token.head.tag_ in ('NN', 'NR') and token.head.i > token.i:
+        return ('Gen',)   # 名詞 + 名詞の複合語 (主体大修工程「本体の 改修の 工事」): 前の名詞は後ろの名詞に掛かる
     if dep in ('nmod:assmod', 'nmod:poss'):
         return ('Gen',)
     if dep == 'ROOT' or any(c.tag_ == 'VC' for c in token.children):

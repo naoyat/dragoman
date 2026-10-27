@@ -117,7 +117,7 @@ SAY_VERBS = {'dizer', 'falar', 'contar', 'responder', 'perguntar', 'pensar', 'ac
 # 進行形 (estar + 現在分詞 (ブラジル)・estar a + 不定詞 (ポルトガル)) を作る動詞と、動詞の組の前置詞
 PROGRESSIVE = {'estar', 'ficar', 'andar', 'continuar', 'seguir', 'viver'}
 # 訳語を決めておく語 (Wiktionary の最初の語義が外れるもの・日本語に直しにくいもの)
-GLOSSES = {
+GLOSSES = {'porão': '地下室,船倉', 'caro': '高価な,親愛な', 
     'ser': '〜である', 'estar': '〜である,いる', 'ter': '持つ,ある', 'haver': 'ある', 'fazer': 'する,作る', 'ir': '行く',
     'vir': '来る', 'dar': '与える', 'dizer': '言う', 'ver': '見る', 'saber': '知る', 'poder': 'できる', 'querer': '欲しい',
     'ficar': '留まる,〜になる', 'deixar': '残す,させる', 'falar': '話す', 'comer': '食べる', 'beber': '飲む', 'ler': '読む',

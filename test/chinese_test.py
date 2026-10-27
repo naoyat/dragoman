@@ -75,6 +75,7 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(tr('书在桌子上。'), '本が / 机の上に / ある,いる')
 
     def test_complement_clauses(self):   # 補文 (接続詞なし)
+        self.assertEqual(tr('教堂完成了主体大修工程。'), '教会が / 本体のリニューアルの{エンジニアリング,計画}を / 完成させた,成し遂げた')
         self.assertEqual(tr('有人说他是老师。'), 'ある人が / {彼が 先生である}と / 言う,話す')
         self.assertEqual(tr('我觉得他会来。'), '私が / {彼が 来るだろう}と / 思う,感じる')
         self.assertEqual(tr('我希望你来。'), '私が / {あなたが 来る}ことを / 望む,願う')

@@ -20,6 +20,10 @@
 #   python3 tools/ud_eval.py --lang=mn                               モンゴル語 (UD Mongolian-GDUD。ラテン文字の転写を
 #                                                                    キリル文字に直して渡す。CC BY-SA 4.0)
 #   python3 tools/ud_eval.py --lang=fi                               フィンランド語 (UD Finnish-TDT, CC BY-SA 4.0)
+#   python3 tools/ud_eval.py --lang=pt [--source=gsd,bosque]         ポルトガル語 (UD Portuguese-GSD。Bosque は spaCy の
+#                                                                    学習に使われているので既定では使わない。CC BY-SA 4.0)
+#   python3 tools/ud_eval.py --lang=zh                               中国語 (UD Chinese-GSDSimp。UD の語の切れ目のまま渡す。
+#                                                                    CC BY-SA 4.0)
 #   python3 tools/ud_eval.py --lang=ang [--source=apt,chrona,or,wscp,æls] 古英語 (ISWOC Treebank。PROIEL 形式の
 #                                                                    CoNLL を UD の形に読み替える。CC BY-NC-SA 3.0)
 #
@@ -102,6 +106,14 @@ try:
     from dragoman.finnish import analyzer as finnish_analyzer
 except ImportError:
     finnish_analyzer = None
+try:
+    from dragoman.portuguese import analyzer as portuguese_analyzer
+except ImportError:
+    portuguese_analyzer = None
+try:
+    from dragoman.chinese import analyzer as chinese_analyzer
+except ImportError:
+    chinese_analyzer = None
 from dragoman.oldenglish import analyzer as oldenglish_analyzer
 from dragoman.core.Word import Word
 from dragoman.core.AndOr import AndOr
@@ -125,6 +137,8 @@ FRENCH_FILES = sorted(glob.glob(os.path.join(DATA_DIR, 'fr', 'ud', 'fr_*-ud-test
 TURKISH_FILES = sorted(glob.glob(os.path.join(DATA_DIR, 'tr', 'ud', 'tr_*-ud-test.conllu')))
 MONGOLIAN_FILES = sorted(glob.glob(os.path.join(DATA_DIR, 'mn', 'ud', 'mn_*-ud-test.conllu')))
 FINNISH_FILES = sorted(glob.glob(os.path.join(DATA_DIR, 'fi', 'ud', 'fi_*-ud-test.conllu')))
+PORTUGUESE_FILES = sorted(glob.glob(os.path.join(DATA_DIR, 'pt', 'ud', 'pt_*-ud-test.conllu')))
+CHINESE_FILES = sorted(glob.glob(os.path.join(DATA_DIR, 'zh', 'ud', 'zh_*-ud-test.conllu')))
 OLD_ENGLISH_FILES = sorted(glob.glob(os.path.join(DATA_DIR, 'ang', 'iswoc', '*.conll')))
 # Perseus の作品番号 (TLG) → 作品
 TLG_WORKS = {'tlg0012': 'homer', 'tlg0016': 'herodotus', 'tlg0003': 'thucydides', 'tlg0011': 'sophocles',
@@ -358,11 +372,13 @@ def words_in(node):
 
 def evaluate(files, sources, limit=0, show_errors=0, macronize=True, lang='la'):
     greek, sanskrit, russian, arabic = lang == 'grc', lang == 'sa', lang == 'ru', lang == 'ar'
-    persian = lang in ('fa', 'hi', 'ur', 'id', 'tl', 'ko', 'tr', 'mn', 'fi', 'fr')  # 格を測らず、nmod を属格として測る言語
+    persian = lang in ('fa', 'hi', 'ur', 'id', 'tl', 'ko', 'tr', 'mn', 'fi', 'fr', 'pt', 'zh')  # 格を測らず、nmod を属格として測る言語
     # (フィンランド語は目的語の属格・分格を対格に読み替えるので、UD の格と体系が合わない)
     korean = lang == 'ko'
     german = lang == 'de'
     french = lang == 'fr'
+    portuguese = lang == 'pt'
+    chinese = lang == 'zh'
     turkish = lang == 'tr'
     mongolian = lang == 'mn'
     finnish = lang == 'fi'
@@ -371,8 +387,8 @@ def evaluate(files, sources, limit=0, show_errors=0, macronize=True, lang='la'):
     tagalog = lang == 'tl'
     hindi = lang in ('hi', 'ur')
     urdu = lang == 'ur'
-    mwt = arabic or persian or german or french  # 書かれたとおりの語を渡し、解析器の切れ目を UD の語に対応させる
-    if greek or sanskrit or russian or mwt or oldenglish:
+    mwt = (arabic or persian or german or french) and not chinese  # 書かれたとおりの語を渡し、解析器の切れ目を UD の語に対応させる
+    if greek or sanskrit or russian or mwt or oldenglish or chinese:
         macronize = False  # マクロンの推定はラテン語だけ
     absolute_case = 'Gen' if greek else 'Loc' if sanskrit else 'Abl'  # 独立奪格 / 属格独立 / 処格独立
     stats = collections.Counter()
@@ -382,7 +398,7 @@ def evaluate(files, sources, limit=0, show_errors=0, macronize=True, lang='la'):
         for meta, tokens in (read_iswoc(path) if oldenglish else read_conllu(path)):
             work = (greek_work_of(meta) if greek else sanskrit_work_of(meta) if sanskrit
                     else meta['source'] if oldenglish
-                    else os.path.basename(path).split('_')[1].split('-')[0] if russian or mwt
+                    else os.path.basename(path).split('_')[1].split('-')[0] if russian or mwt or chinese
                     else work_of(meta.get('source', '')))
             if work in sources:
                 sentences.append(tokens)
@@ -408,6 +424,8 @@ def evaluate(files, sources, limit=0, show_errors=0, macronize=True, lang='la'):
                         else korean_analyzer.analyze_sentence(surfaces) if korean
                         else german_analyzer.analyze_sentence(surfaces) if german
                         else french_analyzer.analyze_sentence(surfaces) if french
+                        else portuguese_analyzer.analyze_sentence(surfaces) if portuguese
+                        else chinese_analyzer.analyze_sentence(surfaces) if chinese
                         else turkish_analyzer.analyze_sentence(surfaces) if turkish
                         else mongolian_analyzer.analyze_sentence([mongolian_script.from_latin(s) for s in surfaces])
                         if mongolian
@@ -554,6 +572,9 @@ def evaluate(files, sources, limit=0, show_errors=0, macronize=True, lang='la'):
             if french and kind == 'obj' and any(t.head == token.head and t.form.lower() == 'y' for t in tokens) and \
                     by_id.get(token.head) is not None and by_id[token.head].lemma == 'avoir':
                 kind = 'nsubj'  # il y a + 名詞: 訳では「〜がある」の主語
+            if (portuguese or chinese) and kind == 'obj' and by_id.get(token.head) is not None and \
+                    by_id[token.head].lemma in ('haver', '有', '没有'):
+                kind = 'nsubj'  # há + 名詞・有 + 名詞: 訳では「〜がある」の主語
             word = word_of.get(token.id)
             if kind is None or word is None:
                 continue
@@ -619,7 +640,7 @@ def main():
         elif option == '--no-wiktionary':
             latindic.LatinDic.use_wiktionary = False
         elif option in ('-h', '--help'):
-            print('Usage: python %s [--lang=la|grc|sa|ru|ar|fa|hi|ur|id|tl|ko|de|fr|tr|mn|fi|ang] [--source=caesar,cicero-off,cicero-att,vulgate,other] [--limit=N] '
+            print('Usage: python %s [--lang=la|grc|sa|ru|ar|fa|hi|ur|id|tl|ko|de|fr|tr|mn|fi|pt|zh|ang] [--source=caesar,cicero-off,cicero-att,vulgate,other] [--limit=N] '
                   '[-e N] [--no-macronize] [--no-tagger] [--no-wiktionary] [FILE.conllu...]' % sys.argv[0])
             sys.exit()
     if sources is None:
@@ -629,13 +650,15 @@ def main():
                    else {'gsd', 'csui', 'pud'} if lang == 'id' else {'newscrawl', 'trg', 'ugnayan'} if lang == 'tl'
                    else {'kaist'} if lang == 'ko' else {'gsd'} if lang in ('de', 'fr') else {'boun', 'kenet'} if lang == 'tr'
                    else {'gdud'} if lang == 'mn' else {'tdt'} if lang == 'fi'
+                   else {'gsd'} if lang == 'pt' else {'gsdsimp'} if lang == 'zh'
                    else {'apt', 'chrona', 'or', 'wscp', 'æls'} if lang == 'ang'
                    else {'caesar', 'cicero-off', 'cicero-att'})
     files = files or {'grc': GREEK_FILES, 'sa': SANSKRIT_FILES, 'ru': RUSSIAN_FILES,
                       'ar': ARABIC_FILES, 'fa': PERSIAN_FILES, 'hi': HINDI_FILES,
                       'ur': URDU_FILES, 'id': INDONESIAN_FILES, 'tl': TAGALOG_FILES,
                       'ko': KOREAN_FILES, 'de': GERMAN_FILES, 'fr': FRENCH_FILES, 'tr': TURKISH_FILES,
-                      'mn': MONGOLIAN_FILES, 'fi': FINNISH_FILES, 'ang': OLD_ENGLISH_FILES}.get(lang, DEFAULT_FILES)
+                      'mn': MONGOLIAN_FILES, 'fi': FINNISH_FILES, 'pt': PORTUGUESE_FILES, 'zh': CHINESE_FILES,
+                      'ang': OLD_ENGLISH_FILES}.get(lang, DEFAULT_FILES)
     if not files:
         sys.exit('no CoNLL-U files (put UD Latin-PROIEL in %s/ud/)' % DATA_DIR)
     latindic.load()

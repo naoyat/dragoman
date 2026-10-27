@@ -165,6 +165,35 @@ def _verb_data(token, feats, lemma=None):
     return data
 
 
+PARTICIPLE = re.compile(r'^(.+)([aií])d[oa]s?$')
+
+
+def _participle_gloss(word):
+    """辞書に無い過去分詞の形容詞 (trancados) → 動詞 (trancar「閉じる」) の受動「閉じられた」。動詞も無ければ (None, None)"""
+    m = PARTICIPLE.match(word)
+    if not m:
+        return None, None
+    stem, vowel = m.group(1), {'a': 'ar', 'i': 'ir', 'í': 'ir'}[m.group(2)]
+    for verb in ((stem + vowel,) if vowel == 'ar' else (stem + 'er', stem + 'ir')):
+        ja, gloss_lang, _ = morphology.gloss(verb, 'verb')
+        if ja and gloss_lang == 'ja':
+            from dragoman.core.japanese import JaVerb
+            return ','.join(JaVerb(j).attributive_form('passive') for j in ja.split(',')[:2]), 'ja'
+    return None, None
+
+
+def _relative_cases(token, lower):
+    """関係代名詞の格: que・qual は節の中の働き (spaCy の依存関係) で主格か対格に絞る (seis homens que moram aqui の que は主格)"""
+    cases = morphology.RELATIVES.get(lower, ('Nom', 'Acc'))
+    if cases == ('Nom', 'Acc'):
+        if token.dep_.startswith('nsubj') and token.head.morph.get('Person') in ([], ['3']) and \
+                not any(c.dep_.startswith('nsubj') and c.i != token.i for c in token.head.children):
+            return ('Nom',)   # 1・2人称の動詞 (o homem que vi) の que は主語でない (spaCy が nsubj にすることがある)
+        if token.dep_ in ('obj', 'dobj'):
+            return ('Acc',)
+    return cases
+
+
 def _case_of(token):
     """依存関係から名詞・代名詞の格"""
     dep = token.dep_
@@ -262,7 +291,7 @@ def item_of(token, doc):
     if pos == 'PRON':
         if feats.get('PronType') == 'Rel' or lower in morphology.RELATIVES and token.head.dep_ == 'acl:relcl':
             return {'surface': text, 'pos': 'pronoun', 'base': lower, 'ja': '〜するところの', 'gloss_lang': 'ja',
-                    'desc': '関係代名詞', '_': morphology.cngs(morphology.RELATIVES.get(lower, ('Nom', 'Acc'))),
+                    'desc': '関係代名詞', '_': morphology.cngs(_relative_cases(token, lower)),
                     'compact': True}
         ja, person, number, cases = morphology.PRONOUNS.get(lower) or \
             (lemma, 3, morphology.NUMBERS.get(feats.get('Number'), 'sg'), morphology.CASES)
@@ -287,11 +316,19 @@ def item_of(token, doc):
         ja, gloss_lang, row = morphology.gloss(lemma, 'adj')
         if ja is None and lemma != lower:
             ja, gloss_lang, row = morphology.gloss(lower, 'adj')
+        if ja is None:
+            ja, gloss_lang = _participle_gloss(lower)
         data = {'surface': text, 'pos': 'adj', 'base': lemma, 'ja': ja or lemma, 'gloss_lang': gloss_lang or 'en',
                 '_': morphology.cngs(morphology.CASES + ('Gen',), feats), 'main': True}
         if token.dep_ == 'ROOT' or any(c.dep_ == 'cop' for c in token.children):
             data.update(predicative=True, _=morphology.cngs(('Nom',), feats))   # 述語 (A casa é bonita)
         return data
+    if pos == 'VERB' and feats.get('VerbForm') == 'Part' and token.dep_ in ('acl', 'amod') and \
+            not any(c.dep_ in ('obj', 'nsubj', 'aux', 'aux:pass') for c in token.children):
+        ja, gloss_lang = _participle_gloss(lower)   # 名詞に掛かる過去分詞 (os livros vendidos「売られた本」)
+        if ja:
+            return {'surface': text, 'pos': 'adj', 'base': lemma, 'ja': ja, 'gloss_lang': gloss_lang,
+                    '_': morphology.cngs(morphology.CASES + ('Gen',), feats), 'main': True, 'desc': '過去分詞'}
     if pos in ('VERB', 'AUX'):
         return _verb_data(token, feats)
     if lower in morphology.NEGATIONS and pos in ('ADV', 'PRON', 'DET', 'CCONJ'):
@@ -607,7 +644,7 @@ def compound_conjunctions(words):
 
 
 def lookup_all(surfaces):
-    plain = [s.lstrip('-') if s.startswith('-') and len(s) > 1 else s for s in surfaces]   # spaCy には - の無い接語で
+    plain = [s.lstrip('-') if s.startswith('-') and s.lstrip('-').isalpha() else s for s in surfaces]   # spaCy には - の無い接語で
     doc = morphology.parse(plain)
     _ENCLITIC_SURFACES.clear()
     _ENCLITIC_SURFACES.update({k: True for k, x in enumerate(surfaces) if x.startswith('-') and len(x) > 1})

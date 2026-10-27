@@ -72,9 +72,23 @@ espeak-ng の発音（IPA）から、共通の規則（core/kana.py）で。既�
 
 macOS の say のブラジルの声 Luciana（`--variety=pt` でポルトガルの声 Joana）、無ければ espeak-ng（pt-br / pt）。
 
+## 評価（`tools/ud_eval.py --lang=pt`）
+
+UD Portuguese-GSD（CC BY-SA 4.0。`$DRAGOMAN_DATA/pt/ud/`）の test 1200 文で（2026-10-27）。spaCy のモデルは Bosque で学習して
+いるので、Bosque（`--source=bosque`）は既定では使わない。
+
+| 項目 | |
+|---|---|
+| 形容詞→名詞 | 再現率 78.0%・適合率 80.1% |
+| 属格→名詞 | 再現率 59.4%・適合率 85.9% |
+| 述語の検出 | 88.3% |
+| 主語 | 74.3% |
+| 目的語 | 65.3% |
+
+há + 名詞は訳で「〜がある」の主語なので主語として測る。
+
 ## まだできないこと
 
-* 評価（UD Portuguese の主語・目的語）はまだ。spaCy の学習に Bosque を使っているので、評価は別のツリーバンク（GSD など）で
 * 文の生成（generate/）はまだ
 * 接続法未来・人称不定詞は語形の表にあるが、訳し分けはまだ
 * ブラジルの口語の主語の a gente「私たち」、tu + 3人称の動詞

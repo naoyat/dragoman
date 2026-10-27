@@ -46,6 +46,19 @@ class AnalyzerTestCase(unittest.TestCase):
 
 
 @unittest.skipUnless(HAVE_DATA, 'ポルトガル語のデータが無い')
+class RelativeAndParticipleTestCase(unittest.TestCase):
+    def test_relative_after_numeral(self):   # 数詞 + 名詞 + que (que の格は節の中の働きで)
+        self.assertEqual(tr('Vi os seis homens que moram aqui.'), '私が / {ここで 住む}六つの男を / 見た')
+        self.assertEqual(tr('O homem que vi é alto.'), '{私が 見た}男は / 高い')
+
+    def test_participles(self):   # 辞書に無い過去分詞は動詞の受動で
+        self.assertEqual(tr('Os livros vendidos são caros.'), '売られた本は / 高価,親愛である')
+
+    def test_dashes(self):   # 「--」の入った文で落ちない
+        self.assertTrue(tr('White -- Acho que sim .'))
+
+
+@unittest.skipUnless(HAVE_DATA, 'ポルトガル語のデータが無い')
 class KanaTestCase(unittest.TestCase):
     def test_brazil_and_portugal(self):
         from dragoman.portuguese.katakana import katakana
