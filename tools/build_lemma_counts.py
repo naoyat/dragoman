@@ -4,7 +4,7 @@
 # 見出し語の出現数の表を Universal Dependencies のコーパスから作る (文の生成の語の置き換えで、よく使う語を先にする目安。
 # 辞書の語義の数だけでは ἡσυχία「静けさ」が εἰρήνη「平和」より先に来る)
 #
-#   python3 tools/build_lemma_counts.py --lang=grc      (grc / ru / sa / id / tl / fa / hi / ur。--lang=all で全部)
+#   python3 tools/build_lemma_counts.py --lang=grc      (grc / ru / sa / id / tl / fa / hi / ur / pt / zh。--lang=all で全部)
 #
 # 見出し語は英語の索引 (en-index.tsv) と同じ形に: ロシア語はアクセント記号を除いた形、サンスクリットは SLP1。
 # インドネシア語・タガログ語は、索引の見出しが接辞の付いた形 (mengangkat) なので、語形 (小文字) も数える
@@ -26,7 +26,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dragoman.core import paths
 
 UPOS = {'NOUN': 'noun', 'PROPN': 'noun', 'VERB': 'verb', 'AUX': 'verb', 'ADJ': 'adj', 'ADV': 'adv'}
-LANGS = ('grc', 'ru', 'sa', 'id', 'tl', 'fa', 'hi', 'ur')
+LANGS = ('grc', 'ru', 'sa', 'id', 'tl', 'fa', 'hi', 'ur', 'pt', 'zh')
 
 
 def key(lang, lemma):

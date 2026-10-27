@@ -9,7 +9,8 @@
 #   python3 tools/build_english_index.py --lang=grc
 #   python3 tools/build_english_index.py --lang=id
 #   python3 tools/build_english_index.py --lang=tl
-#   python3 tools/build_english_index.py --lang=ko   (de・fr・tr・mn・fi も。辞書 wiktionary.sqlite から)
+#   python3 tools/build_english_index.py --lang=ko   (de・fr・tr・mn・fi・pt も。辞書 wiktionary.sqlite から)
+#   python3 tools/build_english_index.py --lang=zh   (中国語は CC-CEDICT の辞書 zh/cedict.sqlite から。品詞は見当)
 #
 # 各行: 見出し語、品詞、英語の訳語 (語義の頭の語句を先に。読点区切り、多くて12)、性 (名詞)、語根の類 (サンスクリットの動詞)、
 #       語義の数 (よく使う語ほど多い)
@@ -96,13 +97,25 @@ def entries(lang):
 
 # 抽出データを置いていない言語 (ドイツ語・トルコ語・フィンランド語は標準入力から読んで辞書だけ残した) と、韓国語・モンゴル語:
 # 辞書 ($DRAGOMAN_DATA/<lang>/wiktionary.sqlite。tools/build_<言語>_dic.py) の見出し・品詞・英語の訳語 (多くて3つ)・性から
-DB_LANGS = {'ko': 'key', 'de': 'word', 'fr': 'word', 'tr': 'word', 'mn': 'key', 'fi': 'word', 'ang': 'key'}
+DB_LANGS = {'ko': 'key', 'de': 'word', 'fr': 'word', 'tr': 'word', 'mn': 'key', 'fi': 'word', 'ang': 'key', 'pt': 'word',
+            'zh': 'simplified'}
 DB_POS = {'noun': 'noun', 'name': 'noun', 'adj': 'adj', 'verb': 'verb', 'adv': 'adv', 'pronoun': 'pronoun',
           'det': 'pronoun', 'preposition': 'preposition', 'postposition': 'preposition', 'conj': 'conj', 'num': 'num'}
 
 
 def db_entries(lang):
     import sqlite3
+    if lang == 'zh':   # CC-CEDICT (tools/build_chinese_dic.py)。同じ見出しは最初の項目の品詞・訳語を
+        db = sqlite3.connect(paths.data('zh', 'cedict.sqlite'))
+        for lemma, pos, en, senses, proper in db.execute('SELECT simplified, pos, en, senses, proper FROM words '
+                                                         'WHERE en != "" ORDER BY rowid'):
+            pos = DB_POS.get(pos)
+            if pos is None or proper:
+                continue
+            en = ','.join(e for e in en.split(',') if e and len(e) < 60)
+            if en:
+                yield lemma, pos, en, '', '', senses or 1
+        return
     db = sqlite3.connect(paths.data(lang, 'wiktionary.sqlite'))
     if lang == 'ang':   # 古英語の辞書は見出しの情報を JSON で (tools/build_oldenglish_dic.py)
         import json

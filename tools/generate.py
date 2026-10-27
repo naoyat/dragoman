@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 #
 # 解析の結果 (格の枠) から文を作り直す試み: ラテン語 (・古典ギリシア語・ロシア語・サンスクリット・日本語) → 文の枠 →
-# ラテン語・英語・ロシア語・サンスクリット・古典ギリシア語・インドネシア語・タガログ語・アラビア語・ヘブライ語・ペルシア語・ヒンディー語・ウルドゥー語・アイヌ語・古典チベット語・日本語・古文
+# ラテン語・英語・ロシア語・サンスクリット・古典ギリシア語・ポルトガル語・中国語・インドネシア語・タガログ語・アラビア語・ヘブライ語・ペルシア語・ヒンディー語・ウルドゥー語・アイヌ語・古典チベット語・日本語・古文
 #
 #   python3 tools/generate.py "Puella rosam pulchram in hortō videt."
 #   python3 tools/generate.py samples/samples.txt
@@ -27,7 +27,7 @@ from collections import Counter
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dragoman.latin import analyzer, latindic
-from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, arabic, hebrew, persian, hindi, urdu, ainu, tibetan, japanese, kobun, korean, turkish, mongolian, german, finnish, french, oldenglish
+from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, arabic, hebrew, persian, hindi, urdu, ainu, tibetan, japanese, kobun, korean, turkish, mongolian, german, finnish, french, oldenglish, portuguese, chinese
 
 
 def _word_list(text):
@@ -103,10 +103,11 @@ def show_frame(clauses):
         from dragoman.generate import compare
         print('  要素ごとの比較:')
         print(compare.text_table(clauses, [lang for lang in compare.LANGS if lang in COMPARE]))
-OTHERS = [('ru', 'ロシア語:', russian), ('de', 'ドイツ語:', german), ('fr', 'フランス語:', french), ('fi', 'フィンランド語:', finnish), ('ang', '古英語:  ', oldenglish), ('sa', '梵語:    ', sanskrit), ('grc', 'ギリシア語:', greek),
+OTHERS = [('ru', 'ロシア語:', russian), ('de', 'ドイツ語:', german), ('fr', 'フランス語:', french), ('pt', 'ポルトガル語:', portuguese), ('fi', 'フィンランド語:', finnish), ('ang', '古英語:  ', oldenglish), ('sa', '梵語:    ', sanskrit), ('grc', 'ギリシア語:', greek),
           ('id', 'インドネシア語:', indonesian), ('tl', 'タガログ語:', tagalog), ('ar', 'アラビア語:', arabic),
           ('he', 'ヘブライ語:', hebrew), ('fa', 'ペルシア語:', persian), ('hi', 'ヒンディー語:', hindi),
           ('ur', 'ウルドゥー語:', urdu), ('ain', 'アイヌ語:', ainu), ('tr', 'トルコ語: ', turkish), ('mn', 'モンゴル語:', mongolian), ('ko', '韓国語:  ', korean),
+          ('zh', '中国語:  ', chinese),
           ('bo', 'チベット語:', tibetan), ('ja', '日本語:  ', japanese),
           ('kobun', '古文:    ', kobun)]
 
@@ -149,7 +150,7 @@ def run_other(text, source):
                'tl': ('タガログ語:', tagalog), 'ar': ('アラビア語:', arabic), 'he': ('ヘブライ語:', hebrew), 'fa': ('ペルシア語:', persian), 'hi': ('ヒンディー語:', hindi),
                'ur': ('ウルドゥー語:', urdu), 'ain': ('アイヌ語:', ainu), 'bo': ('チベット語:', tibetan), 'ja': ('日本語:  ', japanese),
                'ko': ('韓国語:  ', korean), 'tr': ('トルコ語: ', turkish), 'mn': ('モンゴル語:', mongolian), 'de': ('ドイツ語:', german), 'fr': ('フランス語:', french), 'fi': ('フィンランド語:', finnish),
-               'ang': ('古英語:  ', oldenglish), 'kobun': ('古文:    ', kobun)}
+               'pt': ('ポルトガル語:', portuguese), 'zh': ('中国語:  ', chinese), 'ang': ('古英語:  ', oldenglish), 'kobun': ('古文:    ', kobun)}
     for analysis in analyzer_module.analyze_text(text):
         print(analysis.text)
         clauses = frame.frames(analysis)
@@ -157,7 +158,7 @@ def run_other(text, source):
             print('  (述語が見つからない)\n')
             continue
         show_frame(clauses)
-        for lang in ['ja', 'kobun', 'la', 'en', 'ru', 'de', 'fr', 'fi', 'ang', 'sa', 'grc', 'id', 'tl', 'ar', 'he', 'fa', 'hi', 'ur', 'tr', 'mn', 'ko', 'ain', 'bo']:
+        for lang in ['ja', 'kobun', 'la', 'en', 'ru', 'de', 'fr', 'pt', 'fi', 'ang', 'sa', 'grc', 'id', 'tl', 'ar', 'he', 'fa', 'hi', 'ur', 'tr', 'mn', 'ko', 'zh', 'ain', 'bo']:
             if lang not in TARGETS and lang != source:
                 continue
             label, module = modules[lang]

@@ -1139,7 +1139,7 @@ def _converb_key(word):
     return CONVERB_KEYS[_lang].get(head, '')
 
 
-QUESTION_MARKS = {'ar': '؟', 'fa': '؟', 'ur': '؟', 'fr': ' ?'}   # フランス語は ? の前を空ける
+QUESTION_MARKS = {'ar': '؟', 'fa': '؟', 'ur': '؟', 'fr': ' ?', 'zh': '？'}   # フランス語は ? の前を空ける
 
 
 def punctuate(text, clauses, lang):

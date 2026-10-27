@@ -9,7 +9,9 @@
 #       (https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz。CC BY-SA 4.0)
 # 出力: $DRAGOMAN_DATA/zh/cedict.sqlite (データは CC-CEDICT 由来 (CC BY-SA 4.0)。出力ファイルもその条件に従う)
 #   words: simplified (簡体字)・traditional (繁体字)・pinyin (数字の声調: shu1)・en (英語の語義を ',' で6つまで)・
-#          classifiers (量詞: 本,册)・proper (固有名詞: 拼音が大文字で始まる)・senses (語義の数)
+#          classifiers (量詞: 本,册)・proper (固有名詞: 拼音が大文字で始まる)・senses (語義の数)・
+#          pos (品詞の見当: 語義が 'to ' で始まれば verb、英語の訳語が形容詞になれば adj、ほかは noun。文の生成の
+#          語の置き換え (en-index.tsv) に使う)
 #   語の切り分け (最長一致) に使う見出しの長さは words の simplified・traditional の索引から
 #
 import gzip
@@ -47,6 +49,36 @@ def glosses(senses, limit=6):
     return ','.join(out)
 
 
+def _english_pos():
+    """英語の語 → 品詞の集合 (en-ja.sqlite。無ければ空)"""
+    path = paths.data('en-ja.sqlite')
+    table = {}
+    if os.path.exists(path):
+        for en, pos in sqlite3.connect(path).execute('SELECT en, pos FROM en_ja'):
+            table.setdefault(en, set()).add(pos)
+    return table
+
+
+ENGLISH_POS = None
+
+
+def part_of_speech(senses, en, pinyin):
+    """品詞の見当: 固有名詞 name、最初の語義が 'to ' で始まれば verb、最初の訳語が英語で形容詞になれば adj (冠詞の付いた語義は除く)、ほかは noun"""
+    global ENGLISH_POS
+    if pinyin[:1].isupper():
+        return 'name'
+    first = next((s for s in senses if s and not s.startswith(('CL:', 'variant of', 'old variant of', 'see ', 'abbr.'))), '')
+    if first.startswith('to '):
+        return 'verb'
+    if ENGLISH_POS is None:
+        ENGLISH_POS = _english_pos()
+    head = (en or '').split(',')[0].strip().lower()
+    poses = ENGLISH_POS.get(head, set())
+    if 'adj' in poses and not first.startswith(('a ', 'an ', 'the ')):
+        return 'adj'   # beautiful (形容詞にも名詞にもなる英語の語は、冠詞の無い語義なら形容詞)
+    return 'noun'
+
+
 def classifiers(senses):
     for sense in senses:
         m = CLASSIFIER.match(sense)
@@ -65,7 +97,7 @@ def main():
     db = sqlite3.connect(tmp)
     db.executescript('''
         CREATE TABLE words (simplified TEXT, traditional TEXT, pinyin TEXT, en TEXT, classifiers TEXT, proper INTEGER,
-                            senses INTEGER);
+                            senses INTEGER, pos TEXT);
     ''')
     rows = []
     opener = gzip.open if source.endswith('.gz') else open
@@ -82,8 +114,8 @@ def main():
             if not en and not classifiers(senses):
                 continue
             rows.append((simplified, traditional, pinyin, en, classifiers(senses), int(pinyin[:1].isupper()),
-                         len(senses)))
-    db.executemany('INSERT INTO words VALUES (?, ?, ?, ?, ?, ?, ?)', rows)
+                         len(senses), part_of_speech(senses, en, pinyin)))
+    db.executemany('INSERT INTO words VALUES (?, ?, ?, ?, ?, ?, ?, ?)', rows)
     db.executescript('CREATE INDEX words_simplified ON words (simplified); CREATE INDEX words_traditional ON words (traditional);')
     db.commit()
     db.close()

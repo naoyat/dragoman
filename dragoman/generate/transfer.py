@@ -132,7 +132,7 @@ def _in_hand_dictionary(lemma):
 # 解析器の手作りの訳語の表 (基本の語の日本語。Wiktionary の語義の順だけでは 계집・tappo のような語が先に来る) を、
 # ラテン語の手作りの辞書と同じく語の選択に使う言語
 HAND_GLOSSES = {'ko': 'korean', 'de': 'german', 'fr': 'french', 'tr': 'turkish', 'mn': 'mongolian', 'fi': 'finnish',
-                'ang': 'oldenglish'}
+                'ang': 'oldenglish', 'pt': 'portuguese', 'zh': 'chinese'}
 
 
 class _KeyedTable(dict):
@@ -395,6 +395,95 @@ PREFERRED = {
             ('large', 'adj'): ('μέγας', ''), ('small', 'adj'): ('μικρός', ''), ('long', 'adj'): ('μακρός', ''),
             ('wise', 'adj'): ('σοφός', ''), ('brave', 'adj'): ('ἀνδρεῖος', ''), ('new', 'adj'): ('νέος', ''),
             ('old', 'adj'): ('παλαιός', ''), ('many', 'adj'): ('πολύς', ''), ('dear', 'adj'): ('φίλος', '')},
+    # ポルトガル語 (ブラジル)・中国語: 教科書の基本の語 (英語の索引の語義の順・UD の小さいコーパスの数だけでは
+    # lavrador・庄稼汉・辟 (王) のような古い語や方言の語が先に来る)
+    'pt': {('girl', 'noun'): ('menina', 'f'), ('boy', 'noun'): ('menino', 'm'),
+           ('farmer', 'noun'): ('agricultor', 'm'), ('sailor', 'noun'): ('marinheiro', 'm'),
+           ('people', 'noun'): ('povo', 'm'), ('crowd', 'noun'): ('multidão', 'f'),
+           ('master', 'noun'): ('senhor', 'm'), ('lord', 'noun'): ('senhor', 'm'),
+           ('slave', 'noun'): ('escravo', 'm'), ('field', 'noun'): ('campo', 'm'),
+           ('country house', 'noun'): ('casa de campo', 'f'), ('villa', 'noun'): ('casa de campo', 'f'),
+           ('encampment', 'noun'): ('acampamento', 'm'), ('camp', 'noun'): ('acampamento', 'm'),
+           ('king', 'noun'): ('rei', 'm'), ('queen', 'noun'): ('rainha', 'f'), ('soldier', 'noun'): ('soldado', 'm'),
+           ('enemy', 'noun'): ('inimigo', 'm'), ('enemy of the state', 'noun'): ('inimigo', 'm'),
+           ('wood', 'noun'): ('floresta', 'f'), ('forest', 'noun'): ('floresta', 'f'),
+           ('garden', 'noun'): ('jardim', 'm'), ('road', 'noun'): ('estrada', 'f'),
+           ('letter', 'noun'): ('carta', 'f'), ('temple', 'noun'): ('templo', 'm'), ('man', 'noun'): ('homem', 'm'),
+           ('woman', 'noun'): ('mulher', 'f'), ('town', 'noun'): ('cidade', 'f'), ('city', 'noun'): ('cidade', 'f'),
+           ('thing', 'noun'): ('coisa', 'f'), ('teacher', 'noun'): ('professor', 'm'),
+           ('book', 'noun'): ('livro', 'm'), ('rose', 'noun'): ('rosa', 'f'), ('flower', 'noun'): ('flor', 'f'),
+           ('water', 'noun'): ('água', 'f'), ('sea', 'noun'): ('mar', 'm'), ('mother', 'noun'): ('mãe', 'f'),
+           ('father', 'noun'): ('pai', 'm'), ('daughter', 'noun'): ('filha', 'f'), ('son', 'noun'): ('filho', 'm'),
+           ('friend', 'noun'): ('amigo', 'm'), ('sky', 'noun'): ('céu', 'm'), ('heaven', 'noun'): ('céu', 'm'),
+           ('house', 'noun'): ('casa', 'f'), ('word', 'noun'): ('palavra', 'f'),
+           ('messenger', 'noun'): ('mensageiro', 'm'), ('wolf', 'noun'): ('lobo', 'm'),
+           ('sword', 'noun'): ('espada', 'f'), ('tear', 'noun'): ('lágrima', 'f'), ('island', 'noun'): ('ilha', 'f'),
+           ('give', 'verb'): ('dar', ''), ('die', 'verb'): ('morrer', ''), ('fight', 'verb'): ('lutar', ''),
+           ('take', 'verb'): ('pegar', ''), ('capture', 'verb'): ('capturar', ''), ('play', 'verb'): ('brincar', ''),
+           ('carry', 'verb'): ('levar', ''), ('praise', 'verb'): ('elogiar', ''), ('pluck', 'verb'): ('colher', ''),
+           ('think', 'verb'): ('achar', ''), ('judge', 'verb'): ('achar', ''), ('reckon', 'verb'): ('achar', ''), ('object', 'noun'): ('coisa', 'f'), ('suppose', 'verb'): ('achar', ''), ('order', 'verb'): ('mandar', ''),
+           ('command', 'verb'): ('mandar', ''), ('bid', 'verb'): ('mandar', ''), ('wound', 'verb'): ('ferir', ''),
+           ('move', 'verb'): ('mover', ''), ('leave', 'verb'): ('partir', ''), ('depart', 'verb'): ('partir', ''),
+           ('weep', 'verb'): ('chorar', ''), ('cry', 'verb'): ('chorar', ''), ('sing', 'verb'): ('cantar', ''),
+           ('read', 'verb'): ('ler', ''), ('know', 'verb'): ('saber', ''), ('fear', 'verb'): ('temer', ''),
+           ('laugh', 'verb'): ('rir', ''), ('wait for', 'verb'): ('esperar', ''), ('see', 'verb'): ('ver', ''),
+           ('love', 'verb'): ('amar', ''), ('say', 'verb'): ('dizer', ''), ('work', 'verb'): ('trabalhar', ''),
+           ('labor', 'verb'): ('trabalhar', ''), ('toil', 'verb'): ('trabalhar', ''),
+           ('walk', 'verb'): ('andar', ''), ('live', 'verb'): ('morar', ''), ('dwell', 'verb'): ('morar', ''),
+           ('inhabit', 'verb'): ('morar', ''), ('sleep', 'verb'): ('dormir', ''), ('come', 'verb'): ('vir', ''),
+           ('go', 'verb'): ('ir', ''), ('hear', 'verb'): ('ouvir', ''), ('write', 'verb'): ('escrever', ''),
+           ('call', 'verb'): ('chamar', ''), ('flee', 'verb'): ('fugir', ''), ('wait', 'verb'): ('esperar', ''),
+           ('be able', 'verb'): ('poder', ''), ('want', 'verb'): ('querer', ''),
+           ('beautiful', 'adj'): ('bonito', ''), ('pretty', 'adj'): ('bonito', ''), ('great', 'adj'): ('grande', ''),
+           ('big', 'adj'): ('grande', ''), ('large', 'adj'): ('grande', ''), ('long', 'adj'): ('longo', ''),
+           ('wide', 'adj'): ('largo', ''), ('broad', 'adj'): ('largo', ''), ('happy', 'adj'): ('feliz', ''),
+           ('glad', 'adj'): ('feliz', ''), ('good', 'adj'): ('bom', ''), ('bad', 'adj'): ('mau', ''),
+           ('new', 'adj'): ('novo', ''), ('old', 'adj'): ('velho', ''), ('golden', 'adj'): ('dourado', ''),
+           ('Made of gold', 'adj'): ('de ouro', ''), ('strong', 'adj'): ('forte', ''),
+           ('brave', 'adj'): ('corajoso', ''), ('courageous', 'adj'): ('corajoso', ''),
+           ('sharp', 'adj'): ('afiado', ''), ('small', 'adj'): ('pequeno', ''), ('wise', 'adj'): ('sábio', ''),
+           ('dear', 'adj'): ('querido', ''), ('open', 'adj'): ('aberto', '')},
+    'zh': {('girl', 'noun'): ('女孩', ''), ('boy', 'noun'): ('男孩', ''), ('child', 'noun'): ('孩子', ''),
+           ('farmer', 'noun'): ('农夫', ''), ('sailor', 'noun'): ('水手', ''), ('people', 'noun'): ('人民', ''),
+           ('crowd', 'noun'): ('人群', ''), ('master', 'noun'): ('主人', ''), ('lord', 'noun'): ('主人', ''),
+           ('slave', 'noun'): ('奴隶', ''), ('field', 'noun'): ('田野', ''), ('country house', 'noun'): ('别墅', ''),
+           ('villa', 'noun'): ('别墅', ''), ('encampment', 'noun'): ('营地', ''), ('camp', 'noun'): ('营地', ''),
+           ('king', 'noun'): ('国王', ''), ('queen', 'noun'): ('王后', ''), ('soldier', 'noun'): ('士兵', ''),
+           ('enemy', 'noun'): ('敌人', ''), ('enemy of the state', 'noun'): ('敌人', ''), ('wood', 'noun'): ('森林', ''),
+           ('forest', 'noun'): ('森林', ''), ('garden', 'noun'): ('花园', ''), ('road', 'noun'): ('路', ''),
+           ('way', 'noun'): ('路', ''), ('letter', 'noun'): ('信', ''), ('temple', 'noun'): ('寺庙', ''),
+           ('man', 'noun'): ('男人', ''), ('woman', 'noun'): ('女人', ''), ('town', 'noun'): ('城镇', ''),
+           ('city', 'noun'): ('城市', ''), ('thing', 'noun'): ('东西', ''), ('teacher', 'noun'): ('老师', ''),
+           ('book', 'noun'): ('书', ''), ('rose', 'noun'): ('玫瑰', ''), ('flower', 'noun'): ('花', ''),
+           ('water', 'noun'): ('水', ''), ('sea', 'noun'): ('海', ''), ('mother', 'noun'): ('母亲', ''),
+           ('father', 'noun'): ('父亲', ''), ('daughter', 'noun'): ('女儿', ''), ('son', 'noun'): ('儿子', ''),
+           ('friend', 'noun'): ('朋友', ''), ('sky', 'noun'): ('天空', ''), ('heaven', 'noun'): ('天空', ''),
+           ('house', 'noun'): ('房子', ''), ('word', 'noun'): ('话', ''), ('messenger', 'noun'): ('使者', ''),
+           ('wolf', 'noun'): ('狼', ''), ('sword', 'noun'): ('剑', ''), ('tear', 'noun'): ('眼泪', ''),
+           ('island', 'noun'): ('岛', ''), ('matter', 'noun'): ('事情', ''), ('affair', 'noun'): ('事情', ''),
+           ('give', 'verb'): ('给', ''), ('die', 'verb'): ('死', ''), ('fight', 'verb'): ('战斗', ''),
+           ('take', 'verb'): ('拿', ''), ('capture', 'verb'): ('抓住', ''), ('play', 'verb'): ('玩', ''),
+           ('carry', 'verb'): ('搬', ''), ('praise', 'verb'): ('称赞', ''), ('pluck', 'verb'): ('摘', ''),
+           ('think', 'verb'): ('认为', ''), ('judge', 'verb'): ('认为', ''), ('reckon', 'verb'): ('认为', ''), ('object', 'noun'): ('东西', ''), ('suppose', 'verb'): ('认为', ''), ('order', 'verb'): ('命令', ''),
+           ('command', 'verb'): ('命令', ''), ('bid', 'verb'): ('命令', ''), ('wound', 'verb'): ('打伤', ''),
+           ('move', 'verb'): ('移动', ''), ('leave', 'verb'): ('离开', ''), ('depart', 'verb'): ('离开', ''),
+           ('weep', 'verb'): ('哭', ''), ('cry', 'verb'): ('哭', ''), ('sing', 'verb'): ('唱歌', ''),
+           ('read', 'verb'): ('读', ''), ('know', 'verb'): ('知道', ''), ('fear', 'verb'): ('害怕', ''),
+           ('laugh', 'verb'): ('笑', ''), ('wait for', 'verb'): ('等', ''), ('see', 'verb'): ('看见', ''),
+           ('love', 'verb'): ('爱', ''), ('say', 'verb'): ('说', ''), ('work', 'verb'): ('工作', ''),
+           ('labor', 'verb'): ('工作', ''), ('toil', 'verb'): ('工作', ''), ('walk', 'verb'): ('走', ''),
+           ('live', 'verb'): ('住', ''), ('dwell', 'verb'): ('住', ''), ('inhabit', 'verb'): ('住', ''),
+           ('sleep', 'verb'): ('睡觉', ''), ('come', 'verb'): ('来', ''), ('go', 'verb'): ('去', ''),
+           ('hear', 'verb'): ('听', ''), ('write', 'verb'): ('写', ''), ('call', 'verb'): ('叫', ''),
+           ('flee', 'verb'): ('逃跑', ''), ('wait', 'verb'): ('等', ''), ('want', 'verb'): ('想要', ''),
+           ('beautiful', 'adj'): ('美丽', ''), ('pretty', 'adj'): ('漂亮', ''), ('great', 'adj'): ('大', ''),
+           ('big', 'adj'): ('大', ''), ('large', 'adj'): ('大', ''), ('long', 'adj'): ('长', ''),
+           ('wide', 'adj'): ('宽', ''), ('broad', 'adj'): ('宽', ''), ('happy', 'adj'): ('高兴', ''),
+           ('glad', 'adj'): ('高兴', ''), ('good', 'adj'): ('好', ''), ('bad', 'adj'): ('坏', ''),
+           ('new', 'adj'): ('新', ''), ('old', 'adj'): ('老', ''), ('golden', 'adj'): ('金色', ''),
+           ('Made of gold', 'adj'): ('金', ''), ('strong', 'adj'): ('强壮', ''), ('brave', 'adj'): ('勇敢', ''),
+           ('courageous', 'adj'): ('勇敢', ''), ('sharp', 'adj'): ('锋利', ''), ('small', 'adj'): ('小', ''),
+           ('wise', 'adj'): ('聪明', ''), ('dear', 'adj'): ('亲爱', ''), ('open', 'adj'): ('开阔', '')},
 }
 
 
@@ -487,8 +576,8 @@ def candidates(lex, lang, pos=None):
 
 # コーパスでの出現数 (tools/build_lemma_counts.py が UD から作る) の重み: よく使う語を先に (εἰρήνη を ἡσυχία より)
 # 見出し語の形がコーパスと索引で揃うところだけ (サンスクリットの UD の動詞は語根の形が違うので名詞・形容詞だけ。
-# タガログ語はコーパスが小さいので軽く)
-FREQUENCY_WEIGHT = {'grc': 1.0, 'ru': 1.0, 'id': 1.0, 'sa': 1.0, 'tl': 0.5}
+# タガログ語・ポルトガル語 (UD の test だけ)・中国語はコーパスが小さいので軽く)
+FREQUENCY_WEIGHT = {'grc': 1.0, 'ru': 1.0, 'id': 1.0, 'sa': 1.0, 'tl': 0.5, 'pt': 0.5, 'zh': 0.5}
 # 元の語の上位の英語の訳語の複数に合う語の重み (arca: chest, box →「箱」)。大きいと語義の多い語 (ἡσυχία: peace, rest) が勝つ
 MULTIPLE_MATCH_WEIGHT = 1.0
 

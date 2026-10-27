@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from dragoman.core import paths  # noqa: E402
 from dragoman.latin import latindic, analyzer  # noqa: E402
-from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, arabic, hebrew, persian, hindi, ainu, tibetan, japanese, kobun  # noqa: E402
+from dragoman.generate import frame, english, latin, russian, sanskrit, greek, indonesian, tagalog, arabic, hebrew, persian, hindi, ainu, tibetan, japanese, kobun, portuguese, chinese  # noqa: E402
 from dragoman.generate.frame import Lex  # noqa: E402
 
 _saved = None
@@ -495,6 +495,72 @@ class IndonesianTestCase(unittest.TestCase):
         self.assertEqual(indonesian.passive('memiliki'), 'dimiliki')
         self.assertEqual(indonesian.intransitive('nyanyi'), 'bernyanyi')
         self.assertEqual(indonesian.active('beri'), 'memberi')   # ber- で始まるが語根
+
+
+@unittest.skipUnless(portuguese.available(), 'pt/en-index.tsv が無い')
+class PortugueseTestCase(unittest.TestCase):
+    """ラテン語 → 文の枠 → ポルトガル語 (ブラジル)"""
+
+    def portuguese(self, text):
+        analysis, = analyzer.analyze_text(text)
+        clauses = frame.frames(analysis)
+        return frame.punctuate(portuguese.sentence(clauses), clauses, 'pt')
+
+    def test_svo_and_contractions(self):
+        self.assertEqual(self.portuguese('Puella rosam pulchram in hortō videt.'), 'A menina vê a rosa bonita no jardim.')
+        self.assertEqual(self.portuguese('Rēgīna puellīs rosās dedit.'), 'A rainha deu as rosas às meninas.')
+        self.assertEqual(self.portuguese('Duo puerī in viā ambulant.'), 'Dois meninos andam na estrada.')
+
+    def test_passive_and_relative(self):
+        self.assertEqual(self.portuguese('Puer ā magistrō laudātus est.'), 'O menino foi elogiado pelo professor.')
+        self.assertEqual(self.portuguese('Puella puerum videt quem magister laudat.'),
+                         'A menina vê o menino que o professor elogia.')
+
+    def test_copula(self):
+        self.assertEqual(self.portuguese('Nauta nōn est malus.'), 'O marinheiro não é mau.')
+        self.assertEqual(self.portuguese('Puella est rēgīna.'), 'A menina é rainha.')
+
+    def test_absolute_and_perception(self):
+        self.assertEqual(self.portuguese('Urbe captā, cīvēs fūgērunt.'),
+                         'Depois que a cidade foi capturada, os cidadãos fugiram.')
+        self.assertEqual(self.portuguese('Videō puellam cantāre.'), 'Eu vejo a menina cantar.')
+        self.assertEqual(self.portuguese('Quis venit?'), 'Quem vem?')
+
+    def test_forms(self):
+        self.assertEqual(portuguese.finite('saber', 'present', 1, 'sg'), 'sei')   # 方言の sabo でなく
+        self.assertEqual(portuguese.plural('menino'), 'meninos')
+        self.assertEqual(portuguese.with_preposition('de', 'o livro'), 'do livro')
+        self.assertEqual(portuguese.with_preposition('com', 'mim'), 'comigo')
+        self.assertEqual(portuguese._enclitic('ler', 'o'), 'lê-lo')
+
+
+@unittest.skipUnless(chinese.available(), 'zh/en-index.tsv が無い')
+class ChineseTestCase(unittest.TestCase):
+    """ラテン語 → 文の枠 → 中国語"""
+
+    def chinese(self, text):
+        analysis, = analyzer.analyze_text(text)
+        clauses = frame.frames(analysis)
+        return frame.punctuate(chinese.sentence(clauses), clauses, 'zh')
+
+    def test_word_order(self):   # 場所の介詞句は動詞の前、数詞 + 量詞
+        self.assertEqual(self.chinese('Puella rosam pulchram in hortō videt.'), '女孩在花园里看见美丽的玫瑰。')
+        self.assertEqual(self.chinese('Duo puerī in viā ambulant.'), '两个男孩在路上走。')
+        self.assertEqual(self.chinese('Cum amīcīs ad oppidum ambulāmus.'), '我们和朋友一起走到城镇。')
+
+    def test_passive_relative_aspect(self):
+        self.assertEqual(self.chinese('Puer ā magistrō laudātus est.'), '男孩被老师称赞了。')
+        self.assertEqual(self.chinese('Puella puerum videt quem magister laudat.'), '女孩看见老师称赞的男孩。')
+        self.assertEqual(self.chinese('Rēgīna puellīs rosās dedit.'), '王后给了女孩玫瑰。')   # 给 は受け手を目的語の前に
+
+    def test_copula(self):
+        self.assertEqual(self.chinese('Nauta nōn est malus.'), '水手不坏。')
+        self.assertEqual(self.chinese('Puella est rēgīna.'), '女孩是王后。')
+
+    def test_absolute_and_question(self):
+        self.assertEqual(self.chinese('Urbe captā, cīvēs fūgērunt.'), '城市被抓住了以后，公民逃跑了。')
+        self.assertEqual(self.chinese('Videō puellam cantāre.'), '我看见女孩唱歌。')
+        self.assertEqual(self.chinese('Quis venit?'), '谁来？')
 
 
 @unittest.skipUnless(tagalog.available(), 'tl/wiktionary.sqlite か tl/en-index.tsv が無い')

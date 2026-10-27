@@ -76,6 +76,35 @@ python3 tools/build_chinese_dic.py
 
 macOS の say の Tingting（普通話）、無ければ espeak-ng（cmn）。
 
+## 文の生成 (出口)
+
+ほかの言語の文の枠から中国語（簡体字）の文を作ります（`generate/chinese.py`）。比較の表（`tools/generate.py --compare`）にも
+出ます。入口（`--from=zh`）はまだです。
+
+```
+python3 tools/generate.py --to=zh "Puella rosam pulchram in hortō videt."
+  中国語:   女孩在花园里看见美丽的玫瑰。
+python3 tools/generate.py --to=zh "Mihi est liber. Puer ā magistrō laudātus est. Rēge mortuō populus flēvit."
+  中国語:   我有一本书。  /  男孩被老师称赞了。  /  国王死了以后，人群哭了。
+```
+
+* 語は英語を仲立ちにした置き換え（`transfer.py`）。英語の索引 `zh/en-index.tsv` は CC-CEDICT から
+  （`tools/build_english_index.py --lang=zh`。品詞は CC-CEDICT に無いので見当: 語義が "to …" なら動詞、英語の訳語が形容詞に
+  なれば形容詞（`tools/build_chinese_dic.py`））。UD の出現数（`tools/build_lemma_counts.py --lang=zh`）と、教科書の基本の語
+  （transfer.PREFERRED: 国王 を 辟 より、农夫 を 庄稼汉 より）で選ぶ。名前の漢字の表は無いので、固有名詞はラテン文字のまま
+  （長音符は除く）。
+* 名詞句: 指示詞・数詞 + 量詞（这个女孩・两个男孩。量詞は CC-CEDICT の CL:、無ければ个）+ 形容詞 + 名詞。1字の形容詞は的なし
+  （好人）、2字以上は的（美丽的玫瑰）、並列は 又A又B的。属格は 〜的、関係節・名詞に掛かる分詞は 節 + 的（老师称赞的男孩・
+  逃跑的敌人）。
+* 語順: 主語 - 時の副詞 - 否定 - 介詞句（在花园里・从…・和朋友一起・用…・给 + 受け手）- 動詞 - 目的語。行き先は動詞の後ろ
+  （走到城镇、去・回 はそのまま）。方位詞は 里（面の名詞は 上: 在路上）。给・送・告诉・教 は受け手を目的語の前に
+  （给了女孩玫瑰）。
+* 時制: 完了は 動詞 + 了、過去完了 已经、未来 将、否定は 不（完了は 没 で 了 を付けない）、受動 被（+ 動作主）。
+* 繋辞: 名詞は 是、形容詞は 很 + 形容詞（並列は 长又宽）、場所は 在、存在の文と所有の与格は 有 + 一 + 量詞 + 名詞（我有一本书）。
+  疑問文は文末に 吗（疑問詞があれば付けない）と ？。
+* 補文・知覚の不定詞は節のまま（我知道你来・我看见女孩唱歌）、話法の動詞は 能・想・应该 + 動詞。独立奪格は 〜的时候（現在）・
+  〜了以后（過去）、述語的な分詞は 動詞 + 着（摘着花）、過去の受動の分詞は 被 + 動詞。
+
 ## 評価（`tools/ud_eval.py --lang=zh`）
 
 UD Chinese-GSDSimp（CC BY-SA 4.0。`$DRAGOMAN_DATA/zh/ud/`）の test 500 文で（2026-10-27）。語の切れ目は UD のまま渡す。
@@ -95,4 +124,4 @@ UD Chinese-GSDSimp（CC BY-SA 4.0。`$DRAGOMAN_DATA/zh/ud/`）の test 500 文�
 
 * 数量を述語の後ろに回す訳（「私には 友人が 二人 いる」）はしない（「二人の友人が」のまま）
 * 声調の変化（一・不 の変調、3声の連続）はカナに関係しないので扱わない。見出しの拼音は辞書の声調のまま
-* 文の生成（generate/）はまだ
+* 文の生成の入口（`tools/generate.py --from=zh`）はまだ

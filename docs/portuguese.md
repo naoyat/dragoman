@@ -72,6 +72,33 @@ espeak-ng の発音（IPA）から、共通の規則（core/kana.py）で。既�
 
 macOS の say のブラジルの声 Luciana（`--variety=pt` でポルトガルの声 Joana）、無ければ espeak-ng（pt-br / pt）。
 
+## 文の生成 (出口)
+
+ほかの言語の文の枠からポルトガル語（ブラジル）の文を作ります（`generate/portuguese.py`）。比較の表（`tools/generate.py --compare`）
+にも出ます。入口（`--from=pt`）はまだです。
+
+```
+python3 tools/generate.py --to=pt "Puella rosam pulchram in hortō videt."
+  ポルトガル語: A menina vê a rosa bonita no jardim.
+python3 tools/generate.py --to=pt "Ego tē amō. Mihi est liber. Puellā cantante puer dormit."
+  ポルトガル語: Eu te amo.  /  Eu tenho um livro.  /  Enquanto a menina canta, o menino dorme.
+```
+
+* 語は英語を仲立ちにした置き換え（`transfer.py`。英語の索引 `pt/en-index.tsv` は辞書から `tools/build_english_index.py --lang=pt`、
+  よく使う語の目安は UD の出現数 `tools/build_lemma_counts.py --lang=pt`、教科書の基本の語は transfer.PREFERRED で決めておく:
+  agricultor を lavrador より）。名詞の性と、名詞・形容詞・動詞の語形は辞書の語形の表から（表に何度も載る形を先に: saber の
+  sei を方言の sabo より）。無ければ規則（複数 -s・-ões・-ns・-is、女性 -a、-ar・-er・-ir の活用）。
+* 名詞句: 定冠詞 o / a / os / as（所有詞の前にも: o meu livro）、不定冠詞 um / uma、前に置く形容詞（bom・grande・outro …）と後ろに
+  置く形容詞（性・数の一致。並列は bom e corajoso）、指示詞 este・esse・aquele（中性は isto・isso）、de + 属格、名詞に掛かる分詞は
+  que + 節（o inimigo que foge）。前置詞と冠詞・代名詞の縮約（no・do・ao・pelo・dele・nela・comigo）。
+* 語順: 主語 - não - 接語の代名詞 - 動詞 - 目的語 - a + 受け手 - 前置詞句。主語の代名詞は書き（ブラジルの話し言葉）、2人称は você
+  （動詞は3人称）。接語は動詞の前（Eu te amo）、不定詞の後ろの3人称の接語は -lo（posso lê-lo）。
+* 時制: 現在、完了は完全過去（viu）、未完了過去（via）、過去完了 tinha + 過去分詞、単純未来（verá）、受動 ser + 過去分詞。
+  否定の代名詞は動詞の後ろでも não（não vi ninguém）。望む・命じる・感情の補文と para que・embora などの後ろは接続法現在。
+* 繋辞: ser（形容詞は主語に一致）、場所は estar（O menino está no jardim）、存在の文は há、所有の与格は ter（Eu tenho um livro）。
+* 独立奪格は enquanto + 節（現在）・depois que + 節（過去）、述語的な分詞は動名詞（colhendo as flores）、過去の受動は一致した
+  過去分詞（movida pelas palavras）。知覚の動詞 + 不定詞（Eu vejo a menina cantar）。
+
 ## 評価（`tools/ud_eval.py --lang=pt`）
 
 UD Portuguese-GSD（CC BY-SA 4.0。`$DRAGOMAN_DATA/pt/ud/`）の test 1200 文で（2026-10-27）。spaCy のモデルは Bosque で学習して
@@ -89,6 +116,6 @@ há + 名詞は訳で「〜がある」の主語なので主語として測る�
 
 ## まだできないこと
 
-* 文の生成（generate/）はまだ
+* 文の生成の入口（`tools/generate.py --from=pt`）はまだ
 * 接続法未来・人称不定詞は語形の表にあるが、訳し分けはまだ
 * ブラジルの口語の主語の a gente「私たち」、tu + 3人称の動詞
