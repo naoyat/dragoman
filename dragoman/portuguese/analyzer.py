@@ -210,6 +210,9 @@ def _case_of(token):
     return ('Nom', 'Acc')
 
 
+ADVERB_SUBORDINATORS = {'enquanto', 'quando', 'embora', 'caso'}
+
+
 def _noun_data(token, feats, proper=False):
     text, lemma = token.text, token.lemma_ or token.text
     if proper:
@@ -217,6 +220,8 @@ def _noun_data(token, feats, proper=False):
     ja, gloss_lang, row = morphology.gloss(lemma, 'name' if proper else 'noun')
     if ja is None and lemma != text:
         ja, gloss_lang, row = morphology.gloss(text.lower(), 'noun')
+        if ja is not None and not proper:
+            lemma = text.lower()   # spaCy の原形の誤り (rosa → roso): 辞書で引けた語形を見出しに
     given = proper and row is not None and re.search(r'given name|surname', row.get('en') or '')
     if proper and (ja is None or given or gloss_lang == 'en' and ja.split(',')[0] in (lemma, text)):
         from .katakana import katakana   # 辞書に無い名前・人名はカタカナ (João → ジョアオン)
@@ -311,7 +316,7 @@ def item_of(token, doc):
         data.update(ja=morphology.LANGUAGE_NOUNS[lower], gloss_lang='ja', lemma=lower, base=lower + ' (o)')
         return data
     if pos in ('NOUN', 'PROPN'):
-        return _noun_data(token, feats, proper=pos == 'PROPN')
+        return _noun_data(token, feats, proper=pos == 'PROPN' and text[:1].isupper())   # spaCy は小文字の rosa も PROPN に
     if pos == 'ADJ':
         ja, gloss_lang, row = morphology.gloss(lemma, 'adj')
         if ja is None and lemma != lower:
@@ -339,6 +344,12 @@ def item_of(token, doc):
         say = token.head.head.lemma_.lower() in morphology.SAY_VERBS
         return {'surface': text, 'pos': 'conj', 'base': lower, 'ja': '〜ということ', 'gloss_lang': 'ja',
                 'clause_suffix': 'と' if say else 'ことを', 'clause_start': True, 'complement': True}
+    if lower in INTERROGATIVES and INTERROGATIVES[lower] and token.i == 0 and token.doc[-1].text == '?':
+        return {'surface': text, 'pos': 'adv', 'base': lower, 'ja': INTERROGATIVES[lower], 'gloss_lang': 'ja'}   # Quando vens?
+    if pos == 'ADV' and lower in ADVERB_SUBORDINATORS and (token.i > 0 or token.dep_ == 'mark') and \
+            token.doc[-1].text != '?' and \
+            any(t.pos_ in ('VERB', 'AUX') for t in token.doc[token.i + 1:]):
+        pos = 'SCONJ'   # spaCy が副詞と読む従属接続詞 (A menina canta enquanto o menino lê)
     if pos in ('CCONJ', 'SCONJ'):
         return {'surface': text, 'pos': 'conj', 'base': lower, 'ja': morphology.CONJUNCTIONS.get(lower, lemma),
                 'gloss_lang': 'ja'}

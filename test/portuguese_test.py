@@ -54,6 +54,11 @@ class RelativeAndParticipleTestCase(unittest.TestCase):
     def test_participles(self):   # 辞書に無い過去分詞は動詞の受動で
         self.assertEqual(tr('Os livros vendidos são caros.'), '売られた本は / 高価,親愛である')
 
+    def test_spacy_slips(self):
+        self.assertEqual(tr('A menina canta enquanto o menino lê um livro.'),
+                         '{少年が 本を 読む}間に / 少女が / 歌う')   # spaCy が副詞と読む文中の enquanto
+        self.assertEqual(tr('Quando ele vem?'), 'いつ / {彼,それ}が / 来るか')   # 文頭の疑問詞
+
     def test_dashes(self):   # 「--」の入った文で落ちない
         self.assertTrue(tr('White -- Acho que sim .'))
 

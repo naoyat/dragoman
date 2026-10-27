@@ -9,7 +9,7 @@
 #   python3 tools/generate.py --to=en,ru,sa "…"     作る言語 (既定: en,la と、語の置き換えの表があれば ru,sa,grc,id,tl,ar,he,fa,hi,ur,ain,bo,ja,kobun)
 #   python3 tools/generate.py --from=grc "ἡ κόρη τὸ καλὸν ῥόδον βλέπει."   ロシア語 (ru)・サンスクリット (sa)・古典ギリシア語・
 #                                         ペルシア語 (fa)・ヒンディー語 (hi)・ウルドゥー語 (ur)・アラビア語 (ar)・ヘブライ語 (he)・
-#                                         インドネシア語 (id)・タガログ語 (tl) から
+#                                         インドネシア語 (id)・タガログ語 (tl)・ポルトガル語 (pt)・中国語 (zh) … から
 #   python3 tools/generate.py --from=ja "少女が庭で美しい薔薇を見た。"   日本語の文から (MeCab と規則で文の枠に)
 #   python3 tools/generate.py --gaps samples/samples.txt   訳語の見つからない語の一覧だけ (生成文は出さない)
 #   python3 tools/generate.py --compare "Rosam in hortō vīdit."   要素ごとに各言語の手段を並べる (前置詞と格・語順・助詞、
@@ -137,7 +137,7 @@ def run_japanese(text):
 # --from の言語 → 解析器のパッケージ
 SOURCE_ANALYZERS = {'ru': 'russian', 'sa': 'sanskrit', 'grc': 'greek', 'ar': 'arabic', 'he': 'hebrew', 'fa': 'persian',
                     'hi': 'hindi', 'ur': 'urdu', 'id': 'indonesian', 'tl': 'tagalog', 'ko': 'korean', 'de': 'german', 'fr': 'french',
-                    'tr': 'turkish', 'mn': 'mongolian', 'fi': 'finnish', 'ang': 'oldenglish'}
+                    'tr': 'turkish', 'mn': 'mongolian', 'fi': 'finnish', 'ang': 'oldenglish', 'pt': 'portuguese', 'zh': 'chinese'}
 # (チベット語・アイヌ語の解析器は節の構造 (述語と格の枠) を作らないので、文の枠に写せない)
 
 
@@ -170,8 +170,10 @@ def run_other(text, source):
             if lang == source:
                 first = out.split('\n')[0]
                 # 解析の表示の文は標識 (ng・ang) を落としたり冠詞・前置詞を切り離したり (הַ מֶּלֶךְ) するので、
-                # インドネシア語・タガログ語・ヘブライ語・韓国語 (助詞を切り離す)・トルコ語・モンゴル語 (副動詞の印を足す)・フランス語 (エリジオンを切る) は入力の文と比べる
-                original = _source_words(text if source in ('id', 'tl', 'he', 'ko', 'tr', 'mn', 'fr') else analysis.text, source)
+                # インドネシア語・タガログ語・ヘブライ語・韓国語 (助詞を切り離す)・トルコ語・モンゴル語 (副動詞の印を足す)・フランス語 (エリジオンを切る)・
+                # ポルトガル語 (冠詞を落とす)・中国語 (的・了・量詞を落とす) は入力の文と比べる
+                original = _source_words(text if source in ('id', 'tl', 'he', 'ko', 'tr', 'mn', 'fr', 'pt') else
+                                         ''.join(analysis.original) if source == 'zh' else analysis.text, source)
                 mark = '   ✓ 同じ語' if original == _source_words(first, source) else '   ✗'
             first, _, rest = out.partition('\n')
             print('  %s %s%s%s' % (label, first, mark, ('\n' + rest) if rest else ''))
@@ -197,6 +199,9 @@ def _source_words(text, lang):
         words = [''.join(c for c in unicodedata.normalize('NFD', w) if not unicodedata.combining(c)).strip('،۔')
                  for w in words]
         return Counter(w for w in words if w)
+    if lang == 'zh':   # 語の切れ目は書かないので字で比べる (句読点は除く)。簡体字に揃える
+        from dragoman.chinese import segment
+        return Counter(c for c in segment.simplified(''.join(words)) if unicodedata.category(c).startswith('L'))
     if lang == 'ang':   # 長音符・点の有無、ð と þ は問わない (翻刻の綴り = 標準の綴り)
         from dragoman.oldenglish import orthography
         return Counter(orthography.key(w) for w in words)

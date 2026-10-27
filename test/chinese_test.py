@@ -26,6 +26,8 @@ class SegmentTestCase(unittest.TestCase):
         self.assertEqual(segment('我昨天买了一本书。'), ['我', '昨天', '买', '了', '一', '本', '书', '。'])   # 量詞で切る
         self.assertEqual(segment('他把书放在桌子上。')[2:4], ['书', '放'])   # 辞書に無い 书放 は分け直す
         self.assertEqual(segment('我們學習中文。'), ['我們', '學習', '中文', '。'])   # 繁体字
+        self.assertEqual(segment('李明住在北京。'), ['李明', '住', '在', '北京', '。'])   # 辞書に無い人名 (pkuseg は 李明住)
+        self.assertEqual(segment('王小红是老师。')[0], '王小红')
 
 
 @unittest.skipUnless(HAVE_DATA, '中国語のデータが無い')
@@ -73,6 +75,12 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(tr('屋里没有人。'), '家の中には / 人が / いない')
         self.assertEqual(tr('人很多。'), '人は / とても多い')
         self.assertEqual(tr('书在桌子上。'), '本が / 机の上に / ある,いる')
+
+    def test_plurals_localizers_names(self):
+        self.assertEqual(tr('士兵们没有看见国王。'), '軍人たちが / 王を / 見なかった,見受けなかった')   # 名詞 + 们
+        self.assertEqual(tr('他在桌子下面睡觉。'), '彼が / 机の下で / 寝る')   # 2字の方位詞
+        self.assertEqual(tr('我爸爸住在北京。'), '私の父が / 北京に / 住む')   # 代名詞 + 名詞、地名は漢字
+        self.assertEqual(tr('男孩给女孩一本书。'), '少年が / 少女に / 一冊の本を / 与える')   # 二重目的語
 
     def test_complement_clauses(self):   # 補文 (接続詞なし)
         self.assertEqual(tr('教堂完成了主体大修工程。'), '教会が / 本体のリニューアルの{エンジニアリング,計画}を / 完成させた,成し遂げた')

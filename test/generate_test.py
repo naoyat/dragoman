@@ -414,6 +414,44 @@ class OtherSourceTestCase(unittest.TestCase):
         cs = self.frames_of(gr, 'ἤρετο εἰ ὁ παῖς ἔλθοι.')
         self.assertEqual(latin.sentence(cs), 'Num puer ierit interrogāvit.')
 
+    @unittest.skipUnless(portuguese.available() and chinese.available(), 'pt/en-index.tsv か zh/en-index.tsv が無い')
+    def test_portuguese(self):
+        from dragoman.portuguese import analyzer as pt
+        cs = self.frames_of(pt, 'A menina vê a rosa bonita no jardim.')   # spaCy の原形 roso でなく rosa
+        self.assertEqual(portuguese.sentence(cs), 'A menina vê a rosa bonita no jardim.')
+        self.assertEqual(latin.sentence(cs), 'Puella rosam pulchram in hortō videt.')
+        cs = self.frames_of(pt, 'O menino deu o livro à menina.')   # a + 人は与格
+        self.assertEqual(latin.sentence(cs), 'Puer puellae librum dedit.')
+        cs = self.frames_of(pt, 'Há um livro na mesa.')   # 存在の há + 不定の名詞
+        self.assertEqual(portuguese.sentence(cs), 'Há um livro na mesa.')
+        self.assertEqual(chinese.sentence(cs), '桌子上有一本书。')
+        self.assertEqual(japanese.sentence(cs), 'テーブルに本がある。')
+        cs = self.frames_of(pt, 'A menina canta enquanto o menino lê um livro.')   # spaCy が副詞と読む enquanto
+        self.assertEqual(portuguese.sentence(cs), 'A menina canta, enquanto o menino lê um livro.')
+        self.assertEqual(japanese.sentence(cs), '少年が本を読むあいだ、少女は歌う。')   # 従属節を前に
+
+    @unittest.skipUnless(portuguese.available() and chinese.available(), 'pt/en-index.tsv か zh/en-index.tsv が無い')
+    def test_chinese(self):
+        from dragoman.chinese import analyzer as zh
+        cs = self.frames_of(zh, '女孩在花园里看见美丽的玫瑰。')   # 連体修飾節の形容詞・方位詞を枠に
+        self.assertEqual(chinese.sentence(cs), '女孩在花园里看见美丽的玫瑰。')
+        self.assertEqual(latin.sentence(cs), 'Puella rosam pulchram in hortō videt.')
+        cs = self.frames_of(zh, '我有一本书。')   # 所有の与格、一 + 量詞は不定
+        self.assertEqual(latin.sentence(cs), 'Liber mihi est.')
+        self.assertEqual(portuguese.sentence(cs), 'Eu tenho um livro.')
+        self.assertEqual(japanese.sentence(cs), '私には本がある。')
+        cs = self.frames_of(zh, '男孩给女孩一本书。')   # 二重目的語の前の方は受け手
+        self.assertEqual(latin.sentence(cs), 'Puer puellae librum dat.')
+        self.assertEqual(chinese.sentence(cs), '男孩给女孩一本书。')
+        cs = self.frames_of(zh, '他在桌子下面睡觉。')   # 在…下面 → sub
+        self.assertEqual(latin.sentence(cs), 'Is sub mēnsā dormit.')
+        cs = self.frames_of(zh, '李明住在北京。')   # 辞書に無い人名、名前の綴り、住在
+        self.assertEqual(english.sentence(cs), 'Li Ming lives in Beijing.')
+        self.assertEqual(chinese.sentence(cs), '李明住在北京。')
+        cs = self.frames_of(zh, '我觉得他会来。')   # 補文の 会 は未来
+        self.assertEqual(english.sentence(cs), 'I think that he will come.')
+        self.assertEqual(chinese.sentence(cs), '我觉得他会来。')
+
     def test_greek_enclitic_accent(self):
         self.assertEqual(greek._grave('ὁ ἄνθρωπος ἐστί'), 'ὁ ἄνθρωπός ἐστι')
         self.assertEqual(greek._grave('τὸ δῶρον ἐστί'), 'τὸ δῶρόν ἐστι')

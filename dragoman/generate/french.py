@@ -626,7 +626,7 @@ def sentence(clauses):
             if key in CONNECTIVES and k > 0:
                 words.append(CONNECTIVES[key])
         subordinate = rest.subordinator in SUBORDINATORS and rest.subordinator != 'nisi' and \
-            (k + 1 < len(clauses) or rest.subordinator == 'quīn')
+            (k + 1 < len(clauses) or k > 0 and not rest.after_main or rest.subordinator == 'quīn')   # 主節の後ろの従属節も
         if subordinate:
             words.append(SUBORDINATORS[rest.subordinator])
         words += realize(rest, subjunctive=subordinate and rest.subordinator in SUBJUNCTIVE_AFTER)

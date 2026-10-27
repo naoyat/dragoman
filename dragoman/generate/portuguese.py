@@ -560,11 +560,11 @@ def realize(clause, gap=None, antecedent=None, subjunctive=False, infinitive=Fal
                                        args=[('subject', owner), ('object', dataclasses.replace(subject, definite=False))] +
                                        [(r, np) for r, np in clause.args if r not in ('subject', 'recipient')])
             return realize(have, gap, antecedent, subjunctive, infinitive)
-        if not complements and subject is not None and not preps and gap is None:
-            # 存在の文 (Agricola est「農夫がいる」): há + 名詞
+        if not complements and subject is not None and (not preps or subject.definite is False) and gap is None:
+            # 存在の文 (Agricola est「農夫がいる」、不定の主語と場所: Há um livro na mesa): há + 名詞
             verb = {'imperfect': 'havia', 'perfect': 'houve', 'future': 'haverá'}.get(clause.tense, 'há')
             noun = noun_phrase(subject, 'Acc', indefinite=True)
-            return negation + [verb, noun] + adverbs
+            return negation + [verb, noun] + preps + adverbs
         verb = _copula(clause, person, number, location=not complements and bool(preps))
         tail = []
         if complements:
@@ -693,7 +693,8 @@ def sentence(clauses):
         for key in rest.connectives:
             if key in CONNECTIVES and k > 0:
                 words.append(CONNECTIVES[key])
-        subordinate = rest.subordinator in SUBORDINATORS and (k + 1 < len(clauses) or rest.subordinator == 'quīn')
+        subordinate = rest.subordinator in SUBORDINATORS and \
+            (k + 1 < len(clauses) or k > 0 and not rest.after_main or rest.subordinator == 'quīn')   # 主節の後ろの従属節も
         if subordinate:
             words.append(SUBORDINATORS[rest.subordinator])
         words += [absolute(p) + ',' for p in rest.adjuncts if p.kind == 'absolute' and absolute(p)]

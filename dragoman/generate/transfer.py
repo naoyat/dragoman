@@ -179,7 +179,7 @@ def source_key(lang, lemma):
 def english_glosses(lang, lemma, pos):
     """元の言語の語の英語の訳語 (表から)"""
     pos = {'participle': 'verb', 'name': 'noun'}.get(pos, pos)
-    glosses = list(dict.fromkeys(_by_lemma(lang).get((source_key(lang, lemma), pos), [])))
+    glosses = list(dict.fromkeys(OPEN_END.sub('', g) for g in _by_lemma(lang).get((source_key(lang, lemma), pos), [])))
     for k, g in enumerate(glosses):
         m = FORM_OF.search(g)
         if m and m.group(1) != lemma:   # strengthened form of θνῄσκω with the same meaning → θνῄσκω の訳語
@@ -189,6 +189,28 @@ def english_glosses(lang, lemma, pos):
     return [first] + [g for g in glosses if g != first] if first in glosses else glosses
 
 
+# 教科書の基本の語の表 (PREFERRED) を逆に引いて、元の言語の語の英語の訳語を決める言語 (rosa → rose、玫瑰 → rose。
+# 辞書の最初の語義が外れる: rugosa rose)
+PREFERRED_AS_ENGLISH = ('pt', 'zh')
+
+
+@functools.lru_cache(maxsize=None)
+def _preferred_by_lemma(lang):
+    out = {}
+    for (en, pos), value in PREFERRED.get(lang, {}).items():
+        lemma = value[0] if isinstance(value, tuple) else value
+        out.setdefault((lemma, pos), []).append(en)
+    return out
+
+
+def preferred_english(lang, lemma, pos):
+    """教科書の基本の語の表でこの語を選ぶ英語 (無ければ [])"""
+    if lang not in PREFERRED_AS_ENGLISH:
+        return []
+    return _preferred_by_lemma(lang).get((lemma, {'participle': 'verb', 'name': 'noun'}.get(pos, pos)), [])
+
+
+OPEN_END = re.compile(r'(?:\s+that)?\s*(?:\.\.\.|…)$')   # CC-CEDICT の語義の後ろの空所 (to think that ... → think)
 FORM_OF = re.compile(r'\bform of ([^\sA-Za-z,]+)')   # 説明の語義 (… form of + 元の言語の語)
 # 表の最初の訳語が教科書の意味でない語 (βασιλεύς: chief, emperor, … king): 先に使う訳語
 FIRST_GLOSSES = {'fr': {'partir': 'leave'},   # 辞書に古い語源 (share) の項目しか無い

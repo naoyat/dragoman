@@ -179,6 +179,9 @@ def noun_phrase(np):
         else:
             adjectives.append(_adjective(m))
     counted = ''
+    if not (number_word or determiner or quantifier) and np.definite is False and np.number == 'sg' and \
+            head.pos == 'noun' and not head.proper:
+        number_word = '一'   # 不定冠詞のある言語の不定の名詞 (uma rosa・一本书) は 一 + 量詞
     if number_word or determiner:
         cl = classifier(noun) if not noun.startswith('[') else '个'
         counted = determiner + number_word + (cl if not (determiner and np.number == 'pl' and not number_word) else '些')
@@ -186,13 +189,22 @@ def noun_phrase(np):
     genitive = ''.join(noun_phrase(g) + '的' for g in np.genitives)
     relative = ''.join(relative_clause(r) + '的' for r in np.relatives) + \
         ''.join(_attributive_participle(p) + '的' for p in np.participles)   # 逃跑的敌人
+    if possessive and not (genitive or relative or counted or quantifier or adjective_text) and noun in KIN_NOUNS:
+        possessive = possessive[:-1]   # 親族は 的 なしで (我爸爸)
+    if np.number == 'pl' and np.animate and not (counted or quantifier) and head.pos == 'noun' and not head.proper and \
+            not noun.endswith('们') and np.head.lang == 'zh':
+        noun += '们'   # 人の複数 (士兵们)。元が中国語の文のときだけ (ほかの言語からは数を書かない)
     return possessive + genitive + relative + counted + quantifier + adjective_text + noun
+
+
+# 所有の代名詞を 的 なしで付ける親族の名詞 (我爸爸・你妈妈)
+KIN_NOUNS = {'爸爸', '妈妈', '哥哥', '姐姐', '弟弟', '妹妹', '爷爷', '奶奶', '儿子', '女儿', '丈夫', '妻子', '家'}
 
 
 def _indefinite(np):
     """存在・所有の文の名詞は「一 + 量詞」を付ける (有一本书)。複数・修飾語のあるものはそのまま"""
     text = noun_phrase(np)
-    if np.members or np.number == 'pl' or np.modifiers or np.genitives or np.relatives or np.head is None or \
+    if np.definite is False or np.members or np.number == 'pl' or np.modifiers or np.genitives or np.relatives or np.head is None or \
             np.head.pos != 'noun' or np.head.proper:
         return text
     return '一' + classifier(text) + text
@@ -221,8 +233,11 @@ def prepositional(np, passive=False):
     inner = dataclasses.replace(np, prep=None)
     if passive and np.prep is not None and np.prep.lemma in ('ā', 'ab', 'abs'):
         return '被' + noun_phrase(inner), ''
-    if np.prep is not None and np.prep.lang == 'zh' and np.prep.surface:
-        return np.prep.surface + noun_phrase(inner), ''
+    if np.prep is not None and np.prep.lang == 'zh' and np.prep.surface:   # 元の介詞と方位詞 (在花园里)
+        localizer = np.prep.desc[len('localizer:'):] if np.prep.desc.startswith('localizer:') else ''
+        if np.prep.surface == '到':   # 跑到家里: 行き先は動詞の後ろ
+            return '', noun_phrase(inner) + localizer
+        return np.prep.surface + noun_phrase(inner) + localizer, ''
     prep, localizer = PREPOSITIONS.get((np.prep.lemma, np.case), ('在', '里')) if np.prep is not None else ('在', '里')
     if prep == '到':
         return '', _place(inner, '', localizer)   # 行き先は動詞の後ろ (去罗马・走到花园里)
@@ -236,6 +251,13 @@ def prepositional(np, passive=False):
 def _verb(clause):
     found = word(clause.verb, 'verb')
     return found or '[%s]' % english.word(clause.verb)
+
+
+# 場所の 在 + 名詞を動詞の後ろに置く動詞 (住在北京「北京に住む」)
+POSTVERBAL_ZAI = {'住', '坐', '站', '躺', '停', '留', '放', '生', '活', '掉', '落'}
+
+
+SOURCE_MODALS = ('可以', '应该', '必须', '愿意', '会', '能', '想', '要', '得')
 
 
 def realize(clause, gap=None, infinitive=False):
@@ -284,6 +306,8 @@ def realize(clause, gap=None, infinitive=False):
         if not complements and subject is not None and owner is not None and gap is None:
             return [noun_phrase(owner)] + rest + [have, _indefinite(subject)]   # 所有の与格 (Mihi est liber「我有一本书」)
         if not complements and subject is not None and gap is None:
+            if before and subject.definite is False and before[0].startswith('在'):
+                return [before[0][1:]] + rest + [have, _indefinite(subject)]   # 不定の主語は存在の文 (桌子上有一本书)
             if before:   # 場所の繋辞: 主語 + 在 + 場所 (他在花园里)
                 return out + rest + [negation] + before
             return rest + [have, _indefinite(subject)]   # 存在の文 (有 + 名詞)
@@ -300,6 +324,8 @@ def realize(clause, gap=None, infinitive=False):
     if clause.mood == 'infinitive' or infinitive:
         pass
     modal = MODALS.get(clause.verb.lemma) if clause.verb.lang in ('', 'la') else None
+    if modal:   # 元が中国語の文なら元の助動詞 (会说 の 会。possum は 能 にする)
+        modal = next((m for m in SOURCE_MODALS if (clause.verb.surface or '').startswith(m)), modal)
     if modal and len(clause.infinitives) == 1 and not clause.infinitives[0].role('subject'):
         inner = clause.infinitives[0]
         inner_words = realize(inner, gap='subject', infinitive=True)
@@ -309,7 +335,7 @@ def realize(clause, gap=None, infinitive=False):
     objects = []
     if obj is not None and gap != 'object':
         objects.append(noun_phrase(obj))
-    tense_before = '已经' if clause.tense == 'past-perfect' else '将' if clause.tense in ('future', 'future-perfect') \
+    tense_before = '已经' if clause.tense == 'past-perfect' else '会' if clause.tense in ('future', 'future-perfect') \
         else ''
     passive = clause.voice == 'passive'
     if passive and not any(b.startswith('被') for b in before):
@@ -324,6 +350,10 @@ def realize(clause, gap=None, infinitive=False):
         verb_words = [verb + aspect] + after + objects
     elif after:   # 走到城镇・来到别墅 (到 + 行き先)
         verb_words = [verb + '到' + aspect] + after + objects
+    elif verb in POSTVERBAL_ZAI and any(b.startswith('在') for b in before):   # 住在北京・坐在椅子上
+        place = next(b for b in before if b.startswith('在'))
+        before = [b for b in before if b is not place]
+        verb_words = [verb + place + aspect] + objects
     else:
         verb_words = [verb + aspect] + objects
     complements = []
@@ -409,7 +439,8 @@ def wrap(text, clause, last):
 def sentence(clauses):
     if not clauses:
         return ''
-    from .frame import split_address
+    from .frame import split_address, subordinate_first
+    clauses = subordinate_first(clauses)
     parts = []
     for k, c in enumerate(clauses):
         groups, rest = split_address(c)
@@ -432,7 +463,7 @@ def _has_interrogative(clause):
 # 比較の表
 
 PRO_DROP_HOW = '代名詞を補う (我・他 …)'
-PREDICATE_HOW = '語形は変えない。完了は 動詞 + 了、未来 将、否定 不 / 没、受動 被'
+PREDICATE_HOW = '語形は変えない。完了は 動詞 + 了、未来 会、否定 不 / 没、受動 被'
 COPULA_HOW = '名詞は 是 + 補語、形容詞は 很 + 形容詞 (繋辞なし)、場所は 在、存在は 有'
 ADDRESS_HOW = 'そのまま'
 

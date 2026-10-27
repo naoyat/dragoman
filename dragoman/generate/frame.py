@@ -78,6 +78,33 @@ SOURCE_PRONOUNS.update({
            'he': ('is', 'pl'), 'tämä': ('hic', ''), 'tuo': ('ille', ''), 'se': ('is', 'sg'), 'itse': ('sē', ''),
            'kuka': ('quis', ''), 'mikä': ('quid', '')},
 })
+# ポルトガル語 (você・vocês は2人称: 動詞は3人称だが、ほかの言語では「あなた」) と中国語
+SOURCE_PRONOUNS['pt'] = {'eu': ('ego', 'sg'), 'me': ('ego', 'sg'), 'mim': ('ego', 'sg'), 'comigo': ('ego', 'sg'),
+                         'tu': ('tū', 'sg'), 'te': ('tū', 'sg'), 'ti': ('tū', 'sg'), 'contigo': ('tū', 'sg'),
+                         'você': ('tū', 'sg'), 'ele': ('is', 'sg'), 'ela': ('is', 'sg'), 'o': ('is', 'sg'), 'a': ('is', 'sg'),
+                         'lo': ('is', 'sg'), 'la': ('is', 'sg'), 'no': ('is', 'sg'), 'na': ('is', 'sg'), 'lhe': ('is', 'sg'),
+                         'nós': ('ego', 'pl'), 'nos': ('ego', 'pl'), 'conosco': ('ego', 'pl'), 'vós': ('tū', 'pl'),
+                         'vos': ('tū', 'pl'), 'vocês': ('tū', 'pl'), 'eles': ('is', 'pl'), 'elas': ('is', 'pl'),
+                         'os': ('is', 'pl'), 'as': ('is', 'pl'), 'los': ('is', 'pl'), 'las': ('is', 'pl'),
+                         'lhes': ('is', 'pl'), 'se': ('sē', ''), 'si': ('sē', ''), 'consigo': ('sē', ''),
+                         'este': ('hic', ''), 'esta': ('hic', ''), 'estes': ('hic', ''), 'estas': ('hic', ''),
+                         'isto': ('hic', ''), 'esse': ('iste', ''), 'essa': ('iste', ''), 'esses': ('iste', ''),
+                         'essas': ('iste', ''), 'isso': ('iste', ''), 'aquele': ('ille', ''), 'aquela': ('ille', ''),
+                         'aqueles': ('ille', ''), 'aquelas': ('ille', ''), 'aquilo': ('ille', ''), 'quem': ('quis', ''),
+                         'que': ('quid', ''), 'meu': ('meus', ''), 'minha': ('meus', ''), 'meus': ('meus', ''),
+                         'minhas': ('meus', ''), 'teu': ('tuus', ''), 'tua': ('tuus', ''), 'teus': ('tuus', ''),
+                         'tuas': ('tuus', ''), 'seu': ('suus', ''), 'sua': ('suus', ''), 'seus': ('suus', ''),
+                         'suas': ('suus', ''), 'nosso': ('noster', ''), 'nossa': ('noster', ''), 'nossos': ('noster', ''),
+                         'nossas': ('noster', ''), 'vosso': ('vester', ''), 'vossa': ('vester', ''),
+                         'vossos': ('vester', ''), 'vossas': ('vester', ''), 'todo': ('omnis', ''), 'toda': ('omnis', ''),
+                         'todos': ('omnis', ''), 'todas': ('omnis', ''), 'cada': ('omnis', ''), 'ninguém': ('nēmō', ''),
+                         'nada': ('nihil', '')}
+SOURCE_PRONOUNS['zh'] = {'我': ('ego', 'sg'), '你': ('tū', 'sg'), '您': ('tū', 'sg'), '他': ('is', 'sg'), '她': ('is', 'sg'),
+                         '它': ('is', 'sg'), '我们': ('ego', 'pl'), '咱们': ('ego', 'pl'), '你们': ('tū', 'pl'),
+                         '他们': ('is', 'pl'), '她们': ('is', 'pl'), '它们': ('is', 'pl'), '自己': ('sē', ''),
+                         '这': ('hic', ''), '这个': ('hic', ''), '这些': ('hic', 'pl'), '此': ('hic', ''), '那': ('ille', ''),
+                         '那个': ('ille', ''), '那些': ('ille', 'pl'), '谁': ('quis', ''), '什么': ('quid', ''),
+                         '所有': ('omnis', ''), '每': ('omnis', ''), '每个': ('omnis', ''), '各': ('omnis', '')}
 # 古英語: 人称代名詞は見出し (解析器が主格の鍵 he・heo・ic … を lemma に)、sē・þes は指示代名詞
 SOURCE_PRONOUNS['ang'] = {'ic': ('ego', 'sg'), 'þu': ('tū', 'sg'), 'he': ('is', 'sg'), 'heo': ('is', 'sg'),
                           'hit': ('is', 'sg'), 'we': ('ego', 'pl'), 'ge': ('tū', 'pl'), 'hie': ('is', 'pl'),
@@ -205,6 +232,30 @@ for _surface, _latin in {'à': ('in', 'Abl'), 'au': ('in', 'Abl'), 'aux': ('in',
                          'près': ('prope', 'Acc'), 'parmi': ('inter', 'Acc')}.items():
     for _case in ('Gen', None):
         SOURCE_PREPOSITIONS.setdefault('fr', {})[(_surface, _case)] = _latin
+# ポルトガル語の前置詞と、冠詞との縮約形 (no = em + o。解析器は前置詞の目的語を 'Gen' に)
+for _surfaces, _latin in ((('em', 'no', 'na', 'nos', 'nas', 'num', 'numa'), ('in', 'Abl')),
+                          (('a', 'ao', 'aos', 'à', 'às'), ('ad', 'Acc')), (('para', 'pra', 'pro'), ('ad', 'Acc')),
+                          (('de', 'do', 'da', 'dos', 'das', 'dum', 'duma'), ('ab', 'Abl')),
+                          (('por', 'pelo', 'pela', 'pelos', 'pelas'), ('per', 'Acc')), (('com',), ('cum', 'Abl')),
+                          (('sem',), ('sine', 'Abl')), (('sobre',), ('super', 'Acc')), (('sob',), ('sub', 'Abl')),
+                          (('entre',), ('inter', 'Acc')), (('até',), ('ad', 'Acc')), (('desde',), ('ab', 'Abl')),
+                          (('contra',), ('contrā', 'Acc')), (('após',), ('post', 'Acc')), (('durante',), ('per', 'Acc')),
+                          (('perante',), ('ante', 'Acc'))):
+    for _surface in _surfaces:
+        for _case in ('Gen', None):
+            SOURCE_PREPOSITIONS.setdefault('pt', {})[(_surface, _case)] = _latin
+# 中国語の介詞 (在 は後ろの方位詞で: 在…下 → sub。ZH_LOCALIZERS)
+for _surfaces, _latin in ((('在', '于'), ('in', 'Abl')), (('从', '自', '离'), ('ab', 'Abl')),
+                          (('到', '往', '向', '朝', '对', '给'), ('ad', 'Acc')), (('跟', '和', '同', '用'), ('cum', 'Abl')),
+                          (('为', '为了', '替'), ('prō', 'Abl')), (('关于',), ('dē', 'Abl')), (('被',), ('ab', 'Abl')),
+                          (('除了',), ('praeter', 'Acc'))):
+    for _surface in _surfaces:
+        for _case in ('Gen', None):
+            SOURCE_PREPOSITIONS.setdefault('zh', {})[(_surface, _case)] = _latin
+# 中国語の方位詞 → ラテン語の前置詞 (在桌子下 → sub mēnsā。里・上・中は in のまま)
+ZH_LOCALIZERS = {'下': ('sub', 'Abl'), '下面': ('sub', 'Abl'), '前': ('ante', 'Acc'), '前面': ('ante', 'Acc'),
+                 '后': ('post', 'Acc'), '后面': ('post', 'Acc'), '外': ('extrā', 'Acc'), '外面': ('extrā', 'Acc'),
+                 '旁边': ('prope', 'Acc'), '边': ('prope', 'Acc'), '中间': ('inter', 'Acc'), '之间': ('inter', 'Acc')}
 # 前置詞の無い格の役割 (ラテン語に無い格): 具格は手段、サンスクリットの奪格は起点、処格は場所。
 # フィンランド語の場所の格 (内格・所格 → 場所、出格・離格 → 起点、入格・向格 → 場所)、トルコ語・モンゴル語の位格・奪格・具格
 SOURCE_ROLES = {'ru': {'Ins': 'means', 'Loc': 'place'}, 'sa': {'Ins': 'means', 'Abl': 'source', 'Loc': 'place'},
@@ -224,6 +275,10 @@ SOURCE_QUESTION_WORDS = {'grc': {'πῶς': 'quōmodo', 'ὅπως': 'quōmodo',
                                  'ὁπότε': 'quandō', 'πόθεν': 'unde', 'ὁπόθεν': 'unde', 'ποῖ': 'quō', 'ὅποι': 'quō',
                                  'εἰ': 'num', 'πότερον': 'utrum', 'ὁπότερον': 'utrum', 'πόσος': 'quantus',
                                  'ὁπόσος': 'quantus', 'ποῖος': 'quālis', 'ὁποῖος': 'quālis'}}
+
+# 直接の疑問文の疑問の副詞 (解析で conjunction に入るもの) → ラテン語の疑問詞
+SOURCE_QUESTION_ADVERBS = {'pt': {'quando': 'quandō', 'onde': 'ubi', 'aonde': 'quō', 'como': 'quōmodo', 'porque': 'cūr',
+                                  'por que': 'cūr'}}
 
 _lang = ''   # 解析中の文の言語 (clause_of で述語の言語から)
 
@@ -355,7 +410,7 @@ def _pronoun_desc(latin):
 
 
 # 固有名詞をラテン文字に写して渡す言語 (names.latin_spelling)
-NON_LATIN_NAMES = ('ko', 'mn', 'ru')
+NON_LATIN_NAMES = ('ko', 'mn', 'ru', 'zh')
 
 
 def lex_of(word, item=None):
@@ -380,7 +435,7 @@ def lex_of(word, item=None):
         lemma = item.attrib('lemma')
         if item.pos == 'verb' and item.attrib('stem'):
             focus = 'stem:' + item.attrib('stem')
-    if lang in ('ko', 'de', 'tr', 'mn', 'fi', 'fr', 'ang') and item.attrib('lemma'):
+    if lang in ('ko', 'de', 'tr', 'mn', 'fi', 'fr', 'ang', 'pt', 'zh') and item.attrib('lemma'):
         lemma = item.attrib('lemma')   # 表示の形 (학교 (學校) hakgyo) でなく見出し (辞書・生成器の見出しと同じ)
     if lang == 'ar' and item.attrib('lex'):
         lemma = item.attrib('lex')   # 表示の形 (bint ⁧بِنْت⁩) でなく CAMeL の見出しの鍵 (بِنْت。生成器の見出しと同じ)
@@ -394,6 +449,9 @@ def lex_of(word, item=None):
             lemma = next((k for k, v in MN_PRONOUNS.items() if v[:3] == found[:3] and v[3] == 'Nom'), lemma)
     pronoun = SOURCE_PRONOUNS.get(lang, {}).get(lemma.lower()) if item.pos in ('pronoun', 'adj', 'det') and \
         item.attrib('desc') != '関係代名詞' else None
+    if pronoun and item.attrib('possessive') and pronoun[0] in ('ego', 'tū', 'is'):   # 中国語の 我的・我 + 名詞 → meus
+        pronoun = ({'ego': 'meus', 'tū': 'tuus', 'is': 'suus'} if item.attrib('number') != 'pl' else
+                   {'ego': 'noster', 'tū': 'vester', 'is': 'suus'})[pronoun[0]], ''
     if pronoun:   # 閉じた語類はラテン語の形に (я → ego、tad → is)
         personal = lemma.lower() in ('я', 'ты', 'он', 'она', 'оно', 'мы', 'вы', 'они', 'asmad', 'yuṣmad')
         pos = 'adj' if pronoun[0] in ('meus', 'tuus', 'suus', 'noster', 'vester', 'omnis', 'tālis') else 'pronoun'
@@ -410,8 +468,12 @@ def lex_of(word, item=None):
         if lang in NON_LATIN_NAMES:   # ラテン文字に写して、ほかの言語ではラテン文字の名前として扱う
             from .names import latin_spelling
             spelling = latin_spelling(Lex(lemma, 'noun', lang=lang))
-            return Lex(spelling, item.pos, item.ja, proper=True, surface=spelling, origin=(lang, lemma))
-    return Lex(lemma, item.pos, item.ja, proper=proper and item.pos in ('noun', 'unknown', 'name'), lang=lang,
+            ja = lemma if lang == 'zh' else item.ja   # 中国語の名前は日本語でも漢字 (北京・李明)
+            return Lex(spelling, item.pos, ja, proper=True, surface=spelling, origin=(lang, lemma))
+    # 中国語の名詞の訳に組み込んだ連体修飾節・方位詞 (美しい薔薇・庭の中) は文の枠では外す (noun_ja が名詞だけの訳)
+    ja = item.attrib('noun_ja') or (item.attrib('main_ja') if item.attrib('prediction') else None) \
+        or item.ja   # 補文の 会 (来るだろう): 枠では未来の時制なので動詞だけの訳
+    return Lex(lemma, item.pos, ja, proper=proper and item.pos in ('noun', 'unknown', 'name'), lang=lang,
                degree=item.attrib('rank') or '', en=english,
                desc=(focus if focus.startswith('stem:') else 'focus:' + focus) if focus else (item.attrib('desc') or ''),
                verb=verb,
@@ -433,10 +495,14 @@ def np_of(node, case=None):
             if plain[:1] in 'בלכ' and ('\u05b7' in plain or '\u05b8' in plain):
                 np.definite = True
         latin = SOURCE_PREPOSITIONS.get(_lang, {}).get((node.item.surface.lower(), node.dominated_case))
-        if _lang == 'fr' and node.item.attrib('agent'):
-            latin = ('ab', 'Abl')   # 受動の動作主 par (解析器の印): ā + 奪格
+        if _lang in ('fr', 'pt') and node.item.attrib('agent'):
+            latin = ('ab', 'Abl')   # 受動の動作主 par・por (解析器の印): ā + 奪格
+        localizer = _zh_localizer(inner[0]) if _lang == 'zh' and inner else ''
+        if localizer in ZH_LOCALIZERS and node.item.surface in ('在', '于'):
+            latin = ZH_LOCALIZERS[localizer]
         if latin:   # в + 前置格 → in + 奪格 (元の前置詞と格も持つ: 同じ言語に戻すとき на столе を в столе にしない)
-            np.prep = Lex(latin[0], 'preposition', node.item.ja, surface=node.item.surface.lower(), lang=_lang)
+            np.prep = Lex(latin[0], 'preposition', node.item.ja, surface=node.item.surface.lower(), lang=_lang,
+                          desc='localizer:' + localizer if localizer else '')   # 中国語に戻すとき 在 + 花园 + 里
             np.case = latin[1]
             np.source_case = node.dominated_case
         np.surface = node.surface
@@ -471,13 +537,22 @@ def np_of(node, case=None):
     elif _lang == 'ang':   # 古英語: 冠詞 (sē) があれば定。無くても不定とは限らない (不定冠詞がほぼ無い)
         if any(isinstance(m, Word) and m.items and m.items[0].pos == 'article' for m in node.modifiers):
             np.definite = True
-    elif _lang == 'fr':   # 定冠詞 (le・la・les) か不定冠詞・部分冠詞 (un・une・des・du)
-        articles = [m.items[0].attrib('base') for m in node.modifiers
+    elif _lang in ('fr', 'pt'):   # 定冠詞 (le・la・les、o・a) か不定冠詞・部分冠詞 (un・une・des・du、um・uma)
+        articles = [(m.items[0].attrib('base') or m.surface).lower() for m in node.modifiers
                     if isinstance(m, Word) and m.items and m.items[0].pos == 'article']
         if articles:
-            np.definite = articles[0] not in ('un', 'une', 'des', 'du', 'de', "d'")
+            np.definite = articles[0] not in ('un', 'une', 'des', 'du', 'de', "d'", 'um', 'uma', 'uns', 'umas')
+    elif _lang == 'zh':   # 指示詞 (这本书) なら定、一 + 量詞 (一本书) なら不定。無ければ分からない
+        bases = [m.items[0].attrib('base') for m in node.modifiers if isinstance(m, Word) and m.items]
+        if any(b in ('这', '那', '这个', '那个', '这些', '那些', '此', '该') for b in bases):
+            np.definite = True
+        elif any(b in SOURCE_NUMERALS['zh'] for b in bases):   # 一本书・两个朋友 (数詞 + 量詞) は不定
+            np.definite = False
     elif _lang == 'ar':   # アラビア語の冠詞は語に付く (الوَلَد)。属格のつながり (كِتابُ الوَلَدِ) の頭は後ろで定に
         np.definite = item.attrib('prc0') == 'Al_det' or node.surface.startswith('ال')
+    if _lang == 'zh' and item.attrib('relative_adj'):   # 美丽的玫瑰: 名詞の訳に組み込んだ形容詞を修飾語に
+        from dragoman.core.Item import Item
+        np.modifiers.append(lex_of(None, Item(item.attrib('relative_adj'))))
     for mod in node.modifiers:
         if isinstance(mod, Word) and mod.items and mod.items[0].pos != 'article':
             np.modifiers.append(lex_of(mod))
@@ -485,6 +560,8 @@ def np_of(node, case=None):
             np.modifiers.append(np_of(mod))   # 並列した形容詞 (bonus et fortis vir)
         elif isinstance(mod, ParticiplePhrase):
             np.participles.append(participial_of(mod))
+    if _lang == 'zh' and np.definite is False:   # 一本书 の 一 は不定冠詞 (ほかの言語で one book・ūnus liber にしない)
+        np.modifiers = [m for m in np.modifiers if not (isinstance(m, Lex) and m.lemma == 'ūnus')]
     for gen in node.genitives:
         np.genitives.append(np_of(gen, 'Gen'))
     np.animate = is_animate(item)
@@ -506,6 +583,11 @@ def np_of(node, case=None):
     if _lang in SOURCE_NUMERALS and any(isinstance(m, Lex) and m.lemma in _LATIN_NUMERALS[1:] for m in np.modifiers):
         np.number = 'pl'   # 数詞の後ろの単数の名詞 (kaksi kissaa・iki kedi) はほかの言語では複数 (duo cattī)
     return np
+
+
+def _zh_localizer(node):
+    """中国語の名詞に付いた方位詞 (花园里 の 里。解析器が名詞にまとめたもの)"""
+    return (node.items[0].attrib('localizer') or '') if isinstance(node, Word) and node.items else ''
 
 
 GAP_ROLES = {'Nom': 'subject', 'Acc': 'object', 'Dat': 'recipient', 'Abl': 'means', 'Gen': 'possessor',
@@ -552,7 +634,7 @@ def clause_of(predicate, lang=None):
     global _lang
     _lang = getattr(predicate.language, 'name', '') or ''
     verb_item = predicate.first_item
-    tense = verb_item.attrib('tense') or 'present'
+    tense = 'future' if verb_item.attrib('prediction') else verb_item.attrib('tense') or 'present'   # 我觉得他会来 の 会
     if verb_item.attrib('pres1sg') in PERFECT_PRESENTS.get(_lang, ()):
         tense = {'perfect': 'present', 'past-perfect': 'imperfect'}.get(tense, tense)
     clause = Clause(lex_of(predicate.verb), aspect=verb_item.attrib('aspect') or '',
@@ -575,6 +657,11 @@ def clause_of(predicate, lang=None):
         clause.complementizer = True   # Je sais que tu viens の que (ラテン語の -que「そして」と読まない)
     elif predicate.conjunction is not None and is_negation(predicate.conjunction, predicate.language):
         clause.negated = True
+    elif isinstance(predicate.conjunction, Word) and predicate.conjunction.items and \
+            predicate.conjunction.items[0].pos == 'adv' and \
+            predicate.conjunction.surface.lower() in SOURCE_QUESTION_ADVERBS.get(_lang, {}):
+        latin = SOURCE_QUESTION_ADVERBS[_lang][predicate.conjunction.surface.lower()]   # 文頭の疑問詞 (Quando ele vem?)
+        clause.adverbs.append(Lex(latin, 'adv', predicate.conjunction.items[0].ja, surface=latin))
     elif predicate.conjunction is not None and conn.is_connective(conn.normalize(predicate.conjunction.surface, _lang)):
         if conn.lookup(conn.normalize(predicate.conjunction.surface, _lang))[0] == 'adv' and predicate.conjunction.items:
             key = conn.key(conn.normalize(predicate.conjunction.surface, _lang))
@@ -683,6 +770,8 @@ def clause_of(predicate, lang=None):
             clause.number = 'pl'   # 数詞で複数にした主語 (kaksi kissaa → duo cattī) に繋辞を合わせる (sunt)
     if _lang == 'fr' and predicate.first_item.attrib('experiencer'):
         _swap_experiencer(clause)
+    if _lang in ('pt', 'zh'):
+        _portuguese_chinese_frame(clause, verb_item)
     if verb_item.attrib('modal') in SOURCE_MODALS:
         clause = _modal_clause(clause, verb_item)
     if verb_item.attrib('recent_past'):   # 近い過去 venir de「〜したところだ」→ 完了 + modo「たった今」
@@ -695,6 +784,43 @@ def clause_of(predicate, lang=None):
     return clause
 
 
+PT_DATIVE_PREPOSITIONS = ('a', 'à', 'ao', 'aos', 'às')
+
+
+def _portuguese_chinese_frame(clause, verb_item):
+    """ポルトガル語・中国語の節をラテン語の枠の形に:
+    há + 名詞 (存在) → sum + 主語、você (3人称の動詞) → 2人称、a + 人 (deu o livro à menina) → 与格、
+    中国語の二重目的語 (给女孩一本书: 人が先) → 与格、結果の補語 到 + 名詞 (跑到家里) → ad + 対格"""
+    if _lang == 'pt' and verb_item.attrib('existential') and clause.verb.lemma == 'haver':
+        clause.verb, clause.copula = Lex('sum', 'verb', 'ある,いる', surface=clause.verb.surface), True
+        for k, (role, np) in enumerate(clause.args):
+            if role == 'object':
+                np.case = 'Nom'
+                if np.definite is None:
+                    np.definite = False
+                clause.args[k] = ('subject', np)
+                break
+        clause.person = 3
+    subjects = clause.role('subject')
+    if _lang == 'pt' and subjects and subjects[0].head is not None and subjects[0].head.lemma == 'tū' and \
+            clause.person == 3:
+        clause.person = 2   # você fala → tū loqueris (ポルトガル語に戻すとき você + 3人称)
+    for k, (role, np) in enumerate(clause.args):
+        if _lang == 'pt' and role == 'prep' and np.prep is not None and np.prep.surface in PT_DATIVE_PREPOSITIONS and \
+                (np.animate or np.head is not None and np.head.pos == 'pronoun'):
+            clause.args[k] = ('recipient', dataclasses.replace(np, prep=None, case='Dat'))
+    objects = [k for k, (role, _) in enumerate(clause.args) if role == 'object']
+    if _lang == 'zh' and len(objects) >= 2:
+        first = clause.args[objects[0]][1]
+        if first.animate or first.head is not None and first.head.pos == 'pronoun':
+            clause.args[objects[0]] = ('recipient', dataclasses.replace(first, case='Dat'))
+    if _lang == 'zh' and (verb_item.attrib('form') or '').startswith('補語 到') and objects:
+        np = clause.args[objects[0]][1]
+        np.prep = Lex('ad', 'preposition', '〜へ', surface='到', lang='zh')
+        np.case = 'Acc'
+        clause.args[objects[0]] = ('prep', np)
+
+
 # 人が与格・物が主語の動詞 → 人を主語にした英語の動詞と日本語の訳 (manquer à → miss、plaire à → like)
 EXPERIENCER_FRAMES = {'manquer': ('miss', '恋しく思う'), 'plaire': ('like', '好む,気に入る')}
 
@@ -705,6 +831,10 @@ SOURCE_MODALS = {'pouvoir': ('possum', 'できる'), 'savoir': ('possum', 'で�
                  'laisser': ('sinō', 'させておく'), 'können': ('possum', 'できる'), 'wollen': ('volō', '望む,欲しい'),
                  'müssen': ('dēbeō', 'ねばならない'), 'sollen': ('dēbeō', 'ねばならない'), 'dürfen': ('possum', 'できる'),
                  'mögen': ('volō', '望む,欲しい'), 'möchten': ('volō', '望む,欲しい'), 'lassen': ('sinō', 'させておく'),
+                 # 中国語の助動詞 (会说「話せる」・想去「行きたい」)
+                 '会': ('possum', 'できる'), '能': ('possum', 'できる'), '可以': ('possum', 'できる'), '想': ('volō', '望む,欲しい'),
+                 '要': ('volō', '望む,欲しい'), '愿意': ('volō', '望む,欲しい'), '应该': ('dēbeō', 'ねばならない'),
+                 '得': ('dēbeō', 'ねばならない'), '必须': ('dēbeō', 'ねばならない'),
                  # 古英語の話法の動詞 (過去現在動詞)
                  'magan': ('possum', 'できる'), 'cunnan': ('possum', 'できる'), 'willan': ('volō', '望む,欲しい'),
                  'sculan': ('dēbeō', 'ねばならない'), 'mōtan': ('possum', 'できる'), 'þurfan': ('dēbeō', 'ねばならない')}
@@ -819,21 +949,26 @@ SOURCE_NUMERALS = {lang: dict(zip(words, _LATIN_NUMERALS)) for lang, words in {
     'fi': ('yksi', 'kaksi', 'kolme', 'neljä', 'viisi', 'kuusi', 'seitsemän', 'kahdeksan', 'yhdeksän', 'kymmenen'),
     'de': ('eins', 'zwei', 'drei', 'vier', 'fünf', 'sechs', 'sieben', 'acht', 'neun', 'zehn'),
     'fr': ('un', 'deux', 'trois', 'quatre', 'cinq', 'six', 'sept', 'huit', 'neuf', 'dix'),
+    'pt': ('um', 'dois', 'três', 'quatro', 'cinco', 'seis', 'sete', 'oito', 'nove', 'dez'),
+    'zh': ('一', '二', '三', '四', '五', '六', '七', '八', '九', '十'),
     'tr': ('bir', 'iki', 'üç', 'dört', 'beş', 'altı', 'yedi', 'sekiz', 'dokuz', 'on'),
     'mn': ('нэг', 'хоёр', 'гурван', 'дөрвөн', 'таван', 'зургаан', 'долоон', 'найман', 'есөн', 'арван'),
     'ko': ('한', '두', '세', '네', '다섯', '여섯', '일곱', '여덟', '아홉', '열')}.items()}
+SOURCE_NUMERALS['pt'].update(uma='ūnus', duas='duo')
+SOURCE_NUMERALS['zh']['两'] = 'duo'
 # 所有の接尾辞 (トルコ語・フィンランド語の解析の possessive) → ラテン語の所有形容詞と、訳語の頭の日本語
 POSSESSIVE_SUFFIXES = {'P1sg': 'meus', 'P2sg': 'tuus', 'P3sg': 'suus', 'P1pl': 'noster', 'P2pl': 'vester', 'P3pl': 'suus'}
 OWNER_JA = {'meus': '私の', 'tuus': '君の', 'noster': '私たちの', 'vester': '君たちの', 'suus': ''}
 # 繋辞を中立の sum にする言語
-NEUTRAL_COPULA = ('ko', 'de', 'tr', 'mn', 'fi', 'fr', 'ang')
+NEUTRAL_COPULA = ('ko', 'de', 'tr', 'mn', 'fi', 'fr', 'ang', 'pt', 'zh')
 # 動詞が人称で変わらない言語 (人称は主語の代名詞から)
-PERSONLESS = ('ko', 'mn', 'ja')
+PERSONLESS = ('ko', 'mn', 'ja', 'zh')
 
 
 def _person_from_subject(clause, predicate):
     """人称の無い言語の動詞: 主語の代名詞から人称・数を (나 → 1人称単数)"""
-    if _lang not in PERSONLESS or predicate.first_item.attrib('person') is not None:
+    if _lang not in PERSONLESS or predicate.first_item.attrib('person') is not None and \
+            not predicate.first_item.attrib('impersonal_person'):   # 中国語の解析器は仮に3人称を付ける
         return
     subjects = clause.role('subject')
     head = subjects[0].head if subjects else None
@@ -1109,6 +1244,16 @@ CONVERB_KEYS = {
 }
 
 
+def subordinate_first(clauses):
+    """主節の後ろの従属節 (canta, dum puer legit) を主節の前に (日本語・中国語: 少年が本を読むあいだ、少女は歌う)"""
+    out = list(clauses)
+    for k in range(1, len(out)):
+        if out[k].subordinator and not out[k].after_main and not out[k - 1].subordinator and \
+                not out[k].connectives and (k + 1 == len(out) or not out[k + 1].connectives):
+            out[k - 1], out[k] = out[k], out[k - 1]
+    return out
+
+
 def chains_with_next(clauses, k):
     """節 k を次の節に副動詞でつなげるか (同じ主語で et だけのつなぎ: Domum vēnit et cēnāvit → Eve gelip yemek yedi)"""
     if k + 1 >= len(clauses):
@@ -1159,7 +1304,7 @@ def punctuate(text, clauses, lang):
 
 
 # 補文の接続詞 (que 節・dass 節は主節の補文: 文の枠ではラテン語の対格不定詞と同じ不定詞の節)
-COMPLEMENTIZERS = {'fr': ('que', "qu'"), 'de': ('dass', 'daß')}
+COMPLEMENTIZERS = {'fr': ('que', "qu'"), 'de': ('dass', 'daß'), 'pt': ('que',), 'zh': ('(that)',)}
 # 補文を「望む・命じる」として取る動詞 (Je veux que tu viennes → Volō tē venīre・I want you to come)。ほかは「言う・思う」
 # 感情の動詞・形容詞 (que + 接続法: Je regrette que tu partes、Je suis content que tu viennes)
 EMOTION_VERBS = {'regretter', 'craindre', 'avoir peur', 'aimer', 'détester', 'se réjouir', 'bedauern', 'fürchten'}

@@ -197,6 +197,10 @@ def candidates(lex):
             for ja in re.split('[,、]', lex.ja)[:3]:   # 読点でつないだ訳語 (樹木、花) も1つずつ
                 found += [e for e in transfer._ja_english(ja.strip()) if e not in found]
             found = found[:6]
+        preferred = transfer.preferred_english(lex.lang, lex.lemma, pos)
+        if preferred:   # 教科書の基本の語の表で選ぶ英語 (玫瑰 → rose)。いくつもあれば辞書の訳語の順で先のもの
+            first = min(preferred, key=lambda en: found.index(en) if en in found else len(found) + preferred.index(en))
+            return [first] + [g for g in found if g != first]
         if lex.lemma in transfer.FIRST_GLOSSES.get(lex.lang, {}):
             first = transfer.FIRST_GLOSSES[lex.lang][lex.lemma]   # 先に使う訳語の決まっている語 (βασιλεύς: 「長」より king)
             return [first] + [g for g in found if g != first]   # 辞書に無い訳語でも (partir: 古い語源の share より leave)

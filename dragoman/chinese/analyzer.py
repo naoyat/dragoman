@@ -106,6 +106,8 @@ def _case_of(token):
         return ('Dat',)   # 移動の動詞の行き先 (去中国「中国に 行く」)
     if dep.startswith('nsubj'):
         return ('Nom',)
+    if dep in ('dobj', 'obj') and any(c.dep_ in ('dobj', 'obj') and c.i > token.i for c in head.children):
+        return ('Dat',)   # 二重目的語の前の方は受け手 (给女孩一本书「少女に 本を 与える」)
     if dep in ('dobj', 'obj', 'range'):
         return ('Acc',)
     if dep == 'iobj':
@@ -154,8 +156,9 @@ def item_of(token, doc, text):
                 'number': 'sg', '_': _cngs(('Nom',)), 'compact': True}
     if word in morphology.PRONOUNS and tag in ('PN', 'NN', 'DT') and not (tag == 'DT' and word in morphology.DETERMINERS):
         ja, person, number = morphology.PRONOUNS[word]
+        gender = morphology.PRONOUN_GENDERS.get(word, GENDER)
         data = {'surface': text, 'pos': 'pronoun', 'base': word, 'ja': ja, 'gloss_lang': 'ja', 'person': person,
-                'number': number, '_': _cngs(_case_of(token)), 'compact': True}
+                'number': number, '_': [(c, n, gender) for c, n, _ in _cngs(_case_of(token))], 'compact': True}
         if _subject_of_later_clause(token):
             data['clause_start'] = True
         if word in morphology.INTERROGATIVE_PRONOUNS:
@@ -216,7 +219,11 @@ def item_of(token, doc, text):
                 **({'progressive': True} if word in ('正在', '在', '正') else {})}
     if tag in ('NN', 'NR', 'FW'):
         ja, gloss_lang, row = morphology.gloss(word, 'noun')
-        proper = tag == 'NR' or bool(row and row['proper'])
+        # spaCy は 中文 も NR に、CC-CEDICT は言語名 (Zhong1 wen2) も大文字で書く: 手の訳語の表の語・言語名は普通名詞
+        proper = (bool(row and row['proper']) or tag == 'NR' and row is None) and word not in morphology.GLOSSES and \
+            not (len(word) > 1 and word.endswith(('语', '文', '語')))
+        if proper and (ja is None or gloss_lang == 'en'):
+            ja, gloss_lang = text, 'ja'   # 中国の地名・人名は日本語でも漢字 (北京・李明)
         if ja is None:
             from .katakana import katakana
             ja, gloss_lang = katakana(word), 'ja'
@@ -292,7 +299,8 @@ def classifiers(words):
                 if item.attrib('base') in ('个', '個') and noun is not None and _is_person(noun):
                     unit = '人'   # 人を数える 个 (两个朋友「二人の友人」)
                 ja = prev.ja + (unit if unit != 'つ' or len(prev.ja) > 1 else 'つ') + 'の'
-                out[-1].items = [type(prev)(dict(prev.item, ja=ja, surface=out[-1].surface + word.surface))]
+                cases = [t for t in prev._ or [] if noun is None or t[0] in {c for c, _, _ in noun._ or []}] or prev._
+                out[-1].items = [type(prev)(dict(prev.item, ja=ja, surface=out[-1].surface + word.surface, _=cases))]
                 out[-1].surface += word.surface
                 _drop(word)
                 continue
@@ -306,16 +314,33 @@ def classifiers(words):
     return out
 
 
+def plurals(words):
+    """名詞 + 们 (士兵们「兵士たち」) を複数の名詞1つに"""
+    out = []
+    for word in words:
+        if word.surface == '们' and out and _pos(out[-1]) == 'noun':
+            prev = _item(out[-1])
+            out[-1].items = [type(prev)(dict(prev.item, ja=prev.ja.split(',')[0] + 'たち', noun_ja=prev.ja, animate=True,
+                                             _=[t for t in prev._ or [] if t[1] == 'pl'] or prev._))]
+            out[-1].surface += word.surface
+            _drop(word)
+            continue
+        out.append(word)
+    return out
+
+
 def localizers(words):
     """名詞 + 方位詞 (桌子上「机の上」・房间里「部屋の中」) を1つの名詞に"""
     out = []
     for word in words:
         item = _item(word)
-        if item is not None and _tag(word) == 'LC' and out and _pos(out[-1]) in ('noun', 'pronoun'):
+        if item is not None and (_tag(word) == 'LC' or len(word.surface) > 1 and word.surface in morphology.LOCALIZERS) and \
+                out and _pos(out[-1]) in ('noun', 'pronoun'):
             prev = _item(out[-1])
-            place = morphology.LOCALIZERS.get(item.attrib('base'), item.attrib('base'))
+            place = morphology.LOCALIZERS.get(word.surface, item.attrib('base'))
             out[-1].items = [type(prev)(dict(prev.item, ja=prev.ja.split(',')[0] + 'の' + place, pos='noun',
-                                             gloss_lang='ja'))]
+                                             gloss_lang='ja', localizer=word.surface,
+                                             noun_ja=prev.attrib('noun_ja') or prev.ja))]
             out[-1].surface += word.surface
             _drop(word)
             continue
@@ -327,6 +352,13 @@ def genitives(words):
     """名詞・代名詞 + 的 (DEG) + 名詞: 前の語を属格に (妈妈的书「母の本」)。的は落とす"""
     out = []
     for k, word in enumerate(words):
+        item = _item(word)
+        if item is not None and item.pos == 'pronoun' and item._ and all(t[0] == 'Gen' for t in item._) and \
+                k + 1 < len(words) and _pos(words[k + 1]) == 'noun':   # 代名詞 + 名詞 (我爸爸「私の父」)
+            word.items = [type(item)(dict(item.item, pos='adj', ja=item.ja.split(',')[0] + 'の', _=_cngs(ALL_CASES),
+                                          possessive=True))]
+            out.append(word)
+            continue
         if _tag(word) in ('DEG', 'DEC') and out and _pos(out[-1]) in ('noun', 'pronoun') and k + 1 < len(words) and \
                 _pos(words[k + 1]) in ('noun', 'adj'):
             prev = _item(out[-1])
@@ -387,8 +419,12 @@ def relative_clauses(words, doc):
         clause = _clause_ja(sub, by_i)
         noun = by_i[head.i]
         it = _item(noun)
-        noun.items = [type(it)(dict(it.item, ja=clause + it.ja.split(',')[0], gloss_lang='ja',
-                                    relative=''.join(t.text for t in sub) + '的'))]
+        data = dict(it.item, ja=clause + it.ja.split(',')[0], gloss_lang='ja', noun_ja=it.ja,
+                    relative=''.join(t.text for t in sub) + '的')
+        adjective = [by_i[t.i] for t in sub if t.i in by_i and _pos(by_i[t.i]) in ('adj', 'verb')]
+        if len(sub) == 1 and len(adjective) == 1 and sub[0].tag_ == 'VA':
+            data['relative_adj'] = dict(_item(adjective[0]).item, pos='adj')   # 美丽的玫瑰: 文の枠では形容詞に
+        noun.items = [type(it)(data)]
         for t in sub + [token]:
             if t.i in by_i:
                 _drop(by_i[t.i])
@@ -527,11 +563,16 @@ def modals(words):
             m = _item(nxt)
             from dragoman.core.japanese import attach_auxiliary
             suffix = morphology.MODALS[item.attrib('lemma')]
-            if item.attrib('lemma') == '会' and any(_item(w) is not None and _item(w).attrib('complement') for w in out):
-                suffix = 'だろう'   # 補文の 会 は見込み (我觉得他会来「{彼が 来るだろう}と 思う」)
+            prediction = item.attrib('lemma') == '会' and any(_item(w) is not None and _item(w).attrib('complement')
+                                                               for w in out)
+            if prediction:
+                suffix = 'だろう'   # 補文の 会 は見込み (我觉得他会来「{彼が 来るだろう}と 思う」)。文の枠では未来
             ja = ','.join(attach_auxiliary(j, suffix) for j in m.ja.split(',')[:1]) if m.attrib('gloss_lang') == 'ja' else m.ja
-            data = dict(m.item, ja=ja, surface=word.surface + nxt.surface, modal=item.attrib('lemma'),
+            data = dict(m.item, ja=ja, surface=word.surface + nxt.surface, modal=item.attrib('lemma'), main_ja=m.ja,
                         form='助動詞 %s + 動詞' % item.attrib('lemma'), tense=item.attrib('tense'))
+            if prediction:   # 文の枠では未来の時制 (generate/frame.py)
+                del data['modal']
+                data['prediction'] = True
             word.items = [type(m)(data)]
             word.surface = data['surface']
             _drop(nxt)
@@ -675,6 +716,7 @@ def lookup_all(surfaces):
     words = relative_clauses(words, doc)
     words = complement_clauses(words, doc)
     words = complements(words)
+    words = plurals(words)
     words = classifiers(words)
     words = localizers(words)
     words = genitives(words)

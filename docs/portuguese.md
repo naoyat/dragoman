@@ -75,7 +75,7 @@ macOS の say のブラジルの声 Luciana（`--variety=pt` でポルトガル�
 ## 文の生成 (出口)
 
 ほかの言語の文の枠からポルトガル語（ブラジル）の文を作ります（`generate/portuguese.py`）。比較の表（`tools/generate.py --compare`）
-にも出ます。入口（`--from=pt`）はまだです。
+にも出ます。ポルトガル語の文からも作れます（`--from=pt`。下の「入口」）。
 
 ```
 python3 tools/generate.py --to=pt "Puella rosam pulchram in hortō videt."
@@ -99,6 +99,26 @@ python3 tools/generate.py --to=pt "Ego tē amō. Mihi est liber. Puellā cantant
 * 独立奪格は enquanto + 節（現在）・depois que + 節（過去）、述語的な分詞は動名詞（colhendo as flores）、過去の受動は一致した
   過去分詞（movida pelas palavras）。知覚の動詞 + 不定詞（Eu vejo a menina cantar）。
 
+## 文の生成 (入口: `--from=pt`)
+
+ポルトガル語の文を解析して文の枠にし、ほかの言語の文を作ります。元のポルトガル語に戻した文が入力と同じ語になれば ✓。
+
+```
+python3 tools/generate.py --from=pt "O menino deu o livro à menina."
+  ラテン語: Puer puellae librum dedit.
+  中国語:   男孩给了女孩书。
+python3 tools/generate.py --from=pt "Há um livro na mesa."
+  日本語:   テーブルに本がある。
+  中国語:   桌子上有一本书。
+```
+
+* 冠詞（o・a / um・uma）は名詞句の定・不定に。前置詞と縮約形（no・do・ao・pelo）はラテン語の前置詞 + 格に写し、元の前置詞も
+  持つ（ポルトガル語に戻すとき no を em + o に）。a + 人（à menina）は与格の受け手、受動の por + 動作主は ā + 奪格。
+* 主語の代名詞から人称、você・vocês は2人称（ほかの言語では「あなた」、ポルトガル語に戻すと3人称の動詞）。
+* 存在の há + 名詞は繋辞 + 主語（不定）。不定の主語の存在の文は、日本語では場所を先に「〜に …がある」、中国語は 〜上有 …。
+* spaCy の読み誤りの手当て: 小文字の普通名詞を固有名詞と読む（rosa）、原形の誤り（rosa → roso: 辞書で引けた語形を見出しに）、
+  文中の enquanto・quando・embora を副詞と読む（従属接続詞に）。
+
 ## 評価（`tools/ud_eval.py --lang=pt`）
 
 UD Portuguese-GSD（CC BY-SA 4.0。`$DRAGOMAN_DATA/pt/ud/`）の test 1200 文で（2026-10-27）。spaCy のモデルは Bosque で学習して
@@ -116,6 +136,7 @@ há + 名詞は訳で「〜がある」の主語なので主語として測る�
 
 ## まだできないこと
 
-* 文の生成の入口（`tools/generate.py --from=pt`）はまだ
+* 疑問詞の直接疑問文（Quando ele vem?）は枠には入るが、各言語の文は疑問詞の位置が崩れる（ラテン語からも同じ）
+* spaCy が動詞を形容詞と読む文（o menino dorme の dorme）は直していない
 * 接続法未来・人称不定詞は語形の表にあるが、訳し分けはまだ
 * ブラジルの口語の主語の a gente「私たち」、tu + 3人称の動詞

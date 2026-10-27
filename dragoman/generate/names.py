@@ -105,6 +105,17 @@ def latin_spelling(lex):
     elif lex.lang == 'ru':
         from dragoman.russian.script import translit
         lemma = translit(lemma)
+    elif lex.lang == 'zh':   # CC-CEDICT の英語の名前 (北京 → Beijing)、無ければ声調を除いた拼音 (Bei3 jing1 → Beijing)
+        from dragoman.chinese import dictionary
+        rows = [r for r in dictionary.lookup(lemma) if r['proper']] or list(dictionary.lookup(lemma))
+        if rows:
+            m = re.match(r"(?:[A-Z][\w'-]*(?: |$))+", rows[0]['en'] or '')
+            lemma = m.group(0).strip() if m else re.sub(r'[0-9 ]', '', rows[0]['pinyin'] or lemma)
+        else:   # 辞書に無い人名: 姓と名 (李明 → Li Ming)
+            from dragoman.chinese.morphology import pinyin
+            syllables = re.sub(r'[0-9]', '', pinyin(lemma)).split()
+            if syllables:
+                lemma = syllables[0].capitalize() + (' ' + ''.join(syllables[1:]).capitalize() if syllables[1:] else '')
     elif lex.lang == 'grc':
         from dragoman.greek.romanize import romanize_word
         lemma = romanize_word(lemma)

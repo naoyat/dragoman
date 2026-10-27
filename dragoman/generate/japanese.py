@@ -257,12 +257,16 @@ def clause_text(clause, final=True, attributive=False):
     parts = [_participial(p) for p in clause.adjuncts if p.kind == 'absolute']   # 独立奪格は節の頭 (王が死んで、…)
     subjects = clause.role('subject')
     topic = final and not attributive and not clause.subordinator
+    # 不定の主語の存在・所有の文 (冠詞・一 + 量詞のある言語から): 場所・所有者を先に、主語は「が」で述語の前
+    # (Há um livro na mesa「テーブルに 本が ある」、我有一本书「私には 本が ある」)
+    existential = clause.copula and not clause.role('complement') and bool(subjects) and subjects[0].definite is False
+    late = []
     for np in subjects:
         if attributive and clause.gap == 'subject':
             continue
         wh = np.head is not None and np.head.lemma in ('quis', 'quid')   # 疑問詞の主語は「が」(誰が来るか)
-        parts.append(NEGATIVE_PRONOUNS[np.head.lemma] if _negative_pronoun(np) else
-                     noun_phrase(np) + ('は' if topic and not wh else 'が'))
+        (late if existential else parts).append(NEGATIVE_PRONOUNS[np.head.lemma] if _negative_pronoun(np) else
+                                                noun_phrase(np) + ('は' if topic and not wh and not existential else 'が'))
     for p in clause.adjuncts:
         if p.kind != 'absolute':
             parts.append(_participial(p))
@@ -271,7 +275,7 @@ def clause_text(clause, final=True, attributive=False):
             if attributive and clause.gap == role:
                 continue
             parts.append(NEGATIVE_PRONOUNS[np.head.lemma] if _negative_pronoun(np) else
-                         noun_phrase(np) + ROLE_PARTICLES[role])
+                         noun_phrase(np) + ('には' if existential and role == 'recipient' else ROLE_PARTICLES[role]))
     for role, np in clause.args:
         if role in ('subject', 'object', 'recipient', 'complement'):
             continue
@@ -293,6 +297,7 @@ def clause_text(clause, final=True, attributive=False):
         parts.append(question(inner))
     for adv in clause.adverbs:
         parts.append(gloss(adv))
+    parts += late
     verb = predicate(clause, final)
     if clause.infinitives and clause.verb.lemma == 'possum':
         verb = predicate(clause).replace('〜', '')
@@ -367,7 +372,8 @@ def vocative(np):
 def sentence(clauses):
     if not clauses:
         return ''
-    from .frame import split_address
+    from .frame import split_address, subordinate_first
+    clauses = subordinate_first(clauses)
     out = ''
     for i, clause in enumerate(clauses):
         last = i == len(clauses) - 1

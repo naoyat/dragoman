@@ -104,6 +104,28 @@ def _pkuseg(text):
         return None
 
 
+# よくある姓 (辞書に無い人名の切り出し: 李明・王小红)
+SURNAMES = set('王李张刘陈杨黄赵吴周徐孙马朱胡郭何高林罗郑梁谢宋唐许韩冯邓曹彭曾肖田董袁潘蒋蔡杜叶程苏魏吕丁任沈'
+               '姚卢姜崔钟谭陆汪范金石廖贾夏韦方白邹孟熊秦邱江尹薛段雷侯龙史陶黎贺顾毛郝龚邵万钱严武戴莫孔汤')
+
+
+VERB_CHARS = set('是在有住说去来要看给和的了也都很不没把被就会能想爱叫跑走吃喝买卖写读听坐站')
+
+
+def _name(piece, keys):
+    """辞書に無い字の並びが姓で始まれば、姓 + 1〜2字の名前 (残りが辞書の語か空のもの。長い名前を先に)"""
+    if piece[0] not in SURNAMES:
+        return ''
+    for n in (3, 2):
+        if n == 3 and piece[2:3] in VERB_CHARS:
+            continue   # 李明住: 3字めは動詞
+        name, rest = piece[:n], piece[n:]
+        if len(piece) >= n and name not in keys and (not rest or rest in keys) and \
+                not any(name[1:k] in keys and len(name[1:k]) > 1 for k in range(2, n + 1)):
+            return name
+    return ''
+
+
 def segment(text):
     """文 → 語の列 (元の字のまま)"""
     simple = simplified(text)
@@ -113,7 +135,13 @@ def segment(text):
         if piece.isspace():
             continue
         if len(piece) > 1 and piece not in keys and re.fullmatch('[%s]+' % HAN, piece):
-            words += _chunk(piece)   # 辞書に無い語 (书放) は分け直す
+            name = _name(piece, keys)
+            if name:   # 姓 + 名 (李明住 → 李明 / 住)
+                words.append(name)
+                piece = piece[len(name):]
+                if not piece:
+                    continue
+            words += _chunk(piece) if piece not in keys else [piece]   # 辞書に無い語 (书放) は分け直す
         else:
             words.append(piece)
     words = _split_classifiers(words)
