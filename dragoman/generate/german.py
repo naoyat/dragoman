@@ -19,7 +19,7 @@ import sqlite3
 
 from dragoman.core import paths
 from . import transfer, english
-from .frame import NP
+from .frame import NP, on_surface
 
 ARTICLES = {  # (格, 性 / 複数) → 定冠詞
     ('Nom', 'm'): 'der', ('Nom', 'f'): 'die', ('Nom', 'n'): 'das', ('Nom', 'p'): 'die',
@@ -103,7 +103,7 @@ def _forms(lemma, pos):
     if db is None:
         return ()
     return tuple((form, frozenset(tags.split(','))) for form, tags in
-                 db.execute('SELECT form, tags FROM forms WHERE lemma = ? AND pos = ?', (lemma, pos)))
+                 db.execute('SELECT form, tags FROM forms WHERE lemma = ? AND pos = ? ORDER BY rowid', (lemma, pos)))
 
 
 def find_form(lemma, pos, wanted, avoid=()):
@@ -292,6 +292,8 @@ def prepositional(np, passive=False):
         text = noun_phrase(inner, 'Dat')
         return _contract('von', text) if text else ''
     prep, case = PREPOSITIONS.get((np.prep.lemma, np.case), ('in', 'Dat')) if np.prep is not None else ('in', 'Dat')
+    if on_surface(np):
+        prep = 'auf'   # 「上に」(in mēnsā・на столе・sur la table) → auf dem Tisch
     text = noun_phrase(inner, case)
     return _contract(prep, text) if text else ''
 
@@ -589,6 +591,7 @@ def compare_np(role, np, clause):
         if passive and np.prep.lemma in ('ā', 'ab', 'abs'):
             return text, '前置詞 von + 与格 (受動の動作主)'
         prep, case = PREPOSITIONS.get((np.prep.lemma, np.case), ('in', 'Dat'))
+        prep = 'auf' if on_surface(np) else prep
         return text, '%s + %s' % (prep, {'Dat': '与格', 'Acc': '対格', 'Gen': '属格'}[case])
     if role == 'address':
         return vocative(np), ADDRESS_HOW

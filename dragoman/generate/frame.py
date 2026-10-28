@@ -850,6 +850,20 @@ _UNMARKED_RELATIVES = set()   # 相の印 (了・过) の無い中国語の関�
 # 与格を取るときの意味 (辞書の最初の訳語は別の意味: pāreō「現れる」)
 DATIVE_SENSES = {'pāreō': '従う'}
 
+# 「上に」の前置詞 (на столе・auf dem Tisch・sur la table)。ラテン語の in + 奪格は「中に」と区別しないので、上に乗る名詞で決める
+# (in mēnsā → on the table・auf dem Tisch、in monte・in mūrō・in terrā・in viā。対格の in mēnsam → onto・auf den Tisch)
+ON_SURFACES = {'на', 'auf', 'sur', 'sobre', 'em cima de', 'üzerinde'}
+ON_NOUNS = {'mēnsa', 'sella', 'mōns', 'collis', 'mūrus', 'tēctum', 'rīpa', 'lītus', 'tergum', 'solum', 'terra', 'via'}
+
+
+def on_surface(np):
+    """in の句が「上に・上へ」か: 元の前置詞が「上に」(на・桌子上) か、ラテン語の上に乗る名詞 (in mēnsā・in mēnsam)"""
+    if np.prep is None or np.prep.lemma != 'in' or np.case not in ('Abl', 'Acc'):
+        return False
+    if np.prep.surface.lower() in ON_SURFACES or np.prep.desc in ('localizer:上', 'localizer:上面'):
+        return True
+    return np.head is not None and np.head.lang in ('', 'la') and np.head.lemma in ON_NOUNS
+
 
 def _french_inversion(clause):
     """複合倒置 (Pourquoi le garçon court-il ?) の重なった主語: 名詞の主語があれば後ろの代名詞 il・elle を除く"""

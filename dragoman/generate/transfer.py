@@ -523,6 +523,8 @@ for _lang, _lemma in (('de', 'ansehen'), ('fi', 'katsoa')):
 # 英語の lord・master (dominus) はドイツ語の Herr (英語からの借用の Lord にしない)
 for _en in ('lord', 'master'):
     PREFERRED.setdefault('de', {})[(_en, 'noun')] = ('Herr', 'm')
+# 英語の teach・praise はドイツ語の lehren・loben (語義の多い beibringen・anpreisen にしない)
+PREFERRED['de'].update({('teach', 'verb'): ('lehren', ''), ('praise', 'verb'): ('loben', '')})
 PARTICLES = ('to', 'as', 'at', 'on', 'for', 'with', 'into', 'upon', 'in', 'from', 'of', 'out', 'up', 'away',
              'off', 'down', 'by')
 

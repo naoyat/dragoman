@@ -151,6 +151,22 @@ class WhQuestionTestCase(unittest.TestCase):
         self.assertEqual(self.out(english, 'en', 'Quem videt puer?'), 'Who does the boy see?')
         self.assertEqual(self.out(english, 'en', 'Quis venit?'), 'Who comes?')
 
+    def test_teacher_and_table(self):
+        from dragoman.generate import german
+        self.need(german)
+        self.assertEqual(self.out(german, 'de', 'Magister puerōs docet.'), 'Der Lehrer lehrt die Jungen.')
+        self.assertEqual(self.out(english, 'en', 'Magister puerōs docet.'), 'The teacher teaches the boys.')
+        self.assertEqual(self.out(german, 'de', 'Puer ā magistrō laudātur.'), 'Der Junge wird vom Lehrer gelobt.')
+        self.assertEqual(self.out(german, 'de', 'Magistra puellās docet.'), 'Die Lehrerin lehrt die Mädchen.')
+        self.assertEqual(japanese.sentence(clauses('Magistra puellās docet.')), '教師は少女たちを教える。')
+        # in + 奪格・対格の上に乗る名詞 (mēnsa) は on・onto・auf
+        self.assertEqual(self.out(german, 'de', 'Liber magistrī in mēnsā est.'), 'Das Buch des Lehrers ist auf dem Tisch.')
+        self.assertEqual(self.out(english, 'en', 'Liber magistrī in mēnsā est.'), 'The book of the teacher is on the table.')
+        self.assertEqual(self.out(german, 'de', 'Puer librum in mēnsam portat.'), 'Der Junge trägt das Buch auf den Tisch.')
+        self.assertEqual(self.out(english, 'en', 'Puer librum in mēnsam portat.'),
+                         'The boy carries the book onto the table.')
+        self.assertEqual(self.out(english, 'en', 'Puella in hortō ambulat.'), 'The girl walks in the garden.')
+
     def test_verb_second(self):
         from dragoman.generate import german, oldenglish, french, portuguese as pt
         for module in (german, oldenglish, french, pt):

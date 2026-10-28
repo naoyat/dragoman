@@ -53,7 +53,7 @@ PREFERRED = {'見る': 'videō', '褒める': 'laudō', '美しい': 'pulcher', 
              '言う': 'dīcō', '持つ': 'habeō', '住む': 'habitō', '働く': 'labōrō', '与える': 'dō', '良い': 'bonus',
              '小さい': 'parvus', '多い': 'multus', '戦う': 'pugnō', '呼ぶ': 'vocō', '恐れる': 'timeō', '男': 'vir',
              '女': 'fēmina', '人': 'homō', '神': 'deus', '友': 'amīcus', '友達': 'amīcus', '父': 'pater',
-             '娘': 'fīlia', '息子': 'fīlius', '主人': 'dominus', '奴隷': 'servus', '兵士': 'mīles', '敵': 'hostis',
+             '娘': 'fīlia', '息子': 'fīlius', '主人': 'dominus', '教師': 'magister', '先生': 'magister', '奴隷': 'servus', '兵士': 'mīles', '敵': 'hostis',
              'できる': 'possum', '渡る': 'trānseō', '人々': 'homō', '送る': 'mittō', '摘む': 'carpō', '帰る': 'redeō', '降る': 'cadō', '雨': 'imber', '居る': 'sum', 'いる': 'sum', '都': 'urbs', '都市': 'urbs', '町': 'oppidum', '知る': 'sciō', '書く': 'scrībō',
              '道': 'via', '家': 'domus', '国': 'patria', '島': 'īnsula', '川': 'flūmen', '水': 'aqua', '剣': 'gladius'}
 

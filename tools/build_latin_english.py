@@ -27,9 +27,28 @@ POS = {'noun': 'noun', 'name': 'noun', 'adj': 'adj', 'verb': 'verb', 'adv': 'adv
        'pron': 'pronoun', 'det': 'pronoun', 'conj': 'conj', 'num': 'num', 'particle': 'adv'}
 
 
+# 1語ずつの「or」でつないだ語義 (to teach or instruct → teach, instruct)
+WORD_OR_WORD = re.compile(r'^((?:to )?[a-z]+) or ((?:to )?[a-z]+)$')
+
+
+def _sense_glosses(entry, sense, limit):
+    """語義の訳語。入れ子の語義 (doceō: ['to inform', 'to teach or instruct']) は子の語義を先に、親の語義を後に"""
+    glosses = sense.get('glosses') or []
+    chunks = []
+    # 固有名詞の子の語義は人の例 (Abdērīta: … famously held by → Democritus、Alcō → son of Astraea) なので使わない
+    children = [g for g in glosses[1:][-1:] if g[:1].islower()] if entry.get('word', '')[:1].islower() else []
+    for gloss in children + glosses[:1]:
+        m = WORD_OR_WORD.match(gloss)
+        parts = [m.group(1), m.group(2)] if m else [gloss]
+        for part in parts:
+            chunks += [c for c in english_glosses(entry, [dict(sense, glosses=[part])], limit=limit).split(',')
+                       if c and c not in chunks]
+    return chunks
+
+
 def _glosses(entry, senses, limit=12):
     """語義ごとの頭の語句を先に、残りを後に (magister: master, teacher, … 。2つめの語義の teacher も拾う)"""
-    per_sense = [english_glosses(entry, [sense], limit=limit).split(',') for sense in senses]
+    per_sense = [_sense_glosses(entry, sense, limit) for sense in senses]
     out = []
     for rank in range(limit):
         for chunks in per_sense:

@@ -84,7 +84,9 @@ def main():
         CREATE TABLE lemmas (key TEXT, pos TEXT, en TEXT, gender TEXT, aux TEXT, senses INTEGER, word TEXT);
         CREATE TABLE forms (form TEXT, lemma TEXT, pos TEXT, tags TEXT);
     ''')
-    lemmas, forms = [], set()
+    # 語形は見出しの活用表のものを先に、「past participle of loben」のような語義だけの項目のものを後に、取れた順で入れる
+    # (loben の過去分詞は活用表の gelobt。語義だけの項目の gelobet を先にしない)
+    lemmas, forms, form_of = [], {}, {}
     stream = sys.stdin if source == '-' else open(source, encoding='utf-8')
     n = 0
     for line in stream:
@@ -112,7 +114,7 @@ def main():
                 target = m.group(1) if m else ((sense.get('form_of') or [{}])[0].get('word') or '')
                 if target:
                     tags = sorted(t for t in (sense.get('tags') or []) if t in FORM_TAGS)
-                    forms.add((word, target, pos, ','.join(tags)))
+                    form_of[(word, target, pos, ','.join(tags))] = None
                 continue
             if gloss:
                 senses.append(sense)
@@ -128,17 +130,18 @@ def main():
                 continue
             kept = sorted(tags & FORM_TAGS)
             if kept:
-                forms.add((form, word, pos, ','.join(kept)))
+                forms[(form, word, pos, ','.join(kept))] = None
         if n % 200000 == 0:
             print('  %d lines, %d entries, %d forms (%.0fs)' % (n, len(lemmas), len(forms), time.time() - t0),
                   file=sys.stderr)
     db.executemany('INSERT INTO lemmas VALUES (?, ?, ?, ?, ?, ?, ?)', lemmas)
-    db.executemany('INSERT INTO forms VALUES (?, ?, ?, ?)', [(f.lower(), l, p, t) for f, l, p, t in sorted(forms)])
+    rows = [(f.lower(), l, p, t) for f, l, p, t in list(forms) + [x for x in form_of if x not in forms]]
+    db.executemany('INSERT INTO forms VALUES (?, ?, ?, ?)', rows)
     db.executescript('CREATE INDEX lemmas_key ON lemmas (key); CREATE INDEX forms_form ON forms (form);')
     db.commit()
     db.close()
     os.replace(tmp, out)
-    print('%d entries, %d forms → %s (%.1fs)' % (len(lemmas), len(forms), out, time.time() - t0))
+    print('%d entries, %d forms → %s (%.1fs)' % (len(lemmas), len(rows), out, time.time() - t0))
 
 
 if __name__ == '__main__':

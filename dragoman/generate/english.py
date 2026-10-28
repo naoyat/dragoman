@@ -17,7 +17,7 @@ import re
 import unicodedata
 
 from dragoman.core import paths, en_ja
-from .frame import Lex
+from .frame import Lex, on_surface
 
 # 不規則動詞: 原形 → (過去形, 過去分詞)
 IRREGULAR = {
@@ -611,9 +611,8 @@ def noun_phrase(np, objective=False, passive=False):
         prep = LATIN_PREPS.get((np.prep.lemma, np.case)) or gloss(np.prep) or '[%s]' % np.prep.ja
         if np.bare_direction:
             prep = 'to'   # Rōmam vēnit → came to Rome (into でなく)
-        if (np.prep.lemma, np.case) == ('in', 'Abl') and (np.prep.surface.lower() in ON_SURFACES or
-                                                          np.prep.desc in ('localizer:上', 'localizer:上面')):
-            prep = 'on'   # 元の前置詞が「上に」(на столе・auf dem Tisch・桌子上) → on the table
+        if on_surface(np):
+            prep = 'onto' if np.case == 'Acc' else 'on'   # 「上に」(на столе・auf dem Tisch・桌子上・in mēnsā) → on the table
         if passive and np.prep.lemma in ('ā', 'ab', 'abs'):
             prep = 'by'   # 受動の動作主 (ā duce laudantur「指揮官によって褒められる」)
         text = prep + ' ' + text
@@ -792,7 +791,6 @@ def direct_question(clause):
 
 
 # 元の言語の「〜の上に」の前置詞 (ラテン語の in + 奪格に写したもの)
-ON_SURFACES = {'на', 'auf', 'sur', 'sobre', 'em cima de', 'üzerinde'}
 
 
 def _inverted(subject, vp, verb, clause):
