@@ -13,7 +13,8 @@
 #   ./dragoman.py he --help                            言語ごとのオプション
 #   ./dragoman.py --languages                          対応している言語の一覧
 #
-#   LANG          最初の引数が言語の符号なら言語の指定 (--lang=LANG でも)。省略するか auto なら文字から推定し、
+#   LANG          最初の引数が言語の符号なら言語の指定 (--lang=LANG でも)。地域の付いた符号 (pt-BR・pt-PT) は
+#                 言語と --variety の指定 (pt-PT は pt --variety=pt と同じ)。省略するか auto なら文字から推定し、
 #                 推定した言語を標準エラー出力に出す
 #                 (ラテン文字 → la、ギリシア文字 → grc、キリル文字 → ru、ヘブライ文字 → he、
 #                 ウルドゥー語の字 (ٹ ڈ ڑ ں ے ھ) のあるアラビア文字 → ur、ペルシア語の字 (پ چ ژ گ ک ی) の多いもの → fa、
@@ -49,6 +50,9 @@ NAMES = {'la': 'ラテン語', 'grc': '古典ギリシア語', 'sa': 'サンス�
          'hi': 'ヒンディー語', 'ur': 'ウルドゥー語', 'bo': '古典チベット語', 'id': 'インドネシア語', 'ms': 'マレー語', 'tl': 'タガログ語', 'ko': '韓国語', 'de': 'ドイツ語', 'fr': 'フランス語', 'tr': 'トルコ語', 'mn': 'モンゴル語', 'fi': 'フィンランド語', 'ang': '古英語', 'haw': 'ハワイ語', 'ain': 'アイヌ語', 'kobun': '古文 (平安の和文。現代語に組み立て直す)', 'en': '英語 (現代英語)',
          'pt': 'ポルトガル語 (ブラジル・ポルトガル)', 'zh': '中国語 (普通話。簡体字・繁体字)'}
 CODE = re.compile('^[a-z]{2,5}$')
+# 地域の付いた言語の符号 (pt-BR・pt-PT・pt_br) → 言語と --variety の値
+LANG_TAG = re.compile('^([a-z]{2,5})[-_]([A-Za-z]{2,4})$')
+VARIETIES = {'pt': {'br': 'br', 'pt': 'pt'}}
 INDONESIAN_WORDS = {'yang', 'dan', 'di', 'ini', 'itu', 'dengan', 'untuk', 'tidak', 'adalah', 'akan', 'dari', 'ke', 'pada',
                     'saya', 'mereka', 'ada', 'sudah', 'juga', 'dalam', 'oleh', 'bahwa', 'bahawa', 'kami', 'kita'}
 AINU_WORDS = {'kamuy', 'kamui', 'aynu', 'ainu', 'kotan', 'ruwe', 'sekor', 'somo', 'anakne', 'orowa', 'cise', 'chise',
@@ -186,7 +190,12 @@ def kana_json(lang, args, texts):
     while k < len(args):
         arg = args[k]
         name, eq, value = arg.partition('=')
-        if name in KANA_VALUE_OPTIONS or name == '--kana-liaison':
+        if name == '--variety' and lang == 'pt':   # ポルトガル語の地域 (pt-PT) はカタカナの発音にも
+            if not eq:
+                k += 1
+                value = args[k] if k < len(args) else ''
+            options['pt'] = value.lower()
+        elif name in KANA_VALUE_OPTIONS or name == '--kana-liaison':
             if not eq:
                 k += 1
                 value = args[k] if k < len(args) else ''
@@ -270,6 +279,18 @@ def _split_e(arg):
     return None
 
 
+def split_variety(lang, args):
+    """地域の付いた言語の符号 (pt-BR) → (言語, --variety を先頭に足した引数)。後ろの明示の --variety・--kana-pt が優先"""
+    m = LANG_TAG.match(lang or '')
+    if not m:
+        return lang, args
+    base, region = m.group(1), m.group(2).lower()
+    if region not in VARIETIES.get(base, {}):
+        known = ', '.join('%s-%s' % (code, r.upper()) for code, table in VARIETIES.items() for r in table)
+        sys.exit('知らない地域の指定: %s (使えるもの: %s)' % (lang, known))
+    return base, ['--variety=' + VARIETIES[base][region]] + list(args)
+
+
 def parse_args(argv):
     """(言語, 言語に渡す引数, -e の文のリスト)。言語は --lang=LANG か、最初の引数が言語の符号のとき"""
     lang, args, texts = None, [], []
@@ -306,7 +327,7 @@ def parse_args(argv):
         elif arg.startswith('-e') and len(arg) > 2:
             texts.append(arg[2:])
         elif not arg.startswith('-') and not positional_seen and lang is None and not os.path.exists(arg) \
-                and CODE.match(arg):
+                and (CODE.match(arg) or LANG_TAG.match(arg)):
             lang = arg  # ./dragoman.py grc …
             positional_seen = True
         else:
@@ -353,6 +374,7 @@ def main(argv=None):
         print('対応している言語:\n' + language_list())
         return
     lang, args, texts = parse_args(argv)
+    lang, args = split_variety(lang, args)
     if lang == 'auto':
         lang = None  # 文字から推定する
     if lang is not None and lang not in LANGUAGES:

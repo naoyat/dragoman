@@ -52,6 +52,7 @@ def variety(options):
 
 def handle_option(option, arg, options):
     if option == '--variety':
+        arg = arg.lower()
         if arg not in ('br', 'pt'):
             raise SystemExit('--variety は br か pt')
         options.extra['variety'] = arg

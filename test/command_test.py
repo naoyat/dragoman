@@ -151,6 +151,16 @@ class ArgumentTestCase(unittest.TestCase):
                          (None, ['-t', 'say'], ['Rōma magna est.']))   # say は言語でない
         self.assertEqual(self.main.parse_args(['grc', '--pron', 'modern', 'FILE']), ('grc', ['--pron', 'modern', 'FILE'], []))
 
+    def test_language_variety(self):
+        # 地域の付いた言語の符号 (pt-BR・pt-PT) は言語と --variety の指定。後ろの明示のオプションが優先されるよう先頭に
+        lang, args, _ = self.main.parse_args(['pt-PT', '-k', '-e', 'Obrigado.'])
+        self.assertEqual(self.main.split_variety(lang, args), ('pt', ['--variety=pt', '-k']))
+        lang, args, _ = self.main.parse_args(['--lang=pt_br', '-e', 'Obrigado.'])
+        self.assertEqual(self.main.split_variety(lang, args), ('pt', ['--variety=br']))
+        self.assertEqual(self.main.split_variety('pt', ['-k']), ('pt', ['-k']))
+        with self.assertRaises(SystemExit):
+            self.main.split_variety('pt-XX', [])
+
     def test_short_option_clusters(self):
         # まとめた短いオプション: 最後の字が値を取れば次が値 (-wt say)、続きがあればそれが値 (-wtsay)、e は文 (-we TEXT)
         parse = self.main.parse_args

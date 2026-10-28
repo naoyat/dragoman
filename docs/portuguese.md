@@ -14,6 +14,7 @@
   →  私が / 本を / 読んでいる
 ./dragoman.py pt -k -e "Obrigado pela noite."      カナ: オブリガドゥ ペラ ノイチ
 ./dragoman.py pt -k --variety=pt -e "Obrigado pela noite."   カナ: オブリガドゥ ペラ ノイト (音読もポルトガルの声)
+./dragoman.py pt-PT -k -e "Obrigado pela noite."         同じ (pt-PT・pt-BR は言語と --variety の指定)
 ```
 
 ラテン文字の文は、ã・õ・-ção・lh・nh があるか、ポルトガル語らしい語（não, você, um, com, para, o, de, que …）が2つ以上
@@ -54,7 +55,7 @@ python3 tools/build_portuguese_dic.py
 ## カタカナ（`portuguese/katakana.py`）
 
 espeak-ng の発音（IPA）から、共通の規則（core/kana.py）で。既定はブラジル（`--kana-pt=br`、espeak-ng の pt-br）、
-`--kana-pt=pt` か `--variety=pt` でポルトガル（pt）。
+`--kana-pt=pt` か `--variety=pt`（言語の指定を `pt-PT` にしても同じ）でポルトガル（pt）。
 
 | | ブラジル | ポルトガル |
 |---|---|---|
