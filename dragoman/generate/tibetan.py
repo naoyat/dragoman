@@ -180,6 +180,14 @@ def verb_word(clause):
     return (head + ' ' + form).strip()
 
 
+def _sentence_end(verb, question, clause):
+    """文末の助詞: 平叙は終止の助詞 (ngo・do …)、諾否の疑問は疑問の助詞 (ngam・dam …。「または」と同じ語で選択を問う)、
+    疑問詞のある文は動詞で終える (su 'ong /「誰が来るか」)"""
+    if question and clause.question_word:
+        return verb
+    return particle(verb, 'q' if question else 'fin')
+
+
 def realize(clause, gap=None, final=True):
     from .frame import lexical_negation, periphrastic
     from .arabic import to_active
@@ -206,7 +214,7 @@ def realize(clause, gap=None, final=True):
                 out.append(noun_phrase(np) + ' ' + POSTPOSITIONS.get((np.prep.lemma, np.case), 'na'))
         verb = ('min' if clause.negated else 'yin') if complements else ('med' if clause.negated else 'yod')
         out.append(wh)
-        out.append(particle(verb, 'q' if question else 'fin') if final else verb)
+        out.append(_sentence_end(verb, question, clause) if final else verb)
         return ' '.join(w for w in out if w)
     if subject is not None and gap != 'subject':
         text = noun_phrase(subject)
@@ -230,7 +238,7 @@ def realize(clause, gap=None, final=True):
     if not final:
         verb = particle(verb, 'nom')   # 関係節・名詞化 (bstod pa)
     elif clause.mood != 'imperative':
-        verb = particle(verb, 'q' if question else 'fin')   # 疑問文は疑問の助詞 (nam 'ong ngam)
+        verb = _sentence_end(verb, question, clause)
     out.append(wh)
     out.append(verb)
     return ' '.join(w for w in out if w)

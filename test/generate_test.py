@@ -180,6 +180,9 @@ class WhQuestionTestCase(unittest.TestCase):
         self.assertEqual(self.out(mongolian, 'mn', 'Quandō venit?'), 'Хэзээ ирнэ вэ?')
         self.assertEqual(self.out(mongolian, 'mn', 'Puer venit?'), 'Хүү ирнэ үү?')
         self.assertEqual(self.out(hindi, 'hi', 'Ubi est puella?').split('\n')[1].strip(), 'laṛkī kahāṃ hai?')
+        if tibetan.available():   # 諾否の疑問は疑問の助詞、疑問詞の文は動詞で終える
+            self.assertTrue(self.out(tibetan, 'bo', 'Puer venit?').endswith("bu 'ong ngam /"))
+            self.assertTrue(self.out(tibetan, 'bo', 'Quis venit?').endswith("su 'ong /"))
 
     def test_other_sources(self):
         from dragoman.portuguese import analyzer as pt
