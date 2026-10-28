@@ -109,7 +109,7 @@ python3 tools/build_en_ja.py        # → ~/.local/share/dragoman-data/en-ja.sql
 | `-r`, `--romanize` | 語ごとの辞書引きの結果に転写を添える |
 | `-k`, `--kana` | 文のカタカナ読み（発音に忠実に）を見出しの下に添える（ノートにも。下の「カタカナ読み」） |
 | `--kana-only` | カタカナ読みだけを出す |
-| `--kana-json` / `--kana-liaison=next\|prev\|merge` / `--kana-unit=word\|char` | ルビ（フリガナ）用のカタカナを JSON で（入力の1行ごとに、元の文の文字の範囲とカナ。語をまたぐ音の載せ方。中国語は char で漢字1字ごと。解析はしない） |
+| `--kana-json` / `--kana-liaison=next\|prev\|merge` / `--kana-unit=word\|char` | ルビ（フリガナ）用のカタカナを JSON で（入力の1行ごとに、元の文の文字の範囲とカナ。語をまたぐ音の載せ方。中国語・韓国語は char で1字ごと。解析はしない） |
 | `--kana-long` / `--kana-wa` / `--kana-si` / `--kana-oe` / `--kana-accent` | カタカナ読みの書き方の設定（長音「ー」・[wa]・[si]・[ø]・英語の米音 / 英音） |
 | `--no-explain` | 初学者向けの解説（動詞の型・語根・連語形など）を出さない |
 | `--english-glosses` | 英語の訳語を日本語に置き換えない |

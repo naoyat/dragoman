@@ -12,7 +12,8 @@
 #   'next' (既定): 次の語に (レ / ザンファン、Il / y / a → イ / リ / ヤ)
 #   'prev': 前の語に残す (レズ / アンファン)
 #   'merge': つながった語をまとめて1つの区切りに (Les enfants → レザンファン)
-# 中国語は unit='char' (--kana-unit=char) で漢字1字ごとの区切りに (読みは語の拼音の音節)。
+# 中国語・韓国語は unit='char' (--kana-unit=char) で1字ごとの区切りに (中国語の読みは語の拼音の音節、
+# 韓国語は発音どおりに音節に分けたもの: 한국어 → 한 ハン・국 グ・어 ゴ)。
 # 句読点はカナを空にして区切りに残す (区切りの text をつなげば元の文に戻る。空白は区切りの間)。
 # カナは発音に忠実なもの (dragoman の --kana と同じ規則と設定)。読みやすさのための崩しは呼ぶ側で
 #
@@ -226,12 +227,37 @@ def russian_ruby_words(words, liaison='next', **options):
     return out, links
 
 
+def korean_chars(text, **options):
+    """韓国語: ハングルの字1つごとの区切り。読みは発音どおりに音節に分けたもの (korean/katakana.py の syllable_katakana:
+    한국어 → 한 ハン・국 グ・어 ゴ、학교 → 학 ハッ・교 キョ)。つなげば語のカナ。ハングルの続いたところごとに読み
+    (括弧・数字をまたいで連音しない)、ハングルでない字は句読点を1字ずつ、ほかはまとめてカナを空に"""
+    from dragoman.korean.katakana import syllable_katakana
+    out = []
+    for m in re.finditer(r'\S+', text):
+        for run in re.finditer(r'[가-힣]+|[^가-힣]', m.group()):
+            start = m.start() + run.start()
+            if HANGUL.match(run.group()):
+                for k, (ch, kana) in enumerate(zip(run.group(), syllable_katakana(run.group(), **options))):
+                    out.append({'text': ch, 'start': start + k, 'end': start + k + 1, 'kana': kana})
+            elif out and out[-1]['end'] == start and run.group() not in PUNCT and \
+                    not (HANGUL.match(out[-1]['text']) or out[-1]['text'] in PUNCT):
+                out[-1].update(text=out[-1]['text'] + run.group(), end=start + 1)
+            else:
+                out.append({'text': run.group(), 'start': start, 'end': start + 1, 'kana': ''})
+    return out
+
+
+HANGUL = re.compile('[가-힣]')
+
+
 def ruby(text, lang, liaison='next', unit='word', **options):
-    """文 → ルビの区切りの列 [{text, start, end, kana}] (上の説明)。unit='char' は中国語を漢字1字ごとに (ほかの言語は語ごと)"""
+    """文 → ルビの区切りの列 [{text, start, end, kana}] (上の説明)。unit='char' は中国語・韓国語を1字ごとに (ほかの言語は語ごと)"""
     if not available(lang):
         raise ValueError('ルビのカタカナが無い言語: %s' % lang)
     if lang == 'zh':
         return chinese_segments(text, unit=unit, **options)
+    if lang == 'ko' and unit == 'char':
+        return korean_chars(text, **options)
     if lang in SEGMENTED:
         return SEGMENTED[lang](text, **options)
     toks = tokens(text)

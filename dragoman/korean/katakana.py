@@ -97,10 +97,18 @@ def _rules(syls):
 
 
 def phonemes(word):
+    return [ph for group in syllable_phonemes(word) for ph in group]
+
+
+def syllable_phonemes(word):
+    """音節 (ハングルの字) ごとの音素の列。連音で動いた子音は次の音節に (한국어 → 한|구|거)、
+    促音になる子音 (학교 の ㄱ、아빠 の ㅃ の前半) は前の音節に"""
     syls = _rules(_syllables(word))
     out = []
+    starts = []
     prev_coda = None   # None: 語頭、'' : 母音の後ろ、ほかは代表音
     for initial, vowel, final in syls:
+        starts.append(len(out))
         # 初声
         if initial == 'ㅇ':
             onset = ''
@@ -109,6 +117,7 @@ def phonemes(word):
         elif initial in ('ㄲ', 'ㄸ', 'ㅃ', 'ㅆ', 'ㅉ') and prev_coda == '':
             onset = ONSET[initial]
             out.append(onset)                                # 語中の濃音は「ッ」(아빠 → アッパ)
+            starts[-1] += 1                                  # 「ッ」は前の音節に (아 アッ・빠 パ)
         else:
             onset = ONSET[initial]
         if initial == 'ㄹ' and prev_coda == 'l':
@@ -145,12 +154,23 @@ def phonemes(word):
             fixed.append(nxt)
             continue
         fixed.append(ph)
-    return fixed
+    return [fixed[a:b] for a, b in zip(starts, starts[1:] + [len(fixed)])]
 
 
 def katakana(word, long='phonemic', **options):
     options.setdefault('labial_glide', True)
     return kana(phonemes(word), long=long, **options)
+
+
+def syllable_katakana(word, long='phonemic', **options):
+    """語 → ハングルの字ごとのカタカナ (つなげば語のカタカナ)。音節の終わりの促音の子音は「ッ」"""
+    options.setdefault('labial_glide', True)
+    out = []
+    for group in syllable_phonemes(word):
+        if group and group[-1] in ONSET.values() and group[-1] not in ('', 'n', 'm', 'r'):
+            group = group[:-1] + ['t̚']                    # 次の音節の子音と重なる子音 (학 の k) は「ッ」
+        out.append(kana(group, long=long, **options))
+    return out
 
 
 def sentence(text, **options):

@@ -51,8 +51,9 @@ COMMON = (
                               'kana}]}。解析はしない)'),
     Option('kana-liaison', value='MODE', help='ルビの語をまたぐ音 (リエゾンなど) の載せ方: next (既定。次の語に) / prev (前の語に)\n'
                                               '/ merge (つながった語をまとめる)'),
-    Option('kana-unit', value='UNIT', help='ルビの区切りの単位 (中国語): word (既定。語ごと: 喜欢 → シファン) / char\n'
-                                         '(漢字1字ごと: 喜 → シ、欢 → ファン。読みは語で決めたもの: 银行 の行 → ハン)'),
+    Option('kana-unit', value='UNIT', help='ルビの区切りの単位 (中国語・韓国語): word (既定。語ごと: 喜欢 → シファン) / char\n'
+                                         '(1字ごと: 喜 → シ、欢 → ファン。中国語の読みは語で決めたもの: 银行 の行 → ハン。\n'
+                                         '韓国語は発音どおりに音節に分けたもの: 한국어 → 한 ハン・국 グ・어 ゴ)'),
     Option('no-explain', help='初学者向けの解説 (動詞の型・語根など) を出さない'),
     Option('english-glosses', help='英語の訳語 (Wiktionary などの語義) を日本語に置き換えない'),
     Option('sentence-per-line', 'l', help='改行も文の区切りにする (歌詞・詩など、行末に句点の無い行。\n'
