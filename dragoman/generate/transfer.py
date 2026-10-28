@@ -525,6 +525,8 @@ for _en in ('lord', 'master'):
     PREFERRED.setdefault('de', {})[(_en, 'noun')] = ('Herr', 'm')
 # 英語の teach・praise はドイツ語の lehren・loben (語義の多い beibringen・anpreisen にしない)
 PREFERRED['de'].update({('teach', 'verb'): ('lehren', ''), ('praise', 'verb'): ('loben', '')})
+# 英語の player はドイツ語の Spieler (語義の多い Werderaner「Werder Bremen の選手」にしない)
+PREFERRED['de'][('player', 'noun')] = ('Spieler', 'm')
 PARTICLES = ('to', 'as', 'at', 'on', 'for', 'with', 'into', 'upon', 'in', 'from', 'of', 'out', 'up', 'away',
              'off', 'down', 'by')
 

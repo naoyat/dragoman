@@ -44,8 +44,9 @@ FORM_OF = re.compile(r'^(?:(?:(?:nominative|accusative|dative|genitive|strong|we
 ALT_OF = re.compile(r'^(?:alternative (?:form|spelling)|obsolete (?:form|spelling)|archaic (?:form|spelling)|'
                     r'superseded spelling|dated (?:form|spelling)|nonstandard (?:form|spelling)|'
                     r'(?:pre-1996|pre-reform) spelling) of ([^\s,;:()]+)', re.I)
-# 派生語の語義で、後ろに定義が付いているもの (agent noun of lehren: one who teaches, teacher)
-DERIVED_OF = re.compile(r'^[^:]* of [^\s:]+:\s*(\S.*)$')
+# 派生語の語義で、後ろに定義が付いているもの (agent noun of lehren: one who teaches, teacher。
+# agent noun of fahren; driver (person)。gerund of essen; eating。diminutive of …)
+DERIVED_OF = re.compile(r'^[^:;]* of [^\s:;]+[:;]\s*(\S.*)$')
 
 
 def gender_of(entry):
@@ -109,7 +110,9 @@ def main():
             if not m and definition and 'form-of' in (sense.get('tags') or []):
                 # 派生語 (agent noun of lehren: one who teaches, teacher → Lehrer) は語形ではなく、定義を語義にする
                 senses.append(dict(sense, glosses=[definition.group(1)]))
-                continue
+                if 'participle' not in gloss.split(' of ')[0]:
+                    continue
+                # 分詞 (perfect participle of anfixen; hooked) は語形の表にも入れる
             if m or 'form-of' in (sense.get('tags') or []):
                 target = m.group(1) if m else ((sense.get('form_of') or [{}])[0].get('word') or '')
                 if target:

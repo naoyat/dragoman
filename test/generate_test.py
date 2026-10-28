@@ -166,6 +166,10 @@ class WhQuestionTestCase(unittest.TestCase):
         self.assertEqual(self.out(english, 'en', 'Puer librum in mēnsam portat.'),
                          'The boy carries the book onto the table.')
         self.assertEqual(self.out(english, 'en', 'Puella in hortō ambulat.'), 'The girl walks in the garden.')
+        # 定義がセミコロンの後ろの派生語 (agent noun of lesen; reader → Leser)
+        from dragoman.generate import transfer
+        for en, de in (('reader', 'Leser'), ('driver', 'Fahrer'), ('player', 'Spieler'), ('smoker', 'Raucher')):
+            self.assertEqual(transfer.best(Lex(en, 'noun', en=en, lang='en'), 'de').lemma, de)
 
     def test_verb_second(self):
         from dragoman.generate import german, oldenglish, french, portuguese as pt
