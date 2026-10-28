@@ -178,7 +178,7 @@ def value_short():
 
 KANA_VALUE_OPTIONS = {'--kana-long': 'long', '--kana-wa': 'wa', '--kana-si': 'si', '--kana-oe': 'oe',
                       '--kana-accent': 'accent', '--kana-small': 'small', '--kana-kobun': 'kobun',
-                      '--kana-hebrew': 'hebrew', '--kana-pt': 'pt'}
+                      '--kana-hebrew': 'hebrew', '--kana-pt': 'pt', '--kana-unit': 'unit'}
 
 
 def kana_json(lang, args, texts):
@@ -208,6 +208,8 @@ def kana_json(lang, args, texts):
         k += 1
     if not ruby.available(lang):
         sys.exit('ルビのカタカナが無い言語: %s' % lang)
+    if options.get('unit', 'word') not in ('word', 'char'):
+        sys.exit('--kana-unit は word か char')
     for text in texts if texts is not None else cli.read_texts(files):
         for line in text.splitlines():
             if line.strip():

@@ -12,6 +12,7 @@
 #   'next' (既定): 次の語に (レ / ザンファン、Il / y / a → イ / リ / ヤ)
 #   'prev': 前の語に残す (レズ / アンファン)
 #   'merge': つながった語をまとめて1つの区切りに (Les enfants → レザンファン)
+# 中国語は unit='char' (--kana-unit=char) で漢字1字ごとの区切りに (読みは語の拼音の音節)。
 # 句読点はカナを空にして区切りに残す (区切りの text をつなげば元の文に戻る。空白は区切りの間)。
 # カナは発音に忠実なもの (dragoman の --kana と同じ規則と設定)。読みやすさのための崩しは呼ぶ側で
 #
@@ -71,8 +72,8 @@ def kobun_segments(text, **options):
     return [{'text': s, 'start': a, 'end': b, 'kana': k} for s, a, b, k in tokens(text, **options)]
 
 
-def chinese_segments(text, **options):
-    """中国語: 語に切り分けて (chinese/segment.py)、語ごとに拼音から"""
+def chinese_segments(text, unit='word', **options):
+    """中国語: 語に切り分けて (chinese/segment.py)、語ごとに拼音から。unit='char' なら漢字1字ごとに (chinese_chars)"""
     from dragoman.chinese.segment import segment
     from dragoman.chinese.katakana import katakana
     out, pos = [], 0
@@ -81,7 +82,30 @@ def chinese_segments(text, **options):
         if start < 0:
             continue
         pos = start + len(word)
-        out.append({'text': word, 'start': start, 'end': pos, 'kana': katakana(word)})
+        chars = chinese_chars(word, start) if unit == 'char' else []
+        out += chars or [{'text': word, 'start': start, 'end': pos, 'kana': katakana(word)}]
+    return out
+
+
+HAN = re.compile('[㐀-鿿]')
+
+
+def chinese_chars(word, start):
+    """語 → 漢字1字ごとの区切り。読みは語の拼音の音節 (多音字は語で決まる: 银行 の行 → háng → ハン)。
+    漢字でない字 (2024年 の 2024) はまとめてカナを空に。音節の数が漢字の数と合わなければ [] (語のまま)"""
+    from dragoman.chinese import morphology
+    from dragoman.chinese.katakana import syllable_kana
+    syllables = [s for s in morphology.pinyin(word).split() if re.match(r"[a-zA-Zü:]+[0-5]?$", s)]
+    if len(syllables) != len(HAN.findall(word)):
+        return []
+    out = []
+    for k, ch in enumerate(word):
+        if HAN.match(ch):
+            out.append({'text': ch, 'start': start + k, 'end': start + k + 1, 'kana': syllable_kana(syllables.pop(0))})
+        elif out and not HAN.match(out[-1]['text'][-1]):
+            out[-1].update(text=out[-1]['text'] + ch, end=start + k + 1)
+        else:
+            out.append({'text': ch, 'start': start + k, 'end': start + k + 1, 'kana': ''})
     return out
 
 
@@ -202,10 +226,12 @@ def russian_ruby_words(words, liaison='next', **options):
     return out, links
 
 
-def ruby(text, lang, liaison='next', **options):
-    """文 → ルビの区切りの列 [{text, start, end, kana}] (上の説明)"""
+def ruby(text, lang, liaison='next', unit='word', **options):
+    """文 → ルビの区切りの列 [{text, start, end, kana}] (上の説明)。unit='char' は中国語を漢字1字ごとに (ほかの言語は語ごと)"""
     if not available(lang):
         raise ValueError('ルビのカタカナが無い言語: %s' % lang)
+    if lang == 'zh':
+        return chinese_segments(text, unit=unit, **options)
     if lang in SEGMENTED:
         return SEGMENTED[lang](text, **options)
     toks = tokens(text)

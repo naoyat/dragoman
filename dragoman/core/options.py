@@ -51,6 +51,8 @@ COMMON = (
                               'kana}]}。解析はしない)'),
     Option('kana-liaison', value='MODE', help='ルビの語をまたぐ音 (リエゾンなど) の載せ方: next (既定。次の語に) / prev (前の語に)\n'
                                               '/ merge (つながった語をまとめる)'),
+    Option('kana-unit', value='UNIT', help='ルビの区切りの単位 (中国語): word (既定。語ごと: 喜欢 → シファン) / char\n'
+                                         '(漢字1字ごと: 喜 → シ、欢 → ファン。読みは語で決めたもの: 银行 の行 → ハン)'),
     Option('no-explain', help='初学者向けの解説 (動詞の型・語根など) を出さない'),
     Option('english-glosses', help='英語の訳語 (Wiktionary などの語義) を日本語に置き換えない'),
     Option('sentence-per-line', 'l', help='改行も文の区切りにする (歌詞・詩など、行末に句点の無い行。\n'
@@ -71,7 +73,7 @@ COMMON = (
 # --sentence-per-line は入口 main.py が処理する) と、ラテン語だけのもの
 LATIN_COMMON = ('no-word-detail', 'descendants', 'etymology', 'speech', 'tts', 'html', 'pdf', 'marks', 'legend',
                 'provenance', 'compare', 'gaps', 'help', 'kana', 'kana-only', 'kana-long', 'kana-wa', 'kana-si', 'kana-oe', 'kana-accent', 'kana-small', 'kana-kobun', 'kana-hebrew', 'kana-pt', 'kana-json',
-                'kana-liaison')
+                'kana-liaison', 'kana-unit')
 LATIN = tuple(o for o in COMMON if o.long in LATIN_COMMON) + (
     Option('no-translation', 'q', help='訳 (日本語) を表示しない'),
     Option('capital-to-macron', 'm', help='[対話モード] 大文字の母音を長母音として読む (A → ā)'),

@@ -44,5 +44,19 @@ class RubyTestCase(unittest.TestCase):
         self.assertEqual(kanas(ruby.ruby("I don't know.", 'en')), [('I', 'アイ'), ("don't", 'ドウント'), ('know', 'ノウ'), ('.', '')])
 
 
+    def test_chinese_characters(self):
+        from dragoman.chinese import morphology
+        if not morphology.available():
+            self.skipTest('中国語の辞書が無い')
+        self.assertEqual(kanas(ruby.ruby('我喜欢去银行。', 'zh')),
+                         [('我', 'ウォ'), ('喜欢', 'シファン'), ('去', 'チュ'), ('银行', 'インハン'), ('。', '')])
+        # 漢字1字ごと: 読みは語の拼音の音節 (银行 の行 → háng)。漢字でない字はまとめてカナを空に
+        segments = ruby.ruby('我喜欢去银行。2024年', 'zh', unit='char')
+        self.assertEqual(kanas(segments), [('我', 'ウォ'), ('喜', 'シ'), ('欢', 'ファン'), ('去', 'チュ'), ('银', 'イン'),
+                                           ('行', 'ハン'), ('。', ''), ('2024', ''), ('年', 'ニエン')])
+        self.assertEqual([(s['start'], s['end']) for s in segments][-3:], [(6, 7), (7, 11), (11, 12)])
+        self.assertEqual(kanas(ruby.ruby('Les enfants', 'de', unit='char'))[0][0], 'Les')   # ほかの言語は語ごとのまま
+
+
 if __name__ == '__main__':
     unittest.main()
