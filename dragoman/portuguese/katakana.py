@@ -97,8 +97,9 @@ def phonemes(word, pt='br'):
     return fixed
 
 
-# 1語だけで espeak-ng に渡すと文字の名前の読みになる機能語 (冠詞 o「オ」でなく弱い [u]、接続詞 e「エ」でなく [i])
-UNSTRESSED = {'o': ['u'], 'e': ['i']}
+# 1語だけで espeak-ng に渡すと文字の名前や強い母音の読みになる1字の語 (冠詞 o「オ」でなく弱い [u]、接続詞 e「エ」でなく [i]、
+# é は é agudo「エアグドゥ」でなく [ɛ]、à は a grave「アグラヴィ」でなく [a])
+UNSTRESSED = {'o': ['u'], 'e': ['i'], 'é': ['ɛ'], 'à': ['a'], 'ó': ['ɔ']}
 
 
 def katakana(word, pt='br', long='phonemic', **options):

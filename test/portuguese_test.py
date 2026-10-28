@@ -75,7 +75,8 @@ class KanaTestCase(unittest.TestCase):
         cases = {'obrigado': ('オブリガドゥ', 'オブリガドゥ'), 'cidade': ('スィダジ', 'スィダド'), 'noite': ('ノイチ', 'ノイト'),
                  'Rio': ('ヒウ', 'リウ'), 'coração': ('コラサウン', 'クラサウン'), 'mãe': ('マイン', 'マイン'),
                  'gente': ('ジェンチ', 'ジェント'), 'também': ('タンベイン', 'タンベイン'), 'vocês': ('ヴォセス', 'ヴセシュ'),
-                 'Brasil': ('ブラズィウ', 'ブラズィル'), 'o': ('ウ', 'ウ')}
+                 'Brasil': ('ブラズィウ', 'ブラズィル'), 'o': ('ウ', 'ウ'),
+                 'É': ('エ', 'エ'), 'à': ('ア', 'ア')}   # 1字の語は文字の名前 (é agudo・a grave) にしない
         for word, (br, pt) in cases.items():
             self.assertEqual(katakana(word), br, word)
             self.assertEqual(katakana(word, pt='pt'), pt, word)
