@@ -44,6 +44,8 @@ FORM_OF = re.compile(r'^(?:(?:(?:nominative|accusative|dative|genitive|strong|we
 ALT_OF = re.compile(r'^(?:alternative (?:form|spelling)|obsolete (?:form|spelling)|archaic (?:form|spelling)|'
                     r'superseded spelling|dated (?:form|spelling)|nonstandard (?:form|spelling)|'
                     r'(?:pre-1996|pre-reform) spelling) of ([^\s,;:()]+)', re.I)
+# 派生語の語義で、後ろに定義が付いているもの (agent noun of lehren: one who teaches, teacher)
+DERIVED_OF = re.compile(r'^[^:]* of [^\s:]+:\s*(\S.*)$')
 
 
 def gender_of(entry):
@@ -101,6 +103,11 @@ def main():
         for sense in entry.get('senses', []):
             gloss = (sense.get('glosses') or [''])[0]
             m = FORM_OF.match(gloss) or ALT_OF.match(gloss)
+            definition = DERIVED_OF.match(gloss)
+            if not m and definition and 'form-of' in (sense.get('tags') or []):
+                # 派生語 (agent noun of lehren: one who teaches, teacher → Lehrer) は語形ではなく、定義を語義にする
+                senses.append(dict(sense, glosses=[definition.group(1)]))
+                continue
             if m or 'form-of' in (sense.get('tags') or []):
                 target = m.group(1) if m else ((sense.get('form_of') or [{}])[0].get('word') or '')
                 if target:
