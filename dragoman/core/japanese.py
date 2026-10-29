@@ -460,13 +460,21 @@ if __name__ == '__main__':
 # 時制は 'present' / 'past' / 'future'
 
 # 連体詞は形容詞の終止形や代名詞に読み替える
-RENTAISHI = {'大きな': '大きい', '小さな': '小さい', 'おかしな': 'おかしい',
+RENTAISHI = {'大きな': '大きい', '小さな': '小さい', 'おかしな': 'おかしい', '聖なる': '神聖な',
              'この': 'これ', 'その': 'それ', 'あの': 'あれ'}
 VERB_ENDINGS = tuple('うくぐすつぬぶむる')
 
 
-def _complement_type(gloss, adjective):
+# 〜た で終わる形容動詞の語幹 (動詞の過去の形ではない: 新たな・新たである)
+NA_STEMS_IN_TA = {'新た', '確た', '徒', 'あらた'}
+
+
+def complement_type(gloss, adjective):
+    """補語・名詞の前の形容詞の訳語の型: 'ta' (分詞の訳 満ちた)・'i' (形容詞)・'na' (〜な)・'no' (〜の)・'verb' (輝く)・
+    'noun' (名詞・形容動詞の語幹 静か: 名詞の前なら な、補語なら である)"""
     if not adjective:
+        return 'noun'
+    if gloss in NA_STEMS_IN_TA:
         return 'noun'
     if gloss.endswith(('た', 'だ')):
         return 'ta'  # 分詞の訳 (満ちた, 憎まれた) は「〜ている」の形にする
@@ -486,7 +494,7 @@ def _copula_parts(gloss, adjective):
     gloss = RENTAISHI.get(gloss, gloss)
     if gloss.endswith(('ている', 'でいる')) and len(gloss) > 3:
         return gloss[:-2], 'te'   # 状態の訳語 (開いている → 開いていた・開いていない)
-    kind = _complement_type(gloss, adjective)
+    kind = complement_type(gloss, adjective)
     if kind == 'i':
         return ('よ' if gloss == 'いい' else gloss[:-1]), 'i'  # いい → よかった
     if kind == 'ta':

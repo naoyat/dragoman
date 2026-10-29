@@ -12,7 +12,7 @@
 #
 import re
 
-from dragoman.core.japanese import JaVerb, copula_predicate
+from dragoman.core.japanese import JaVerb, copula_predicate, complement_type
 from dragoman.core import verb_flags as Verb
 from . import ja_lexicon
 
@@ -129,7 +129,8 @@ def noun_phrase(np):
             before.insert(len(np.genitives) + len(np.relatives), DEMONSTRATIVE_ADJ[m.lemma])
         else:
             adj = gloss(m)
-            before.append(adj if adj.endswith(('い', 'な', 'の')) else adj + 'な')
+            # 形容動詞の語幹 (静か) だけ な を付ける。動詞の形 (祝福された・熱望する・聖なる) はそのまま名詞の前に
+            before.append(adj + 'な' if complement_type(adj, True) == 'noun' else adj)
     return ''.join(before) + word
 
 

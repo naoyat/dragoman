@@ -540,6 +540,14 @@ class JapaneseOutputTestCase(unittest.TestCase):
                          '少女は教師が称賛する少年を見る。')
         self.assertEqual(self.japanese('Puer ā magistrō laudātur.'), '少年は教師に称賛される。')
 
+    def test_attributive_adjectives(self):
+        # 名詞の前の形容詞: 形容動詞の語幹 (確か) だけ な を付ける。動詞の形 (生い茂った・聖なる) はそのまま
+        self.assertEqual(self.japanese('Puer locum herbōsum videt.'), '少年は草の生い茂った場所を見る。')
+        self.assertEqual(self.japanese('Puella rem certam videt.'), '少女は確かな物を見る。')
+        self.assertEqual(self.japanese('Rēx sanctus est.'), '王は神聖である。')   # 連体詞の 聖なる は補語なら 神聖である
+        from dragoman.core.japanese import copula_predicate
+        self.assertEqual(copula_predicate('新た'), '新たである')
+
 
 
 class OtherSourceTestCase(unittest.TestCase):
@@ -1113,6 +1121,10 @@ class KobunTestCase(unittest.TestCase):
         self.assertEqual(self.kobun('Rēgīna puellīs rosās dedit.'), '女王は乙女どもにバラを与へけり。')
         self.assertEqual(self.kobun('Puer ā magistrō laudātus est.'), '童は師に褒められけり。')   # 受身 らる + けり
         self.assertEqual(self.kobun('Puella puerum videt quem magister laudat.'), '乙女は師の褒むる童を見る。')
+        # 分詞の訳の補語は 〜たり (生い茂ったなり にしない)、聖なる はナリ活用 (聖なり・聖なる)
+        self.assertEqual(self.kobun('Locus herbōsus est.'), '所は草の生い茂りたり。')
+        self.assertEqual(self.kobun('Locus herbōsus erat.'), '所は草の生い茂りたりけり。')
+        self.assertEqual(self.kobun('Rēx sanctus est.'), '王は聖なり。')
 
     def test_lexicon(self):
         from dragoman.generate.kobun_lexicon import VERBS

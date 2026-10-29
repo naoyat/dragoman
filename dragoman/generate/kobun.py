@@ -268,6 +268,11 @@ def _adjective_predicate(word, clause, name):
             return adjective(word, '未然+aux') + 'ざり' + attach('', 'けり', name)
         return text if name == '終止' else adjective(word, '未然+aux') + {'連体': 'ぬ', '已然': 'ね', '連用': 'ず',
                                                                          '未然': 'ず'}.get(name, 'ず')
+    if word.endswith(('た', 'だ')) and word not in ADJECTIVES:
+        attributive = _past_attributive(word)   # 分詞の訳 (草の生い茂った → 生い茂りたり。〜なり にしない)
+        if attributive:
+            stem = attributive[:-2]
+            return attach(stem, 'たり', '連用') + attach('', 'けり', name) if past else attach(stem, 'たり', name)
     if past:
         return adjective(word, '連用+aux') + attach('', 'けり', name)
     return adjective(word, name)
