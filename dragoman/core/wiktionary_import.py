@@ -116,7 +116,10 @@ def english_glosses(entry, senses=None, limit=3, per_sense=None):
     glosses = []
     for sense in senses if senses is not None else entry.get('senses', []):
         for gloss in sense.get('glosses', [])[:1]:
-            gloss = re.sub(r'\s*\(.*?\)', '', gloss)
+            # 括弧書きは入れ子ごと除く (singer (male) (verbal noun of canō (nomen agentis)) → singer)
+            gloss, n = re.subn(r'\s*\([^()]*\)', '', gloss)
+            while n:
+                gloss, n = re.subn(r'\s*\([^()]*\)', '', gloss)
             gloss = _colon_gloss(gloss)
             for chunk in re.split(r'[;,]', gloss)[:per_sense]:
                 chunk = re.sub(r'^(to|a|an|the) ', '', chunk.strip().rstrip('.:'), flags=re.I).strip()

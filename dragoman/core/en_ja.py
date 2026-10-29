@@ -172,6 +172,22 @@ def english_key(english):
     return PARTICLE_TAIL.sub('', key(english))
 
 
+@functools.lru_cache(maxsize=2000)
+def english_by_japanese(japanese, pos):
+    """英和の表を逆に: 日本語の訳語 → それを訳語に持つ英語 (訳語の中で前にあるものを先に: 運転する → drive, jockey)。
+    和英 (JMdict) でサ変名詞の英語が名詞の形 (運転: operation, driving) のときに、動詞の英語を引く"""
+    db = _connect()
+    if db is None or not japanese:
+        return ()
+    found = []
+    for p in POS_GROUPS.get(pos, (pos,)):
+        for en, ja in db.execute('SELECT en, ja FROM en_ja WHERE pos = ? AND ja LIKE ?', (p, '%' + japanese + '%')):
+            glosses = ja.split(',')
+            if japanese in glosses:
+                found.append((glosses.index(japanese), en))
+    return tuple(dict.fromkeys(en for _, en in sorted(found)))
+
+
 @functools.lru_cache(maxsize=20000)
 def english_for(japanese):
     """日本語の訳語 → 英語の訳語の比べる形の列 (語義の順: 少年 → boy, juvenile, child)。JMdict の表から"""

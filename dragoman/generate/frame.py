@@ -335,6 +335,7 @@ class Lex:
     ptense: str = ''       # 分詞の時制: present / past / future (future は動形容詞 adeundus「近づかれるべき」も)
     lang: str = ''         # 元の言語 ('' / 'la' はラテン語。ru・sa の語は作るときに英語を仲立ちに置き換える)
     origin: tuple = ()     # ラテン文字に写した固有名詞の元の (言語, 綴り) (민수 → Minsu。元の言語に戻すときはこの綴り)
+    sense: str = ''        # 文脈で決まった英語の訳語 (equōs agit の agō → drive。辞書の訳語にあれば先に使う)
 
 
 @dataclass
@@ -810,6 +811,10 @@ def clause_of(predicate, lang=None):
         _french_inversion(clause)
     if _lang in ('', 'la') and clause.verb.lemma in DATIVE_SENSES and clause.role('recipient'):
         clause.verb = dataclasses.replace(clause.verb, ja=DATIVE_SENSES[clause.verb.lemma])   # dominō pāret「主に従う」
+    if _lang in ('', 'la') and clause.verb.lemma in OBJECT_SENSES:
+        nouns, ja, en = OBJECT_SENSES[clause.verb.lemma]
+        if any(np.head is not None and np.head.lemma in nouns for np in clause.role('object')):
+            clause.verb = dataclasses.replace(clause.verb, ja=ja, sense=en)   # equōs agit「馬を駆る」・drives the horses
     if _lang in ('pt', 'zh'):
         _portuguese_chinese_frame(clause, verb_item)
     if verb_item.attrib('modal') in SOURCE_MODALS:
@@ -849,6 +854,10 @@ _UNMARKED_RELATIVES = set()   # 相の印 (了・过) の無い中国語の関�
 
 # 与格を取るときの意味 (辞書の最初の訳語は別の意味: pāreō「現れる」)
 DATIVE_SENSES = {'pāreō': '従う'}
+# 目的語の名詞で決まる意味 (agō「する」は家畜を目的語にすると「駆る」: equōs agit → drives the horses)。
+# 英語の訳語は括弧の前 (drive)。ほかの言語の語はこの名前で transfer.SENSE_TARGETS から (ドイツ語 treiben)
+OBJECT_SENSES = {'agō': ({'equus', 'equa', 'bōs', 'pecus', 'grex', 'armentum', 'capella', 'capra', 'ovis', 'iūmentum',
+                          'asinus', 'mūlus', 'taurus', 'vacca', 'porcus', 'currus', 'praeda'}, '駆る', 'drive (animals)')}
 
 # 「上に」の前置詞 (на столе・auf dem Tisch・sur la table)。ラテン語の in + 奪格は「中に」と区別しないので、上に乗る名詞で決める
 # (in mēnsā → on the table・auf dem Tisch、in monte・in mūrō・in terrā・in viā。対格の in mēnsam → onto・auf den Tisch)

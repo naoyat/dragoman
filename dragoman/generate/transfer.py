@@ -525,6 +525,14 @@ for _en in ('lord', 'master'):
     PREFERRED.setdefault('de', {})[(_en, 'noun')] = ('Herr', 'm')
 # 英語の teach・praise はドイツ語の lehren・loben (語義の多い beibringen・anpreisen にしない)
 PREFERRED['de'].update({('teach', 'verb'): ('lehren', ''), ('praise', 'verb'): ('loben', '')})
+# 文の枠で文脈から決めた意味 (frame.OBJECT_SENSES) → 言語ごとの語 (英語の drive だけでは運転の fahren と区別できない)
+SENSE_TARGETS = {}
+for _lang, _lemma in (('de', 'treiben'), ('ru', 'гнать'), ('ko', '몰다'), ('zh', '驱赶'), ('ang', 'drīfan'),
+                      ('grc', 'ἐλαύνω'), ('fi', 'ajaa'), ('tr', 'sürmek')):
+    SENSE_TARGETS.setdefault(_lang, {})['drive (animals)'] = _lemma
+# 英語の drive は車を運転する意味 (辞書の筆頭の verschlagen・달리다 にしない。家畜を追う意味は上の SENSE_TARGETS)
+for _lang, _lemma in (('de', 'fahren'), ('ru', 'водить'), ('ko', '운전하다'), ('zh', '驾驶')):
+    PREFERRED.setdefault(_lang, {})[('drive', 'verb')] = (_lemma, '')
 # 英語の player はドイツ語の Spieler (語義の多い Werderaner「Werder Bremen の選手」にしない)
 PREFERRED['de'][('player', 'noun')] = ('Spieler', 'm')
 PARTICLES = ('to', 'as', 'at', 'on', 'for', 'with', 'into', 'upon', 'in', 'from', 'of', 'out', 'up', 'away',
@@ -564,6 +572,8 @@ def candidates(lex, lang, pos=None):
     pos = pos or {'participle': 'verb'}.get(lex.pos, lex.pos)
     if (lex.lang or 'la') == lang:
         return [(-1000, Target(source_key(lang, lex.lemma), pos, (), '', '', 1))]
+    if lex.sense in SENSE_TARGETS.get(lang, {}):   # 文脈で決まった意味の語 (家畜を drive → treiben)
+        return [(-100, Target(SENSE_TARGETS[lang][lex.sense], pos, (lex.sense,), '', ''))]
     sources = english.candidates(lex) or ([e for e in lex.en.split(',') if e] if lex.en else [])
     for en in sources[:1] + [e.replace(' for', '') for e in sources[:1] if e.endswith(' for')]:   # wait for → wait
         words = en.lower().split(' ')

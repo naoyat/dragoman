@@ -167,6 +167,13 @@ class WhQuestionTestCase(unittest.TestCase):
                          'The boy carries the book onto the table.')
         self.assertEqual(self.out(english, 'en', 'Puella in hortō ambulat.'), 'The girl walks in the garden.')
         # 定義がセミコロンの後ろの派生語 (agent noun of lesen; reader → Leser)
+        # 家畜を目的語にした agō は「駆る」(drive。ドイツ語は運転の fahren ではなく treiben)
+        self.assertEqual(self.out(english, 'en', 'Aurīga equōs agit.'), 'The charioteer drives the horses.')
+        self.assertEqual(self.out(german, 'de', 'Aurīga equōs agit.'), 'Der Kutscher treibt die Pferde.')
+        self.assertEqual(japanese.sentence(clauses('Aurīga equōs agit.')), '御者は馬たちを駆る。')
+        self.assertEqual(self.out(english, 'en', 'Puer rem agit.'), 'The boy does the object.')
+        self.assertEqual(english.plural('head of cattle'), 'cattle')
+        self.assertEqual(english.plural('piece of bread'), 'pieces of bread')
         from dragoman.generate import transfer
         for en, de in (('reader', 'Leser'), ('driver', 'Fahrer'), ('player', 'Spieler'), ('smoker', 'Raucher')):
             self.assertEqual(transfer.best(Lex(en, 'noun', en=en, lang='en'), 'de').lemma, de)
@@ -484,6 +491,13 @@ class JapaneseInputTestCase(unittest.TestCase):
         self.assertEqual(self.latin('少年が庭で寝ているとき、少女は歌った。'),
                          'Ubi puer in hortō dormiēbat, puella cantāvit.')
 
+
+    def test_words_via_english(self):
+        # 日本語の訳語を持つラテン語の語が無ければ英語を仲立ちに (歌手 → singer → cantor)。サ変名詞 + する は1つの述語
+        from dragoman.generate import german
+        self.assertEqual(german.sentence(from_japanese.parse('歌手が歌う。')), 'Der Sänger singt.')
+        self.assertEqual(german.sentence(from_japanese.parse('運転手が車を運転する。')), 'Der Fahrer fährt das Auto.')
+        self.assertEqual(english.sentence(from_japanese.parse('少年が料理する。')), 'The boy cooks.')
 
     def test_long_sentence(self):
         # 関係節が2つある長い文 (GiNZA があれば係り受けで、無ければ後ろの一番近い述語へ)

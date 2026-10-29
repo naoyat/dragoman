@@ -49,6 +49,7 @@ PLACE_PARTICLE_PREP = {'で': ('in', 'Abl'), 'から': ('ex', 'Abl'), 'へ': ('a
 CONNECTIVES = {'て': 'et', 'で': 'et', 'ので': 'quod', 'から': 'quod', 'ば': 'sī', 'たら': 'sī', 'なら': 'sī',
                'が': 'sed', 'けれど': 'sed', 'けど': 'sed', 'ながら': 'dum', 'と': 'sī'}
 SUBORDINATE = {'quod', 'sī', 'dum', 'ubi'}
+SURU = ('する', '為る')
 PREFERRED = {'見る': 'videō', '褒める': 'laudō', '美しい': 'pulcher', '大きい': 'magnus', '歌う': 'cantō',
              '言う': 'dīcō', '持つ': 'habeō', '住む': 'habitō', '働く': 'labōrō', '与える': 'dō', '良い': 'bonus',
              '小さい': 'parvus', '多い': 'multus', '戦う': 'pugnō', '呼ぶ': 'vocō', '恐れる': 'timeō', '男': 'vir',
@@ -137,7 +138,9 @@ def chunks(tokens):
             prev = out[-1].tokens[-1]
             if prev.pos == '接頭辞' or (prev.pos == '名詞' and t.pos == '名詞' and prev.pos2 != '数詞') or \
                     (t.pos == '動詞' and t.pos2 == '非自立可能' and prev.lemma in ('て', 'で')) or \
-                    (t.pos == '名詞' and t.pos2 == '普通名詞' and prev.pos == '名詞' and prev.pos2 == '固有名詞'):
+                    (t.pos == '名詞' and t.pos2 == '普通名詞' and prev.pos == '名詞' and prev.pos2 == '固有名詞') or \
+                    (t.pos == '動詞' and t.lemma in SURU and prev.pos == '名詞' and prev.pos2 == '普通名詞'):
+                # サ変名詞 + する (運転する) は1つの述語
                 new = False
         if t.pos == '補助記号':
             new = False
@@ -171,7 +174,25 @@ def latin_lex(lemma, pos, lexeme=''):
         found = latin_lex(lemma[:-1] + 'する', pos)   # 愛す → 愛する (GiNZA の見出し)
     if found is None and pos == 'verb' and lemma.endswith('する'):
         found = ja_lexicon.lookup(lemma[:-2], 'verb') or ja_lexicon.lookup(lemma, 'verb')
+    if found is None and pos in ('noun', 'verb'):
+        found = _via_english(lemma, pos)
     return found
+
+
+def _via_english(lemma, pos):
+    """日本語の訳語を持つラテン語の語が無ければ、和英 (JMdict) の英語から英語 → ラテン語の表で (歌手 → singer → cantor、
+    選手 → player → lūsor、運転する → drive → …)。点が同じなら手作りの辞書の語を先に。日本語の訳語は元の語のまま (日本語に戻すとき「選手」)"""
+    from . import transfer
+    from dragoman.core import en_ja
+    # 動詞は英和の表を逆に (運転する → drive。和英の サ変名詞の英語は名詞の形 operation, driving なので)
+    english = list(en_ja.english_by_japanese(lemma, 'verb') if pos == 'verb' else transfer._ja_english(lemma))[:4]
+    if not english:
+        return None
+    found = transfer.by_english(english, 'la', pos)
+    if not found:
+        return None
+    _, target = min(found, key=lambda st: (st[0], not transfer._in_hand_dictionary(st[1].lemma)))
+    return Lex(target.lemma, pos, lemma, en=','.join(target.english)), ''
 
 
 def _gender(lex, gender):
@@ -261,10 +282,14 @@ def predicate(chunk):
         tense = 'present'
     mood = 'imperative' if any(t.cform.startswith('命令形') for t in tokens if t.pos == '動詞') else 'indicative'
     if head.pos == '動詞':
-        found = latin_lex(head.lemma, 'verb', head.lexeme)
-        verb = found[0] if found else Lex(head.lemma, 'verb')
+        lemma, lexeme = head.lemma, head.lexeme
+        k = tokens.index(head)
+        if lemma in SURU and k > 0 and tokens[k - 1].pos == '名詞':
+            lemma = lexeme = tokens[k - 1].lemma + 'する'   # 運転する
+        found = latin_lex(lemma, 'verb', lexeme)
+        verb = found[0] if found else Lex(lemma, 'verb')
         clause = Clause(verb, tense=tense, mood=mood, voice='passive' if passive else 'active', negated=negated)
-        clause.ja_verb = head.lemma
+        clause.ja_verb = lemma
         return clause
     # 形容詞・名詞 + だ: 繋辞の文 (sum) と補語
     clause = Clause(Lex('sum', 'verb', 'ある,いる,〜である'), tense=tense, mood=mood, negated=negated, copula=True)

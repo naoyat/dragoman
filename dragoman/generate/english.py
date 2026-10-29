@@ -233,7 +233,8 @@ def candidates(lex):
     female = female_counterpart(lex, found) if pos == 'noun' else None
     if female:   # 女性の人の名詞 (magistra: mistress, female teacher) は teacher を先に
         return [female] + [en for en in found if en != female]
-    best = _matching(tuple(found), lex.ja, pos)
+    sense = lex.sense.split(' (')[0]   # 文脈で決まった訳語 (drive (animals) → drive)
+    best = sense if sense in found else _matching(tuple(found), lex.ja, pos)
     return [best] + [en for en in found if en != best]
 
 
@@ -405,6 +406,9 @@ def superlative(adj):
 # 語形
 
 def plural(noun):
+    head, of, rest = noun.partition(' of ')
+    if of and head and ' ' not in head:   # of の前の名詞を複数に (piece of bread → pieces of bread)
+        return rest if head == 'head' else plural(head) + of + rest   # 家畜の頭数の head of cattle → cattle
     words = noun.split(' ')
     head = words[-1]
     if head in IRREGULAR_PLURAL:

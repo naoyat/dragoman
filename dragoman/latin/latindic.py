@@ -112,7 +112,17 @@ def lookup(word):
 def lookup_hand_deponent(word):
     """手作りの辞書を引き、同じ形の形式受動態動詞の読みを Wiktionary から足す (_with_deponent)"""
     hand = lookup_hand(word)
-    return _with_deponent(word, _without_vocative_participle(hand)) if hand else hand
+    return _with_agent_noun(word, _with_deponent(word, _without_vocative_participle(hand))) if hand else hand
+
+
+def _with_agent_noun(word, hand):
+    """手作りの辞書では受動の動詞の形 (cantor: cantō の受動の1人称単数) としか読めない -or の語に、Wiktionary の
+    名詞の読み (行為者名詞 cantor「歌い手」・amātor「恋する人」) を足す。手作りの辞書に名詞が無い語だけ"""
+    if not word.lower().endswith('or') or not all(item.get('pos') == 'verb' and item.get('voice') == 'passive'
+                                                  for item in hand):
+        return hand
+    nouns = [item for item in (lookup_wiktionary(word) or []) if item.get('pos') == 'noun']
+    return hand + nouns
 
 
 def _without_vocative_participle(items):
