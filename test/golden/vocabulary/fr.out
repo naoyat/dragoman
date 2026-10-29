@@ -162,7 +162,7 @@ amnis (noun) 川	rivière
 amor (noun) 愛	amour
 amīcus (noun) 友人	ami
 animus (noun) 心,考え	cœur
-annus (noun) 年,季節	an
+annus (noun) 年,季節	année
 aper (noun) 野猪	sanglier
 aqua (noun) 水	eau
 arbiter (noun) 証人,裁判官	témoin
@@ -192,7 +192,7 @@ collum (noun) 首	gorge
 color (noun) 色	coloration
 colus (noun) 糸巻き棒	quenouille
 commercium (noun) 交際	commerce
-commūtātiō (noun) 変化,変異	inflexion
+commūtātiō (noun) 変化,変異	changement
 coniungium (noun) 結婚	mariage
 cor (noun) 心,心臓	cœur
 cornū (noun) 角(つの)	cor
@@ -223,7 +223,7 @@ dōnum (noun) 贈物	don
 epistula (noun) 手紙	lettre
 equus (noun) 馬	cheval
 excelsum (noun) 高み	hauteur
-exemplar (noun) 模範	schéma
+exemplar (noun) 模範	modèle
 exemplum (noun) 例,サンプル	précédent
 exercitus (noun) 軍隊	armée
 faber (noun) 職人	artisan
@@ -329,7 +329,7 @@ mūrus (noun) 壁	mur
 nauta (noun) 水夫	matelot
 nimbus (noun) 雨	nuée
 nox (noun) 夜	nuit
-numerus (noun) 数,測定	numéro
+numerus (noun) 数,測定	nombre
 nuntius (noun) 使者	envoyé
 nātiō (noun) 国民	nation
 nāvis (noun) 船	navire
@@ -364,7 +364,7 @@ preada (noun) 戦利品	butin
 precēs (noun) 祈り,願い	prière
 principium (noun) 最初	prémices
 proelium (noun) 戦闘	bataille
-prātum (noun) 牧場,草原,野原	prairie
+prātum (noun) 牧場,草原,野原	pré
 prōditor (noun) 反逆者,裏切り者	traître
 prūdentia (noun) 思慮深さ	connaissance
 puella (noun) 少女	fille
@@ -387,7 +387,7 @@ rēx (noun) 王,指導者	roi
 rīvus (noun) 小川	rivière
 saeculum (noun) 時代,世代	an
 sapientia (noun) 知識,良識,知恵	sagesse
-saxum (noun) 岩	rock
+saxum (noun) 岩	roche
 schola (noun) 学校	école
 scrība (noun) 書記	secrétaire
 scūtum (noun) 盾	écu
@@ -422,7 +422,7 @@ tectum (noun) 屋根,家	toiture
 templum (noun) 神殿	temple
 tempus (noun) 時	temps
 tentōrium (noun) テント	guitoune
-tergum (noun) 背中	arrière
+tergum (noun) 背中	dos
 terra (noun) 地,大地	terre
 titulus (noun) 碑銘,題字	exergue
 triumphus (noun) 勝利	victoire
@@ -438,7 +438,7 @@ verbum (noun) 言葉	mot
 vesper (noun) 夕方	nuit
 vesper (noun) 夕方,晩,夜	nuit
 vespera (noun) 晩,夜の時間	nuit
-via (noun) 道	route
+via (noun) 道	chemin
 victima (noun) 犠牲,いけにえ,被害者	victime
 vir (noun) 男,夫	homme
 virgo (noun) 乙女	fille
@@ -453,7 +453,7 @@ vīta (noun) 人生	vie
 vōtum (noun) 誓約,祈り	vœu
 vōx (noun) 声	voix
 āra (noun) 祭壇	autel
-ātrium (noun) 広間,前室	temple
+ātrium (noun) 広間,前室	salle
 ēloquium (noun) 雄弁,修辞	verve
 īgnis (noun) 火	feu
 īnsula (noun) 島	île
@@ -498,7 +498,7 @@ cūrō (verb) 世話をする,育てる	arranger
 doceō (verb) 教える	enseigner
 dormiō (verb) 眠る	dormir
 dormītō (verb) まどろむ,居眠りをする	somnoler
-dubitō (verb) ためらう	barguigner
+dubitō (verb) ためらう	hésiter
 dēlectō (verb) 喜ばす	réjouir
 dēmōnstrō (verb) 示す	montrer
 dēserō (verb) 別れる,棄てる,見捨てる	délaisser
@@ -536,10 +536,10 @@ interrogō (verb) 尋ねる,質問する	demander
 intersum (verb) 間にある,相違する	être
 intrō (verb) 入る,貫く	entrer
 invideō (verb) 憎む	voir
-invītō (verb) 招く	convier
+invītō (verb) 招く	inviter
 jaceō (verb) 横たわる	envoyer du lourd
-jaciō (verb) 投げる	jeter
-jactō (verb) 投げる	jeter
+jaciō (verb) 投げる	lancer
+jactō (verb) 投げる	lancer
 lacrimō (verb) 泣く	pleurer
 laedō (verb) たたく	heurter
 laudō (verb) 称賛する,ほめる	louer
@@ -557,7 +557,7 @@ mōnstrō (verb) 示す,見せる	montrer
 mūtō (verb) 変える,(移り)変わる	altérer
 necō (verb) 殺す,滅ぼす	tuer
 nesciō (verb) ¬知る	connaître
-noscō (verb) 教わる,知る,学ぶ,習得する	connaître
+noscō (verb) 教わる,知る,学ぶ,習得する	savoir
 notō (verb) 印をつける,指し示す	marquer
 nārrō (verb) 語る,話す,言う	raconter
 nāvigō (verb) 航海する	naviguer
@@ -579,7 +579,7 @@ probō (verb) 試す,確かめる,賛成する	essayer
 properō (verb) 急ぐ	se dépêcher
 prōsum (verb) 役に立つ	aider
 putō (verb) 思う,考える	juger
-pāreō (verb) 現れる,従う	paraître
+pāreō (verb) 現れる,従う	apparaître
 pūgnō (verb) 戦う	combattre
 pūniō (verb) 罰する	coger
 rapiō (verb) 奪う	subtiliser

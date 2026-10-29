@@ -5,7 +5,7 @@ alacer (adj) 活発な	sirkeä
 albus (adj) 白い	valkoinen
 altus (adj) 高い,深い	pitkä
 amāns (adj) 情の厚い	-
-angustus (adj) 狭い	suppea
+angustus (adj) 狭い	kapea
 armātus (adj) 武装した	-
 arrogāns (adj) 不遜な	röyhkeä
 asper (adj) 荒い,苦しい	tyly
@@ -30,7 +30,7 @@ crūdus (adj) 生の	raaka
 cupidus (adj) 熱望する	hanakka
 cārus (adj) かわいい,大切な	hyvä
 cōnscius (adj) 同感の	tietoinen
-cūnctus (adj) 全体の	yhtenäinen
+cūnctus (adj) 全体の	koko
 dexter (adj) 右の,巧みな	oikea
 dignus (adj) 価する	asiallinen
 doctus (adj) 学識ある	-
@@ -66,7 +66,7 @@ impiger (adj) たゆまぬ	huolellinen
 ingrātus (adj) 不愉快な,恩知らずな	epämiellyttävä
 inimīcus (adj) 敵対する	vihamielinen
 integer (adj) 完全な	täysi
-jūcundus (adj) 快適な	mieluisa
+jūcundus (adj) 快適な	hauska
 jūstus (adj) 正しい	oikeudenmukainen
 lacer (adj) 裂けた	-
 laetus (adj) うれしい,愉快な	iloinen
@@ -74,7 +74,7 @@ laevus (adj) 左の,へたな	vasen
 largus (adj) 豊かな	runsas
 levis (adj) 軽い	kevyt
 longus (adj) 長い,広い	pitkä
-lātus (adj) 広い,大きい	leveä
+lātus (adj) 広い,大きい	laaja
 lēnis (adj) 穏やかな	loiva
 līber (adj) 自由な	vapaa
 maestus (adj) 悲嘆に暮れた	surullinen
@@ -140,7 +140,7 @@ varius (adj) 様々な	moninainen
 vastus (adj) 空の,誰もいない,荒涼とした	tyhjä
 vester (adj) あなたたちの	-
 vetus (adj) 古い,老いた	vanha
-viridis (adj) 緑の	uusi
+viridis (adj) 緑の	tuore
 vānus (adj) 空虚な	turhamainen
 vērus (adj) 本当の	tosi
 ācer (adj) 鋭い	terävä
@@ -172,10 +172,10 @@ armiger (noun) よろい持ち(従者)	turvamies
 armum (noun) 道具,武器	työkalu
 ars (noun) 術	taide
 atomus (noun) 原子	atomi
-auris (noun) 耳	korvakuulo
+auris (noun) 耳	korva
 aurum (noun) 金	kulta
 aurīga (noun) 御者	Ajomies
-auxilium (noun) 助け,援助,救助	nainen
+auxilium (noun) 助け,援助,救助	apu
 bellum (noun) 戦争	sota
 bracchium (noun) 腕	käsi
 caelum (noun) 天空	taivas
@@ -198,7 +198,7 @@ cor (noun) 心,心臓	sydän
 cornū (noun) 角(つの)	sarvi
 corpus (noun) 身体	vartalo
 cubīle (noun) 寝台	seslonki
-culter (noun) ナイフ	puukko
+culter (noun) ナイフ	veitsi
 currus (noun) 馬車	vaunu
 cursus (noun) コース	suunta
 cēna (noun) 食事	illallinen
@@ -233,7 +233,7 @@ familia (noun) 家族	perhe
 famulus (noun) 奉公人	palvelija
 ferrum (noun) 鉄,剣	rauta
 festum (noun) 祝祭	loma
-flamma (noun) 炎,火	leimu
+flamma (noun) 炎,火	liekki
 fluvius (noun) 流れ,川	vuo
 flōs (noun) 花	kukka
 flūmen (noun) 川	vuo
@@ -242,7 +242,7 @@ fortitūdō (noun) 力,勇気	vahvuus
 forum (noun) 市場,広場	markkinapaikka
 fructus (noun) 果実	hedelmä
 frāter (noun) 兄弟	veli
-frūmentum (noun) 麦の粒,穀粒,穀物	jyvä
+frūmentum (noun) 麦の粒,穀粒,穀物	vilja
 fāgus (noun) ブナの木(※木の実は中性)	puu
 fātum (noun) 運命	kohtalo
 fēmina (noun) 女性	nainen
@@ -270,7 +270,7 @@ hortus (noun) 庭	puutarha
 hospitium (noun) 歓待	viihde
 hostis (noun) 敵	vihollinen
 humus (noun) 大地	maailma
-hōra (noun) 時(じ)	aika
+hōra (noun) 時(じ)	tunti
 hūmānitās (noun) 人間性,親切	inhimillisyys
 imperātor (noun) 将軍	kenraali
 imāgō (noun) 像,似姿	imago
@@ -305,16 +305,16 @@ medium (noun) 真ん中	puoliväli
 membrum (noun) 四肢,(pl.)体	jäsen
 memoria (noun) 記憶	muisto
 meritum (noun) 奉仕,功績	palvelu
-methodus (noun) 方法	työtapa
+methodus (noun) 方法	menetelmä
 minister (noun) 召使	palvelija
 misericordia (noun) 慈悲,憐憫	sääli
 modus (noun) 制限,方法	raja-arvo
 monitum (noun) 忠告	neuvo
 mora (noun) 遅れ,間	viipymä
-mors (noun) 死	tuoni
+mors (noun) 死	kuolema
 mulier (noun) 婦人	nainen
-mundus (noun) 世界,宇宙	perusjoukko
-māgnitūdō (noun) 大きさ,偉大さ,多量,重要性	suuruus
+mundus (noun) 世界,宇宙	maailmankaikkeus
+māgnitūdō (noun) 大きさ,偉大さ,多量,重要性	koko
 mālus (noun) 林檎の木(※木の実は中性)	omena
 māter (noun) 母	äiti
 mēns (noun) 精神	sydän
@@ -325,7 +325,7 @@ mōnstrum (noun) 怪物	hirmu
 mōrbus (noun) 病気	tauti
 mōrus (noun) 桑の木(※木の実は中性)	puu
 mōs (noun) 意思,習慣,性格	tahto
-mūrus (noun) 壁	muuri
+mūrus (noun) 壁	seinä
 nauta (noun) 水夫	merimies
 nimbus (noun) 雨	rankkasade
 nox (noun) 夜	yö
@@ -341,7 +341,7 @@ officium (noun) 義務	tullimaksu
 oppidum (noun) 町	kaupunki
 opus (noun) 仕事	työ
 osculum (noun) キス	suukko
-ostium (noun) 口,入口	kita
+ostium (noun) 口,入口	suu
 palla (noun) コート	pinnoite
 pars (noun) 部分	osa
 pater (noun) 父	isä
@@ -382,7 +382,7 @@ rāmus (noun) 枝	haara
 rēgnum (noun) 支配,王権,王国	hallituskausi
 rēgulus (noun) 王子	kuningas
 rēgīna (noun) 女王	kuningatar
-rēs (noun) 物,事	kappale
+rēs (noun) 物,事	esine
 rēx (noun) 王,指導者	kuningas
 rīvus (noun) 小川	vuo
 saeculum (noun) 時代,世代	vuosi
@@ -422,7 +422,7 @@ tectum (noun) 屋根,家	ulkokatto
 templum (noun) 神殿	pingotin
 tempus (noun) 時	aika
 tentōrium (noun) テント	teltta
-tergum (noun) 背中	perä
+tergum (noun) 背中	selkä
 terra (noun) 地,大地	maa
 titulus (noun) 碑銘,題字	piirtokirjoitus
 triumphus (noun) 勝利	triumfi
@@ -431,13 +431,13 @@ ulmus (noun) ニレの木	jalava
 umerus (noun) 肩	lapa
 unda (noun) 波	aalto
 urbs (noun) 都市	kaupunki
-uxor (noun) 妻	ämmä
+uxor (noun) 妻	vaimo
 vanus (noun) 箕	pohdin
 ventus (noun) 風	tuuli
 verbum (noun) 言葉	sana
 vesper (noun) 夕方	ilta
 vesper (noun) 夕方,晩,夜	yö
-vespera (noun) 晩,夜の時間	yö
+vespera (noun) 晩,夜の時間	ilta
 via (noun) 道	tie
 victima (noun) 犠牲,いけにえ,被害者	uhri
 vir (noun) 男,夫	mies
@@ -461,7 +461,7 @@ vōx (noun) 声	pääluokka
 ōmen (noun) 前兆	enne
 ōrātor (noun) 弁論家	puhuja
 ōsculum (noun) くちづけ	suukko
-ōtium (noun) 暇,休日	joutoaika
+ōtium (noun) 暇,休日	vapaa-aika
 ōvum (noun) 卵	muna
 ūva (noun) ぶどうの実,ぶどうの房	hedelmä
 absum (verb) 不在である,離れている	olla
@@ -569,7 +569,7 @@ occupō (verb) 先取りする,占有する,占領する	ennakoida
 oppūgnō (verb) 襲う,攻撃する	hyökätä
 pandō (verb) 広げる,開ける	avata
 parō (verb) 用意する	järjestää
-pellō (verb) 押す	painaa
+pellō (verb) 押す	työntää
 perterreō (verb) おののかせる	säikyttää
 placeō (verb) 良いと思う	olla
 portō (verb) 運ぶ	kantaa
@@ -618,7 +618,7 @@ videō (verb) 見る	nähdä
 vinciō (verb) 結ぶ	sitoa
 vincō (verb) 勝つ	voittaa
 vocō (verb) 呼ぶ,名付ける	pirauttaa
-vītō (verb) 避ける	karttaa
+vītō (verb) 避ける	välttää
 vīvō (verb) 生きる	elää
 ēvolō (verb) 飛び立つ,飛び出る	lentää
 ōrnō (verb) 備える,飾る	varustaa

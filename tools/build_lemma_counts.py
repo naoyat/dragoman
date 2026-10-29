@@ -4,10 +4,12 @@
 # 見出し語の出現数の表を Universal Dependencies のコーパスから作る (文の生成の語の置き換えで、よく使う語を先にする目安。
 # 辞書の語義の数だけでは ἡσυχία「静けさ」が εἰρήνη「平和」より先に来る)
 #
-#   python3 tools/build_lemma_counts.py --lang=grc      (grc / ru / sa / id / tl / fa / hi / ur / pt / zh / ko / de。--lang=all で全部)
+#   python3 tools/build_lemma_counts.py --lang=grc      (grc / ru / sa / id / tl / fa / hi / ur / pt / zh / ko / de / fr / fi / tr。--lang=all で全部)
 #
 # 見出し語は英語の索引 (en-index.tsv) と同じ形に: ロシア語はアクセント記号を除いた形、サンスクリットは SLP1。
 # インドネシア語・タガログ語は、索引の見出しが接辞の付いた形 (mengangkat) なので、語形 (小文字) も数える。
+# フィンランド語は複合語の境目の # を除き (lain#säädäntö)、トルコ語の動詞は語幹だけなので -mak・-mek を付ける (gel → gelmek)。
+# モンゴル語の UD はラテン文字の転写なので使わない。
 # 韓国語 (KAIST) の見出し語は形態素を + でつないだ形 (가수+가、운전+하+ㄴ다) なので、XPOS の印で辞書の見出しに直す
 # (名詞は先頭の名詞の形態素: 가수。動詞・形容詞は語尾の前まで + 다: 운전하다。品詞も XPOS から: 連結の形は UPOS が CCONJ)
 #
@@ -28,7 +30,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from dragoman.core import paths
 
 UPOS = {'NOUN': 'noun', 'PROPN': 'noun', 'VERB': 'verb', 'AUX': 'verb', 'ADJ': 'adj', 'ADV': 'adv'}
-LANGS = ('grc', 'ru', 'sa', 'id', 'tl', 'fa', 'hi', 'ur', 'pt', 'zh', 'ko', 'de')
+LANGS = ('grc', 'ru', 'sa', 'id', 'tl', 'fa', 'hi', 'ur', 'pt', 'zh', 'ko', 'de', 'fr', 'fi', 'tr')
 
 
 def korean_key(lemma, xpos):
@@ -53,8 +55,13 @@ def korean_key(lemma, xpos):
     return None
 
 
-def key(lang, lemma):
+def key(lang, lemma, upos=''):
     lemma = unicodedata.normalize('NFC', lemma)
+    if lang == 'fi':
+        return lemma.replace('#', '')   # 複合語の境目 (lain#säädäntö → lainsäädäntö)
+    if lang == 'tr' and upos == 'VERB' and not lemma.endswith(('mak', 'mek')):
+        vowels = [c for c in lemma.lower() if c in 'aeıioöuü']   # 動詞は語幹だけ (gel → gelmek、ol → olmak)
+        return lemma + ('mek' if vowels and vowels[-1] in 'eiöü' else 'mak')
     if lang == 'ru':
         from dragoman.russian import script
         return script.key(lemma)
@@ -80,9 +87,9 @@ def build(lang):
                 if lang == 'ko':
                     lemma, pos = (korean_key(lemma, fields[4]) if len(fields) > 4 else None) or (None, None)
                 if lemma and lemma != '_':
-                    counts[key(lang, lemma)] += 1
+                    counts[key(lang, lemma, fields[3])] += 1
                     if pos:
-                        by_pos[key(lang, lemma), pos] += 1
+                        by_pos[key(lang, lemma, fields[3]), pos] += 1
                 if lang in ('id', 'tl') and form.lower() != lemma.lower():
                     counts[form.lower()] += 1
                     if pos:

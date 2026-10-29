@@ -535,6 +535,14 @@ for _lang, _lemma in (('de', 'fahren'), ('ru', 'водить'), ('ko', '운전�
     PREFERRED.setdefault(_lang, {})[('drive', 'verb')] = (_lemma, '')
 # 韓国語の say は 말하다 (コーパスに多い 위하다「〜のために」にしない)
 PREFERRED.setdefault('ko', {})[('say', 'verb')] = ('말하다', '')
+# 小さいコーパスの出現数で、同じ英語の別の意味の語が勝つもの (トルコ語の temple → şakak「こめかみ」、フランス語の
+# time → fois「〜回」、フィンランド語の fire → palo「火事」)
+for _lang, _en, _pos, _lemma in (('tr', 'temple', 'noun', 'tapınak'), ('tr', 'mark', 'noun', 'işaret'),
+                                 ('tr', 'healthy', 'adj', 'sağlıklı'), ('fr', 'time', 'noun', 'temps'),
+                                 ('fr', 'change', 'noun', 'changement'), ('fr', 'back', 'noun', 'dos'),
+                                 ('fi', 'fire', 'noun', 'tuli'), ('fi', 'grass', 'noun', 'ruoho'),
+                                 ('fi', 'push', 'verb', 'työntää')):
+    PREFERRED.setdefault(_lang, {})[(_en, _pos)] = (_lemma, '')
 # 英語の player はドイツ語の Spieler (語義の多い Werderaner「Werder Bremen の選手」にしない)
 PREFERRED['de'][('player', 'noun')] = ('Spieler', 'm')
 PARTICLES = ('to', 'as', 'at', 'on', 'for', 'with', 'into', 'upon', 'in', 'from', 'of', 'out', 'up', 'away',
@@ -659,8 +667,10 @@ def explain(lex, lang, pos=None, limit=8):
 
 # コーパスでの出現数 (tools/build_lemma_counts.py が UD から作る) の重み: よく使う語を先に (εἰρήνη を ἡσυχία より)
 # 見出し語の形がコーパスと索引で揃うところだけ (サンスクリットの UD の動詞は語根の形が違うので名詞・形容詞だけ。
-# タガログ語・ポルトガル語・ドイツ語 (UD の test だけ)・中国語はコーパスが小さいので軽く。韓国語は KAIST)
-FREQUENCY_WEIGHT = {'grc': 1.0, 'ru': 1.0, 'id': 1.0, 'sa': 1.0, 'ko': 1.0, 'tl': 0.5, 'pt': 0.5, 'zh': 0.5, 'de': 0.5}
+# タガログ語・ポルトガル語・ドイツ語・フランス語・フィンランド語・トルコ語 (UD の test だけ)・中国語はコーパスが小さいので軽く。
+# 韓国語は KAIST。モンゴル語の UD は転写、アラビア語・ヘブライ語は英語の索引を通らないので無し)
+FREQUENCY_WEIGHT = {'grc': 1.0, 'ru': 1.0, 'id': 1.0, 'sa': 1.0, 'ko': 1.0, 'tl': 0.5, 'pt': 0.5, 'zh': 0.5, 'de': 0.5,
+                    'fr': 0.5, 'fi': 0.5, 'tr': 0.5}
 # 元の語の上位の英語の訳語の複数に合う語の重み (arca: chest, box →「箱」)。大きいと語義の多い語 (ἡσυχία: peace, rest) が勝つ
 MULTIPLE_MATCH_WEIGHT = 1.0
 

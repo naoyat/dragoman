@@ -87,9 +87,9 @@ Via longa et lāta est .
     主語 (Nom/Voc): via sg f
     補語 (Nom/Voc/Nom/Voc/Acc): longus sg f et lātus sg f
   ドイツ語: Der Weg ist das lang und das weit.
-  フランス語: La route est longue et large.
-  フィンランド語: Tie on pitkä ja leveä.
-  トルコ語:  Yol uzun ve ferah.
+  フランス語: Le chemin est long et large.
+  フィンランド語: Tie on pitkä ja laaja.
+  トルコ語:  Yol uzun ve geniş.
   モンゴル語: Мөр урт ба өргөн.
   韓国語:   길이 길고 넓다.
 Agricola laetus nōn erit .
@@ -107,9 +107,9 @@ Via longa et lāta nōn erat .
     主語 (Nom/Voc): via sg f
     補語 (Nom/Voc/Nom/Voc/Acc): longus sg f et lātus sg f
   ドイツ語: Der Weg war nicht das lang und das weit.
-  フランス語: La route n'était pas longue et large.
-  フィンランド語: Tie ei ollut pitkä ja leveä.
-  トルコ語:  Yol uzun ve ferah değildi.
+  フランス語: Le chemin n'était pas long et large.
+  フィンランド語: Tie ei ollut pitkä ja laaja.
+  トルコ語:  Yol uzun ve geniş değildi.
   モンゴル語: Мөр урт ба өргөн биш байсан.
   韓国語:   길이 길고 안 넓었다.
 Templum aureum est .
@@ -217,7 +217,7 @@ Hīs rēbus cognitīs agricola ad vīllam vēnit .
     辞書に無い語 (): cognitīs sg
   ドイツ語: Der Bauer kam diesen Gegenständen.
   フランス語: L'agriculteur est venu à ces objets.
-  フィンランド語: Maanviljelijä tuli tälle kappaleille.
+  フィンランド語: Maanviljelijä tuli tälle esineille.
   トルコ語:  Çiftçi bu nesnelere geldi.
   モンゴル語: Тариачин энэ объектод ирсэн.
   韓国語:   농부가 이 적에게 왔다.
@@ -240,7 +240,7 @@ Rēge mortuō populus flēvit .
   ドイツ語: Das Gedränge weinte dem König.
   フランス語: La foule a larmoyé par le roi.
   フィンランド語: Väki pillitti kuninkaalle.
-  トルコ語:  Cemaat krala ağladı.
+  トルコ語:  Kalabalık krala ağladı.
   モンゴル語: Иргэн хаанд уйлсан.
   韓国語:   대중이 왕에게 울었다.
 Cum hīs rēbus cognitīs vēnit .
@@ -248,7 +248,7 @@ Cum hīs rēbus cognitīs vēnit .
     前置詞句 (cum + Abl): rēs pl f + hic
   ドイツ語: Er kam mit diesen Gegenständen.
   フランス語: Il est venu avec ces objets.
-  フィンランド語: Hän tuli tämän kappaleiden kanssa.
+  フィンランド語: Hän tuli tämän esineiden kanssa.
   トルコ語:  Bu nesnelerle geldi.
   モンゴル語: Энэ объекттой ирсэн.
   韓国語:   이 적과 함께 왔다.
@@ -402,7 +402,7 @@ Uir uiam uidet .
     主語 (Nom/Voc): vir sg m
     目的語 (Acc): via sg f
   ドイツ語: Der Mann sieht den Weg.
-  フランス語: L'homme voit la route.
+  フランス語: L'homme voit le chemin.
   フィンランド語: Mies näkee tien.
   トルコ語:  Adam yolu görüyor.
   モンゴル語: Хүн мөрийг үзнэ.
