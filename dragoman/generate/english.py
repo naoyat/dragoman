@@ -233,8 +233,8 @@ def candidates(lex):
     female = female_counterpart(lex, found) if pos == 'noun' else None
     if female:   # 女性の人の名詞 (magistra: mistress, female teacher) は teacher を先に
         return [female] + [en for en in found if en != female]
-    sense = lex.sense.split(' (')[0]   # 文脈で決まった訳語 (drive (animals) → drive)
-    best = sense if sense in found else _matching(tuple(found), lex.ja, pos)
+    sense = lex.sense.split(' (')[0]   # 文脈で決まった訳語 (drive (animals) → drive。辞書に無くても: wage (war) → wage)
+    best = sense or _matching(tuple(found), lex.ja, pos)
     return [best] + [en for en in found if en != best]
 
 

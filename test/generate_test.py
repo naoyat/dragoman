@@ -172,6 +172,12 @@ class WhQuestionTestCase(unittest.TestCase):
         self.assertEqual(self.out(german, 'de', 'Aurīga equōs agit.'), 'Der Kutscher treibt die Pferde.')
         self.assertEqual(japanese.sentence(clauses('Aurīga equōs agit.')), '御者は馬たちを駆る。')
         self.assertEqual(self.out(english, 'en', 'Puer rem agit.'), 'The boy does the object.')
+        # 目的語で決まるほかの言い回し (uxōrem dūcit「妻を娶る」、vītam agit「人生を送る」)
+        self.assertEqual(self.out(english, 'en', 'Puer uxōrem dūcit.'), 'The boy marries the wife.')
+        self.assertEqual(self.out(german, 'de', 'Puer uxōrem dūcit.'), 'Der Junge heiratet die Frau.')
+        self.assertEqual(japanese.sentence(clauses('Puer uxōrem dūcit.')), '少年は妻を娶る。')
+        self.assertEqual(self.out(german, 'de', 'Puella vītam agit.'), 'Das Mädchen verbringt das Leben.')
+        self.assertEqual(self.out(english, 'en', 'Puer librum dūcit.'), 'The boy leads the book.')
         self.assertEqual(english.plural('head of cattle'), 'cattle')
         self.assertEqual(english.plural('piece of bread'), 'pieces of bread')
         from dragoman.generate import transfer

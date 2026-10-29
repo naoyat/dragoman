@@ -811,10 +811,12 @@ def clause_of(predicate, lang=None):
         _french_inversion(clause)
     if _lang in ('', 'la') and clause.verb.lemma in DATIVE_SENSES and clause.role('recipient'):
         clause.verb = dataclasses.replace(clause.verb, ja=DATIVE_SENSES[clause.verb.lemma])   # dominō pāret「主に従う」
-    if _lang in ('', 'la') and clause.verb.lemma in OBJECT_SENSES:
-        nouns, ja, en = OBJECT_SENSES[clause.verb.lemma]
-        if any(np.head is not None and np.head.lemma in nouns for np in clause.role('object')):
-            clause.verb = dataclasses.replace(clause.verb, ja=ja, sense=en)   # equōs agit「馬を駆る」・drives the horses
+    if _lang in ('', 'la'):
+        objects = {np.head.lemma for np in clause.role('object') if np.head is not None}
+        for nouns, ja, en in OBJECT_SENSES.get(clause.verb.lemma, ()):
+            if objects & nouns:   # equōs agit「馬を駆る」・drives the horses、uxōrem dūcit「妻を娶る」・marries
+                clause.verb = dataclasses.replace(clause.verb, ja=ja, sense=en)
+                break
     if _lang in ('pt', 'zh'):
         _portuguese_chinese_frame(clause, verb_item)
     if verb_item.attrib('modal') in SOURCE_MODALS:
@@ -855,9 +857,17 @@ _UNMARKED_RELATIVES = set()   # 相の印 (了・过) の無い中国語の関�
 # 与格を取るときの意味 (辞書の最初の訳語は別の意味: pāreō「現れる」)
 DATIVE_SENSES = {'pāreō': '従う'}
 # 目的語の名詞で決まる意味 (agō「する」は家畜を目的語にすると「駆る」: equōs agit → drives the horses)。
-# 英語の訳語は括弧の前 (drive)。ほかの言語の語はこの名前で transfer.SENSE_TARGETS から (ドイツ語 treiben)
-OBJECT_SENSES = {'agō': ({'equus', 'equa', 'bōs', 'pecus', 'grex', 'armentum', 'capella', 'capra', 'ovis', 'iūmentum',
-                          'asinus', 'mūlus', 'taurus', 'vacca', 'porcus', 'currus', 'praeda'}, '駆る', 'drive (animals)')}
+# 英語の訳語は括弧の前 (drive。辞書の訳語に無くても: wage)。ほかの言語の語はこの名前で transfer.SENSE_TARGETS から
+# (ドイツ語 treiben)、無ければ英語の訳語から
+OBJECT_SENSES = {
+    'agō': [({'equus', 'equa', 'bōs', 'pecus', 'grex', 'armentum', 'capella', 'capra', 'ovis', 'iūmentum', 'asinus',
+              'mūlus', 'taurus', 'vacca', 'porcus', 'currus', 'praeda'}, '駆る', 'drive (animals)'),
+            ({'vīta', 'aetās'}, '送る', 'spend (life)')],      # vītam agit「人生を送る」
+    'dūcō': [({'uxor', 'conjux', 'coniunx'}, '娶る', 'marry (wife)')],   # uxōrem dūcit「妻を娶る」
+    'gerō': [({'bellum'}, '行う', 'wage (war)')],                # bellum gerit「戦争を行う」
+    'habeō': [({'ōrātiō'}, '行う', 'deliver (speech)')],         # ōrātiōnem habet「演説を行う」
+}
+# (grātiās agit「感謝する」・poenās dat「罰を受ける」は与格の受け手・目的語の扱いが要るので、まだ入れない)
 
 # 「上に」の前置詞 (на столе・auf dem Tisch・sur la table)。ラテン語の in + 奪格は「中に」と区別しないので、上に乗る名詞で決める
 # (in mēnsā → on the table・auf dem Tisch、in monte・in mūrō・in terrā・in viā。対格の in mēnsam → onto・auf den Tisch)
