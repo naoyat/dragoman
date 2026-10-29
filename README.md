@@ -71,6 +71,11 @@ pip install -r requirements.txt     # または pip install -e .  (dragoman コ�
 手順でデータを用意します。データは `~/.local/share/dragoman-data/`（環境変数 `DRAGOMAN_DATA` で変更可。旧名の
 `LATIN_DATA` と `~/.local/share/latin-data` も読む）に置き、リポジトリには入れません。
 
+置いたデータから辞書・索引をまとめて作り直すには `python3 tools/rebuild_data.py --lang=all`（`--lang=de,ko` で言語を、
+`--only=dic,index` で工程を絞る。`--dry-run` で何をするかだけ）。作る前に出力の控え（`.bak-日付`）を取り、入力の無い工程は
+飛ばし、最後に出力ごとの変化（変わった行の数・表の行数）を出します。データの置き場所の `MANIFEST.tsv` に入力の一覧
+（大きさ・日付・取得元・ライセンス。手元に無いものは missing）を書きます。
+
 英語 → 日本語の訳語の表は、日本語版 Wiktionary の抽出（[kaikki.org の ja-extract](https://kaikki.org/dictionary/rawdata.html)、
 `ja-extract.jsonl.gz`）と [JMdict](https://www.edrdg.org/jmdict/j_jmdict.html)（`JMdict_e.gz`、EDRDG、CC BY-SA 4.0。任意）を
 データの置き場所に置いて作ります:
