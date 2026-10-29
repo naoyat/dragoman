@@ -14,6 +14,11 @@
 #   python3 tools/generate.py --gaps samples/samples.txt   訳語の見つからない語の一覧だけ (生成文は出さない)
 #   python3 tools/generate.py --compare "Rosam in hortō vīdit."   要素ごとに各言語の手段を並べる (前置詞と格・語順・助詞、
 #                                                                 書かれていない主語を補うか …)
+#   python3 tools/generate.py --vocabulary   手作りの辞書の名詞・動詞・形容詞の、言語ごとの訳語の表 (言語 TAB 語 TAB 訳語。
+#                                         test/vocabulary_golden_test.py の正解と比べる)
+#   python3 tools/generate.py --why=lūsor --to=de,ko   語の訳語を選んだ理由 (候補ごとの点の内訳。表で決まったならその表)。
+#                                         --pos=noun で品詞を絞る。--from=en なら英語の語から (--why=player --from=en)、
+#                                         --from=ru などはその言語の見出しから
 #
 # ラテン語に戻した文が元の文と同じ語 (順序は問わない) になれば ✓。違えば、違う語を出す。
 # ファイルは1行1文 (# で始まる行は飛ばす。samples/samples.txt の形)
@@ -211,7 +216,7 @@ def _source_words(text, lang):
 def main():
     import getopt
     latindic.load()
-    opts, args = getopt.gnu_getopt(sys.argv[1:], '', ['to=', 'from=', 'compare', 'gaps'])
+    opts, args = getopt.gnu_getopt(sys.argv[1:], '', ['to=', 'from=', 'compare', 'gaps', 'why=', 'pos=', 'vocabulary'])
     TARGETS[:] = ['en', 'la'] + [lang for lang, _, module in OTHERS if module.available()]
     source = 'la'
     for opt, value in opts:
@@ -223,6 +228,17 @@ def main():
             COMPARE.append(True)
         elif opt == '--gaps':
             GAPS.append(True)
+        elif opt == '--why':
+            WHY['word'] = unicodedata.normalize('NFC', value)
+        elif opt == '--pos':
+            WHY['pos'] = value
+        elif opt == '--vocabulary':
+            for line in vocabulary():
+                print(line)
+            return
+    if WHY:
+        explain_word(WHY['word'], source, WHY.get('pos'))
+        return
     if COMPARE:   # 比べる言語: 作る言語と元の言語
         COMPARE[:] = list(dict.fromkeys(TARGETS + [source] + (['la'] if source != 'la' else [])))
     global run
@@ -248,6 +264,78 @@ def main():
         return
     for text in texts:
         run(text)
+
+
+WHY = {}   # --why: 語 (word) と品詞 (pos)
+
+
+def why_lexes(word, source, pos=None):
+    """--why の語 → [Lex]。ラテン語は辞書の項目ごと (品詞・訳語)。英語・ほかの言語は見出しのまま"""
+    if source == 'en':
+        return [frame.Lex(word, p, en=word, lang='en') for p in ([pos] if pos else ['noun', 'verb', 'adj'])]
+    if source != 'la':
+        return [frame.Lex(word, pos or 'noun', lang=source)]
+    lexes = []
+    for item in latindic.lookup(word) or []:
+        p = {'participle': 'verb'}.get(item.get('pos'), item.get('pos'))
+        lemma = item.get('base') or frame._verb_lemma(item.get('pres1sg'))
+        if not lemma or p not in ('noun', 'verb', 'adj', 'adv') or (pos and p != pos):
+            continue
+        english_only = item.get('gloss_lang') == 'en'
+        lex = frame.Lex(lemma, p, '' if english_only else item.get('ja', ''), en=item.get('ja', '') if english_only else '')
+        if lex not in lexes:
+            lexes.append(lex)
+    return lexes or [frame.Lex(word, pos or 'noun')]
+
+
+def explain_word(word, source, pos=None):
+    """--why: 作る言語ごとに、語の訳語を選んだ理由"""
+    from dragoman.generate import transfer
+    for lex in why_lexes(word, source, pos):
+        print('%s (%s) %s' % (lex.lemma, lex.pos, lex.ja or lex.en))
+        for lang in TARGETS:
+            if lang == 'en':
+                print('  en: ' + (', '.join(english.candidates(lex)) or '候補なし') + '  (先頭を使う)')
+            elif lang in ('ja', 'kobun'):
+                print('  %s: %s' % (lang, japanese.gloss(lex)))
+            elif lang == source or (lang == 'la' and source == 'la'):
+                continue
+            else:
+                print('  %s:' % lang)
+                for line in transfer.explain(lex, lang)[1:]:   # 1行目 (語 → 言語) は見出しと重なるので除く
+                    print('  ' + line)
+        print()
+
+
+def vocabulary_lexes():
+    """手作りの辞書の名詞・動詞・形容詞 (固有名詞を除く) → [Lex] (品詞・見出しの順)"""
+    seen = {}
+    for items in latindic.LatinDic.dic.values():
+        for item in items:
+            pos = item.get('pos')
+            lemma = item.get('base') or frame._verb_lemma(item.get('pres1sg'))
+            if pos not in ('noun', 'verb', 'adj') or not lemma or lemma[:1].isupper() or item.get('source') or \
+                    item.get('rank'):   # 比較級・最上級の形 (bonus「より良い」) は原級の語と重なるので除く
+                continue
+            seen.setdefault((pos, lemma, item.get('ja', '')), frame.Lex(lemma, pos, item.get('ja', '')))
+    return [seen[key] for key in sorted(seen)]
+
+
+def vocabulary():
+    """--vocabulary: 言語ごとの訳語の表の行 (言語 TAB 語 (品詞) 日本語 TAB 訳語)。辞書の無い言語は飛ばす"""
+    from dragoman.generate import transfer
+    lines = []
+    lexes = vocabulary_lexes()
+    for lang in ['en'] + [lang for lang, _, module in OTHERS if module.available() and lang not in ('ja', 'kobun')]:
+        for lex in lexes:
+            if lang == 'en':
+                found = english.candidates(lex)
+                word = found[0] if found else '-'
+            else:
+                best = transfer.best(lex, lang)
+                word = best.lemma if best else '-'
+            lines.append('%s\t%s (%s) %s\t%s' % (lang, lex.lemma, lex.pos, lex.ja, word))
+    return lines
 
 
 GAPS = []   # --gaps: 生成文は出さず、言語ごとに訳語の見つからない語 ([英語] のまま残った語) の一覧だけ

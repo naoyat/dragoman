@@ -569,55 +569,92 @@ def _variants(sources):
     return out
 
 
-def candidates(lex, lang, pos=None):
-    """Lex → [(点, Target)] (点の小さいほうが良い)。元の言語と作る言語が同じなら置き換えない"""
+def candidates(lex, lang, pos=None, trace=None):
+    """Lex → [(点, Target)] (点の小さいほうが良い)。元の言語と作る言語が同じなら置き換えない。
+    trace (dict) を渡すと、選んだ理由を入れる: 'sources' (英語の訳語の並び)、'decided' (表で決まったときの表の名前)、
+    'parts' ((見出し, 品詞) → [(点の項目, 値)]。その語の一番良い点の内訳)"""
+    trace = {} if trace is None else trace
     pos = pos or {'participle': 'verb'}.get(lex.pos, lex.pos)
     if (lex.lang or 'la') == lang:
+        trace['decided'] = '元の言語と同じ'
         return [(-1000, Target(source_key(lang, lex.lemma), pos, (), '', '', 1))]
     if lex.sense in SENSE_TARGETS.get(lang, {}):   # 文脈で決まった意味の語 (家畜を drive → treiben)
+        trace['decided'] = 'SENSE_TARGETS[%r]' % lex.sense
         return [(-100, Target(SENSE_TARGETS[lang][lex.sense], pos, (lex.sense,), '', ''))]
     sources = english.candidates(lex) or ([e for e in lex.en.split(',') if e] if lex.en else [])
+    trace['sources'] = list(sources)
     for en in sources[:1] + [e.replace(' for', '') for e in sources[:1] if e.endswith(' for')]:   # wait for → wait
         words = en.lower().split(' ')
-        preferred = PREFERRED.get(lang, {}).get((en.lower(), pos)) or \
-            PREFERRED.get(lang, {}).get((words[-1], pos)) or \
-            (PREFERRED.get(lang, {}).get((words[0], pos)) if pos == 'verb' else None)   # die of … → die
-        if preferred:
-            lemma, extra = preferred
+        keys = [(en.lower(), pos), (words[-1], pos)] + ([(words[0], pos)] if pos == 'verb' else [])   # die of … → die
+        key = next((k for k in keys if k in PREFERRED.get(lang, {})), None)
+        if key:
+            lemma, extra = PREFERRED[lang][key]
             gender, gana = (extra, '') if pos != 'verb' else ('', extra)
+            trace['decided'] = 'PREFERRED[%r]' % (key,)
             return [(-100, Target(lemma, pos, (en,), gender, gana))]
     wanted = [j.strip() for j in (lex.ja or '').split(',') if j.strip()]
     if pos == 'noun' and english.female_counterpart(lex):
         wanted = []   # 女性の人の名詞 (magistra) は英語の teacher から。日本語の訳語 (主婦) で選ばない
     if (lex.lang or 'la') == 'la':   # 日本語の訳語が手作りの辞書のもの (ほかの言語の語の日本語は英語から作ったもの)
         sources = _with_japanese(sources[:6], wanted)
-    scored, matched = {}, {}
+    trace['sources'] = list(sources[:8])
+    scored, matched, parts = {}, {}, {}
     for i, en in _variants(sources[:8]):
         for j, target in _index(lang).get(en.lower(), []):
             if target.pos != pos or j > 5:
                 continue
             # 出現数は、元の語の筆頭の英語が語の筆頭の語義のときだけ (よく出る хороший を great で、πόλις を villa の
             # 4番目の city で取らない)
-            score = 3 * i + j - math.log(1 + target.senses) - (_frequency(lang, target) if i == 0 and j == 0 else 0)
+            items = [('英語 %s (%g番目) × 3' % (en, i + 1), 3 * i), ('語の中の順位 %d' % (j + 1), j),
+                     ('語義の数 %d' % target.senses, -math.log(1 + target.senses))]
+            if i == 0 and j == 0 and _frequency(lang, target):
+                items.append(('出現数 %d' % _count(lang, target.lemma, target.pos), -_frequency(lang, target)))
             if lang == 'la' and _in_hand_dictionary(target.lemma) or target.lemma in hand_glosses(lang):
-                score -= 3   # 手作りの辞書にある (よく使う) 語 (hortus を gardīnum より、소녀 を 계집 より)
+                items.append(('手作りの辞書', -3))   # よく使う語 (hortus を gardīnum より、소녀 を 계집 より)
             ja = japanese(lang, target)
             if wanted and wanted[0] in ja:
-                score -= 3     # 日本語の一番の訳語が合う
+                items.append(('日本語の一番の訳語「%s」' % wanted[0], -3))
             elif any(w in ja for w in wanted):
-                score -= 2
+                items.append(('日本語の訳語「%s」' % next(w for w in wanted if w in ja), -2))
+            score = sum(v for _, v in items)
             if i < 3:   # 上位の英語の訳語だけ数える (pater の5番目 priest で батюшка・pari を良くしない)
                 matched.setdefault((target.lemma, target.pos), set()).add(int(i))
             if target not in scored or score < scored[target]:
                 scored[target] = score
+                parts[target] = items
     # 元の語の英語の訳語の複数に合う語を良くする (arca: chest, box → 「胸」の uras より、chest と box の両方にある「箱」)
     best_by_lemma = {}
+    trace['parts'] = {}
     for target, score in scored.items():
-        score -= MULTIPLE_MATCH_WEIGHT * max(0, len(matched.get((target.lemma, target.pos), ())) - 1)
         key = (target.lemma, target.pos)
+        n = len(matched.get(key, ()))
+        score -= MULTIPLE_MATCH_WEIGHT * max(0, n - 1)
         if key not in best_by_lemma or score < best_by_lemma[key][0]:
             best_by_lemma[key] = (score, target)
+            trace['parts'][key] = parts[target] + ([('英語の訳語 %d つに合う' % n, -MULTIPLE_MATCH_WEIGHT * (n - 1))]
+                                                   if n > 1 else [])
     return sorted(best_by_lemma.values(), key=lambda st: st[0])
+
+
+def explain(lex, lang, pos=None, limit=8):
+    """選んだ訳語の理由の表 (tools/generate.py --why)。行の列"""
+    trace = {}
+    found = candidates(lex, lang, pos, trace)
+    lines = ['%s (%s) → %s' % (lex.lemma, pos or lex.pos, lang)]
+    if trace.get('sources'):
+        lines.append('  英語の訳語: ' + ', '.join(trace['sources']))
+    if trace.get('decided'):
+        lines.append('  表で決まり: %s → %s' % (trace['decided'], found[0][1].lemma if found else '-'))
+        return lines
+    if not found:
+        lines.append('  候補なし')
+    for k, (score, target) in enumerate(found[:limit]):
+        detail = ', '.join('%s %+.2f' % (name, value) for name, value in trace['parts'].get((target.lemma, target.pos), [])
+                           if value)
+        lines.append('  %s %6.2f  %s  (%s)' % ('→' if k == 0 else ' ', score, target.lemma, detail))
+    if len(found) > limit:
+        lines.append('  … ほか %d 語' % (len(found) - limit))
+    return lines
 
 
 # コーパスでの出現数 (tools/build_lemma_counts.py が UD から作る) の重み: よく使う語を先に (εἰρήνη を ἡσυχία より)

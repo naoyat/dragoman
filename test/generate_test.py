@@ -175,6 +175,11 @@ class WhQuestionTestCase(unittest.TestCase):
         self.assertEqual(english.plural('head of cattle'), 'cattle')
         self.assertEqual(english.plural('piece of bread'), 'pieces of bread')
         from dragoman.generate import transfer
+        # 選んだ理由 (tools/generate.py --why): 点の内訳、表で決まったならその表
+        why = transfer.explain(Lex('puella', 'noun', '少女'), 'de')
+        self.assertTrue(why[2].startswith('  →') and 'Mädchen' in why[2] and '日本語の一番の訳語「少女」' in why[2], why)
+        self.assertIn("PREFERRED[('player', 'noun')] → Spieler",
+                      '\n'.join(transfer.explain(Lex('player', 'noun', en='player', lang='en'), 'de')))
         for en, de in (('reader', 'Leser'), ('driver', 'Fahrer'), ('player', 'Spieler'), ('smoker', 'Raucher')):
             self.assertEqual(transfer.best(Lex(en, 'noun', en=en, lang='en'), 'de').lemma, de)
 
