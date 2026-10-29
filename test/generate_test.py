@@ -509,11 +509,12 @@ class JapaneseInputTestCase(unittest.TestCase):
                          'Puella rosam pulchram in hortō vīdit.')
 
     def test_round_trip(self):
-        # 日本語 → 文の枠 → 日本語 (語はラテン語の見出しの訳語に置き換わる: 先生 → 教師)
+        # 日本語 → 文の枠 → 日本語 (語は元の日本語のまま: 先生 → magister → 先生。料理する → coquō → 料理する)
         from dragoman.generate import japanese
         for text in ('私は少女が歌うのを見た。', '少年は少女が来ると言った。', 'あなたは誰が来たか知らない。'):
             self.assertEqual(japanese.sentence(from_japanese.parse(text)), text)
-        self.assertEqual(japanese.sentence(from_japanese.parse('少年は先生に褒められた。')), '少年は教師に称賛された。')
+        for text in ('少年は先生に褒められた。', '少年は料理する。', '少女は勉強する。'):
+            self.assertEqual(japanese.sentence(from_japanese.parse(text)), text)
 
 
 class JapaneseOutputTestCase(unittest.TestCase):

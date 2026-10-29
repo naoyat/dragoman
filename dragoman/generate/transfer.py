@@ -533,6 +533,8 @@ for _lang, _lemma in (('de', 'treiben'), ('ru', 'гнать'), ('ko', '몰다'),
 # 英語の drive は車を運転する意味 (辞書の筆頭の verschlagen・달리다 にしない。家畜を追う意味は上の SENSE_TARGETS)
 for _lang, _lemma in (('de', 'fahren'), ('ru', 'водить'), ('ko', '운전하다'), ('zh', '驾驶')):
     PREFERRED.setdefault(_lang, {})[('drive', 'verb')] = (_lemma, '')
+# 韓国語の say は 말하다 (コーパスに多い 위하다「〜のために」にしない)
+PREFERRED.setdefault('ko', {})[('say', 'verb')] = ('말하다', '')
 # 英語の player はドイツ語の Spieler (語義の多い Werderaner「Werder Bremen の選手」にしない)
 PREFERRED['de'][('player', 'noun')] = ('Spieler', 'm')
 PARTICLES = ('to', 'as', 'at', 'on', 'for', 'with', 'into', 'upon', 'in', 'from', 'of', 'out', 'up', 'away',
@@ -620,8 +622,8 @@ def candidates(lex, lang, pos=None):
 
 # コーパスでの出現数 (tools/build_lemma_counts.py が UD から作る) の重み: よく使う語を先に (εἰρήνη を ἡσυχία より)
 # 見出し語の形がコーパスと索引で揃うところだけ (サンスクリットの UD の動詞は語根の形が違うので名詞・形容詞だけ。
-# タガログ語・ポルトガル語 (UD の test だけ)・中国語はコーパスが小さいので軽く)
-FREQUENCY_WEIGHT = {'grc': 1.0, 'ru': 1.0, 'id': 1.0, 'sa': 1.0, 'tl': 0.5, 'pt': 0.5, 'zh': 0.5}
+# タガログ語・ポルトガル語・ドイツ語 (UD の test だけ)・中国語はコーパスが小さいので軽く。韓国語は KAIST)
+FREQUENCY_WEIGHT = {'grc': 1.0, 'ru': 1.0, 'id': 1.0, 'sa': 1.0, 'ko': 1.0, 'tl': 0.5, 'pt': 0.5, 'zh': 0.5, 'de': 0.5}
 # 元の語の上位の英語の訳語の複数に合う語の重み (arca: chest, box →「箱」)。大きいと語義の多い語 (ἡσυχία: peace, rest) が勝つ
 MULTIPLE_MATCH_WEIGHT = 1.0
 

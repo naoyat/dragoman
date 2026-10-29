@@ -47,6 +47,8 @@ JAPANESE = re.compile('[\u3040-\u30ff\u4e00-\u9fff]')
 
 def gloss(lex):
     """ラテン語の語 → 日本語の訳語 (最初のもの。注記・〜を除く)"""
+    if lex.origin and lex.origin[0] == 'ja' and not lex.proper:
+        return lex.origin[1]   # 日本語の文から作った語は元の日本語 (料理する。coquō の筆頭の「調理する」にしない)
     from . import transfer
     first = transfer.FIRST_GLOSSES.get(lex.lang, {}).get(lex.lemma)
     if first and lex.lemma not in transfer.hand_glosses(lex.lang):

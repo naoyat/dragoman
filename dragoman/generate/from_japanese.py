@@ -17,6 +17,7 @@
 #      連体形 + とき → ubi (cum)、ながら → dum
 #   6. 語はラテン語の見出しに置き換える (ja_lexicon)。英語・ロシア語・サンスクリットはラテン語の見出しから
 #
+import dataclasses
 import functools
 import os
 import re
@@ -234,6 +235,8 @@ def noun_phrase(chunk, modifiers=()):
         np = NP(Lex(noun.surface, 'noun', proper=noun.pos2 == '固有名詞'), number=number, surface=chunk.surface)
     else:
         lex, gender = found
+        if not lemma.endswith('々'):   # 元の日本語の名詞 (先生 → magister → 先生。人々 は複数の homō のまま)
+            lex = dataclasses.replace(lex, origin=('ja', lemma))
         np = NP(lex, number=number, gender=_gender(lex, gender), surface=chunk.surface)
         # 人・動物: 訳語から、または日本語の語 (〜人・〜者・〜士・〜夫・人々・子)
         np.animate = human_plural or _animate(lex) or \
@@ -287,7 +290,8 @@ def predicate(chunk):
         if lemma in SURU and k > 0 and tokens[k - 1].pos == '名詞':
             lemma = lexeme = tokens[k - 1].lemma + 'する'   # 運転する
         found = latin_lex(lemma, 'verb', lexeme)
-        verb = found[0] if found else Lex(lemma, 'verb')
+        # 元の日本語の動詞を持たせる (日本語に戻すとき、ラテン語の語の筆頭の訳語にしない: 料理する → coquō → 料理する)
+        verb = dataclasses.replace(found[0], origin=('ja', lemma)) if found else Lex(lemma, 'verb')
         clause = Clause(verb, tense=tense, mood=mood, voice='passive' if passive else 'active', negated=negated)
         clause.ja_verb = lemma
         return clause

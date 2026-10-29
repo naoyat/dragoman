@@ -121,7 +121,7 @@ Templum aureum est .
   フィンランド語: Pingotin on.
   トルコ語:  Tapınak var.
   モンゴル語: Сүм байна.
-  韓国語:   관자놀이가 있다.
+  韓国語:   사원이 있다.
 Magnus vir est .
   述語: sum [現在 3sg 直説法 能動]
     主語 (Nom/Voc): vir sg m + magnus
@@ -160,7 +160,7 @@ Puer ā magistrō laudātur .
   フィンランド語: Poika kehutaan.
   トルコ語:  Oğlan öğretmen tarafından alkışlanıyor.
   モンゴル語: Хүү багшаар [praise].
-  韓国語:   소년이 선생에 의해 격찬된다.
+  韓国語:   소년이 선생에 의해 칭송된다.
 Servī epistulās portāvērunt .
   述語: portō [完了 3pl 直説法 能動]
     目的語 (Acc): epistula pl f ← 属格 servus sg m
@@ -169,7 +169,7 @@ Servī epistulās portāvērunt .
   フィンランド語: He kantoivat orjan kirjeet.
   トルコ語:  Kulun mektuplarını götürdüler.
   モンゴル語: Боолын захиаг өмссөн.
-  韓国語:   노비의 편지를 날랐다.
+  韓国語:   노예의 편지를 날랐다.
 Nautae mare nōn timent .
   述語: timeō [現在 3pl 直説法 能動 否定]
     目的語 (Nom/Voc/Acc): mare sg n ← 属格 nauta sg m
@@ -188,7 +188,7 @@ Servus epistulam nōn portābat .
   フィンランド語: Orja ei kantanut kirjettä.
   トルコ語:  Kul mektubu götürmedi.
   モンゴル語: Боол захиаг өмссөнгүй.
-  韓国語:   노비가 편지를 안 날랐다.
+  韓国語:   노예가 편지를 안 날랐다.
 Puer ā magistrō nōn laudātus est .
   述語: laudō [完了 3sg 直説法 受動 否定]
     主語 (Nom/Voc): puer sg m
@@ -198,7 +198,7 @@ Puer ā magistrō nōn laudātus est .
   フィンランド語: Poika ei kehuttu.
   トルコ語:  Oğlan öğretmen tarafından alkışlanmadı.
   モンゴル語: Хүү багшаар [praise].
-  韓国語:   소년이 선생에 의해 안 격찬됐다.
+  韓国語:   소년이 선생에 의해 안 칭송됐다.
 Cum amīcīs ad oppidum ambulāmus .
   述語: ambulō [現在 1pl 直説法 能動]
     前置詞句 (cum + Abl): amīcus pl m
@@ -242,7 +242,7 @@ Rēge mortuō populus flēvit .
   フィンランド語: Väki pillitti kuninkaalle.
   トルコ語:  Cemaat krala ağladı.
   モンゴル語: Иргэн хаанд уйлсан.
-  韓国語:   군집이 왕에게 울었다.
+  韓国語:   대중이 왕에게 울었다.
 Cum hīs rēbus cognitīs vēnit .
   述語: veniō [完了 3sg 直説法 能動]
     前置詞句 (cum + Abl): rēs pl f + hic
@@ -280,7 +280,7 @@ Rēgīna , verbīs nūntiī commōta , lacrimāvit .
   フィンランド語: Kuningatar pillitti sanoille.
   トルコ語:  Kraliçe sözlere ağladı.
   モンゴル語: Хатан үгт уйлсан.
-  韓国語:   여왕이 말에게 울었다.
+  韓国語:   여왕이 낱말에게 울었다.
 Mīlitēs hostem fugientem cēpērunt .
   述語: capiō [完了 3pl 直説法 能動]
     主語 (Nom/Voc/Acc): mīles pl m
@@ -353,7 +353,7 @@ Dominus servum epistulam portāre iubet .
   フィンランド語: Isäntä kantaa orjan.
   トルコ語:  Ağa kulu götürüyor.
   モンゴル語: Эзэн боолыг өмснө.
-  韓国語:   주가 노비를 나른다.
+  韓国語:   주가 노예를 나른다.
 Puer librum legere potest .
   述語: legō [現在 3sg 不定法 能動]
     主語 (Nom/Voc): puer sg m
@@ -376,7 +376,7 @@ Caesar hostēs veritus castra mōvit .
   フィンランド語: Caesar meni viholliset.
   トルコ語:  Sezar düşmanları gitti.
   モンゴル語: Кэсар дайсануудыг явсан.
-  韓国語:   카이사르가 적들을 갔다.
+  韓国語:   카이사르가 적들을 옮겼다.
 Cicerō Pompēium laudat .
   述語: laudō [現在 3sg 直説法 能動]
     主語 (Nom): Cicerō sg
@@ -386,7 +386,7 @@ Cicerō Pompēium laudat .
   フィンランド語: Cicero kehuu Pompeiumin.
   トルコ語:  Kikero Pompeium'u alkışlıyor.
   モンゴル語: Кикэро Помпэиумыг [praise].
-  韓国語:   키케로가 폼페윰을 격찬한다.
+  韓国語:   키케로가 폼페윰을 칭송한다.
 Julia et Juno in caelo sunt .
   述語: sum [現在 3pl 直説法 能動]
     前置詞句 (in + Acc): ? sg
@@ -426,6 +426,6 @@ Hic servus dominum suum amat .
   フィンランド語: Tämä orja rakastaa isäntäään.
   トルコ語:  Bu kul ağasını seviyor.
   モンゴル語: Энэ боол өөрийн эзэнийг хайрлана.
-  韓国語:   이 노비가 자기의 주를 사랑한다.
+  韓国語:   이 노예가 자기의 주를 사랑한다.
 Mīles hostem gladiō acūtō vulnerāvit .
   (述語が見つからない)
