@@ -37,7 +37,7 @@ class Target:
 INDEX_FILES = {'sa': ('en-index.tsv', 'en-index-apte.tsv')}
 
 
-@functools.lru_cache(maxsize=4)
+@functools.lru_cache(maxsize=None)   # 言語ごと (作る言語の数より小さいと文ごとに読み直す)
 def _index(lang):
     """英語 → [(訳語の中の順位, Target)]"""
     if lang == 'la':
@@ -109,7 +109,7 @@ def _latin_index():
     return index
 
 
-@functools.lru_cache(maxsize=4)
+@functools.lru_cache(maxsize=None)
 def _by_lemma(lang):
     """見出し → [英語] (ロシア語・サンスクリットの語の英語の訳語。en-index.tsv を見出しで)"""
     out = {}
@@ -223,13 +223,13 @@ def available(lang):
     return bool(_index(lang))
 
 
-@functools.lru_cache(maxsize=4)
+@functools.lru_cache(maxsize=None)
 def _db(lang):
     path = paths.data(lang, 'wiktionary.sqlite')
     return sqlite3.connect(path, check_same_thread=False) if os.path.exists(path) else None
 
 
-@functools.lru_cache(maxsize=8)
+@functools.lru_cache(maxsize=None)
 def _has_japanese(lang):
     db = _db(lang)
     return db is not None and 'ja' in [row[1] for row in db.execute('PRAGMA table_info(lemmas)')]

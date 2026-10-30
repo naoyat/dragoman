@@ -322,9 +322,11 @@ python3 tools/build_lemma_counts.py --lang=all     # <lang>/lemma-counts.tsv (UD
 
 ```
 python3 -m unittest discover -s test -p '*_test.py'
+python3 tools/run_tests.py            # 同じテストをファイルごとに並列で（-j で並列の数、引数でファイル名を絞る）
 ```
 
 * 追加データが無い環境でも動きます（データが必要なテストはスキップ）。
+* `tools/run_tests.py` の最後の行は unittest と同じく `OK` か `FAILED (...)`。失敗したファイルの出力だけを出します。
 * `test/golden_test.py` は、テキストの解析結果を正解ファイルと比べる回帰テストです（手作りの辞書だけで、
   タガーを使わずに解析）。意図して解析結果を変えたときは `UPDATE_GOLDEN=1 python3 test/golden_test.py`
   で更新し、差分を確認してからコミットします。
