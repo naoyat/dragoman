@@ -263,7 +263,7 @@ def item_of(token, doc):
         return {'surface': text, 'pos': 'particle', 'base': 'to', 'ja': '', 'gloss_lang': 'ja'}   # 不定詞の to
     if lower in morphology.NEGATIONS and (tag == 'RB' or token.dep_ == 'neg'):
         return {'surface': text, 'pos': 'adv', 'base': 'not' if lower == "n't" else lower,
-                'ja': morphology.NEGATIONS[lower], 'gloss_lang': 'ja', 'negation': True}
+                'ja': morphology.NEGATIONS[lower], 'gloss_lang': 'ja', 'negation': True, 'compact': True}
     if tag == 'MD':
         suffix, tense = morphology.MODALS.get(lower, ('', 'present'))
         return {'surface': text, 'pos': 'verb', 'lemma': lower, 'base': lower, 'ja': suffix, 'gloss_lang': 'ja',
@@ -367,6 +367,9 @@ def _attach(verb, suffix):
     return attach_auxiliary(verb, suffix)
 
 
+MODAL_SPELLING = {'ca': 'can', 'wo': 'will', 'sha': 'shall', "'ll": 'will', "'d": 'would'}   # can't の ca …
+
+
 def merge_verbs(words, doc):
     """助動詞 (be・have・do・will・can …) を本動詞にまとめる。まとめた動詞は本動詞の位置に"""
     by_i = {w.doc_i: w for w in words}
@@ -392,13 +395,13 @@ def merge_verbs(words, doc):
                 suffix = a.attrib('modal_suffix')
                 if a.attrib('tense') == 'future' and not suffix:
                     data['tense'] = 'future'
-                    forms.append('未来 (%s + 原形)' % aux.text)
+                    forms.append('未来 (%s + 原形)' % MODAL_SPELLING.get(aux.text.lower(), aux.text))
                 elif suffix:
                     data.update(modal=aux.text.lower(), main_ja=main.ja)
                     if main.attrib('gloss_lang') == 'ja':
                         data['ja'] = ','.join(_attach(j, suffix) for j in (main.ja or '').split(',')[:1])
                     data['tense'] = a.attrib('tense')
-                    forms.append('%s + 原形' % aux.text)
+                    forms.append('%s + 原形' % MODAL_SPELLING.get(aux.text.lower(), aux.text))
             elif lemma == 'be' and aux.dep_ == 'auxpass':
                 finite = finite or a
                 data['voice'] = 'passive'
@@ -431,6 +434,9 @@ def merge_verbs(words, doc):
         if finite is not None:
             data.update(person=finite.attrib('person'), number=finite.attrib('number'))
         data['mood'] = 'indicative' if data.get('mood') in ('participle', 'infinitive') else data.get('mood')
+        if token.dep_ == 'ROOT' and token.tag_ == 'VB' and [a.lemma_ for a in auxes] == ['do'] and \
+                not any(c.dep_ in ('nsubj', 'nsubjpass', 'expl') for c in token.children):
+            data.update(mood='imperative', person=2, number='sg')   # Don't go! (do + 原形で主語が無い)
         if data.get('lemma') != 'be':
             data.pop('existential', None)
         if forms:
@@ -513,6 +519,40 @@ def _personal_subject(token):
 
 PERSON_NOUNS = {'man', 'woman', 'boy', 'girl', 'child', 'teacher', 'student', 'friend', 'mother', 'father', 'brother',
                 'sister', 'people', 'doctor', 'king', 'queen'}
+
+
+def negated_verbs(words, doc):
+    """動詞を否定する not・n't を動詞にまとめる (否定の印 negative。語の表は can't go・don't know、離れていれば
+    Don't … know)。never と、名詞を否定する not (Not John but Mary) は副詞のまま"""
+    by_i = {w.doc_i: w for w in words}
+    for token in doc:
+        word = by_i.get(token.i)
+        item = _item(word) if word is not None else None
+        if item is None or not item.attrib('negation') or token.text.lower() not in ('not', "n't") or \
+                token.dep_ != 'neg' or token.head.pos_ not in ('VERB', 'AUX'):
+            continue
+        k = words.index(word)
+        verb = by_i.get(token.head.i)
+        if verb not in words or _pos(verb) != 'verb':   # 不定詞とまとめた動詞 (didn't want to sleep の want)
+            verb = next((w for w in words[k + 1:] if _pos(w) == 'verb'), None)
+        if verb is None:
+            continue
+        before = doc[token.i - 1] if token.i > 0 else None
+        negation = token.text if token.text == "n't" else ' ' + token.text
+        if before is not None and by_i.get(before.i) is verb:   # isn't・is not (繋辞の be)
+            verb.surface += negation
+        else:
+            # 前の助動詞と合わせる (ca + n't → can't、do not)。助動詞は本動詞にまとめて語の表に出ていない
+            hidden = before is not None and before.dep_ in ('aux', 'auxpass') and before.i not in by_i.keys() - \
+                {w.doc_i for w in words if getattr(w, 'merged_into', False)} and by_i.get(before.i) not in words
+            head = (before.text + negation if hidden else negation.strip())
+            gap = words.index(verb) - k > 1
+            verb.surface = head + (' … ' if gap else ' ') + verb.surface
+        v = _item(verb)
+        verb.items = [type(v)(dict(v.item, negative=True))]
+        word.merged_into = True
+        words.remove(word)
+    return words
 
 
 def _masu(verb):
@@ -738,6 +778,7 @@ def lookup_all(surfaces):
     verbs_in_context(words, doc)
     words = merge_verbs(words, doc)
     words = control_verbs(words, doc)
+    words = negated_verbs(words, doc)
     words = possessives(words)
     words = how_adjectives(words)
     existential_there(words)

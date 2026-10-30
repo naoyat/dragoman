@@ -53,6 +53,21 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(words[1].surface, 'gotta go')
         self.assertIn('gotta = got to', words[1].items[0].attrib('form'))
 
+    def test_negation_in_verb(self):
+        # not・n't は動詞にまとめる (語の表に単独で出さない)
+        for text, surface, ja in [("I can't go.", "can't go", '私が / 行くことができない'),
+                                  ('I do not know.', 'do not know', '私が / 知らない'),
+                                  ('I dunno.', "don't know", '私が / 知らない'),
+                                  ("I didn't want to sleep.", "didn't want to sleep", '私が / 眠りたくなかった'),
+                                  ("He isn't a doctor.", "isn't", '彼は / 医者ではない'),
+                                  ("Don't you know?", "Don't … know", 'あなたが / 知らないか'),
+                                  ("Don't go!", "Don't go", '行くな')]:
+            words = analyzer.lookup_all(next(analyzer.sentences(text)))
+            self.assertIn(surface, [w.surface for w in words], text)
+            self.assertNotIn("n't", [w.surface for w in words], text)
+            self.assertEqual(self.ja(text), ja)
+        self.assertEqual(self.ja('I never sleep.'), '私が / 眠らない,寝ない')   # never は副詞のまま
+
     def test_existential_and_relative(self):
         self.assertEqual(self.ja('There is a cat in the garden.'), '庭に / 猫が / いる')
         self.assertEqual(self.ja('The man who lives here is my teacher.'), '{ここで 住む}男は / 私の先生,教師である')
@@ -84,7 +99,7 @@ class AnalyzerTestCase(unittest.TestCase):
 
     def test_glosses_in_context(self):
         self.assertEqual(self.ja('You will pass the exam.'), 'あなたが / {試験,テスト}に / 受かるだろう')   # 目的語で動詞の訳語 (JMdict)
-        self.assertEqual(self.ja("Don't give up."), '諦めない,見限らない')                         # 句動詞
+        self.assertEqual(self.ja("Don't give up."), '諦めるな,見限るな')                           # 句動詞 (否定の命令)
         self.assertEqual(self.ja('Take this medicine.'), 'この薬を / 飲め,受け付けろ')            # 対訳文 (Tatoeba) で薬
         self.assertEqual(self.ja('She is looking after her brother.'), '彼女が / 彼女の{兄,弟}を / 世話している')
 
