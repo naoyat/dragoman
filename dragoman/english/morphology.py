@@ -70,7 +70,8 @@ QUESTION_ADVERBS = {'where': 'どこで', 'when': 'いつ', 'why': 'なぜ', 'ho
 MODALS = {'can': ('ことができる', 'present'), 'could': ('ことができる', 'perfect'), 'must': ('なければならない', 'present'),
           'should': ('べきだ', 'present'), 'may': ('てもよい', 'present'), 'might': ('かもしれない', 'present'),
           'will': ('', 'future'), "'ll": ('', 'future'), 'shall': ('', 'future'), 'would': ('だろう', 'present'),
-          "'d": ('だろう', 'present'), 'ca': ('ことができる', 'present'), 'wo': ('', 'future')}
+          "'d": ('だろう', 'present'), 'ca': ('ことができる', 'present'), 'wo': ('', 'future'),
+          'ought': ('べきだ', 'present')}
 # 訳語を決めておく語 (英和の表の最初の訳語が外れるもの)
 GLOSSES = {
     ('be', 'verb'): 'ある,いる', ('have', 'verb'): '持つ', ('do', 'verb'): 'する', ('go', 'verb'): '行く',

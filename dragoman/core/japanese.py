@@ -308,7 +308,26 @@ class JaVerb:
             return stem + 'なかった'
         return stem + 'ない'
 
+    def auxiliary_form(self, flag, negated):
+        """最後が助動詞 たい・ない・だ の訳語 (眠りたい・行かなければならない・呼ぶつもりだ) の形:
+        眠りたかった・眠りたくない・呼ぶつもりだった・呼ぶつもりではない。作れない形は None"""
+        stem = self.stop_form[:-1]
+        if self.body == 'だ':
+            out = stem + ('ではなかった' if negated else 'だった') if flag & (Verb.PAST | Verb.PERFECT) else \
+                stem + ('ではない' if negated else 'だ')
+        elif negated and self.body == 'ない':
+            return None   # 行かなければならない の否定 (行かなくてもよい) は作らない
+        else:
+            out = stem + ('く' if negated else '') + ('なかった' if negated else 'かった') \
+                if flag & (Verb.PAST | Verb.PERFECT) else stem + ('くない' if negated else 'い')
+        return out + 'だろう' if flag & Verb.FUTURE else out
+
     def form(self, flag, negated=False):
+        if self.use_mecab and self.body in ('たい', 'ない', 'だ') and \
+                flag & Verb.INDICATIVE and not flag & (Verb.PARTICIPLE | Verb.PASSIVE | Verb.IMPERATIVE):
+            out = self.auxiliary_form(flag, negated)
+            if out:
+                return out
         if negated and not flag & Verb.PARTICIPLE:
             return self.negative_form(flag)
         if flag & Verb.PARTICIPLE:
@@ -572,7 +591,9 @@ def attach_auxiliary(verb, suffix):
             return Modern.masu_stem(verb) + suffix
         if suffix == 'なければならない':
             return Modern.neg_stem(verb) + suffix
-        if suffix in ('ようになる', 'ことができる', 'べきだ'):
+        if suffix == 'ようとする':   # 意志形 + とする (眠ろうとする・食べようとする)
+            return Modern.volitional(verb) + 'とする'
+        if suffix in ('ようになる', 'ことができる', 'べきだ', 'つもりだ'):
             return verb + suffix
         if suffix == 'させる':
             return Modern.neg_stem(verb) + ('せる' if Modern.neg_stem(verb)[-1:] in 'かがさたなばまらわ' else 'させる')

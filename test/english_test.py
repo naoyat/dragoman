@@ -32,6 +32,27 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('I want to go to London.'), '私が / ロンドン[へ,に] / 行きたい')
         self.assertEqual(self.ja('They began to sing.'), '彼らが / 歌い始めた')
 
+    def test_going_to_and_colloquial(self):
+        self.assertEqual(self.ja("I'm going to eat."), '私が / 食べるつもりだ')        # be going to + 原形
+        self.assertEqual(self.ja("It's going to rain."), 'それが / 雨が降るだろう')   # 人でない主語は未来
+        self.assertEqual(self.ja('I was going to call you.'), '私が / あなたを / 呼ぶつもりだった')
+        self.assertEqual(self.ja("I'm going to school."), '私が / {学校,高校}[へ,に] / 行っている')
+        self.assertEqual(self.ja("I've got to go."), '私が / 行かなければならない')
+        self.assertEqual(self.ja("I'm trying to sleep."), '私が / 眠ろうとする')
+        self.assertEqual(self.ja('I wanted to sleep.'), '私が / 眠りたかった')
+        self.assertEqual(self.ja("I didn't want to sleep."), '私が / 眠りたくなかった')
+        self.assertEqual(self.ja('You ought to go.'), 'あなたが / 行くべきだ')
+        # 縮まった形は元の形で解析し、語の表には縮まった形のまま
+        self.assertEqual(self.ja("I'm gonna eat."), '私が / 食べるつもりだ')
+        self.assertEqual(self.ja('I gotta go.'), '私が / 行かなければならない')
+        self.assertEqual(self.ja('I wanna sleep.'), '私が / 眠りたい')
+        self.assertEqual(self.ja("I'm tryna sleep."), '私が / 眠ろうとする')
+        self.assertEqual(self.ja('You oughta go.'), 'あなたが / 行くべきだ')
+        self.assertEqual(analyzer.tokens("I'm gonna eat."), ['I', "'m", 'gonna', 'eat', '.'])
+        words = analyzer.lookup_all(['I', 'gotta', 'go', '.'])
+        self.assertEqual(words[1].surface, 'gotta go')
+        self.assertIn('gotta = got to', words[1].items[0].attrib('form'))
+
     def test_existential_and_relative(self):
         self.assertEqual(self.ja('There is a cat in the garden.'), '庭に / 猫が / いる')
         self.assertEqual(self.ja('The man who lives here is my teacher.'), '{ここで 住む}男は / 私の先生,教師である')

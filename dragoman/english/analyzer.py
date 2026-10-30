@@ -58,8 +58,22 @@ ENGLISH = language.Language(
 )
 
 
+# 話し言葉の縮まった形 → 元の語の列 (解析は元の形で、語の表には縮まった形のまま出す)
+COLLOQUIAL = {'gonna': ('going', 'to'), 'gotta': ('got', 'to'), 'wanna': ('want', 'to'), 'tryna': ('trying', 'to'),
+              'hafta': ('have', 'to'), 'hasta': ('has', 'to'), 'oughta': ('ought', 'to'), 'gimme': ('give', 'me'),
+              'lemme': ('let', 'me'), 'outta': ('out', 'of'), 'dunno': ('do', "n't", 'know')}
+SPLIT_COLLOQUIAL = {('gon', 'na'): 'gonna', ('got', 'ta'): 'gotta'}   # spaCy が2つに分ける形
+
+
 def tokens(text):
-    return morphology.tokenize(text.replace('’', "'"))
+    out = []
+    for token in morphology.tokenize(text.replace('’', "'")):
+        joined = SPLIT_COLLOQUIAL.get((out[-1].lower(), token.lower())) if out else None
+        if joined:
+            out[-1] += token
+        else:
+            out.append(token)
+    return out
 
 
 def sentences(text):
@@ -71,6 +85,38 @@ def sentences(text):
             current = []
     if current:
         yield current
+
+
+def expand_colloquial(surfaces):
+    """縮まった形を元の語の列に (I'm gonna eat → I 'm going to eat)。→ (語の列, {元の語の列の最初の位置: (縮まった形, 元の句)})"""
+    out, marks = [], {}
+    for surface in surfaces:
+        full = COLLOQUIAL.get(surface.lower())
+        if not full:
+            out.append(surface)
+            continue
+        if surface[:1].isupper():
+            full = (full[0].capitalize(),) + full[1:]
+        marks[len(out)] = (surface, ' '.join(full))
+        out += full
+    return out, marks
+
+
+def restore_colloquial(words, marks):
+    """語の表の形を縮まった形に戻し (going to eat → gonna eat)、語の形の説明に元の形を添える。句が1語にまとまって
+    いなければ (gimme → give・me) 最初の語に説明だけ"""
+    for short, full in marks.values():
+        pattern = r'(?<![\w\'])' + re.escape(full).replace(r'\ ', ' +') + r'(?!\w)'
+        word = next((w for w in words if re.search(pattern, w.surface)), None) or \
+            next((w for w in words if _item(w) is not None and _item(w).attrib('colloquial') == short), None)
+        if word is None:
+            continue
+        word.surface = re.sub(pattern, short, word.surface, count=1)
+        item = _item(word)
+        if item is not None:
+            form = '%s = %s' % (short, full)
+            word.items = [type(item)(dict(item.item, colloquial=short,
+                                          form=item.attrib('form') + '・' + form if item.attrib('form') else form))]
 
 
 def _item(word):
@@ -87,6 +133,8 @@ def _pos(word):
 
 def _verb_data(token):
     lemma = token.lemma_.lower() if token.lemma_ else token.text.lower()
+    if lemma == 'got':
+        lemma = 'get'   # spaCy が got を原形のまま返すもの (I got to see …)
     ja, gloss_lang = morphology.gloss(lemma, 'verb')
     tag = token.tag_
     tense = 'perfect' if tag == 'VBD' else 'present'
@@ -400,7 +448,8 @@ def merge_verbs(words, doc):
 
 # 不定詞を取って1つの述語にする動詞: 原形 → 本動詞に付ける形 (want to go → 行きたい、have to go → 行かなければならない)
 CONTROL = {'want': 'たい', 'have': 'なければならない', 'need': 'なければならない', 'try': 'ようとする',
-           'begin': '始める', 'start': '始める', 'like': 'たい', 'love': 'たい', 'hope': 'たい', 'would like': 'たい'}
+           'begin': '始める', 'start': '始める', 'like': 'たい', 'love': 'たい', 'hope': 'たい', 'would like': 'たい',
+           'ought': 'べきだ'}
 
 
 def control_verbs(words, doc):
@@ -412,21 +461,33 @@ def control_verbs(words, doc):
             continue
         head_word, main_word = by_i[token.head.i], by_i[token.i]
         h, m = _item(head_word), _item(main_word)
-        if h is None or m is None or h.pos != 'verb' or m.pos != 'verb' or h.attrib('lemma') not in CONTROL:
+        if h is None or m is None or h.pos != 'verb' or m.pos != 'verb' or not any(c.tag_ == 'TO' for c in token.children):
             continue
-        if not any(c.tag_ == 'TO' for c in token.children):
+        lemma, tense, form = h.attrib('lemma'), h.attrib('tense'), None
+        if lemma == 'go' and token.head.tag_ == 'VBG' and '進行形' in (h.attrib('form') or ''):
+            # be going to + 原形: 人が主語なら「〜するつもりだ」、ほか (It's going to rain) は未来「〜だろう」
+            suffix = 'つもりだ' if _personal_subject(token.head) else ''
+            tense = tense if suffix else 'future'
+            form = '未来 (be going to + 原形)'
+        elif lemma in ('get', 'got') and token.head.text.lower() == 'got' and \
+                (h.attrib('colloquial') == 'gotta' or '現在完了' in (h.attrib('form') or '')):
+            suffix, tense, form = 'なければならない', 'present', 'have got to + 原形'   # (have) got to「〜しなければならない」
+        elif lemma in CONTROL:
+            suffix = CONTROL[lemma]
+        else:
             continue
-        suffix = CONTROL[h.attrib('lemma')]
         data = dict(m.item)
         if m.attrib('gloss_lang') == 'ja':
             from dragoman.core.japanese import attach_auxiliary
             first = (m.ja or '').split(',')[0]
             data['ja'] = _masu(first) + '始める' if suffix == '始める' else attach_auxiliary(first, suffix)
-        data.update(tense=h.attrib('tense'), person=h.attrib('person'), number=h.attrib('number'), mood=h.attrib('mood'),
+        data.update(tense=tense, person=h.attrib('person'), number=h.attrib('number'), mood=h.attrib('mood'),
                     surface=head_word.surface + ' to ' + main_word.surface, main_ja=m.ja,
-                    form='%s + to 不定詞' % h.attrib('lemma'))
-        if h.attrib('form'):
+                    form=form or '%s + to 不定詞' % lemma)
+        if h.attrib('form') and not form:
             data['form'] = h.attrib('form') + '・' + data['form']
+        if h.attrib('colloquial'):
+            data['colloquial'] = h.attrib('colloquial')
         data.pop('existential', None)
         main_word.items = [type(m)(data)]
         main_word.surface = data['surface']
@@ -436,6 +497,22 @@ def control_verbs(words, doc):
         if id(w) in dropped:
             w.merged_into = True
     return [w for w in words if id(w) not in dropped]
+
+
+PERSONAL_PRONOUNS = ('i', 'you', 'we', 'he', 'she', 'they')
+
+
+def _personal_subject(token):
+    """主語が人 (人称代名詞・人の名前・人を表す名詞) か"""
+    for c in token.children:
+        if c.dep_ == 'nsubj':
+            return c.text.lower() in PERSONAL_PRONOUNS or c.ent_type_ == 'PERSON' or \
+                c.pos_ == 'NOUN' and c.lemma_.lower() in PERSON_NOUNS
+    return False
+
+
+PERSON_NOUNS = {'man', 'woman', 'boy', 'girl', 'child', 'teacher', 'student', 'friend', 'mother', 'father', 'brother',
+                'sister', 'people', 'doctor', 'king', 'queen'}
 
 
 def _masu(verb):
@@ -641,10 +718,13 @@ def passive_agents(words):
 
 
 def lookup_all(surfaces):
+    surfaces, colloquial = expand_colloquial(surfaces)
     doc = morphology.parse(surfaces)
     words = []
     for token in doc:
         data = item_of(token, doc)
+        if data is not None and token.i in colloquial:
+            data['colloquial'] = colloquial[token.i][0]   # gotta の got (have got to と同じく「〜しなければならない」)
         word = Word(token.text, None if data is None else [data])
         word.token_ix = token.i
         word.doc_i = token.i
@@ -664,6 +744,7 @@ def lookup_all(surfaces):
     words = [w for w in words if _pos(w) != 'particle']
     words = attach_articles(words)
     passive_agents(words)
+    restore_colloquial(words, colloquial)
     for i, word in enumerate(words):
         word.index = i
     return words
