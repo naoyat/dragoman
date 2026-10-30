@@ -264,6 +264,8 @@ def realize(clause, gap=None, infinitive=False):
     """節 → 語の列 (中国語は空白なしでつなぐ)"""
     from .frame import lexical_negation, periphrastic
     clause = lexical_negation(periphrastic(clause))
+    from .frame import dative_as_object
+    clause = dative_as_object(clause, 'zh')   # grātiās agit magistrō → 感谢老师 (受け手を目的語に)
     if clause.question and clause.question_word and clause.mood == 'indicative' and gap is None and not infinitive:
         return [_question(clause)]   # 直接の疑問文 (疑問詞はその場に)
     subject = (clause.role('subject') or [None])[0]

@@ -535,7 +535,9 @@ for _sense, _targets in (
         ('marry (wife)', {'de': 'heiraten', 'ru': 'брать', 'fr': 'épouser', 'ko': '맞이하다', 'zh': '娶'}),
         ('wage (war)', {'de': 'führen', 'ru': 'вести', 'fr': 'faire', 'ko': '벌이다', 'zh': '进行'}),
         ('spend (life)', {'de': 'verbringen', 'ru': 'проводить', 'fr': 'mener', 'ko': '보내다', 'zh': '过'}),
-        ('deliver (speech)', {'de': 'halten', 'ru': 'произносить', 'fr': 'prononcer', 'ko': '하다', 'zh': '发表'})):
+        ('deliver (speech)', {'de': 'halten', 'ru': 'произносить', 'fr': 'prononcer', 'ko': '하다', 'zh': '发表'}),
+        ('thank', {'de': 'danken', 'ru': 'благодарить', 'fr': 'remercier', 'ko': '감사하다', 'zh': '感谢'}),
+        ('pay the penalty', {'de': 'büßen', 'ru': 'расплачиваться', 'fr': 'expier', 'ko': '벌받다', 'zh': '受罚'})):
     for _lang, _lemma in _targets.items():
         SENSE_TARGETS.setdefault(_lang, {})[_sense] = _lemma
 # 英語の drive は車を運転する意味 (辞書の筆頭の verschlagen・달리다 にしない。家畜を追う意味は上の SENSE_TARGETS)

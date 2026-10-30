@@ -178,6 +178,11 @@ class WhQuestionTestCase(unittest.TestCase):
         self.assertEqual(japanese.sentence(clauses('Puer uxōrem dūcit.')), '少年は妻を娶る。')
         self.assertEqual(self.out(german, 'de', 'Puella vītam agit.'), 'Das Mädchen verbringt das Leben.')
         self.assertEqual(self.out(english, 'en', 'Puer librum dūcit.'), 'The boy leads the book.')
+        # 目的語を動詞の意味に含める成句: grātiās agit「感謝する」(与格の人は英語では目的語、ドイツ語は danken + 与格)
+        self.assertEqual(self.out(english, 'en', 'Puer magistrō grātiās agit.'), 'The boy thanks the teacher.')
+        self.assertEqual(self.out(german, 'de', 'Puer magistrō grātiās agit.'), 'Der Junge dankt dem Lehrer.')
+        self.assertEqual(japanese.sentence(clauses('Puer magistrō grātiās agit.')), '少年は教師に感謝する。')
+        self.assertEqual(self.out(latin, 'la', 'Puer magistrō grātiās agit.'), 'Puer magistrō grātiās agit.')
         self.assertEqual(english.plural('head of cattle'), 'cattle')
         self.assertEqual(english.plural('piece of bread'), 'pieces of bread')
         from dragoman.generate import transfer

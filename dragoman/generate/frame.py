@@ -400,6 +400,8 @@ class Clause:
     after_main: bool = False   # 従属節が主節の後ろにある (ubi「〜するところの」と読む)
     subordinator_source: str = ''   # 従属の接続詞の元の綴り (когда・quand。直接の疑問文なら疑問詞に)
     surface: str = ''
+    idiom: list = field(default_factory=list)   # 成句の目的語 (grātiās agit の grātiās、poenās dat の poenās)。ほかの
+    #                                             言語では動詞の意味に含め (thank・pay the penalty)、ラテン語に戻すときだけ置く
 
     def role(self, name):
         return [np for r, np in self.args if r == name]
@@ -812,10 +814,13 @@ def clause_of(predicate, lang=None):
     if _lang in ('', 'la') and clause.verb.lemma in DATIVE_SENSES and clause.role('recipient'):
         clause.verb = dataclasses.replace(clause.verb, ja=DATIVE_SENSES[clause.verb.lemma])   # dominō pāret「主に従う」
     if _lang in ('', 'la'):
+        _split_idiom_verb(clause, verb_item)   # poenās dō (Wiktionary の成句の見出し) → dō + 目的語 poenās
         objects = {np.head.lemma for np in clause.role('object') if np.head is not None}
         for nouns, ja, en in OBJECT_SENSES.get(clause.verb.lemma, ()):
             if objects & nouns:   # equōs agit「馬を駆る」・drives the horses、uxōrem dūcit「妻を娶る」・marries
                 clause.verb = dataclasses.replace(clause.verb, ja=ja, sense=en)
+                if en in IDIOM_SENSES:
+                    _take_idiom_object(clause, nouns)
                 break
     if _lang in ('pt', 'zh'):
         _portuguese_chinese_frame(clause, verb_item)
@@ -867,7 +872,47 @@ OBJECT_SENSES = {
     'gerō': [({'bellum'}, '行う', 'wage (war)')],                # bellum gerit「戦争を行う」
     'habeō': [({'ōrātiō'}, '行う', 'deliver (speech)')],         # ōrātiōnem habet「演説を行う」
 }
-# (grātiās agit「感謝する」・poenās dat「罰を受ける」は与格の受け手・目的語の扱いが要るので、まだ入れない)
+OBJECT_SENSES['agō'].append(({'grātia'}, '感謝する', 'thank'))   # grātiās agit「感謝する」(+ 与格の人に)
+OBJECT_SENSES['dō'] = [({'poena'}, '罰を受ける', 'pay the penalty')]   # poenās dat「罰を受ける」
+# 目的語を動詞の意味に含める成句 (目的語は Clause.idiom に移し、ラテン語に戻すときだけ置く): thank the teacher・
+# 教師に感謝する (grātiās を訳さない)。thank は与格の受け手を英語の目的語に (DATIVE_OBJECT_SENSES)
+IDIOM_SENSES = {'thank', 'pay the penalty'}
+
+
+def _split_idiom_verb(clause, verb_item):
+    """見出しが「対格の名詞 + 動詞」の成句 (Wiktionary の poenās dō) → 動詞 dō と目的語 poenās (OBJECT_SENSES で意味を)"""
+    words = (verb_item.attrib('pres1sg') or '').split(' ')
+    if len(words) != 2 or clause.role('object'):
+        return
+    from dragoman.latin import latindic
+    verbs = [i for i in latindic.lookup(words[1]) or [] if i.get('pos') == 'verb' and i.get('pres1sg') == words[1]]
+    nouns = [i for i in latindic.lookup(words[0]) or [] if i.get('pos') == 'noun' and
+             any(t[0] == 'Acc' for t in i.get('_') or [])]
+    if not verbs or not nouns:
+        return
+    verb, noun = verbs[0], nouns[0]
+    number = next(t[1] for t in noun['_'] if t[0] == 'Acc')
+    gender = next((t[2] for t in noun['_'] if len(t) > 2 and t[2]), '')
+    english = noun.get('gloss_lang') == 'en'
+    clause.verb = Lex(words[1], 'verb', verb.get('ja', ''), surface=clause.verb.surface)
+    clause.args.insert(0, ('object', NP(Lex(noun.get('base'), 'noun', '' if english else noun.get('ja', ''),
+                                            en=noun.get('ja', '') if english else ''),
+                                        case='Acc', cases=['Acc'], number=number, gender=gender, surface=words[0])))
+
+
+def _take_idiom_object(clause, nouns):
+    """成句の目的語を Clause.idiom に移す。与格と奪格の曖昧な名詞句 (magistrō) は与格の受け手に"""
+    clause.idiom = [np for role, np in clause.args if role == 'object' and np.head is not None and np.head.lemma in nouns]
+    args = []
+    for role, np in clause.args:
+        if role == 'object' and np in clause.idiom:
+            continue
+        if role == 'means' and np.prep is None and 'Dat' in (np.cases or []):
+            role = 'recipient'   # grātiās agit magistrō「教師に感謝する」(手段の奪格と読まない)
+            np = dataclasses.replace(np, case='Dat')
+        args.append((role, np))
+    clause.args = args
+
 
 # 「上に」の前置詞 (на столе・auf dem Tisch・sur la table)。ラテン語の in + 奪格は「中に」と区別しないので、上に乗る名詞で決める
 # (in mēnsā → on the table・auf dem Tisch、in monte・in mūrō・in terrā・in viā。対格の in mēnsam → onto・auf den Tisch)
@@ -1410,11 +1455,16 @@ DATIVE_OBJECT_VERBS = {
     'grc': {'misereor'},   # ἐλεέω + 対格 (ἐλέησον ἡμᾶς)
 }
 DATIVE_OBJECT_VERBS['kobun'] = DATIVE_OBJECT_VERBS['ja']
+# 意味で決まるもの (grātiās agit magistrō → thank the teacher。日本語は 教師に感謝する のまま)
+DATIVE_OBJECT_SENSES = {lang: {'thank'} for lang in ('en', 'de', 'ru', 'fr', 'pt', 'fi', 'tr', 'ko', 'zh', 'id', 'tl',
+                                                    'ang', 'grc', 'sa', 'ar', 'he', 'fa', 'hi', 'ur', 'mn', 'ain', 'bo')}
+DATIVE_OBJECT_SENSES['de'] = set()   # danken + 与格 (Der Junge dankt dem Lehrer)
 
 
 def dative_as_object(clause, lang):
     """与格を取る動詞の受け手を、言語 lang の目的語に (DATIVE_OBJECT_VERBS)。当てはまらなければ元の節"""
-    if clause.verb is None or clause.verb.lemma not in DATIVE_OBJECT_VERBS.get(lang, ()) or \
+    if clause.verb is None or not (clause.verb.lemma in DATIVE_OBJECT_VERBS.get(lang, ()) or
+                                   clause.verb.sense in DATIVE_OBJECT_SENSES.get(lang, ())) or \
             not clause.role('recipient') or clause.role('object'):
         return clause
     import dataclasses

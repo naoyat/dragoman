@@ -570,6 +570,8 @@ def _inverted(words):
 def realize(clause, gap=None, antecedent=None, subjunctive=False, infinitive=False):
     from .frame import lexical_negation, periphrastic, Lex
     clause = lexical_negation(periphrastic(clause))
+    from .frame import dative_as_object
+    clause = dative_as_object(clause, 'fr')   # grātiās agit magistrō → remercie le professeur (受け手を目的語に)
     if clause.question and clause.question_word and clause.mood == 'indicative' and gap is None and not infinitive:
         return direct_question(clause)
     modal = _modal(clause, gap, antecedent, subjunctive)

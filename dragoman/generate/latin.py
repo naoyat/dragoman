@@ -324,6 +324,8 @@ def realize(clause, capitalize=True):
                 out.append(decline(np.head, subject_case, subject.number, np_gender(subject)))
                 continue
             out.append(noun_phrase(np))
+    for np in clause.idiom:   # 成句の目的語 (grātiās agit・poenās dat)
+        out.append(noun_phrase(np))
     for inner in clause.infinitives:
         out.append(realize(inner, capitalize=False))
     for inner in clause.questions:   # 間接疑問: 疑問の副詞を節の頭に (rogāvit cūr puer flēret)
