@@ -117,6 +117,15 @@ SOURCE_PRONOUNS['ang'] = {'ic': ('ego', 'sg'), 'þu': ('tū', 'sg'), 'he': ('is'
                           'eall': ('omnis', ''), 'ǣlċ': ('omnis', ''), 'ælc': ('omnis', '')}
 
 
+SOURCE_PRONOUNS['en'] = {'i': ('ego', 'sg'), 'me': ('ego', 'sg'), 'you': ('tū', ''), 'he': ('is', 'sg'), 'him': ('is', 'sg'),
+                         'she': ('is', 'sg'), 'her': ('is', 'sg'), 'it': ('is', 'sg'), 'we': ('ego', 'pl'), 'us': ('ego', 'pl'),
+                         'they': ('is', 'pl'), 'them': ('is', 'pl'), 'this': ('hic', ''), 'these': ('hic', 'pl'),
+                         'that': ('ille', ''), 'those': ('ille', 'pl'), 'who': ('quis', ''), 'what': ('quid', ''),
+                         'my': ('meus', ''), 'your': ('tuus', ''), 'his': ('suus', ''), 'our': ('noster', ''),
+                         'their': ('suus', ''), 'myself': ('ipse', ''), 'himself': ('sē', ''), 'herself': ('sē', ''),
+                         'every': ('omnis', ''), 'all': ('omnis', '')}
+
+
 def _with_plain(table):
     """古英語の表: 長音符の無い綴り (翻刻: to = tō) でも引けるように"""
     from dragoman.oldenglish.orthography import key
@@ -148,6 +157,14 @@ SOURCE_PREPOSITIONS = {
            ('за', 'Ins'): ('post', 'Acc'), ('между', 'Ins'): ('inter', 'Acc'), ('около', 'Gen'): ('prope', 'Acc'),
            ('против', 'Gen'): ('contrā', 'Acc'), ('вокруг', 'Gen'): ('circum', 'Acc')},
 }
+# 英語の前置詞 (解析器の前置詞の目的語は Gen)
+SOURCE_PREPOSITIONS['en'] = {(prep, case): latin for prep, latin in {
+    'in': ('in', 'Abl'), 'into': ('in', 'Acc'), 'on': ('in', 'Abl'), 'at': ('in', 'Abl'), 'to': ('ad', 'Acc'),
+    'toward': ('ad', 'Acc'), 'towards': ('ad', 'Acc'), 'from': ('ab', 'Abl'), 'out of': ('ex', 'Abl'), 'with': ('cum', 'Abl'),
+    'about': ('dē', 'Abl'), 'without': ('sine', 'Abl'), 'through': ('per', 'Acc'), 'for': ('prō', 'Abl'),
+    'after': ('post', 'Acc'), 'before': ('ante', 'Acc'), 'under': ('sub', 'Abl'), 'over': ('super', 'Acc'),
+    'above': ('super', 'Acc'), 'against': ('contrā', 'Acc'), 'between': ('inter', 'Acc'), 'among': ('inter', 'Acc'),
+    'near': ('prope', 'Acc'), 'around': ('circum', 'Acc'), 'by': ('ab', 'Abl')}.items() for case in ('Gen', None)}
 SOURCE_PREPOSITIONS['ang'] = _with_plain({
     ('on', 'Dat'): ('in', 'Abl'), ('on', 'Acc'): ('in', 'Acc'), ('in', 'Dat'): ('in', 'Abl'), ('in', 'Acc'): ('in', 'Acc'),
     ('tō', 'Dat'): ('ad', 'Acc'), ('of', 'Dat'): ('ex', 'Abl'), ('fram', 'Dat'): ('ab', 'Abl'), ('from', 'Dat'): ('ab', 'Abl'),
@@ -286,6 +303,8 @@ SOURCE_QUESTION_ADVERBS = {'pt': {'quando': 'quandō', 'onde': 'ubi', 'aonde': '
                                   'откуда': 'unde', 'куда': 'quō'},
                            'fi': {'milloin': 'quandō', 'missä': 'ubi', 'miksi': 'cūr', 'miten': 'quōmodo',
                                   'kuinka': 'quōmodo', 'mistä': 'unde', 'minne': 'quō'},
+                           'en': {'when': 'quandō', 'where': 'ubi', 'why': 'cūr', 'how': 'quōmodo', 'whence': 'unde',
+                                  'whither': 'quō'},
                            'ang': {'hwonne': 'quandō', 'hwǣr': 'ubi', 'hwær': 'ubi', 'hwȳ': 'cūr', 'hwi': 'cūr',
                                    'hwy': 'cūr', 'hū': 'quōmodo', 'hu': 'quōmodo', 'hwanon': 'unde', 'hwider': 'quō'},
                            'tr': {'nerede': 'ubi', 'neden': 'cūr', 'niçin': 'cūr', 'niye': 'cūr', 'nasıl': 'quōmodo',
@@ -470,8 +489,10 @@ def lex_of(word, item=None):
         lemma = item.attrib('lemma')
         if item.pos == 'verb' and item.attrib('stem'):
             focus = 'stem:' + item.attrib('stem')
-    if lang in ('ko', 'de', 'tr', 'mn', 'fi', 'fr', 'ang', 'pt', 'zh') and item.attrib('lemma'):
+    if lang in ('ko', 'de', 'tr', 'mn', 'fi', 'fr', 'ang', 'pt', 'zh', 'en') and item.attrib('lemma'):
         lemma = item.attrib('lemma')   # 表示の形 (학교 (學校) hakgyo) でなく見出し (辞書・生成器の見出しと同じ)
+    if lang == 'en' and item.pos in ('noun', 'verb', 'adj', 'adv'):
+        english = lemma   # 英語の語は見出しが英語の訳語 (ほかの言語の語を英語の索引で引く)
     if lang == 'ar' and item.attrib('lex'):
         lemma = item.attrib('lex')   # 表示の形 (bint ⁧بِنْت⁩) でなく CAMeL の見出しの鍵 (بِنْت。生成器の見出しと同じ)
     numeral = SOURCE_NUMERALS.get(lang, {}).get(lemma.lower()) if item.pos in ('adj', 'num', 'det', 'noun') else None
@@ -488,7 +509,8 @@ def lex_of(word, item=None):
         pronoun = ({'ego': 'meus', 'tū': 'tuus', 'is': 'suus'} if item.attrib('number') != 'pl' else
                    {'ego': 'noster', 'tū': 'vester', 'is': 'suus'})[pronoun[0]], ''
     if pronoun:   # 閉じた語類はラテン語の形に (я → ego、tad → is)
-        personal = lemma.lower() in ('я', 'ты', 'он', 'она', 'оно', 'мы', 'вы', 'они', 'asmad', 'yuṣmad')
+        personal = lemma.lower() in ('я', 'ты', 'он', 'она', 'оно', 'мы', 'вы', 'они', 'asmad', 'yuṣmad') or \
+            lang == 'en' and lemma.lower() in ('i', 'me', 'you', 'he', 'him', 'she', 'her', 'it', 'we', 'us', 'they', 'them')
         pos = 'adj' if pronoun[0] in ('meus', 'tuus', 'suus', 'noster', 'vester', 'omnis', 'tālis') else 'pronoun'
         return Lex(pronoun[0], pos, item.ja,   # 所有形容詞 (мой・mein → meus) は形容詞として (名詞に一致させる)
                    desc='人称代名詞' if personal else (item.attrib('desc') or _pronoun_desc(pronoun[0])),
@@ -506,8 +528,8 @@ def lex_of(word, item=None):
             ja = lemma if lang == 'zh' else item.ja   # 中国語の名前は日本語でも漢字 (北京・李明)
             return Lex(spelling, item.pos, ja, proper=True, surface=spelling, origin=(lang, lemma))
     # 中国語の名詞の訳に組み込んだ連体修飾節・方位詞 (美しい薔薇・庭の中) は文の枠では外す (noun_ja が名詞だけの訳)
-    ja = item.attrib('noun_ja') or (item.attrib('main_ja') if item.attrib('prediction') else None) \
-        or item.ja   # 補文の 会 (来るだろう): 枠では未来の時制なので動詞だけの訳
+    ja = item.attrib('noun_ja') or (item.attrib('main_ja') if item.attrib('prediction') or lang == 'en' else None) \
+        or item.ja   # 補文の 会 (来るだろう)・英語のまとめた動詞 (want to go): 枠では時制・話法の動詞なので動詞だけの訳
     return Lex(lemma, item.pos, ja, proper=proper and item.pos in ('noun', 'unknown', 'name'), lang=lang,
                degree=item.attrib('rank') or '', en=english,
                desc=(focus if focus.startswith('stem:') else 'focus:' + focus) if focus else (item.attrib('desc') or ''),
@@ -803,6 +825,12 @@ def clause_of(predicate, lang=None):
             clause.adjuncts.append(participial_of(sub))
     _person_from_subject(clause, predicate)
     _agree_with_subject(clause, predicate)
+    if _lang == 'en':
+        subjects = clause.role('subject')
+        if subjects and subjects[0].head is not None and subjects[0].head.surface.startswith('('):
+            clause.args = [(r, np) for r, np in clause.args if np is not subjects[0]]   # 補った主語 (Gotta go の (I)) は人称だけ
+        if '(be going to' in (verb_item.attrib('form') or ''):
+            clause.tense = 'future'   # I'm going to eat (解析の訳は「食べるつもりだ」、枠では未来)
     if clause.copula and _lang in SOURCE_NUMERALS and clause.person == 3:
         subjects = clause.role('subject')
         if subjects and (subjects[0].number == 'pl' or subjects[0].members):
@@ -824,6 +852,8 @@ def clause_of(predicate, lang=None):
                 break
     if _lang in ('pt', 'zh'):
         _portuguese_chinese_frame(clause, verb_item)
+    if verb_item.attrib('negative') and _lang == 'en':
+        clause.negated = True   # 動詞にまとめた否定 (英語の can't go・don't know)
     if verb_item.attrib('modal') in SOURCE_MODALS:
         clause = _modal_clause(clause, verb_item)
     if verb_item.attrib('recent_past'):   # 近い過去 venir de「〜したところだ」→ 完了 + modo「たった今」
@@ -1008,7 +1038,12 @@ SOURCE_MODALS = {'pouvoir': ('possum', 'できる'), 'savoir': ('possum', 'で�
                  '得': ('dēbeō', 'ねばならない'), '必须': ('dēbeō', 'ねばならない'),
                  # 古英語の話法の動詞 (過去現在動詞)
                  'magan': ('possum', 'できる'), 'cunnan': ('possum', 'できる'), 'willan': ('volō', '望む,欲しい'),
-                 'sculan': ('dēbeō', 'ねばならない'), 'mōtan': ('possum', 'できる'), 'þurfan': ('dēbeō', 'ねばならない')}
+                 'sculan': ('dēbeō', 'ねばならない'), 'mōtan': ('possum', 'できる'), 'þurfan': ('dēbeō', 'ねばならない'),
+                 # 英語の法の助動詞 (can't の ca)・to 不定詞を取る動詞 (english/analyzer.py の modal)
+                 'can': ('possum', 'できる'), 'ca': ('possum', 'できる'), 'could': ('possum', 'できる'),
+                 'must': ('dēbeō', 'ねばならない'), 'should': ('dēbeō', 'ねばならない'), 'ought': ('dēbeō', 'ねばならない'),
+                 'want': ('volō', '望む,欲しい'), 'have': ('dēbeō', 'ねばならない'), 'need': ('dēbeō', 'ねばならない'),
+                 'got': ('dēbeō', 'ねばならない')}
 
 
 def _modal_clause(clause, verb_item):
@@ -1131,9 +1166,9 @@ SOURCE_NUMERALS['zh']['两'] = 'duo'
 POSSESSIVE_SUFFIXES = {'P1sg': 'meus', 'P2sg': 'tuus', 'P3sg': 'suus', 'P1pl': 'noster', 'P2pl': 'vester', 'P3pl': 'suus'}
 OWNER_JA = {'meus': '私の', 'tuus': '君の', 'noster': '私たちの', 'vester': '君たちの', 'suus': ''}
 # 繋辞を中立の sum にする言語
-NEUTRAL_COPULA = ('ko', 'de', 'tr', 'mn', 'fi', 'fr', 'ang', 'pt', 'zh')
+NEUTRAL_COPULA = ('ko', 'de', 'tr', 'mn', 'fi', 'fr', 'ang', 'pt', 'zh', 'en')
 # 動詞が人称で変わらない言語 (人称は主語の代名詞から)
-PERSONLESS = ('ko', 'mn', 'ja', 'zh')
+PERSONLESS = ('ko', 'mn', 'ja', 'zh', 'en')
 
 
 def _person_from_subject(clause, predicate):

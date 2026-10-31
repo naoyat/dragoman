@@ -250,6 +250,24 @@ class WhQuestionTestCase(unittest.TestCase):
         cs = frames_of(zh, '女孩在花园里。')
         self.assertEqual(latin.sentence(cs), 'Puella in hortō est.')
 
+    def test_english_source(self):
+        from dragoman.english import analyzer as en, morphology
+        if not morphology.available():
+            self.skipTest('spaCy の英語モデルか英和の表が無い')
+
+        def out(text, module, lang):
+            analysis, = en.analyze_text(text)
+            cs = frame.frames(analysis)
+            return frame.punctuate(module.sentence(cs), cs, lang)
+        for text, la, ja in [('The girl gives the sailor a rose.', 'Puella nautae rosam dat.', '少女は船乗りに薔薇を与える。'),
+                             ("I can't go.", 'Īre nōn possum.', '私は行くことができない。'),   # 法の助動詞・否定
+                             ('I want to go.', 'Īre volō.', '私は行きたい。'),
+                             ('She loves him.', 'Ea eum amat.', '彼女は彼を愛する。'),            # 代名詞の性
+                             ('Gotta go.', 'Īre dēbeō.', '行かなければならない。'),               # 補った主語は人称だけ
+                             ("I'm gonna eat.", 'Edam.', '私は食べるだろう。')]:                  # be going to は未来
+            self.assertEqual(out(text, latin, 'la'), la)
+            self.assertEqual(out(text, japanese, 'ja'), ja)
+
 
 class SmallFixesTestCase(unittest.TestCase):
     """出口・入口の小さな手当て: 3人称の主語の代名詞、倒置、否定の縮約、場所の文、女性の人の名詞 …"""

@@ -34,7 +34,7 @@ class AnalyzerTestCase(unittest.TestCase):
 
     def test_going_to_and_colloquial(self):
         self.assertEqual(self.ja("I'm going to eat."), '私が / 食べるつもりだ')        # be going to + 原形
-        self.assertEqual(self.ja("It's going to rain."), 'それが / 雨が降るだろう')   # 人でない主語は未来
+        self.assertEqual(self.ja("It's going to rain."), '雨が降るだろう')   # 人でない主語は未来 (天気の it は訳さない)
         self.assertEqual(self.ja('I was going to call you.'), '私が / あなたを / 呼ぶつもりだった')
         self.assertEqual(self.ja("I'm going to school."), '私が / {学校,高校}[へ,に] / 行っている')
         self.assertEqual(self.ja("I've got to go."), '私が / 行かなければならない')
@@ -71,7 +71,7 @@ class AnalyzerTestCase(unittest.TestCase):
     def test_elided_subject(self):
         # 主語の落ちた文: 仮の主語 (I・it) を補って解析し、語の表に括弧で、訳には出さない
         for text, subject, ja in [('Gotta go.', '(I)', '行かなければならない'),
-                                  ('Gonna rain.', '(it)', '雨が降るだろう'),
+                                  ('Gonna rain.', 'Gonna rain', '雨が降るだろう'),   # 天気の it は訳さない語
                                   ("Can't wait.", '(I)', '待つことができない'),
                                   ('Went home early.', '(I)', '家に / 早く,初期のうちに / 行った'),
                                   ('Sounds good.', '(it)', '良いように聞こえる')]:
@@ -82,6 +82,18 @@ class AnalyzerTestCase(unittest.TestCase):
             words = analyzer.lookup_all(next(analyzer.sentences(text)))
             self.assertFalse(words[0].surface.startswith('('), text)
         self.assertEqual(self.ja('Go home.'), '家に / 行け')
+
+    def test_modal_copula_and_negative_perfect(self):
+        # 繋辞に付く法の助動詞は推量・義務
+        self.assertEqual(self.ja('He could be a doctor.'), '彼は / 医者であるかもしれない')
+        self.assertEqual(self.ja('He must be a doctor.'), '彼は / 医者に違いない')
+        self.assertEqual(self.ja("It can't be true."), 'それは / 本当のものであるはずがない')
+        self.assertEqual(self.ja('You should be careful.'), 'あなたは / 注意深くあるべきだ,慎重であるべきだ')
+        # 完了の否定は「〜ていない」、経験は「〜たことがない」
+        self.assertEqual(self.ja("I haven't eaten."), '私が / 食べていない,食っていない')
+        self.assertEqual(self.ja("I haven't been to Japan."), '私が / 日本[へ,に] / 行ったことがない')
+        self.assertEqual(self.ja('I have never eaten sushi.'), '私が / 寿司を / 食べたことがない')
+        self.assertEqual(self.ja('Love it.'), 'それを / 愛せ')
 
     def test_copular_verbs(self):
         self.assertEqual(self.ja('It sounds good.'), 'それが / 良いように聞こえる')

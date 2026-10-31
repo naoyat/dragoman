@@ -194,7 +194,9 @@ class Predicate (LatinObject):
         noms = []
         nom_acc_objs = case_slot.get('Nom/Acc', [])
         # 解析器が補った主語 (英語の主語の落ちた文 Gotta go. の (I)) は訳に出さず、主語も補わない
-        elided = [o for o in case_slot.get('Nom', []) if isinstance(o, Word) and o.items and o.items[0].attrib('elided')]
+        elided = [o for o in case_slot.get('Nom', []) + nom_acc_objs if isinstance(o, Word) and o.items and
+                  o.items[0].attrib('elided')]
+        nom_acc_objs = [o for o in nom_acc_objs if o not in elided]
         if 'Nom' in case_slot or (person == 3 and nom_acc_objs):
             nom_objs = [o for o in case_slot.get('Nom', []) if o not in elided]
             # nom_acc_objs = case_slot.get('Nom/Acc', [])
@@ -396,6 +398,15 @@ class Predicate (LatinObject):
                 negated = False
         if is_existential:
             pass
+        elif self.is_sum and sum_complement and verb.attrib('copula_suffix'):
+            # 法の助動詞の付いた繋辞 (英語の should be fine「元気であるべきだ」、might be dangerous「危険であるかもしれない」)
+            suffix = verb.attrib('copula_suffix')
+            out = []
+            for obj in sum_complement:
+                t = copula_translation(obj, 'present', False)
+                out.append(','.join(JaVerb(_copula_with(c, suffix)).form(flag, negated)
+                                    for c in ([t] if '{' in t else t.split(','))))
+            verb_tr = '='.join(out)
         elif self.is_sum and sum_complement:
             verb_tr = '='.join(copula_translation(obj, copula_tense(tense), negated) for obj in sum_complement)
         elif negated and self.is_sum:
@@ -476,6 +487,16 @@ def _is_adjective(obj):
     if isinstance(obj, AndOr):
         return obj.pos == 'adj'
     return isinstance(obj, Word) and bool(obj.items) and obj.items[0].pos in ('adj', 'participle')
+
+
+def _copula_with(predicate, suffix):
+    """補語の述語の形 (医者である・危ない) + 法の助動詞の形 (医者であるかもしれない・医者であるはずがない)。
+    に違いない は である を除き (医者に違いない)、べきだ の前のイ形容詞は 良くあるべきだ"""
+    if predicate.endswith('である') and suffix == 'に違いない':
+        return predicate[:-len('である')] + suffix
+    if suffix == 'べきだ' and predicate.endswith('い') and not predicate.endswith('である'):
+        return predicate[:-1] + 'くあるべきだ'
+    return predicate + suffix
 
 
 def copula_translation(obj, tense, negated):

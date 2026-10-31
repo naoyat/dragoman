@@ -208,6 +208,7 @@ def _noun_data(token):
     return data
 
 
+PRONOUN_GENDERS = {'he': 'm', 'him': 'm', 'himself': 'm', 'she': 'f', 'her': 'f', 'herself': 'f', 'it': 'n', 'itself': 'n'}
 WEATHER_VERBS = {'rain', 'snow', 'hail', 'thunder', 'drizzle', 'pour', 'freeze'}
 
 
@@ -301,14 +302,18 @@ def item_of(token, doc):
             return {'surface': text, 'pos': 'pronoun', 'base': lower, 'ja': ja, 'gloss_lang': 'ja',
                     'desc': '指示代名詞' if lower in ('this', 'that', 'these', 'those') else '不定形容詞',
                     '_': morphology.cngs(morphology.ALL_CASES), 'compact': True, 'determiner': True}
-    if lower == 'it' and token.dep_ == 'nsubj' and token.head.lemma_ in WEATHER_VERBS:
+    if lower == 'it' and token.dep_ == 'nsubj' and (token.head.lemma_ in WEATHER_VERBS or any(
+            c.dep_ == 'xcomp' and c.lemma_ in WEATHER_VERBS for c in token.head.children)):   # it's going to rain も
         return {'surface': text, 'pos': 'particle', 'base': 'it', 'ja': '', 'gloss_lang': 'ja'}   # 天候の it (it rained)
     if pos == 'PRON' or tag in ('PRP', 'WP', 'DT'):
         ja, person, number, cases = morphology.PRONOUNS.get(lower) or (lower, 3, 'sg', morphology.ALL_CASES)
         if len(cases) > 1:
             cases = tuple(c for c in _case(token) if c in cases) or cases
+        tags = morphology.cngs(cases, number)
+        if lower in PRONOUN_GENDERS:   # he・she・it の性 (文の枠で ille・illa、он・она に)
+            tags = [t for t in tags if t[2] == PRONOUN_GENDERS[lower]]
         data = {'surface': text, 'pos': 'pronoun', 'base': lower, 'ja': ja, 'gloss_lang': 'ja', 'person': person,
-                'number': number, '_': morphology.cngs(cases, number), 'compact': True}
+                'number': number, '_': tags, 'compact': True}
         if tag == 'WP':
             data['desc'] = '疑問代名詞'   # 直接疑問・間接疑問の who・what (関係代名詞は上で)
         return data
@@ -367,6 +372,9 @@ def _attach(verb, suffix):
     return attach_auxiliary(verb, suffix)
 
 
+# 繋辞に付く法の助動詞は推量 (He could be a doctor「医者であるかもしれない」、You must be tired の must)
+COPULA_MODALS = {'can': 'かもしれない', 'could': 'かもしれない', 'may': 'かもしれない', 'might': 'かもしれない',
+                 'must': 'に違いない'}
 MODAL_SPELLING = {'ca': 'can', 'wo': 'will', 'sha': 'shall', "'ll": 'will', "'d": 'would'}   # can't の ca …
 
 
@@ -398,9 +406,14 @@ def merge_verbs(words, doc):
                     forms.append('未来 (%s + 原形)' % MODAL_SPELLING.get(aux.text.lower(), aux.text))
                 elif suffix:
                     data.update(modal=aux.text.lower(), main_ja=main.ja)
+                    if data.get('lemma') == 'be':   # 繋辞の補語の後ろに (It should be fine → 元気であるべきだ)
+                        modal = MODAL_SPELLING.get(aux.text.lower(), aux.text.lower())
+                        data['copula_suffix'] = COPULA_MODALS.get(modal, suffix)
                     if main.attrib('gloss_lang') == 'ja':
                         data['ja'] = ','.join(_attach(j, suffix) for j in (main.ja or '').split(',')[:1])
                     data['tense'] = a.attrib('tense')
+                    if data.get('copula_suffix') in COPULA_MODALS.values():
+                        data['tense'] = 'present'   # could be「〜かもしれない」(過去でなく推量)
                     forms.append('%s + 原形' % MODAL_SPELLING.get(aux.text.lower(), aux.text))
             elif lemma == 'be' and aux.dep_ == 'auxpass':
                 finite = finite or a
@@ -490,6 +503,8 @@ def control_verbs(words, doc):
         data.update(tense=tense, person=h.attrib('person'), number=h.attrib('number'), mood=h.attrib('mood'),
                     surface=head_word.surface + ' to ' + main_word.surface, main_ja=m.ja,
                     form=form or '%s + to 不定詞' % lemma)
+        if lemma in ('want', 'have', 'need', 'ought') or suffix == 'なければならない':
+            data['modal'] = 'got' if lemma in ('get', 'got') else lemma   # 文の枠で話法の動詞 + 不定詞 (volō īre)
         if h.attrib('form') and not form:
             data['form'] = h.attrib('form') + '・' + data['form']
         if h.attrib('colloquial'):
@@ -528,6 +543,8 @@ def negated_verbs(words, doc):
     for token in doc:
         word = by_i.get(token.i)
         item = _item(word) if word is not None else None
+        if item is not None and token.text.lower() == 'never' and _experience(by_i.get(token.head.i)):
+            continue
         if item is None or not item.attrib('negation') or token.text.lower() not in ('not', "n't") or \
                 token.dep_ != 'neg' or token.head.pos_ not in ('VERB', 'AUX'):
             continue
@@ -549,10 +566,33 @@ def negated_verbs(words, doc):
             gap = words.index(verb) - k > 1
             verb.surface = head + (' … ' if gap else ' ') + verb.surface
         v = _item(verb)
-        verb.items = [type(v)(dict(v.item, negative=True))]
+        data = dict(v.item, negative=True)
+        if v.attrib('copula_suffix') == 'かもしれない' and v.attrib('modal') in ('ca', 'can', 'could'):
+            data.update(copula_suffix='はずがない', negative=False)   # It can't be true「本当のはずがない」
+        if 'have + 過去分詞' in (v.attrib('form') or '') and v.attrib('gloss_lang') == 'ja' and v.attrib('voice') != 'passive':
+            # 完了の否定は「〜ていない」(I haven't eaten → まだ食べていない、hadn't eaten → 食べていなかった)
+            data.update(ja=','.join(_attach(j, 'ている') for j in (v.ja or '').split(',')),
+                        tense='perfect' if v.attrib('tense') == 'pluperfect' else 'present')
+            if v.attrib('lemma') == 'be (go)':
+                data['ja'] = '行ったことがある'   # 経験の否定 (I haven't been to Japan → 行ったことがない)
+        verb.items = [type(v)(data)]
         word.merged_into = True
         words.remove(word)
     return words
+
+
+def _experience(verb):
+    """have never + 過去分詞: 経験の否定「〜たことがない」(I have never been to Japan → 日本へ 行ったことがない)"""
+    v = _item(verb) if verb is not None else None
+    if v is None or v.pos != 'verb' or 'have + 過去分詞' not in (v.attrib('form') or '') or \
+            v.attrib('gloss_lang') != 'ja' or v.attrib('voice') == 'passive':
+        return False
+    from dragoman.core.japanese import JaVerb
+    from dragoman.core import verb_flags as Verb
+    first = '行く' if v.attrib('lemma') == 'be (go)' else (v.ja or '').split(',')[0]
+    ja = JaVerb(first).form(Verb.INDICATIVE | Verb.PERFECT) + 'ことがある'
+    verb.items = [type(v)(dict(v.item, ja=ja, tense='perfect' if v.attrib('tense') == 'pluperfect' else 'present'))]
+    return True
 
 
 def copular_complements(words, doc):
@@ -842,6 +882,10 @@ def lookup_all(surfaces):
     words = merge_verbs(words, doc)
     words = control_verbs(words, doc)
     words = negated_verbs(words, doc)
+    for w in words:   # 天気の動詞 (it は訳さない): 主語を補わない (It's going to rain → 雨が降るだろう)
+        item = _item(w)
+        if item is not None and item.pos == 'verb' and item.attrib('lemma') in WEATHER_VERBS:
+            w.items = [type(item)(dict(item.item, person=None, number=None))]
     words = copular_complements(words, doc)
     words = possessives(words)
     words = how_adjectives(words)

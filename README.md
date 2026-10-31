@@ -256,7 +256,7 @@ python3 tools/macos/install_service.py     # ~/Library/Services/dragoman で解�
 ```
 python3 tools/generate.py "Puella rosam pulchram in hortō videt."            # ラテン語 → 文の枠 → 全部の出口の言語
 python3 tools/generate.py --to=grc,ja latin/texts/fabulae_faciles/perseus.txt
-python3 tools/generate.py --from=grc "ἡ κόρη τὸ καλὸν ῥόδον ἐν τῷ κήπῳ βλέπει."   # --from=ru / sa / grc / fa / hi / ur / ar / he / id / tl / de / fr / pt / zh / fi / tr / mn / ko / ja
+python3 tools/generate.py --from=grc "ἡ κόρη τὸ καλὸν ῥόδον ἐν τῷ κήπῳ βλέπει."   # --from=ru / sa / grc / fa / hi / ur / ar / he / id / tl / de / fr / pt / zh / fi / tr / mn / ko / en / ja
 python3 tools/generate.py --from=ja "少女が庭で美しい薔薇を見た。"
 python3 tools/generate.py --gaps FILE   # 言語ごとに訳語の見つからない語の一覧だけ (生成文・元の文は出さない)
 python3 tools/generate.py --why=lūsor --to=de,ko   # 訳語を選んだ理由: 候補ごとの点の内訳 (英語の訳語の順位・語義の数・出現数・手作りの辞書・日本語の訳語)。--from=en で英語の語から、--pos=noun で品詞を絞る

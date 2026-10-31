@@ -415,6 +415,8 @@ class JaVerb:
             else:
                 # 能動態
                 if self.use_mecab:
+                    if self.body == '愛する':
+                        return self.prefix + '愛せ'   # 愛しろ より自然 (否定の 愛さ と同じく)
                     conj, _vocalize = self.conjugate(MEIREI)
                     return conj
                 else:

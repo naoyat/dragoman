@@ -63,6 +63,10 @@ SOURCE_CONNECTIVES = {
             'syþþan': 'postquam', 'ǣr': 'antequam', 'ær': 'antequam', 'þā': 'ubi', 'þa': 'ubi', 'þā þā': 'ubi',
             'þa þa': 'ubi', 'þenden': 'dum', 'oþ': 'dum', 'hwæþer': 'num', 'swā': 'ut', 'swa': 'ut', 'ēac': 'etiam',
             'eac': 'etiam', 'nū': 'nunc', 'nu': 'nunc', 'sōþlīċe': 'autem', 'soþlice': 'autem'},
+    # 英語
+    'en': {'and': 'et', 'but': 'sed', 'or': 'aut', 'if': 'sī', 'unless': 'nisi', 'although': 'quamquam', 'though': 'quamquam',
+           'because': 'quia', 'since': 'quoniam', 'when': 'cum', 'while': 'dum', 'until': 'dum', 'after': 'postquam',
+           'before': 'priusquam', 'so': 'itaque', 'therefore': 'igitur', 'that': 'quod', 'whether': 'num'},
     # フランス語: 前置詞・副詞 + que の接続詞は解析で1語 (sans que の語は sans)
     'fr': {'quand': 'cum', 'lorsque': 'cum', "lorsqu'": 'cum', 'si': 'sī', "s'": 'sī', 'parce': 'quia', 'puisque': 'quoniam',
            'bien': 'quamquam', 'avant': 'priusquam', 'pour': 'ut', 'afin': 'ut', 'pendant': 'dum', 'après': 'postquam',

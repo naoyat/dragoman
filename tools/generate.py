@@ -142,7 +142,8 @@ def run_japanese(text):
 # --from の言語 → 解析器のパッケージ
 SOURCE_ANALYZERS = {'ru': 'russian', 'sa': 'sanskrit', 'grc': 'greek', 'ar': 'arabic', 'he': 'hebrew', 'fa': 'persian',
                     'hi': 'hindi', 'ur': 'urdu', 'id': 'indonesian', 'tl': 'tagalog', 'ko': 'korean', 'de': 'german', 'fr': 'french',
-                    'tr': 'turkish', 'mn': 'mongolian', 'fi': 'finnish', 'ang': 'oldenglish', 'pt': 'portuguese', 'zh': 'chinese'}
+                    'tr': 'turkish', 'mn': 'mongolian', 'fi': 'finnish', 'ang': 'oldenglish', 'pt': 'portuguese', 'zh': 'chinese',
+                    'en': 'english'}
 # (チベット語・アイヌ語の解析器は節の構造 (述語と格の枠) を作らないので、文の枠に写せない)
 
 
@@ -177,7 +178,7 @@ def run_other(text, source):
                 # 解析の表示の文は標識 (ng・ang) を落としたり冠詞・前置詞を切り離したり (הַ מֶּלֶךְ) するので、
                 # インドネシア語・タガログ語・ヘブライ語・韓国語 (助詞を切り離す)・トルコ語・モンゴル語 (副動詞の印を足す)・フランス語 (エリジオンを切る)・
                 # ポルトガル語・ドイツ語 (冠詞を落とす)・中国語 (的・了・量詞を落とす) は入力の文と比べる
-                original = _source_words(text if source in ('id', 'tl', 'he', 'ko', 'tr', 'mn', 'fr', 'pt', 'de') else
+                original = _source_words(text if source in ('id', 'tl', 'he', 'ko', 'tr', 'mn', 'fr', 'pt', 'de', 'en') else
                                          ''.join(analysis.original) if source == 'zh' else analysis.text, source)
                 mark = '   ✓ 同じ語' if original == _source_words(first, source) else '   ✗'
             first, _, rest = out.partition('\n')
