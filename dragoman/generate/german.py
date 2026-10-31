@@ -390,6 +390,11 @@ def _copula_words(clause, person, number):
     return AUX['sein'][key]
 
 
+# 目的語を与格で取る動詞 (Ich helfe dir、Er dankt mir)
+DATIVE_VERBS = {'helfen', 'danken', 'folgen', 'gefallen', 'gehören', 'antworten', 'vertrauen', 'gratulieren',
+                'begegnen', 'schaden', 'dienen', 'gehorchen', 'zuhören', 'widersprechen'}
+
+
 # 不定詞を支配する話法の動詞 (ラテン語の見出し) → ドイツ語の話法の助動詞
 GERMAN_MODALS = {'possum': 'können', 'volō': 'wollen', 'dēbeō': 'müssen', 'oportet': 'müssen', 'faciō': 'lassen',
                  'sinō': 'lassen'}
@@ -440,7 +445,8 @@ def _modal(clause, gap, subordinate):
         args.append(('object', person_np))   # Er lässt mich lachen
     outer = dataclasses.replace(clause, verb=Lex(modal, 'verb', lang='de'), infinitives=[], args=args)
     words = realize(outer, gap, subordinate)
-    if subordinate:   # 副文: … lesen kann (定動詞を最後に)
+    if subordinate or clause.tense in ('future', 'future-perfect'):
+        # 副文: … lesen kann (定動詞を最後に)。未来: Wir werden gehen müssen (話法の助動詞の不定詞を最後に)
         return words[:-1] + inner_words + words[-1:]
     return words + inner_words
 
@@ -448,6 +454,37 @@ def _modal(clause, gap, subordinate):
 # 直接の疑問文の疑問の副詞
 QUESTION_WORDS = {'quandō': 'wann', 'ubi': 'wo', 'cūr': 'warum', 'quārē': 'warum', 'quōmodo': 'wie', 'unde': 'woher',
                   'quō': 'wohin', 'quotiēns': 'wie oft'}
+# 間接疑問だけの疑問詞 (num, utrum「〜かどうか」→ ob)
+INDIRECT_WORDS = dict(QUESTION_WORDS, quemadmodum='wie', num='ob', utrum='ob', quam='wie', quot='wie viele',
+                      quantus='wie groß', quālis='was für ein', quā='auf welchem Weg')
+IDIOM_WORDS = {'where': 'wo', 'why': 'warum', 'how': 'wie', 'when': 'wann'}   # frame.question_idiom の意味
+WHO = {'quis', 'quem', 'cui', 'cūius', 'cuius', 'quibus'}   # 人を問う形 (ほかは was)
+WHO_FORMS = {'Nom': 'wer', 'Acc': 'wen', 'Dat': 'wem', 'Gen': 'wessen'}
+
+
+def question_phrase(inner):
+    """間接疑問: 読点 + 疑問詞 + 副文 (定動詞を最後に: …, was du willst・…, wer gekommen ist・…, ob er kommt)"""
+    from .frame import interrogative_np, without_interrogative, question_idiom
+    finite = dataclasses.replace(inner, mood='indicative', question_word='', question=False)
+    idiom, stripped = question_idiom(inner)
+    if idiom:
+        return [',', IDIOM_WORDS[idiom]] + realize(dataclasses.replace(stripped, mood='indicative', question_word='',
+                                                                       question=False), subordinate=True)
+    owner, role, wh = interrogative_np(inner)
+    if wh is None:
+        return [',', INDIRECT_WORDS.get(inner.question_word, inner.question_word)] + realize(finite, subordinate=True)
+    if role == 'prep':   # 前置詞 + 疑問代名詞: 物は wo(r) + 前置詞 (worüber・womit)、人は前置詞 + wen / wem
+        text = prepositional(wh)
+        prep, _, rest = text.rpartition(' ')
+        if inner.question_word in WHO:
+            pronoun = prep + ' ' + WHO_FORMS['Acc' if rest in ('wen', 'was') else 'Dat']
+        else:
+            pronoun = 'wo' + ('r' if prep[:1] in 'aeiouäöü' else '') + prep if ' ' not in prep else text
+        return [',', pronoun] + realize(without_interrogative(finite), subordinate=True)
+    case = {'subject': 'Nom', 'recipient': 'Dat', 'possessor': 'Gen'}.get(role, 'Acc')
+    pronoun = WHO_FORMS[case] if inner.question_word in WHO else ('wessen' if case == 'Gen' else 'was')
+    gap = 'subject' if owner is inner and role == 'subject' else None
+    return [',', pronoun] + realize(without_interrogative(finite), gap=gap, subordinate=True)
 
 
 def direct_question(clause):
@@ -469,6 +506,11 @@ def realize(clause, gap=None, subordinate=False, infinitive=False):
     clause = lexical_negation(periphrastic(clause))
     if clause.question and clause.question_word and clause.mood == 'indicative' and gap is None and not subordinate:
         return direct_question(clause)
+    if clause.questions:   # 間接疑問は主文の後ろ (Ich weiß nicht, was du willst)
+        main = realize(dataclasses.replace(clause, questions=[]), gap, subordinate, infinitive)
+        for inner in clause.questions:
+            main += question_phrase(inner)
+        return main
     modal = _modal(clause, gap, subordinate)
     if modal is not None:
         return modal
@@ -487,6 +529,8 @@ def realize(clause, gap=None, subordinate=False, infinitive=False):
     head_words = []
     if subject is not None and gap != 'subject':
         head_words.append(noun_phrase(subject, 'Nom'))
+    elif subject is None and gap is None and clause.mood != 'imperative' and english.impersonal(clause):
+        head_words.append('es')   # 非人称の主語 (Es regnet)
     elif subject is None and gap is None and clause.mood != 'imperative':
         head_words.append({(1, 'sg'): 'ich', (2, 'sg'): 'du', (3, 'sg'): 'er', (1, 'pl'): 'wir', (2, 'pl'): 'ihr',
                            (3, 'pl'): 'sie'}[(person, number)])
@@ -519,7 +563,7 @@ def realize(clause, gap=None, subordinate=False, infinitive=False):
             middle.append(noun_phrase(np, 'Dat'))
         obj = (clause.role('object') or [None])[0]
         if obj is not None and gap != 'object':
-            middle.append(noun_phrase(obj, 'Acc'))
+            middle.append(noun_phrase(obj, 'Dat' if word(clause.verb, 'verb') in DATIVE_VERBS else 'Acc'))
         for role, np in clause.args:
             if role in ('subject', 'object', 'recipient', 'complement', 'address'):
                 continue
@@ -544,7 +588,8 @@ def realize(clause, gap=None, subordinate=False, infinitive=False):
         return [w for w in [stem + ('t' if number == 'pl' else '')] + middle + (['nicht'] if clause.negated else []) if w]
     if subordinate:   # 関係節・従属節: 動詞を最後に
         return [w for w in head_words + middle + tail + [verb] if w]
-    if clause.invert:   # 疑問詞の後ろは定動詞 + 主語 (Wann kommt er?)
+    if clause.invert or clause.question and not clause.question_word and gap is None:
+        # 疑問詞の後ろ・諾否の疑問文は定動詞 + 主語 (Wann kommt er?・Kommt er?)
         return [w for w in [verb] + head_words + middle + tail if w]
     return [w for w in head_words + [verb] + middle + tail if w]
 

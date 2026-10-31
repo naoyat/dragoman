@@ -149,9 +149,20 @@ def name(latin):
     return out[:1].upper() + out[1:]
 
 
+# 話法の動詞 (ラテン語の見出し) → ロシア語の動詞 (possum「〜できる」は мочь。умеять「技能がある」にしない)
+MODAL_VERBS = {'possum': 'мочь', 'volō': 'хотеть'}
+# 天気の文: 天気の種類 → (名詞, 現在, 過去 (男性), 未来) (Идёт дождь・Шёл снег・Пойдёт дождь)
+WEATHER = {'rain': ('дождь', 'идёт', 'шёл', 'пойдёт'), 'snow': ('снег', 'идёт', 'шёл', 'пойдёт'),
+           'hail': ('град', 'идёт', 'шёл', 'пойдёт'), 'thunder': ('гром', 'гремит', 'гремел', 'загремит')}
+# dēbeō「〜なければならない」: 短語尾の должен (性・数で変わる。過去は был、未来は буду を添える)
+DOLZHEN = {'masc': 'должен', 'femn': 'должна', 'neut': 'должно'}
+
+
 def verb_lemma(lex, aspect='impf', transitive=False):
     if lex.lemma == 'sum':
         return 'быть'
+    if lex.lemma in MODAL_VERBS and lex.lang in ('', 'la'):
+        return MODAL_VERBS[lex.lemma]
     found = transfer.candidates(lex, 'ru')
     if transitive:   # 受動分詞を作るので、-ся の動詞 (тронуться) を除く
         found = [(s, t) for s, t in found if not t.lemma.endswith(('ся', 'сь'))] or found
@@ -379,6 +390,19 @@ def verb_form(clause, gender, person, number):
     num = 'plur' if number == 'pl' else 'sing'
     past = {'past', num} | ({gender} if number != 'pl' else set())
     perfective = tense in ('perfect', 'past-perfect', 'future-perfect')
+    from .frame import weather
+    if weather(clause) in WEATHER and mood == 'indicative':
+        noun, present, past_form, future = WEATHER[weather(clause)]
+        return [past_form if tense in ('imperfect', 'perfect', 'past-perfect') else
+                future if tense in ('future', 'future-perfect') else present, noun]
+    if clause.verb is not None and clause.verb.lemma == 'dēbeō' and clause.verb.lang in ('', 'la') and \
+            mood == 'indicative' and voice == 'active':
+        words = ['должны' if number == 'pl' else DOLZHEN.get(gender, 'должен')]
+        if tense in ('imperfect', 'perfect', 'past-perfect'):
+            words.append(_inflect('быть', 'INFN', past))
+        elif tense in ('future', 'future-perfect'):
+            words.append(_inflect('быть', 'INFN', {'futr', _person(person), num}))
+        return words
     if clause.copula:
         if tense in ('imperfect', 'perfect', 'past-perfect'):
             return [_inflect('быть', 'INFN', past)]
@@ -562,6 +586,8 @@ def question_phrase(inner):
             head, _, rest = text.partition(' ')
             return ', ' + head + ' ли' + (' ' + rest if rest else '')
         return ', ' + word + ' ' + text
+    if role == 'prep':   # 前置詞 + 疑問代名詞 (о чём ты говоришь)
+        return ', ' + prepositional(wh) + ' ' + realize(without_interrogative(finite), capitalize=False)
     pronoun = 'кто' if inner.question_word in ('quis', 'quem', 'cui', 'cūius', 'cuius') else 'что'
     case = 'Nom' if role == 'subject' else ROLE_CASES.get(role, 'Acc')
     if owner is inner and role == 'subject':
@@ -623,7 +649,9 @@ def realize(clause, capitalize=True):
             out.append(noun_phrase(subject, 'Nom'))
             for other in subjects[1:]:
                 out[-1] += ', ' + noun_phrase(other, 'Nom') + ','
-        elif (clause.copula or clause.tense in ('imperfect', 'perfect', 'past-perfect')) and clause.gap != 'subject':
+        elif (clause.copula or clause.tense in ('imperfect', 'perfect', 'past-perfect') or
+              clause.verb is not None and clause.verb.lemma == 'dēbeō') and clause.gap != 'subject' and \
+                not english.impersonal(clause):
             out.append(PERSONAL.get((person, number), 'он'))   # 過去形は人称を示さないので代名詞を補う
     for p in clause.adjuncts:
         if p.kind != 'absolute':

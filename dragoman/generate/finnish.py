@@ -365,7 +365,7 @@ def realize(clause, gap=None):
                                                          and subject.head.lemma in ('ego', 'tū') and gap is None):
         head.append(noun_phrase(subject, 'Nom'))
     elif subject is None and gap is None and person == 3 and clause.mood == 'indicative' and \
-            clause.verb.lemma not in english.IMPERSONAL:
+            not english.impersonal(clause):
         head.append('he' if number == 'pl' else 'hän')   # 3人称の主語は省かない (Hän tulee。Sataa は主語なし)
     rest = [word(adv, 'adv') for adv in clause.adverbs if adv.lemma != 'nōn']
     if clause.copula:

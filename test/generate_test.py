@@ -267,6 +267,31 @@ class WhQuestionTestCase(unittest.TestCase):
                              ("I'm gonna eat.", 'Edam.', '私は食べるだろう。')]:                  # be going to は未来
             self.assertEqual(out(text, latin, 'la'), la)
             self.assertEqual(out(text, japanese, 'ja'), ja)
+        from dragoman.generate import german
+        if not russian.available() or not german.available():
+            return
+        for text, ru, de in [
+                ('It rains.', 'Идёт дождь.', 'Es regnet.'),                       # 天気の文 (主語なし・es)
+                ("It's going to rain.", 'Пойдёт дождь.', 'Es wird regnen.'),
+                ('It snowed.', 'Шёл снег.', 'Es schneite.'),
+                ('Gotta go.', 'Я должен идти.', 'Ich muss gehen.'),               # dēbeō → должен
+                ('She had to go.', 'Она должна была идти.', 'Sie musste gehen.'),
+                ('We will have to go.', 'Мы должны будем идти.', 'Wir werden gehen müssen.'),
+                ("I can't go.", 'Я не могу идти.', 'Ich kann nicht gehen.'),      # possum → мочь
+                ('Can you help me?', 'Ты можешь помогать мне?', 'Kannst du mir helfen?'),   # 諾否の疑問文・与格の動詞
+                # 間接疑問 (ドイツ語は副文: 定動詞を最後に)
+                ("I don't know what you want.", 'Я не знаю, что ты хочешь.', 'Ich weiß nicht, was du willst.'),
+                ('Do you know who wrote this book?', 'Ты знаешь, кто написал эту книгу?',
+                 'Weißt du, wer dieses Buch schrieb?'),
+                ('Tell me where you live.', 'Рассказывай мне, где ты живёшь.', 'Erzähl mir, wo du lebst.'),
+                ("I don't know what you're talking about.", 'Я не знаю, о чём ты поговариваешь.',
+                 'Ich weiß nicht, worüber du sprichst.')]:
+            self.assertEqual(out(text, russian, 'ru'), ru)
+            self.assertEqual(out(text, german, 'de'), de)
+        self.assertIn(', ob er kommen wird', out('I wonder whether he will come.', german, 'de'))   # whether → ob
+        self.assertEqual(out('It rains.', english, 'en'), 'It rains.')
+        self.assertEqual(out("I don't know what you're talking about.", english, 'en'),
+                         'I do not know what you talk about.')
 
 
 class SmallFixesTestCase(unittest.TestCase):

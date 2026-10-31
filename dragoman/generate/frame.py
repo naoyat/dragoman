@@ -291,9 +291,26 @@ PERFECT_PRESENTS = {'grc': {'οἶδα'}}
 SOURCE_QUESTION_WORDS = {'grc': {'πῶς': 'quōmodo', 'ὅπως': 'quōmodo', 'ποῦ': 'ubi', 'ὅπου': 'ubi', 'πότε': 'quandō',
                                  'ὁπότε': 'quandō', 'πόθεν': 'unde', 'ὁπόθεν': 'unde', 'ποῖ': 'quō', 'ὅποι': 'quō',
                                  'εἰ': 'num', 'πότερον': 'utrum', 'ὁπότερον': 'utrum', 'πόσος': 'quantus',
-                                 'ὁπόσος': 'quantus', 'ποῖος': 'quālis', 'ὁποῖος': 'quālis'}}
+                                 'ὁπόσος': 'quantus', 'ποῖος': 'quālis', 'ὁποῖος': 'quālis'},
+                         'en': {'who': 'quis', 'whom': 'quem', 'whose': 'cūius', 'what': 'quid', 'which': 'quid',
+                                'when': 'quandō', 'where': 'ubi', 'why': 'cūr', 'how': 'quōmodo', 'whence': 'unde',
+                                'whither': 'quō', 'whether': 'num', 'if': 'num'}}
 
-# 直接の疑問文の疑問の副詞 (解析で conjunction に入るもの) → ラテン語の疑問詞
+# 天気の動詞 (主語の無い非人称の動詞。各言語の見出し) → 天気の種類 (Pluit・It rains・Es regnet・Идёт дождь)
+WEATHER_VERBS = {'pluit': 'rain', 'ningit': 'snow', 'tonat': 'thunder', 'grandinat': 'hail',
+                 'rain': 'rain', 'snow': 'snow', 'thunder': 'thunder', 'hail': 'hail',
+                 'regnen': 'rain', 'schneien': 'snow', 'donnern': 'thunder', 'hageln': 'hail',
+                 'pleuvoir': 'rain', 'neiger': 'snow', 'tonner': 'thunder', 'grêler': 'hail',
+                 'chover': 'rain', 'nevar': 'snow', 'trovejar': 'thunder'}
+
+
+def weather(clause):
+    """天気の文 (主語の無い天気の動詞) なら天気の種類 (rain・snow …)、ほかは None"""
+    if clause.verb is None or clause.copula or clause.role('subject'):
+        return None
+    return WEATHER_VERBS.get(clause.verb.lemma)
+
+
 SOURCE_QUESTION_ADVERBS = {'pt': {'quando': 'quandō', 'onde': 'ubi', 'aonde': 'quō', 'como': 'quōmodo', 'porque': 'cūr',
                                   'por que': 'cūr'},
                            'de': {'wann': 'quandō', 'wo': 'ubi', 'warum': 'cūr', 'weshalb': 'cūr', 'wieso': 'cūr',
@@ -1224,8 +1241,9 @@ def question_of(question):
     inner.connectives = [c for c in inner.connectives if c != word]
     for c in [inner] + inner.infinitives:
         for _, np in c.args:
-            if np.surface and np.surface.split(' ')[0].lower() == word:
-                np.interrogative = True
+            words = (np.surface or '').lower().split(' ')
+            if words[0] == word or np.prep is not None and words[-1] == word and len(words) == 2:
+                np.interrogative = True   # 前置詞句の疑問代名詞も (about what: What are you talking about)
     if _lang in SOURCE_QUESTION_WORDS:
         inner.question_source = word
         _, _, np = interrogative_np(inner)
@@ -1234,6 +1252,7 @@ def question_of(question):
         if word == 'εἰ':
             inner.connectives = [c for c in inner.connectives if c != 'sī']
             inner.subordinator = '' if inner.subordinator == 'sī' else inner.subordinator
+        inner.adverbs = [adv for adv in inner.adverbs if adv.lemma != inner.question_word]   # 写した疑問の副詞 (where → ubi)
         if inner.mood != 'subjunctive':
             inner.source_mood, inner.mood = inner.mood, 'subjunctive'   # ラテン語の間接疑問は接続法
     return inner

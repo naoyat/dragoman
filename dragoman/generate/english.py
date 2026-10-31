@@ -685,6 +685,12 @@ MODAL_VERBS = {'dēbeō': 'have to', 'oportet': 'be necessary', 'faciō': 'make'
 IMPERSONAL = {'oportet', 'licet', 'pluit', 'ningit'}   # 主語の無い動詞の主語は it (It is necessary to leave)
 
 
+def impersonal(clause):
+    """主語の無い非人称の動詞の文 (oportet・licet、天気の動詞: pluit・rain・regnen)"""
+    from .frame import weather
+    return clause.verb is not None and (clause.verb.lemma in IMPERSONAL or weather(clause) is not None)
+
+
 def infinitive_phrase(inner, main_subject=None):
     """不定詞句: 言う・思う → that 節、見る・聞く → 目的語 + 原形、命じる → 目的語 + to 不定詞、補足 → to 不定詞"""
     kind = inner.infinitive_kind
@@ -757,6 +763,9 @@ def question_phrase(inner):
         entry = connectives.interrogative(inner.question_word)
         return (entry[0] if entry else inner.question_word) + ' ' + realize(finite, capitalize=False)
     word = 'who' if inner.question_word in WHO else 'what'   # quae causa esset → what
+    if role == 'prep':   # 前置詞は節の後ろに残す (what you are talking about)
+        prep = noun_phrase(wh, objective=True).rpartition(' ')[0]
+        return word + ' ' + realize(without_interrogative(finite), capitalize=False) + (' ' + prep if prep else '')
     if owner is inner and role == 'subject':
         return realize(without_interrogative(finite, NP(Lex(word, 'noun', proper=True))), capitalize=False)
     return word + ' ' + realize(without_interrogative(finite), capitalize=False)
@@ -863,7 +872,7 @@ def realize(clause, capitalize=True):
             out.append(participial(p) + ',')
     if clause.mood not in ('imperative', 'infinitive') and not (subject is None and clause.gap == 'subject'):
         out.append(noun_phrase(subject) if subject is not None else
-                   'it' if clause.verb.lemma in IMPERSONAL else PRONOUNS.get((person, number), 'it'))
+                   'it' if impersonal(clause) else PRONOUNS.get((person, number), 'it'))
         for other in subjects[1:]:
             out[-1] += ', ' + noun_phrase(other) + ','   # 主語が2つ (並列でない): 同格として (this, the slave,)
     for p in clause.adjuncts:

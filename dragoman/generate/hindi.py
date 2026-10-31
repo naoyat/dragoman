@@ -431,7 +431,7 @@ def realize(clause, gap=None):
         if ergative:
             out.append(('ने', 'ne', 'نے'))
     elif subject is None and gap is None and clause.mood != 'imperative' and \
-            (clause.person in (1, 2) or clause.person == 3 and clause.verb.lemma not in english.IMPERSONAL):
+            (clause.person in (1, 2) or clause.person == 3 and not english.impersonal(clause)):
         pronoun = PRONOUNS[({1: 'ego', 2: 'tū', 3: 'is'}[clause.person], clause.number)]   # 3人称も वह (वह कब आता है)
         out.append(pronoun[3:] if ergative else pronoun[:3])
         if ergative:
