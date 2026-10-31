@@ -193,8 +193,10 @@ class Predicate (LatinObject):
         # Nominative
         noms = []
         nom_acc_objs = case_slot.get('Nom/Acc', [])
+        # 解析器が補った主語 (英語の主語の落ちた文 Gotta go. の (I)) は訳に出さず、主語も補わない
+        elided = [o for o in case_slot.get('Nom', []) if isinstance(o, Word) and o.items and o.items[0].attrib('elided')]
         if 'Nom' in case_slot or (person == 3 and nom_acc_objs):
-            nom_objs = case_slot.get('Nom', [])
+            nom_objs = [o for o in case_slot.get('Nom', []) if o not in elided]
             # nom_acc_objs = case_slot.get('Nom/Acc', [])
 
             demand = 2 if self.is_sum else 1
@@ -257,7 +259,7 @@ class Predicate (LatinObject):
             case_slot['Acc'] = case_slot.get('Acc', []) + nom_acc_objs
             case_slot['Nom/Acc'] = []
 
-        if not noms and verb.attrib('mood') != 'imperative' and not (self.is_sum and case_slot.get('Inf')) and \
+        if not noms and not elided and verb.attrib('mood') != 'imperative' and not (self.is_sum and case_slot.get('Inf')) and \
                 self.gap not in ('Nom', 'Nom/Acc'):   # 関係節で主語が空所なら補わない ({歌う}少女)
             pn = str(self.person()) + str(self.number())
             subj_ja = {'1sg':'私', '2sg':'あなた', '3sg':'彼,彼女,それ',

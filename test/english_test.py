@@ -68,6 +68,28 @@ class AnalyzerTestCase(unittest.TestCase):
             self.assertEqual(self.ja(text), ja)
         self.assertEqual(self.ja('I never sleep.'), '私が / 眠らない,寝ない')   # never は副詞のまま
 
+    def test_elided_subject(self):
+        # 主語の落ちた文: 仮の主語 (I・it) を補って解析し、語の表に括弧で、訳には出さない
+        for text, subject, ja in [('Gotta go.', '(I)', '行かなければならない'),
+                                  ('Gonna rain.', '(it)', '雨が降るだろう'),
+                                  ("Can't wait.", '(I)', '待つことができない'),
+                                  ('Went home early.', '(I)', '家に / 早く,初期のうちに / 行った'),
+                                  ('Sounds good.', '(it)', '良いように聞こえる')]:
+            words = analyzer.lookup_all(next(analyzer.sentences(text)))
+            self.assertEqual(words[0].surface, subject, text)
+            self.assertEqual(self.ja(text), ja)
+        for text in ['Go home.', 'Love it.', 'Can you help me?']:   # 命令・疑問文には補わない
+            words = analyzer.lookup_all(next(analyzer.sentences(text)))
+            self.assertFalse(words[0].surface.startswith('('), text)
+        self.assertEqual(self.ja('Go home.'), '家に / 行け')
+
+    def test_copular_verbs(self):
+        self.assertEqual(self.ja('It sounds good.'), 'それが / 良いように聞こえる')
+        self.assertEqual(self.ja('She looks happy.'), '彼女が / 幸せなように見える')
+        self.assertEqual(self.ja('The soup tastes good.'), 'スープが / 良い味がする')
+        self.assertEqual(self.ja('It looks like a cat.'), 'それが / 猫のように / 見える')
+        self.assertEqual(self.ja("He didn't look happy."), '彼が / 幸せなように見えなかった')
+
     def test_existential_and_relative(self):
         self.assertEqual(self.ja('There is a cat in the garden.'), '庭に / 猫が / いる')
         self.assertEqual(self.ja('The man who lives here is my teacher.'), '{ここで 住む}男は / 私の先生,教師である')

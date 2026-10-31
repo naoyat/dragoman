@@ -476,7 +476,7 @@ def control_verbs(words, doc):
             tense = tense if suffix else 'future'
             form = '未来 (be going to + 原形)'
         elif lemma in ('get', 'got') and token.head.text.lower() == 'got' and \
-                (h.attrib('colloquial') == 'gotta' or '現在完了' in (h.attrib('form') or '')):
+                ((h.attrib('colloquial') or '').lower() == 'gotta' or '現在完了' in (h.attrib('form') or '')):
             suffix, tense, form = 'なければならない', 'present', 'have got to + 原形'   # (have) got to「〜しなければならない」
         elif lemma in CONTROL:
             suffix = CONTROL[lemma]
@@ -553,6 +553,36 @@ def negated_verbs(words, doc):
         word.merged_into = True
         words.remove(word)
     return words
+
+
+def copular_complements(words, doc):
+    """sound・look・seem などの補語の形容詞を動詞にまとめる (It sounds good → それが / 良いように聞こえる、
+    She looks happy → 幸せなように見える)"""
+    by_i = {w.doc_i: w for w in words}
+    for token in doc:
+        verb, adj = by_i.get(token.head.i), by_i.get(token.i)
+        if token.dep_ not in ('acomp', 'oprd', 'dobj', 'xcomp') or token.head.lemma_.lower() not in COPULAR_VERBS or verb not in words or \
+                adj not in words or _pos(verb) != 'verb' or _pos(adj) != 'adj':
+            continue
+        v, a = _item(verb), _item(adj)
+        ja = (a.ja or adj.surface).split(',')[0] + COPULAR_VERBS[token.head.lemma_.lower()]
+        verb.items = [type(v)(dict(v.item, ja=ja, gloss_lang='ja', main_ja=v.ja,
+                                   form='%s + 形容詞' % token.head.lemma_.lower()))]
+        verb.surface += ' ' + adj.surface
+        adj.merged_into = True
+        words.remove(adj)
+    for token in doc:   # look like + 名詞「〜のように見える」(Looks like rain)
+        verb = by_i.get(token.head.i)
+        if token.dep_ == 'prep' and token.text.lower() == 'like' and token.head.lemma_.lower() in COPULAR_LIKE and \
+                verb in words and _pos(verb) == 'verb':
+            v = _item(verb)
+            verb.items = [type(v)(dict(v.item, ja=COPULAR_LIKE[token.head.lemma_.lower()], gloss_lang='ja',
+                                       form='%s like + 名詞' % token.head.lemma_.lower()))]
+    return words
+
+
+COPULAR_LIKE = {'look': '見える', 'sound': '聞こえる', 'seem': '思える', 'feel': '感じる', 'smell': 'においがする',
+                'taste': '味がする'}
 
 
 def _masu(verb):
@@ -757,15 +787,48 @@ def passive_agents(words):
             w.items = [type(item)(dict(item.item, ja='〜によって'))]
 
 
+SUBJECT_DROP_STARTS = {'going', 'got', 'want', 'trying', 'have', 'has', 'ought'}   # gonna・gotta・wanna … の文頭
+# 形容詞を補語に取る動詞: 原形 → 形容詞の連体形に付ける形 (sounds good → 良いように聞こえる)
+COPULAR_VERBS = {'sound': 'ように聞こえる', 'look': 'ように見える', 'seem': 'ようだ', 'appear': 'ように見える',
+                 'feel': 'ように感じる', 'smell': 'においがする', 'taste': '味がする'}
+
+
+def elided_subject(doc):
+    """主語の落ちた文 (Gotta go.・Gonna rain.・Sounds good.・Went home.・Can't wait.) に補う仮の主語の語の列。
+    補わない文は None (原形で始まる命令 Go home.・Love it.、主語のある文、疑問文)"""
+    first = next((t for t in doc if not t.is_punct), None)
+    if first is None or doc[-1].text == '?' or \
+            any(t.dep_ in ('nsubj', 'nsubjpass', 'expl', 'csubj') and t.head.dep_ == 'ROOT' for t in doc):
+        return None
+    lower = first.text.lower()
+    if not (first.tag_ in ('MD', 'VBZ', 'VBD', 'VBP') or lower in SUBJECT_DROP_STARTS and first.dep_ in ('ROOT', 'aux')):
+        return None
+    root = next(t for t in doc if t.dep_ == 'ROOT')
+    lemmas = {root.lemma_.lower()} | {c.lemma_.lower() for c in root.children if c.dep_ == 'xcomp'}
+    it = first.tag_ == 'VBZ' or lemmas & (WEATHER_VERBS | set(COPULAR_VERBS)) or root.lemma_ == 'be'
+    subject = ['it'] if it else ['I']
+    if first.tag_ == 'VBG':   # Going to rain → it 's going to rain
+        subject.append("'s" if it else "'m")
+    return subject
+
+
 def lookup_all(surfaces):
     surfaces, colloquial = expand_colloquial(surfaces)
     doc = morphology.parse(surfaces)
+    elided = elided_subject(doc)
+    if elided:
+        surfaces = elided + [surfaces[0][:1].lower() + surfaces[0][1:]] + surfaces[1:]
+        colloquial = {i + len(elided): (short, full[:1].lower() + full[1:]) for i, (short, full) in colloquial.items()}
+        doc = morphology.parse(surfaces)
     words = []
     for token in doc:
         data = item_of(token, doc)
         if data is not None and token.i in colloquial:
             data['colloquial'] = colloquial[token.i][0]   # gotta の got (have got to と同じく「〜しなければならない」)
-        word = Word(token.text, None if data is None else [data])
+        if data is not None and elided and token.i == 0:
+            data.update(surface='(%s)' % token.text, ja='', elided=True)   # 補った主語: 語の表に括弧で、訳には出さない
+        word = Word('(%s)' % token.text if data is not None and data.get('elided') else token.text,
+                    None if data is None else [data])
         word.token_ix = token.i
         word.doc_i = token.i
         words.append(word)
@@ -779,6 +842,7 @@ def lookup_all(surfaces):
     words = merge_verbs(words, doc)
     words = control_verbs(words, doc)
     words = negated_verbs(words, doc)
+    words = copular_complements(words, doc)
     words = possessives(words)
     words = how_adjectives(words)
     existential_there(words)
