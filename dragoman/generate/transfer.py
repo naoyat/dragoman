@@ -525,6 +525,11 @@ for _en in ('lord', 'master'):
     PREFERRED.setdefault('de', {})[(_en, 'noun')] = ('Herr', 'm')
 # 英語の teach・praise はドイツ語の lehren・loben (語義の多い beibringen・anpreisen にしない)
 PREFERRED['de'].update({('teach', 'verb'): ('lehren', ''), ('praise', 'verb'): ('loben', '')})
+# nōlō「望まない」(英語 be unwilling) は「拒む・嫌がる」の語 (日本語の訳語の「望む」で wollen・vouloir にしない)
+for _lang, _lemma in (('de', 'verweigern'), ('fr', 'refuser'), ('ru', 'отказываться'), ('fi', 'kieltäytyä'),
+                      ('pt', 'recusar'), ('zh', '不愿意'), ('ko', '싫어하다'), ('id', 'enggan'), ('tr', 'istememek'),
+                      ('ang', 'forsacan'), ('tl', 'ayaw'), ('grc', 'ἀρνέομαι'), ('mn', 'татгалзах')):
+    PREFERRED.setdefault(_lang, {})[('be unwilling', 'verb')] = (_lemma, '')
 # 文の枠で文脈から決めた意味 (frame.OBJECT_SENSES) → 言語ごとの語 (英語の drive だけでは運転の fahren と区別できない)
 SENSE_TARGETS = {}
 for _lang, _lemma in (('de', 'treiben'), ('ru', 'гнать'), ('ko', '몰다'), ('zh', '驱赶'), ('ang', 'drīfan'),

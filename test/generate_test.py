@@ -321,9 +321,42 @@ class WhQuestionTestCase(unittest.TestCase):
             if ru is not None:
                 self.assertEqual(out(text, russian, 'ru'), ru)
         self.assertEqual(out('Give it to me.', latin, 'la'), 'Mihi id dā.')
+        self.assertEqual(out('Give it to me.', japanese, 'ja'), '私にそれを与えろ。')   # 中性の代名詞は「それ」
+        self.assertEqual(out("Don't leave me.", latin, 'la'), 'Nōlī mē relinquere.')   # 禁止は nōlī + 不定詞
+        self.assertEqual(out("Don't go!", latin, 'la'), 'Nōlī īre.')
+        for text, de in [('She was reading a book when I came.', 'Sie las das Buch, als ich kam.'),   # 副文
+                         ('When she came, I saw her.', 'Als sie kam, sah ich sie.'),   # 副文の後ろは定動詞が先
+                         ('Wash your hands before you eat.', 'Wasch deine Hände, bevor du isst.')]:
+            self.assertEqual(out(text, german, 'de'), de)
         self.assertEqual(out('The boy was crying.', latin, 'la'), 'Puer flēbat.')
         self.assertEqual(out("I don't know what you're talking about.", english, 'en'),
                          'I do not know what you talk about.')
+
+
+class LatinVelleTestCase(unittest.TestCase):
+    """手作りの辞書の volō・nōlō・mālō、禁止の nōlī + 不定詞、フランス語の y aller"""
+
+    def test_velle(self):
+        for text, lemma in [('Vult.', 'volō'), ('Velīs.', 'volō'), ('Nōlunt.', 'nōlō'), ('Māvult.', 'mālō')]:
+            cs = clauses(text)
+            self.assertEqual(cs[0].verb.lemma, lemma, text)
+        a, = analyzer.analyze_text('Nesciō quid velīs.')   # 疑問詞の後ろの velīs (名詞 vela の読みもある) は動詞
+        self.assertEqual(len(a.verbs), 2)
+        a, = analyzer.analyze_text('Nōlīte timēre.')
+        self.assertEqual(a.clauses[0].predicate.translate()[0], '恐れるな')
+
+    def test_french_y_aller(self):
+        from dragoman.generate import french
+        from dragoman.generate.frame import Clause
+        if not french.available():
+            self.skipTest('フランス語の辞書が無い')
+        for tense, mood, negated, person, expected in [('present', 'indicative', False, 1, "J'y vais."),
+                                                       ('perfect', 'indicative', False, 1, "J'y suis allé."),
+                                                       ('present', 'imperative', False, 2, 'Vas-y.'),
+                                                       ('present', 'imperative', True, 2, "N'y va pas.")]:
+            c = Clause(verb=Lex('y aller', 'verb', lang='fr'), tense=tense, mood=mood, negated=negated, person=person,
+                       number='sg')
+            self.assertEqual(french.sentence([c]), expected)
 
 
 class SmallFixesTestCase(unittest.TestCase):

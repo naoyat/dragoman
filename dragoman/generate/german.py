@@ -66,6 +66,11 @@ CONTRACTIONS = {('in', 'dem'): 'im', ('in', 'das'): 'ins', ('zu', 'dem'): 'zum',
 CONNECTIVES = {'et': 'und', 'que': 'und', 'atque': 'und', 'ac': 'und', 'sed': 'aber', 'at': 'aber', 'autem': 'aber',
                'enim': 'denn', 'nam': 'denn', 'igitur': 'also', 'itaque': 'deshalb', 'tamen': 'trotzdem', 'tum': 'dann',
                'deinde': 'dann', 'aut': 'oder', 'vel': 'oder'}
+# 従属接続詞 (副文は定動詞を最後に)。cum・ubi「〜したとき」は過去なら als、ほかは wenn
+SUBORDINATORS = {'cum': 'wenn', 'ubi': 'wenn', 'sī': 'wenn', 'quod': 'weil', 'quia': 'weil', 'quoniam': 'da',
+                 'dum': 'während', 'postquam': 'nachdem', 'ut': 'damit', 'quamquam': 'obwohl', 'etsī': 'obwohl',
+                 'priusquam': 'bevor', 'antequam': 'bevor', 'dōnec': 'bis', 'simul': 'sobald', 'quīn': 'ohne dass'}
+PAST_TENSES = ('perfect', 'imperfect', 'past-perfect')
 WORDS = {'semper': 'immer', 'saepe': 'oft', 'iam': 'schon', 'nunc': 'jetzt', 'hodiē': 'heute', 'crās': 'morgen',
          'heri': 'gestern', 'ibi': 'dort', 'hīc': 'hier', 'etiam': 'auch', 'quoque': 'auch', 'valdē': 'sehr',
          'magnopere': 'sehr', 'statim': 'sofort', 'mox': 'bald', 'tandem': 'endlich', 'iterum': 'wieder',
@@ -611,13 +616,25 @@ def sentence(clauses):
         return ''
     from .frame import split_address
     parts = []
+    after_subordinate = False
     for k, c in enumerate(clauses):
         groups, rest = split_address(c)
         words = [', '.join(vocative(np) for np in group) + ',' for group in groups]
         for key in rest.connectives:
             if key in CONNECTIVES and k > 0:
                 words.append(CONNECTIVES[key])
-        words += realize(rest)
+        subordinate = rest.subordinator in SUBORDINATORS and \
+            (k + 1 < len(clauses) or k > 0 and not rest.after_main or rest.subordinator == 'quīn')
+        if subordinate:   # 副文: Als ich kam・Wenn du lernst (定動詞を最後に)
+            conjunction = SUBORDINATORS[rest.subordinator]
+            if rest.subordinator in ('cum', 'ubi') and rest.tense in PAST_TENSES:
+                conjunction = 'als'
+            words += [conjunction] + realize(rest, subordinate=True)
+        elif after_subordinate and rest.mood == 'indicative' and not rest.question:
+            words += realize(dataclasses.replace(rest, invert=True))   # 副文の後ろの主文は定動詞が先 (…, las sie das Buch)
+        else:
+            words += realize(rest)
+        after_subordinate = subordinate and k + 1 < len(clauses)
         parts.append(' '.join(w for w in words if w))
     text = ', '.join(parts).replace(' ,', ',').replace(',,', ',').rstrip(',')
     return text[:1].upper() + text[1:] + '.'

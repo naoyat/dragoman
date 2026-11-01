@@ -329,6 +329,11 @@ class Predicate (LatinObject):
         if case_slot.get('Acc'):
             negated = self._accusative(case_slot, tr) or negated
 
+        if verb.attrib('pres1sg') == 'nōlō' and verb.attrib('mood') == 'imperative' and case_slot.get('Inf'):
+            # 禁止 nōlī + 不定詞「〜するな」(Nōlī mē tangere → 私に / 触れるな)。不定詞句の語をそのまま並べる
+            inner = case_slot['Inf'][0].predicate.translate()[0].split(' / ')
+            inner[-1] = ','.join(v + 'な' for v in inner[-1].split(','))
+            return (' / '.join(tr + inner), False)
         # 不定詞句 ({少年が 遊ぶ}と / {本を 読む}ことが)
         for clause in case_slot.get('Inf', []):
             tr.append(clause.translate()[0])

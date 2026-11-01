@@ -336,10 +336,13 @@ def realize(clause, capitalize=True):
             out.append(noun_phrase(np))
     out += [(adv.surface or adv.lemma).lower() if adv.lang in ('', 'la') else _adverb(adv)
             for adv in clause.adverbs]   # 副詞は変化しないので文中の形で
-    if clause.negated:
+    prohibition = clause.negated and clause.mood == 'imperative'
+    if prohibition:   # 禁止は nōlī (nōlīte) + 不定詞 (Nōlī mē relinquere。nōn + 命令法にしない)
+        out.insert(0, 'nōlīte' if clause.number == 'pl' else 'nōlī')
+    elif clause.negated:
         out.append('nōn')
-    if clause.mood == 'infinitive':
-        out.append(infinitive(clause.verb, clause.tense, clause.voice))
+    if clause.mood == 'infinitive' or prohibition:
+        out.append(infinitive(clause.verb, 'present' if prohibition else clause.tense, clause.voice))
     else:
         gender = np_gender(subjects[0]) if subjects and not subjects[0].members else \
             getattr(clause, 'antecedent_gender', '') if clause.gap == 'subject' else ''

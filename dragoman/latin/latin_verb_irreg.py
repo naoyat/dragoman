@@ -177,6 +177,59 @@ def conjugate_verb_sum(prefix='', ja=''):
     return items
 
 
+def conjugate_verb_velle(pres1sg, ja, present, subjunctive, imperative=None):
+    """volō・nōlō・mālō (velle・nōlle・mālle): 現在と接続法現在が不規則、ほかは規則的 (vol-ēbam・vol-am・volu-ī)"""
+    tags = {'pos':'verb', 'pres1sg':pres1sg, 'ja':ja}
+    stem = pres1sg[:-1]                  # vol / nōl / māl
+    inf = {'volō': 'velle', 'nōlō': 'nōlle', 'mālō': 'mālle'}[pres1sg]
+    perf1sg = stem + 'uī'                # voluī / nōluī / māluī
+
+    items = []
+    items += conjugate('', util.aggregate_dicts(tags, {'voice':'active', 'mood':'infinitive', 'tense':'present'}),
+                       [inf], [{}])
+    items += conjugate('', util.aggregate_dicts(tags, {'voice':'active', 'mood':'infinitive', 'tense':'perfect'}),
+                       [stem + 'uisse'], [{}])
+
+    items += conjugate('', util.aggregate_dicts(tags, {'mood':'indicative', 'voice':'active', 'tense':'present'}),
+                       present)
+    items += conjugate(stem, util.aggregate_dicts(tags, {'mood':'indicative', 'voice':'active', 'tense':'imperfect'}),
+                       ['ēbam', 'ēbās', 'ēbat', 'ēbāmus', 'ēbātis', 'ēbant'])
+    items += conjugate(stem, util.aggregate_dicts(tags, {'mood':'indicative', 'voice':'active', 'tense':'future'}),
+                       ['am', 'ēs', 'et', 'ēmus', 'ētis', 'ent'])
+
+    items += conjugate_perfect(perf1sg, tags)
+    items += conjugate_past_perfect(perf1sg, tags)
+    items += conjugate_future_perfect(perf1sg, tags)
+
+    items += conjugate('', util.aggregate_dicts(tags, {'mood':'subjunctive', 'voice':'active', 'tense':'present'}),
+                       subjunctive)
+    items += conjugate(inf[:-1], util.aggregate_dicts(tags, {'mood':'subjunctive', 'voice':'active', 'tense':'imperfect'}),
+                       ['em', 'ēs', 'et', 'ēmus', 'ētis', 'ent'])   # vellem・nōllem・māllem
+    items += conjugate(stem, util.aggregate_dicts(tags, {'mood':'subjunctive', 'voice':'active', 'tense':'perfect'}),
+                       ['uerim', 'ueris', 'uerit', 'uerimus', 'ueritis', 'uerint'])
+    items += conjugate(stem, util.aggregate_dicts(tags, {'mood':'subjunctive', 'voice':'active', 'tense':'past-perfect'}),
+                       ['uissem', 'uissēs', 'uisset', 'uissēmus', 'uissētis', 'uissent'])
+
+    if imperative:   # nōlī・nōlīte (禁止: Nōlī mē tangere)
+        items += conjugate('', util.aggregate_dicts(tags, {'voice':'active', 'tense':'present', 'mood':'imperative'}),
+                           imperative)
+
+    items += conjugate_participle(stem + 'ē', 'es##', tags)   # volēns (目的分詞は無い)
+    return items
+
+
+def conjugate_verb_velle_composites():
+    items = []
+    items += conjugate_verb_velle('volō', '望む,欲する', ['volō', 'vīs', 'vult', 'volumus', 'vultis', 'volunt'],
+                                  ['velim', 'velīs', 'velit', 'velīmus', 'velītis', 'velint'])
+    items += conjugate_verb_velle('nōlō', '望まない,欲しない', ['nōlō', None, None, 'nōlumus', None, 'nōlunt'],
+                                  ['nōlim', 'nōlīs', 'nōlit', 'nōlīmus', 'nōlītis', 'nōlint'],
+                                  [None, 'nōlī', None, None, 'nōlīte', None])
+    items += conjugate_verb_velle('mālō', 'むしろ望む', ['mālō', 'māvīs', 'māvult', 'mālumus', 'māvultis', 'mālunt'],
+                                  ['mālim', 'mālīs', 'mālit', 'mālīmus', 'mālītis', 'mālint'])
+    return items
+
+
 def conjugate_verb_eo_composites():
     items = []
 
@@ -224,9 +277,7 @@ def load():
     items += conjugate_verb_fero_composites()
 
     # items += conjugate_irregular_verb(u'fīō', '成る,生ずる') # fīō factus sum, fierī
-    # items += conjugate_irregular_verb(u'volō', '欲する') # volō voluī velle
-    # items += conjugate_irregular_verb(u'mālō', 'むしろ〜を欲する') # mālō māluī mālle
-    # items += conjugate_irregular_verb(u'nōlō', '欲しない') # nōlō nōluī nōlle
+    items += conjugate_verb_velle_composites()   # volō voluī velle・nōlō nōluī nōlle・mālō māluī mālle
 
     return items
 

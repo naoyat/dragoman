@@ -80,7 +80,7 @@ Acrisius volēbat Perseum nepōtem suum necāre ;
 
   --- 
    0  Acrisius  (?)
-   1  volēbat   (?)
+   1  volēbat   (volō) v.望む,欲する 3sg 直説法.能動.未完了
    2  Perseum   (?)
    3  nepōtem   (?)
    4  suum      (suus) a.自分の [Acc.sg.m|Nom.sg.n|Voc.sg.n|Acc.sg.n]
@@ -89,14 +89,18 @@ Acrisius volēbat Perseum nepōtem suum necāre ;
   --- 
 
 // ADJ#4 (suum) -> no target noun detected
+// INF #2..#5 (Perseum nepōtem suum necāre) <- VERB#1 (volēbat) [complement]
 
-1 VERB FOUND: necāre
+1 VERB FOUND: volēbat
 
-  necāre (infinitive NoneNone)
-    Acc:
-      suum
+  volēbat (indicative 3sg)
+    Inf:
+      [infinitive complement]
+        necāre (infinitive NoneNone)
+          Acc:
+            suum
 
-  →  自分のを / 殺す,滅ぼす
+  →  {彼,彼女,それ}が / {自分のを 殺す,滅ぼす}ことを / 望んでいた,欲していた
 
 
 nam propter ōrāculum puerum timēbat .
@@ -595,26 +599,30 @@ At Polydectēs Danaēn māgnopere amābat , atque eam in mātrimōnium dūcere v
    8  in           prep<Acc> 〜へ,〜の中へ,〜の上へ,〜に向かって,〜に対して | prep<Abl> 〜で,〜の中で,〜の上で
    9  mātrimōnium  (?)
   10  dūcere       (dūcō) v.導く 0- 不定法.能動.現在 | (dūcō) v.導く 2sg 直説法.受動.現在 | (dūcō) v.導く 2sg 命令法.受動.現在
-  11  volēbat      (?)
+  11  volēbat      (volō) v.望む,欲する 3sg 直説法.能動.未完了
   12  .            
   --- 
 
+// INF #7..#9 (eam in mātrimōnium dūcere) <- VERB#10 (volēbat) [complement]
 
-2 VERBS FOUND: amābat, dūcere
+2 VERBS FOUND: amābat, volēbat
 
   amābat (indicative 3sg)
     (At)
 
   →  これに反して / {彼,彼女,それ}が / 愛していた
 
-  dūcere (infinitive NoneNone)
+  volēbat (indicative 3sg)
     (atque)
-    Acc:
-      eam
-    prep:
-      in <Acc>
+    Inf:
+      [infinitive complement]
+        dūcere (infinitive NoneNone)
+          prep:
+            in <Acc>
+          Acc:
+            eam
 
-  →  〜および〜(第2項に重点がある) / (?)[へ,の中へ,の上へ,に向かって,に対して] / {その,それ}を / 導く
+  →  〜および〜(第2項に重点がある) / {彼,彼女,それ}が / {(?)[へ,の中へ,の上へ,に向かって,に対して] {その,それ}を 導く}ことを / 望んでいた,欲していた
 
 
 Hōc tamen cōnsilium Perseō minimē grātum erat .
@@ -1413,22 +1421,23 @@ Arma rapuērunt , et Perseum occīdere volēbant .
    3  et         conj 〜と〜,そして〜,〜も {}
    4  Perseum    (?)
    5  occīdere   (?)
-   6  volēbant   (?)
+   6  volēbant   (volō) v.望む,欲する 3pl 直説法.能動.未完了
    7  .          
   --- 
 
 
-1 VERB FOUND: rapuērunt
-
-  NOT SOLVED:
-    (et)
-    →  〜と〜,そして〜,〜も
+2 VERBS FOUND: rapuērunt, volēbant
 
   rapuērunt (indicative 3pl)
     Nom/Acc:
       Arma
 
   →  {道具,武器}が / 奪った
+
+  volēbant (indicative 3pl)
+    (et)
+
+  →  そして / {彼ら,彼女ら,それら}が / 望んでいた,欲していた
 
 
 Ille autem dum fugit , galeam magicam induit ;
@@ -1772,7 +1781,7 @@ Cēpheus ubi haec audīvit , māgnum dolōrem percēpit .
 Volēbat tamen cīvīs suōs ē tantō perīculō extrahere , atque ob eam causam imperāta Hammōnis facere cōnstituit .
 
   --- 
-   0  Volēbat     (?)
+   0  Volēbat     (volō) v.望む,欲する 3sg 直説法.能動.未完了
    1  tamen       conj しかしながら,それでも {}
    2  cīvīs       (?)
    3  suōs        (suus) a.自分の [Acc.pl.m]
@@ -1795,8 +1804,14 @@ Volēbat tamen cīvīs suōs ē tantō perīculō extrahere , atque ob eam causa
 // ADJ#3 (suōs) -> no target noun detected
 // ADJ#5 (tantō) -> NOUN#6 (perīculō)
 // DET#11 (eam) -> NOUN#12 (causam)
+// PARTICIPLE #11..#11 (imperāta)
 
-1 VERB FOUND: facere
+2 VERBS FOUND: Volēbat, facere
+  NOT WELL: {1..8}
+
+  Volēbat (indicative 3sg)
+
+  →  {彼,彼女,それ}が / 望んでいた,欲していた
 
   NOT SOLVED:
     (atque)
@@ -1804,6 +1819,7 @@ Volēbat tamen cīvīs suōs ē tantō perīculō extrahere , atque ob eam causa
 
   facere (infinitive NoneNone)
     (tamen)
+    [participle] imperāta (passive)
     Acc:
       suōs
     prep:
@@ -1814,9 +1830,8 @@ Volēbat tamen cīvīs suōs ē tantō perīculō extrahere , atque ob eam causa
       ob <Acc>
         causam
           eam
-        imperāta
 
-  →  しかしながら,それでも / {これほどの危険 (?)}(の中)から外へ / {{その,それ}原因 命じられた (?)}[の前へ,ゆえに,の代わりに] / 自分のを / 作る
+  →  しかしながら,それでも / {命じられて} / {これほどの危険 (?)}(の中)から外へ / {その,それ}原因[の前へ,ゆえに,の代わりに] / 自分のを / 作る
 
 
 Tum rēx diem certam dīxit et omnia parāvit .
@@ -3030,13 +3045,14 @@ Polydectēs māgnō timōre adfectus est et fugere volēbat .
    4  est         (sum) v.〜である 3sg 直説法.能動.現在
    5  et          conj 〜と〜,そして〜,〜も {}
    6  fugere      (fugiō) v.逃げる 0- 不定法.能動.現在 | (fugiō) v.逃げる 2sg 直説法.受動.現在 | (fugiō) v.逃げる 2sg 命令法.受動.現在
-   7  volēbat     (?)
+   7  volēbat     (volō) v.望む,欲する 3sg 直説法.能動.未完了
    8  .           
   --- 
 
 // ADJ#1 (māgnō) -> no target noun detected
+// INF #6..#6 (fugere) <- VERB#7 (volēbat) [complement]
 
-2 VERBS FOUND: est, fugere
+2 VERBS FOUND: est, volēbat
 
   est (indicative 3sg)
     Dat:
@@ -3044,10 +3060,13 @@ Polydectēs māgnō timōre adfectus est et fugere volēbat .
 
   →  {彼,彼女,それ}は / 大きなに / 〜である
 
-  fugere (infinitive NoneNone)
+  volēbat (indicative 3sg)
     (et)
+    Inf:
+      [infinitive complement]
+        fugere (infinitive NoneNone)
 
-  →  そして / 逃げる
+  →  そして / {彼,彼女,それ}が / {逃げる}ことを / 望んでいた,欲していた
 
 
 Dum tamen ille fugit , Perseus caput Medūsae mōnstrāvit ;

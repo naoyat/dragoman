@@ -105,7 +105,8 @@ def noun_phrase(np):
     elif head.pos == 'pronoun' and (head.lemma, np.number) in PRONOUNS:
         word = PRONOUNS[(head.lemma, np.number)]
     elif head.pos == 'pronoun' and head.lemma == 'is' and not np.modifiers and not np.relatives:
-        word = '彼女' if np.gender == 'f' else '彼ら' if np.number == 'pl' else '彼'
+        word = '彼女' if np.gender == 'f' else ('彼ら' if np.number == 'pl' else '彼') if np.gender != 'n' else \
+            ('それら' if np.number == 'pl' else 'それ')   # 中性 (id・ea・it) は物 (Give it to me → それを)
     elif head.pos == 'pronoun' and np.relatives and head.lemma in DEMONSTRATIVE_NOUNS:
         word = 'もの' if np.gender == 'n' else '人'   # is quī … 「…する人」
     elif head.pos == 'pronoun' and head.lemma in DEMONSTRATIVE_NOUNS:

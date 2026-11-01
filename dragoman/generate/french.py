@@ -421,8 +421,8 @@ def verb_group(clause, person, number, agree=('m', 'sg'), subjunctive=False, inf
     pronominal = lemma.startswith('se ')
     if pronominal:   # 代名動詞 (se lever・se en aller): 動詞の部分で活用し、複合過去は être (再帰の代名詞と en・y は呼ぶ側で)
         lemma = lemma[3:]
-        if lemma.startswith(('en ', 'y ')):
-            lemma = lemma.split(' ', 1)[1]
+    if lemma.startswith(('en ', 'y ')):   # y aller・en vouloir も動詞の部分で (j'y vais。y・en は呼ぶ側で)
+        lemma = lemma.split(' ', 1)[1]
     if clause.voice == 'passive':
         tense = 'imperfect' if clause.tense == 'imperfect' else 'future' if clause.tense == 'future' else 'present'
         if clause.tense in ('perfect', 'past-perfect'):   # a été + 過去分詞
@@ -724,13 +724,19 @@ def realize(clause, gap=None, antecedent=None, subjunctive=False, infinitive=Fal
         if particle:
             clitics.append(particle)
         clitics.insert(0, {(1, 'sg'): 'me', (2, 'sg'): 'te', (1, 'pl'): 'nous', (2, 'pl'): 'vous'}.get((person, number), 'se'))
+    elif lemma_fr.startswith(('en ', 'y ')):   # y aller・en vouloir の y・en は代名詞の最後 (je t'en veux・j'y vais)
+        clitics.append(lemma_fr.split(' ', 1)[0])
     if clause.mood == 'imperative':
         lemma = word(clause.verb, 'verb')
+        if lemma.startswith(('en ', 'y ')):
+            lemma = lemma.split(' ', 1)[1]
         form = find_form(lemma, 'verb', ('imperative', 'second-person', 'plural' if number == 'pl' else 'singular')) or verb
         if clause.negated:   # 否定の命令: 代名詞は動詞の前 (Ne me le donne pas)
             out = _elided(['ne'] + clitics + [form]) + ['pas']
         elif clitics:   # 肯定の命令: 動詞 + ハイフン + 代名詞 (Donne-moi・Dis-le-moi。me・te は moi・toi)
             ordered = sorted(clitics, key=lambda c: c not in ('le', 'la', 'les'))
+            if ordered[-1] in ('y', 'en') and form.endswith(('a', 'e')):
+                form += 's'   # Vas-y・Manges-en
             out = ['-'.join([form] + [{'me': 'moi', 'te': 'toi'}.get(c, c) for c in ordered])]
         else:
             out = [form]
