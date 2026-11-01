@@ -362,7 +362,8 @@ def realize(clause, gap=None):
             out.append(noun_phrase(np, 'ng'))
     if topic is not None:
         out.append(noun_phrase(topic, 'ang'))
-    elif voice == 'actor' and gap is None and not clause.role('subject') and clause.mood != 'infinitive':
+    elif voice == 'actor' and gap is None and not clause.role('subject') and clause.mood != 'infinitive' and \
+            not english.impersonal(clause):   # 天気の文は主語なし (Umuulan)
         out.append(PRONOUNS[({1: 'ego', 2: 'tū'}.get(clause.person, 'is'), clause.number)][0])
     for np in clause.role('recipient'):
         out.append(noun_phrase(np, 'sa'))

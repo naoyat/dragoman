@@ -290,6 +290,22 @@ class WhQuestionTestCase(unittest.TestCase):
             self.assertEqual(out(text, german, 'de'), de)
         self.assertIn(', ob er kommen wird', out('I wonder whether he will come.', german, 'de'))   # whether → ob
         self.assertEqual(out('It rains.', english, 'en'), 'It rains.')
+        # 天気の文は主語の代名詞を補わない (インドネシア語は Hujan turun「雨が降る」)
+        for module, lang, expected in [(portuguese, 'pt', 'Chove.'), (chinese, 'zh', '下雨。'), (tagalog, 'tl', 'Umuulan.'),
+                                       (indonesian, 'id', 'Hujan turun.')]:
+            self.assertEqual(out('It rains.', module, lang), expected)
+        self.assertEqual(out("It's going to rain.", indonesian, 'id'), 'Hujan akan turun.')
+        from dragoman.generate import french
+        if french.available():
+            for text, fr in [("I don't know what you want.", 'Je ne sais pas ce que tu veux.'),   # 間接疑問
+                             ("I don't know what happened.", 'Je ne sais pas ce qui est arrivé.'),
+                             ('Do you know who wrote this book?', 'Tu sais qui a écrit ce livre ?'),
+                             ('I wonder whether he will come.', "Je me demande s'il viendra."),
+                             ('I know who you are talking to.', 'Je sais à qui tu parles.'),
+                             ('Tell me where you live.', 'Dis-moi où tu vis.'),               # 命令の代名詞
+                             ('Help me.', 'Aide-moi.'),
+                             ("Don't touch me.", 'Ne me touche pas.')]:
+                self.assertEqual(out(text, french, 'fr'), fr)
         self.assertEqual(out("I don't know what you're talking about.", english, 'en'),
                          'I do not know what you talk about.')
 

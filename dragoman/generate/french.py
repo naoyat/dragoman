@@ -517,6 +517,40 @@ def _modal(clause, gap, antecedent, subjunctive):
 QUESTION_WORDS = {'quandō': 'quand', 'ubi': 'où', 'cūr': 'pourquoi', 'quārē': 'pourquoi', 'quōmodo': 'comment',
                   'unde': "d'où", 'quō': 'où', 'quotiēns': 'combien de fois'}
 WHO = {'quis', 'quem', 'cui', 'cūius', 'cuius', 'quibus'}
+# 間接疑問だけの疑問詞 (num, utrum「〜かどうか」→ si)
+INDIRECT_WORDS = dict(QUESTION_WORDS, quemadmodum='comment', num='si', utrum='si', quam='combien', quot='combien',
+                      quantus='combien', quālis='quel', quā='par où')
+IDIOM_WORDS = {'where': 'où', 'why': 'pourquoi', 'how': 'comment', 'when': 'quand'}   # frame.question_idiom の意味
+
+
+def _elide(first, words):
+    """que・si の母音の前の省略 (ce qu'il veut・s'il vient。si は il・ils の前だけ)"""
+    if words and first.endswith('que') and _vowel(words[0]):
+        return [first[:-1] + "'" + words[0]] + words[1:]
+    if words and first == 'si' and words[0] in ('il', 'ils'):
+        return ["s'" + words[0]] + words[1:]
+    return [first] + words
+
+
+def question_phrase(inner):
+    """間接疑問: 疑問詞 + 平叙の語順 (Je ne sais pas ce que tu veux・qui a écrit ce livre・où tu habites・s'il viendra)。
+    物を問う代名詞は ce que (目的語)・ce qui (主語)、前置詞 + 疑問代名詞は de quoi・à qui"""
+    from .frame import interrogative_np, without_interrogative, question_idiom
+    finite = dataclasses.replace(inner, mood='indicative', question_word='', question=False)
+    idiom, stripped = question_idiom(inner)
+    if idiom:
+        return [IDIOM_WORDS[idiom]] + realize(dataclasses.replace(stripped, mood='indicative', question_word='',
+                                                                  question=False))
+    owner, role, wh = interrogative_np(inner)
+    if wh is None:
+        return _elide(INDIRECT_WORDS.get(inner.question_word, inner.question_word), realize(finite))
+    who = inner.question_word in WHO
+    if role == 'prep':
+        prep = prepositional(wh).rpartition(' ')[0] or 'de'
+        return [prep + ' ' + ('qui' if who else 'quoi')] + realize(without_interrogative(finite))
+    if owner is inner and role == 'subject':
+        return ['qui' if who else 'ce qui'] + realize(without_interrogative(finite), gap='subject')
+    return _elide('qui' if who else 'ce que', realize(without_interrogative(finite)))
 
 
 def direct_question(clause):
@@ -574,6 +608,11 @@ def realize(clause, gap=None, antecedent=None, subjunctive=False, infinitive=Fal
     clause = dative_as_object(clause, 'fr')   # grātiās agit magistrō → remercie le professeur (受け手を目的語に)
     if clause.question and clause.question_word and clause.mood == 'indicative' and gap is None and not infinitive:
         return direct_question(clause)
+    if clause.questions:   # 間接疑問は主文の後ろ (Je ne sais pas ce que tu veux)
+        main = realize(dataclasses.replace(clause, questions=[]), gap, antecedent, subjunctive, infinitive)
+        for inner in clause.questions:
+            main += question_phrase(inner)
+        return main
     modal = _modal(clause, gap, antecedent, subjunctive)
     if modal is not None:
         return modal
@@ -682,7 +721,13 @@ def realize(clause, gap=None, antecedent=None, subjunctive=False, infinitive=Fal
     if clause.mood == 'imperative':
         lemma = word(clause.verb, 'verb')
         form = find_form(lemma, 'verb', ('imperative', 'second-person', 'plural' if number == 'pl' else 'singular')) or verb
-        out = _elided(_negate([form], clause.negated)) if clause.negated else [form]
+        if clause.negated:   # 否定の命令: 代名詞は動詞の前 (Ne me le donne pas)
+            out = _elided(['ne'] + clitics + [form]) + ['pas']
+        elif clitics:   # 肯定の命令: 動詞 + ハイフン + 代名詞 (Donne-moi・Dis-le-moi。me・te は moi・toi)
+            ordered = sorted(clitics, key=lambda c: c not in ('le', 'la', 'les'))
+            out = ['-'.join([form] + [{'me': 'moi', 'te': 'toi'}.get(c, c) for c in ordered])]
+        else:
+            out = [form]
         return [w for w in out + objects + adverbs if w]
     verb_words = _elided(clitics + [verb])
     negative_pronoun = any(np.head is not None and np.head.lemma in NEGATIVE_PRONOUNS for _, np in clause.args)

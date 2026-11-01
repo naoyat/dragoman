@@ -345,6 +345,9 @@ def relative_clause(r):
 # ----------------------------------------------------------------------
 # 節
 
+WEATHER = {'rain': 'hujan', 'snow': 'salju', 'hail': 'hujan es'}   # 天気の種類 → 降るもの (frame.weather)
+
+
 def _subject_np(clause):
     subjects = clause.role('subject')
     return subjects[0] if subjects else None
@@ -363,7 +366,11 @@ def realize(clause, verb_override=None, finite=False, aspect=True):
     subjects = clause.role('subject')
     for np in subjects:
         out.append(noun_phrase(np))
-    if not subjects and clause.mood not in ('infinitive', 'imperative') and not verb_override:
+    from .frame import weather
+    if verb_override is None and weather(clause) in WEATHER and clause.mood == 'indicative':
+        out.append(WEATHER[weather(clause)])   # 天気の文: 名詞 + turun (Hujan turun「雨が降る」)
+        verb_override = 'turun'
+    elif not subjects and clause.mood not in ('infinitive', 'imperative') and not verb_override:
         if clause.person in (1, 2) or (clause.person == 3 and not clause.copula and not finite):
             key = {1: 'ego', 2: 'tū', 3: 'is'}[clause.person]
             out.append(PRONOUNS[(key, clause.number)])

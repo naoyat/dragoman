@@ -529,7 +529,7 @@ def realize(clause, gap=None):
     subject_text = noun_phrase(subject)[0] if subject is not None and gap != 'subject' and not (
         subject.head is not None and subject.head.pos == 'pronoun' and not participle) else ''
     if participle and gap != 'subject':   # 分詞は主語が先 (代名詞の主語も書く)
-        if not subject_text and subject is None:
+        if not subject_text and subject is None and not english.impersonal(clause):   # 天気の文は主語なし
             key = ({1: 'ego', 2: 'tū'}.get(clause.person, 'is'), clause.number)
             subject_text = PRONOUNS.get(key, ('הוּא',))[0]
         out += [subject_text] + verb

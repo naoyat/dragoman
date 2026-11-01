@@ -272,7 +272,8 @@ def realize(clause, gap=None, infinitive=False):
     out = []
     if subject is not None and gap != 'subject' and not infinitive:
         out.append(noun_phrase(subject))
-    elif subject is None and gap is None and clause.mood not in ('imperative', 'infinitive') and not infinitive:
+    elif subject is None and gap is None and clause.mood not in ('imperative', 'infinitive') and not infinitive and \
+            not english.impersonal(clause):   # 天気の文は主語なし (下雨)
         out.append({(1, 'sg'): '我', (1, 'pl'): '我们', (2, 'sg'): '你', (2, 'pl'): '你们', (3, 'sg'): '他',
                     (3, 'pl'): '他们'}.get((clause.person or 3, clause.number or 'sg'), '他'))
     adverbs = [word(a, 'adv') for a in clause.adverbs if a.lemma != 'nōn']

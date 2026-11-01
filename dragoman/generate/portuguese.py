@@ -588,7 +588,8 @@ def realize(clause, gap=None, antecedent=None, subjunctive=False, infinitive=Fal
         found = _pronoun(subject, 'Nom') if subject.head is not None and subject.head.pos == 'pronoun' and \
             not subject.members and subject.head.lemma not in NEGATIVE_PRONOUNS else None
         words.append(found or noun_phrase(subject, 'Nom'))
-    elif subject is None and gap is None and clause.mood != 'imperative' and not infinitive:
+    elif subject is None and gap is None and clause.mood != 'imperative' and not infinitive and \
+            not english.impersonal(clause):   # 天気の文は主語なし (Chove)
         pronoun = {(1, 'sg'): 'eu', (1, 'pl'): 'nós'}.get((person, number))
         if pronoun is None and clause.person == 2:
             pronoun = 'você' if number == 'sg' else 'vocês'

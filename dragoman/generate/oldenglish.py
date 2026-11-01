@@ -418,7 +418,8 @@ def realize(clause, gap=None, subordinate=False, infinitive=False):
     head_words = []
     if subject is not None and gap != 'subject':
         head_words.append(noun_phrase(subject, 'Nom'))
-    elif subject is None and gap != 'subject' and clause.mood != 'imperative':   # 主語は省かない (þe þū ġesihst)
+    elif subject is None and gap != 'subject' and clause.mood != 'imperative' and not english.impersonal(clause):
+        # 主語は省かない (þe þū ġesihst)。天気の文は主語なし (rīnþ)
         head_words.append({(1, 'sg'): 'iċ', (2, 'sg'): 'þū', (3, 'sg'): 'hē', (1, 'pl'): 'wē', (2, 'pl'): 'ġē',
                            (3, 'pl'): 'hīe'}[(person, number)])
     middle, tail = [], []
