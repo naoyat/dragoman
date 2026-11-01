@@ -714,6 +714,16 @@ def detect_verbs(words):
 #            verbs_at.append(i)
 #            verbs[i] = verb
 
+    for i, word in enumerate(words):
+        # 疑問詞の直後の、最初の読みが接続法の語は間接疑問の動詞 (Nesciō quid velīs の velīs: 名詞 vela の読みもある)
+        if i == 0 or i in verb_ix or not isinstance(word, Word) or not word.items or word.items[0].pos != 'verb' or \
+                word.items[0].attrib('mood') != 'subjunctive' or not _interrogative(words[i - 1]):
+            continue
+        word.items = [item for item in word.items if item.pos == 'verb']
+        words[i] = Predicate(word)
+        verb_ix.append(i)
+    verb_ix.sort()
+
     if not verb_ix:
         # 動詞が1つも無ければ、最初の読みが定動詞の語を動詞に (Ubi habitās? の habitās: 分詞の読みもある)
         for i, word in enumerate(words):
@@ -727,6 +737,15 @@ def detect_verbs(words):
 
 
 FINITE_MOODS = ('indicative', 'subjunctive', 'imperative')
+QUESTION_ADVERBS = {'cūr', 'ubi', 'quandō', 'quōmodo', 'unde', 'quō', 'num', 'utrum', 'quārē'}
+
+
+def _interrogative(word):
+    """疑問代名詞・疑問の副詞の語か (間接疑問の頭)"""
+    if not isinstance(word, Word) or not word.items:
+        return False
+    item = word.items[0]
+    return item.attrib('desc') == '疑問代名詞' or item.pos == 'adv' and item.attrib('base') in QUESTION_ADVERBS
 
 
 # 名詞に係りうる代名詞 (限定詞としても使う): hic, is, ille, iste, ipse, aliquis, quīdam など

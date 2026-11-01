@@ -94,6 +94,14 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja("I haven't been to Japan."), '私が / 日本[へ,に] / 行ったことがない')
         self.assertEqual(self.ja('I have never eaten sushi.'), '私が / 寿司を / 食べたことがない')
         self.assertEqual(self.ja('Love it.'), 'それを / 愛せ')
+        self.assertEqual(self.ja('The boy was crying.'), '少年が / 泣いていた')   # 過去進行形 (未完了過去)
+
+    def test_dative_to(self):
+        # give・show・say … + to + 人は受け手 (与格)。to は次の語の表示に
+        self.assertEqual(self.ja('She gave the book to him.'), '彼女が / 彼に / 本を / 与えた')
+        words = analyzer.lookup_all(next(analyzer.sentences('Give it to me.')))
+        self.assertIn('to me', [w.surface for w in words])
+        self.assertNotIn('to', [w.surface for w in words])
 
     def test_copular_verbs(self):
         self.assertEqual(self.ja('It sounds good.'), 'それが / 良いように聞こえる')

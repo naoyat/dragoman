@@ -340,8 +340,14 @@ def relative_clause(r, g, number):
     return join([pronoun] + words)
 
 
-def prepositional(np, passive=False):
+# 「〜について」(dē) を sur でなく de で取る動詞 (parler de・rêver de・discuter de)
+DE_TOPIC_VERBS = {'parler', 'rêver', 'discuter', 'se plaindre', 'causer', 'bavarder', 'entendre parler'}
+
+
+def prepositional(np, passive=False, verb=''):
     inner = dataclasses.replace(np, prep=None)
+    if verb in DE_TOPIC_VERBS and np.prep is not None and np.prep.lemma == 'dē' and np.case in ('Abl', ''):
+        return with_preposition('de', noun_phrase(inner, 'Str'))   # parler de son père
     if passive and np.prep is not None and np.prep.lemma in ('ā', 'ab', 'abs'):
         return with_preposition('par', noun_phrase(inner, 'Str'))
     if np.prep is not None and np.prep.lang == 'fr' and np.prep.surface:   # 元のフランス語の前置詞 (à l'école を dans にしない)
@@ -546,7 +552,7 @@ def question_phrase(inner):
         return _elide(INDIRECT_WORDS.get(inner.question_word, inner.question_word), realize(finite))
     who = inner.question_word in WHO
     if role == 'prep':
-        prep = prepositional(wh).rpartition(' ')[0] or 'de'
+        prep = prepositional(wh, verb=word(inner.verb, 'verb') if inner.verb is not None else '').rpartition(' ')[0] or 'de'
         return [prep + ' ' + ('qui' if who else 'quoi')] + realize(without_interrogative(finite))
     if owner is inner and role == 'subject':
         return ['qui' if who else 'ce qui'] + realize(without_interrogative(finite), gap='subject')
@@ -702,7 +708,7 @@ def realize(clause, gap=None, antecedent=None, subjunctive=False, infinitive=Fal
         if role in ('subject', 'object', 'recipient', 'complement', 'address'):
             continue
         if role == 'prep':
-            objects.append(prepositional(np, clause.voice == 'passive'))
+            objects.append(prepositional(np, clause.voice == 'passive', word(clause.verb, 'verb')))
         elif np.head is not None and np.head.lemma in WORDS and np.head.lang in ('', 'la'):
             objects.append(WORDS[np.head.lemma])
         elif role == 'means':

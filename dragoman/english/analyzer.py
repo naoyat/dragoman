@@ -171,6 +171,8 @@ def _case(token):
         return ('Acc',)
     if dep == 'dative':
         return ('Dat',)
+    if dep == 'pobj' and _dative_to(token.head):
+        return ('Dat',)   # give it to me の me
     if dep == 'pobj':
         return ('Acc',) if _prepositional_verb(token.head) else ('Gen',)   # look after her brother の brother
     if dep == 'conj':
@@ -223,6 +225,22 @@ def _phrasal_particle(token):
 
 
 VERB_PREPOSITIONS = ('after', 'for', 'at', 'into')
+# to + 人を受け手 (与格) にする動詞 (give it to me → mihi dā・Donne-le-moi・gib es mir)
+TO_DATIVE_VERBS = {'give', 'send', 'show', 'tell', 'say', 'offer', 'hand', 'lend', 'bring', 'sell', 'pay', 'teach',
+                   'explain', 'write', 'read', 'promise', 'throw', 'pass', 'return', 'describe', 'introduce', 'owe'}
+TO_DATIVE_PRONOUNS = {'me', 'you', 'him', 'her', 'us', 'them'}
+
+
+def _dative_to(token):
+    """受け手を表す to (spaCy の dative、give・show … + to + 人)"""
+    if token.text.lower() != 'to' or token.head.pos_ not in ('VERB', 'AUX'):
+        return False
+    if token.dep_ == 'dative':
+        return True
+    objects = [c for c in token.children if c.dep_ == 'pobj']
+    return token.dep_ == 'prep' and token.head.lemma_.lower() in TO_DATIVE_VERBS and bool(objects) and (
+        objects[0].text.lower() in TO_DATIVE_PRONOUNS or objects[0].ent_type_ == 'PERSON' or
+        objects[0].lemma_.lower() in PERSON_NOUNS)
 
 
 def _prepositional_verb(token):
@@ -317,6 +335,8 @@ def item_of(token, doc):
         if tag == 'WP':
             data['desc'] = '疑問代名詞'   # 直接疑問・間接疑問の who・what (関係代名詞は上で)
         return data
+    if _dative_to(token):   # 受け手の to: 次の語にまとめる (to me。dative_to_words)
+        return {'surface': text, 'pos': 'particle', 'base': 'to', 'ja': '', 'gloss_lang': 'ja', 'dative_to': True}
     if pos == 'ADP' or tag == 'IN' and token.dep_ == 'prep' or tag == 'TO':
         if token.dep_ == 'mark' or tag == 'IN' and token.dep_ not in ('prep', 'agent', 'dative', 'prt') and \
                 lower in morphology.CONJUNCTIONS:
@@ -425,7 +445,8 @@ def merge_verbs(words, doc):
                 finite = finite or a
                 if main.attrib('gloss_lang') == 'ja':
                     data['ja'] = ','.join(_attach(j, 'ている') for j in (main.ja or '').split(',')[:1])
-                data['tense'] = a.attrib('tense')
+                # 過去進行形は未完了過去 (was crying → flēbat・pleurait・плакал)
+                data['tense'] = 'imperfect' if a.attrib('tense') == 'perfect' else a.attrib('tense')
                 forms.append('進行形 (be + 現在分詞)')
             elif lemma == 'have' and token.tag_ == 'VBN':
                 finite = finite or a
@@ -890,6 +911,10 @@ def lookup_all(surfaces):
     words = possessives(words)
     words = how_adjectives(words)
     existential_there(words)
+    for k, w in enumerate(words[:-1]):   # 受け手の to は次の語の表示に (to me・to his mother の to his)
+        item = _item(w)
+        if item is not None and item.attrib('dative_to'):
+            words[k + 1].surface = w.surface + ' ' + words[k + 1].surface
     words = [w for w in words if _pos(w) != 'particle']
     words = attach_articles(words)
     passive_agents(words)

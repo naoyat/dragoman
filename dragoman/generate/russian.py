@@ -89,7 +89,8 @@ def _parse(lemma, pos):
     """見出し語の解析 (pymorphy3)。pos: NOUN / ADJF / INFN / NPRO。人名 (Роза) でない解析を先に"""
     key = lemma.lower().replace('ё', 'е')   # pymorphy3 の見出しは ё で書く (мудрёный)
     parses = [p for p in _morph().parse(lemma) if p.normal_form.replace('ё', 'е') == key and p.tag.POS == pos]
-    parses.sort(key=lambda p: any(g in p.tag for g in ('Name', 'Surn', 'Patr', 'Geox')))
+    # 同じ綴りの完了体と不完了体 (уходить「立ち去る」と「歩き疲れさせる」) は不完了体を先に (現在形 ухожу を作れる)
+    parses.sort(key=lambda p: (any(g in p.tag for g in ('Name', 'Surn', 'Patr', 'Geox')), 'perf' in p.tag))
     return parses[0] if parses else None
 
 

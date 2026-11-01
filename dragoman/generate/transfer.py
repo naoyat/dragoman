@@ -537,7 +537,12 @@ for _sense, _targets in (
         ('spend (life)', {'de': 'verbringen', 'ru': 'проводить', 'fr': 'mener', 'ko': '보내다', 'zh': '过'}),
         ('deliver (speech)', {'de': 'halten', 'ru': 'произносить', 'fr': 'prononcer', 'ko': '하다', 'zh': '发表'}),
         ('thank', {'de': 'danken', 'ru': 'благодарить', 'fr': 'remercier', 'ko': '감사하다', 'zh': '感谢'}),
-        ('pay the penalty', {'de': 'büßen', 'ru': 'расплачиваться', 'fr': 'expier', 'ko': '벌받다', 'zh': '受罚'})):
+        ('pay the penalty', {'de': 'büßen', 'ru': 'расплачиваться', 'fr': 'expier', 'ko': '벌받다', 'zh': '受罚'}),
+        # 英語の leave: 目的語があれば「(場所・人を) 去る」、無ければ「出発する」(frame.EN_TRANSITIVITY_SENSES)
+        ('leave (place)', {'la': 'relinquō', 'de': 'verlassen', 'ru': 'покидать', 'fr': 'quitter', 'pt': 'deixar',
+                           'ko': '떠나다', 'zh': '离开'}),
+        ('leave (depart)', {'la': 'discēdō', 'de': 'weggehen', 'ru': 'уходить', 'fr': 'partir', 'pt': 'partir',
+                            'ko': '떠나다', 'zh': '离开'})):
     for _lang, _lemma in _targets.items():
         SENSE_TARGETS.setdefault(_lang, {})[_sense] = _lemma
 # 英語の drive は車を運転する意味 (辞書の筆頭の verschlagen・달리다 にしない。家畜を追う意味は上の SENSE_TARGETS)

@@ -559,10 +559,14 @@ def realize(clause, gap=None, subordinate=False, infinitive=False):
         if clause.negated:
             tail.insert(0, 'nicht')
     else:
+        obj = (clause.role('object') or [None])[0]
+        pronoun_object = obj is not None and gap != 'object' and obj.head is not None and obj.head.pos == 'pronoun' \
+            and not obj.members
+        if pronoun_object:   # 代名詞の目的語は与格の前 (Er sagte es mir)
+            middle.append(noun_phrase(obj, 'Dat' if word(clause.verb, 'verb') in DATIVE_VERBS else 'Acc'))
         for np in clause.role('recipient'):
             middle.append(noun_phrase(np, 'Dat'))
-        obj = (clause.role('object') or [None])[0]
-        if obj is not None and gap != 'object':
+        if obj is not None and gap != 'object' and not pronoun_object:
             middle.append(noun_phrase(obj, 'Dat' if word(clause.verb, 'verb') in DATIVE_VERBS else 'Acc'))
         for role, np in clause.args:
             if role in ('subject', 'object', 'recipient', 'complement', 'address'):
@@ -585,7 +589,8 @@ def realize(clause, gap=None, subordinate=False, infinitive=False):
     if clause.mood == 'imperative' and not clause.copula:
         lemma = word(clause.verb, 'verb')
         stem = (lemma[:-2] if lemma.endswith('en') else lemma)
-        return [w for w in [stem + ('t' if number == 'pl' else '')] + middle + (['nicht'] if clause.negated else []) if w]
+        singular = find_form(lemma, 'verb', ('imperative', 'singular')) if number != 'pl' else None
+        return [w for w in [singular or stem + ('t' if number == 'pl' else '')] + middle + (['nicht'] if clause.negated else []) if w]
     if subordinate:   # 関係節・従属節: 動詞を最後に
         return [w for w in head_words + middle + tail + [verb] if w]
     if clause.invert or clause.question and not clause.question_word and gap is None:

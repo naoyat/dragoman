@@ -848,6 +848,9 @@ def clause_of(predicate, lang=None):
             clause.args = [(r, np) for r, np in clause.args if np is not subjects[0]]   # 補った主語 (Gotta go の (I)) は人称だけ
         if '(be going to' in (verb_item.attrib('form') or ''):
             clause.tense = 'future'   # I'm going to eat (解析の訳は「食べるつもりだ」、枠では未来)
+        if clause.verb.lemma in EN_TRANSITIVITY_SENSES:   # leave the room「部屋を去る」(quitter) と I leave「出発する」(partir)
+            senses = EN_TRANSITIVITY_SENSES[clause.verb.lemma]
+            clause.verb = dataclasses.replace(clause.verb, sense=senses[0 if clause.role('object') else 1])
     if clause.copula and _lang in SOURCE_NUMERALS and clause.person == 3:
         subjects = clause.role('subject')
         if subjects and (subjects[0].number == 'pl' or subjects[0].members):
@@ -906,6 +909,8 @@ def _chinese_relative(data):
 _UNMARKED_RELATIVES = set()   # 相の印 (了・过) の無い中国語の関係節: 時制は主節の過去に合わせる (我看了我买的书 → I read the book I bought)
 
 
+# 英語の動詞の目的語の有無で決まる意味: 見出し → (目的語あり, なし)。各言語の語は transfer.SENSE_TARGETS
+EN_TRANSITIVITY_SENSES = {'leave': ('leave (place)', 'leave (depart)')}
 # 与格を取るときの意味 (辞書の最初の訳語は別の意味: pāreō「現れる」)
 DATIVE_SENSES = {'pāreō': '従う'}
 # 目的語の名詞で決まる意味 (agō「する」は家畜を目的語にすると「駆る」: equōs agit → drives the horses)。

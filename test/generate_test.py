@@ -304,8 +304,24 @@ class WhQuestionTestCase(unittest.TestCase):
                              ('I know who you are talking to.', 'Je sais à qui tu parles.'),
                              ('Tell me where you live.', 'Dis-moi où tu vis.'),               # 命令の代名詞
                              ('Help me.', 'Aide-moi.'),
-                             ("Don't touch me.", 'Ne me touche pas.')]:
+                             ("Don't touch me.", 'Ne me touche pas.'),
+                             ("I don't know what you're talking about.", 'Je ne sais pas de quoi tu parles.'),   # parler de
+                             ('He talks about his father.', 'Il parle de son père.'),
+                             ('Give it to me.', 'Donne-le-moi.'),              # to + 人は受け手 (与格)
+                             ('He said it to me.', "Il me l'a dit."),
+                             ('I asked why the boy was crying.', "J'ai demandé pourquoi le garçon pleurait."),   # 過去進行形
+                             ("Don't leave me.", 'Ne me quitte pas.'),         # leave + 目的語は quitter、なしは partir
+                             ('I leave tomorrow.', 'Je pars demain.')]:
                 self.assertEqual(out(text, french, 'fr'), fr)
+        for text, de, ru in [('Give it to me.', 'Gib es mir.', None), ('He said it to me.', 'Er sagte es mir.', None),
+                             ("Don't leave me.", 'Verlass mich nicht.', 'Не покидай меня.'),
+                             ('I leave tomorrow.', 'Ich gehe morgen weg.', 'Я ухожу завтра.'),
+                             ('She gave the book to him.', 'Sie gab ihm das Buch.', None)]:
+            self.assertEqual(out(text, german, 'de'), de)
+            if ru is not None:
+                self.assertEqual(out(text, russian, 'ru'), ru)
+        self.assertEqual(out('Give it to me.', latin, 'la'), 'Mihi id dā.')
+        self.assertEqual(out('The boy was crying.', latin, 'la'), 'Puer flēbat.')
         self.assertEqual(out("I don't know what you're talking about.", english, 'en'),
                          'I do not know what you talk about.')
 
