@@ -29,6 +29,12 @@ class KanbunAnalysis:
         """音読に渡す書き下し文 (新字体)"""
         return readings.shinjitai(self.kakikudashi)
 
+    @property
+    def yomi(self):
+        """書き下し文の読み (ひらがな。ruby.py。JMdict の読みの表が無ければ '')"""
+        from . import ruby
+        return ruby.yomi(self) if ruby.available() else ''
+
     def reading_of(self, token):
         """語の書き下しでの形 (送り仮名・助詞を付けたもの。置き字は '')"""
         for elems in self.elems:

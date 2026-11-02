@@ -762,14 +762,15 @@ body.no-marks .mk { display: none; } body.no-marks .sf { text-decoration: none; 
 .note { font-size: .8rem; } .note.explain { color: var(--gen); } .note.descendants { color: #00838f; }
 .note.etymology { color: var(--dat); }
 pre.rendered { white-space: pre-wrap; font-size: .85rem; }
-/* 漢文の訓点付きの本文 (kanbun/note.py): 縦書き。字の右下に送り仮名、左下に返り点 */
+/* 漢文の訓点付きの本文 (kanbun/note.py): 縦書き。字の右に振り仮名と送り仮名、左下に返り点 */
 .kunten .kv { writing-mode: vertical-rl; font-size: 1.6rem; line-height: 1;
               font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif; }
 .kunten .kc { display: inline-block; position: relative; width: 2.1em; writing-mode: horizontal-tb; vertical-align: top; }
 .kunten .kj { position: absolute; top: 0; left: .55em; width: 1em; height: 1em; writing-mode: vertical-rl; }
-.kunten .ok, .kunten .kt, .kunten .ol { position: absolute; font-size: .5em; width: 1em; writing-mode: vertical-rl;
+.kunten .rb, .kunten .ok, .kunten .kt, .kunten .ol { position: absolute; font-size: .5em; width: 1em; writing-mode: vertical-rl;
                                         white-space: nowrap; }
-.kunten .ok { left: 3.1em; top: 1em; }
+.kunten .ok, .kunten .rb { left: 3.1em; }
+.kunten .rb { color: var(--sub); }
 .kunten .kt { left: .1em; top: 1.4em; }
 .kunten .ol { left: .1em; }
 .cmp { border-collapse: collapse; font-size: .78rem; width: 100%; table-layout: fixed; margin-bottom: .4rem; }

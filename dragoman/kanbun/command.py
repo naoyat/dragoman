@@ -85,6 +85,8 @@ def render(analysis, options):
     if not (options.html or options.pdf):   # ノートでは返り点は縦書きの訓点付きの本文に (note.py)
         print('  返り点   ' + analysis.kaeriten)
     print('  書き下し ' + analysis.kakikudashi)
+    if analysis.yomi:
+        print('  読み     ' + analysis.yomi)
     if options.show_word_detail:
         print()
         width = max([len(t.form) for t in analysis.tokens] + [1])

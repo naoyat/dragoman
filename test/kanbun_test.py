@@ -10,6 +10,7 @@ import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+from dragoman.core import paths  # noqa: E402
 from dragoman.kanbun import parse, readings  # noqa: E402
 
 HAVE_DATA = parse.available() and readings.kanjidic_available()
@@ -74,15 +75,28 @@ class KanbunTestCase(unittest.TestCase):
         self.assertEqual(a.reading_of(mi), '未だ…ず')   # 再読文字は前と後ろで読む
 
     def test_note_units(self):
-        # ノートの縦書きの訓点: (字, 右の送り仮名, 返り点, 左の送り仮名)。置き字 於 の助詞は前の名詞に
-        from dragoman.kanbun import note
-        self.assertEqual(note.units(self.analyze('學而時習之、不亦說乎。'))[:5],
+        # ノートの縦書きの訓点: (字, 振り仮名, 右の送り仮名, 返り点, 左の送り仮名)。置き字 於 の助詞は前の名詞に
+        from dragoman.kanbun import note, ruby
+        units = note.units(self.analyze('學而時習之、不亦說乎。'))
+        self.assertEqual([(u[0],) + u[2:] for u in units[:5]],
                          [('學', 'ビテ', '', ''), ('而', '', '', ''), ('時', 'ニ', '', ''), ('習', 'フ', 'レ', ''),
                           ('之', 'ヲ', '', '')])
-        self.assertEqual(note.units(self.analyze('將入城。'))[:2], [('將', 'ニ', 'レ', 'ス'), ('入', 'ラント', 'レ', '')])
-        self.assertIn(('人', 'ニ', '一', ''), note.units(self.analyze('己所不欲、勿施於人。')))
-        self.assertIn('class="kunten"', note.html_of(self.analyze('將入城。')).replace('part kunten', 'kunten'))
+        self.assertEqual([(u[0],) + u[2:] for u in note.units(self.analyze('將入城。'))[:2]],
+                         [('將', 'ニ', 'レ', 'ス'), ('入', 'ラント', 'レ', '')])
+        self.assertIn(('人', 'ニ', '一', ''), [(u[0],) + u[2:] for u in note.units(self.analyze('己所不欲、勿施於人。'))])
+        self.assertIn('part kunten', note.html_of(self.analyze('將入城。')))
+        if ruby.available():
+            self.assertEqual([u[1] for u in units[:5]], ['まな', '', 'とき', 'なら', 'これ'])
 
+    @unittest.skipUnless(HAVE_DATA and os.path.exists(os.path.join(paths.data(), 'ja-readings.tsv')), 'no ja-readings.tsv')
+    def test_yomi(self):
+        # 振り仮名: 用言は KANJIDIC2 の訓の語幹 (送り仮名の行で)、名詞・熟語は JMdict (語義で選び、1字なら訓を先に)、
+        # 助字・副詞・代名詞は手作りの表 (歴史的仮名遣い)
+        self.assertEqual(self.analyze('有朋自遠方來、不亦樂乎。').yomi, 'ともありえんぽうよりきたる、またたのしからずや。')
+        self.assertEqual(self.analyze('己所不欲、勿施於人。').yomi, 'おのれのほつせざるところ、ひとにほどこすことなかれ。')
+        self.assertEqual(self.analyze('子曰、學而不思則罔。').yomi, 'しいはく、まなびておもはざればすなはちくらし。')
+        self.assertEqual(self.analyze('不入虎穴、不得虎子。').yomi, 'こけつにいらずんば、こしをえず。')
+        self.assertEqual(self.analyze('未知生、焉知死。').yomi, 'いまだせいをしらず、いづくんぞしをしらん。')
 
 if __name__ == '__main__':
     unittest.main()

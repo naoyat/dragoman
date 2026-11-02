@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# ノート (--html・--pdf) の訓点付きの本文: 縦書きで、字の右下に送り仮名 (カタカナ)、左下に返り点、
-# 再読文字の二度目の読みの送り仮名は左に
+# ノート (--html・--pdf) の訓点付きの本文: 縦書きで、字の右に振り仮名 (ひらがな。ruby.py) とその下に送り仮名
+# (カタカナ)、左下に返り点、再読文字の二度目の読みの送り仮名は左に
 #
 import html
 
-from . import kundoku
+from . import kundoku, ruby
 
 # UD-Kanbun の返り点の記号 (漢文用の符号) → 普通の字 (字形の無いフォントでも出るように)
 MARKS = dict(zip('㆑㆒㆓㆔㆕㆖㆗㆘㆙㆚㆛㆜㆝㆞㆟', 'レ一二三四上中下甲乙丙丁天地人'))
@@ -52,7 +52,9 @@ def _okurigana(elems):
 
 
 def units(analysis):
-    """字ごとの (字, 右の送り仮名, 返り点, 左の送り仮名)。返り点は UD-Kanbun の返り点付きの白文から"""
+    """字ごとの (字, 振り仮名, 右の送り仮名, 返り点, 左の送り仮名)。返り点は UD-Kanbun の返り点付きの白文から。
+    振り仮名は JMdict の読みの表 (ja-readings.tsv) が無ければ出さない"""
+    yomi = ruby.rubies(analysis) if ruby.available() else {}
     okuri = {}
     for elems in analysis.elems:
         okuri.update(_okurigana(elems))
@@ -61,17 +63,19 @@ def units(analysis):
     result = []
     for t in analysis.tokens:
         right, left = okuri.get(id(t), ['', ''])
+        rubies = yomi.get(id(t), [])
         for k, ch in enumerate(t.form):
             while pos < len(text) and text[pos] != ch:   # 字の後ろの返り点
                 if result:
-                    result[-1][2] += MARKS.get(text[pos], text[pos])
+                    result[-1][3] += MARKS.get(text[pos], text[pos])
                 pos += 1
             pos += 1
             last = k == len(t.form) - 1
-            result.append([ch, katakana(right) if last else '', '', katakana(left) if last else ''])
+            result.append([ch, rubies[k] if k < len(rubies) else '', katakana(right) if last else '', '',
+                           katakana(left) if last else ''])
     for c in text[pos:]:
         if result:
-            result[-1][2] += MARKS.get(c, c)
+            result[-1][3] += MARKS.get(c, c)
     return [tuple(u) for u in result]
 
 
@@ -79,13 +83,18 @@ def html_of(analysis):
     """訓点付きの本文 (縦書き) の HTML。字の高さは送り仮名・返り点の長さに合わせて伸ばす"""
     cells = []
     total = 0
-    for ch, right, marks, left in units(analysis):
-        # 右の送り仮名は字の下半分から、返り点は字の左下、左の送り仮名は返り点の下
-        height = max(0.6 if ch in PUNCT else 1.0, 0.5 + SMALL * len(right), 0.7 + SMALL * (len(marks) + len(left)))
+    for ch, yomi, right, marks, left in units(analysis):
+        # 振り仮名は字の右 (2字までは字の中ほど)、送り仮名は字の下半分か振り仮名の後ろから、返り点は字の左下、
+        # 左の送り仮名は返り点の下
+        top = (1 - SMALL * len(yomi)) / 2 if len(yomi) <= 2 else 0
+        start = max(0.5, top + SMALL * len(yomi) + 0.15) if yomi else 0.5   # 振り仮名との間を少し空ける
+        height = max(0.6 if ch in PUNCT else 1.0, start + SMALL * len(right), 0.7 + SMALL * (len(marks) + len(left)))
         total += height + 0.08
-        cells.append('<span class="kc" style="height:%.2fem"><span class="kj">%s</span>%s%s%s</span>'
+        cells.append('<span class="kc" style="height:%.2fem"><span class="kj">%s</span>%s%s%s%s</span>'
                      % (height + 0.08, html.escape(ch),
-                        '<span class="ok">%s</span>' % html.escape(right) if right else '',
+                        '<span class="rb" style="top:%.2fem">%s</span>' % (top / SMALL, html.escape(yomi)) if yomi else '',
+                        '<span class="ok" style="top:%.2fem">%s</span>' % (start / SMALL, html.escape(right))
+                        if right else '',
                         '<span class="kt">%s</span>' % html.escape(marks) if marks else '',
                         '<span class="ol" style="top:%.2fem">%s</span>' % (1.4 + len(marks), html.escape(left))
                         if left else ''))
