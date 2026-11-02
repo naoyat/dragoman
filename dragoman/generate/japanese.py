@@ -28,6 +28,8 @@ PREPOSITIONS = {('in', 'Abl'): 'で', ('in', 'Acc'): 'へ', ('ad', 'Acc'): 'へ'
                 ('apud', 'Acc'): 'のもとで', ('inter', 'Acc'): 'の間で', ('propter', 'Acc'): 'のために',
                 ('ob', 'Acc'): 'のために', ('contrā', 'Acc'): 'に対して', ('trāns', 'Acc'): 'を越えて',
                 ('circum', 'Acc'): 'のまわりで', ('prope', 'Acc'): 'の近くで', ('super', 'Acc'): 'の上で'}
+# 目的語を「に」で取る日本語の動詞 (試験に受かる・友達に会う・馬に乗る)
+NI_OBJECT_VERBS = {'受かる', '会う', '乗る', '勝つ', '従う', '答える', '似る', '触れる', '合格する', '逆らう'}
 ROLE_PARTICLES = {'object': 'を', 'recipient': 'に', 'means': 'で', 'place': 'で', 'possessor': 'の',
                   'source': 'から', 'complement': ''}
 SUBORDINATORS = {'ubi': 'とき', 'cum': 'とき', 'postquam': '後で', 'quod': 'ので', 'quia': 'ので', 'sī': 'なら',
@@ -327,12 +329,14 @@ def clause_text(clause, final=True, attributive=False):
     for p in clause.adjuncts:
         if p.kind != 'absolute':
             parts.append(_participial(p))
+    ni_object = clause.verb is not None and not clause.copula and gloss(clause.verb) in NI_OBJECT_VERBS
     for role in ('recipient', 'object'):
         for np in clause.role(role):
             if attributive and clause.gap == role:
                 continue
+            particle = 'に' if role == 'object' and ni_object else ROLE_PARTICLES[role]   # 試験に受かる
             parts.append(NEGATIVE_PRONOUNS[np.head.lemma] if _negative_pronoun(np) else
-                         noun_phrase(np) + ('には' if existential and role == 'recipient' else ROLE_PARTICLES[role]))
+                         noun_phrase(np) + ('には' if existential and role == 'recipient' else particle))
     for role, np in clause.args:
         if role in ('subject', 'object', 'recipient', 'complement'):
             continue
@@ -347,7 +351,10 @@ def clause_text(clause, final=True, attributive=False):
         elif attributive and clause.gap == role:
             continue
         else:
-            parts.append(noun_phrase(np) + ROLE_PARTICLES.get(role, 'で'))
+            particle = ROLE_PARTICLES.get(role, 'で')
+            if role == 'place' and particle == 'で' and _existence(clause):
+                particle = 'に'   # 家にとどまる (domī manet。存在・居住の動詞の場所)
+            parts.append(noun_phrase(np) + particle)
     for inner in clause.infinitives:
         parts.append(infinitive(inner, clause))
     for inner in clause.questions:

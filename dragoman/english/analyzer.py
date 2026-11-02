@@ -28,8 +28,16 @@ PUNCTUATION = {'.': 'period', '!': 'period', '?': 'question', '…': 'period', '
 def _particle(case, obj, predicate):
     """自動詞の訳語の目的語は「に」(pass the exam → 試験に受かる。解析器が acc_particle を付けたもの)"""
     if case == 'Acc':
-        return predicate.first_item.attrib('acc_particle')
+        item = predicate.first_item
+        if item.attrib('acc_particle'):
+            return item.attrib('acc_particle')
+        if item.attrib('gloss_lang') == 'ja' and (item.ja or '').split(',')[0] in NI_OBJECT_VERBS:
+            return 'に'   # 馬に乗る・友達に会う (目的語を「に」で取る訳語)
     return None
+
+
+# 目的語を「に」で取る訳語 (generate/japanese.NI_OBJECT_VERBS と同じ)
+NI_OBJECT_VERBS = {'受かる', '会う', '乗る', '勝つ', '従う', '答える', '似る', '触れる', '合格する', '逆らう'}
 
 
 def _root_items(lemma):
@@ -131,10 +139,15 @@ def _pos(word):
 # ----------------------------------------------------------------------
 # 語の項目
 
+# spaCy の見出し語の誤り: (語形, spaCy の見出し) → 見出し (rides → rid「取り除く」でなく ride)
+VERB_LEMMA_FIXES = {('rides', 'rid'): 'ride', ('rided', 'rid'): 'ride'}
+
+
 def _verb_data(token):
     lemma = token.lemma_.lower() if token.lemma_ else token.text.lower()
     if lemma == 'got':
         lemma = 'get'   # spaCy が got を原形のまま返すもの (I got to see …)
+    lemma = VERB_LEMMA_FIXES.get((token.text.lower(), lemma), lemma)
     ja, gloss_lang = morphology.gloss(lemma, 'verb')
     tag = token.tag_
     tense = 'perfect' if tag == 'VBD' else 'present'
@@ -496,7 +509,12 @@ def control_verbs(words, doc):
     """want to go などの「動詞 + to 不定詞」を不定詞の位置の1語にまとめる (時制・人称は前の動詞から)"""
     by_i = {w.doc_i: w for w in words}
     removed = set()
+    merged = []
     for token in doc:
+        if token.dep_ == 'xcomp' and token.tag_ == 'VB' and token.head.lemma_.lower() == 'able' and \
+                token.head.dep_ == 'acomp' and token.head.i in by_i and token.head.head.i in by_i and token.i in by_i:
+            merged += _be_able_to(token, by_i)
+            continue
         if token.dep_ != 'xcomp' or token.tag_ != 'VB' or token.head.i not in by_i or token.i not in by_i:
             continue
         head_word, main_word = by_i[token.head.i], by_i[token.i]
@@ -534,11 +552,34 @@ def control_verbs(words, doc):
         main_word.items = [type(m)(data)]
         main_word.surface = data['surface']
         removed.add(token.head.i)
-    dropped = {id(by_i[i]) for i in removed}
+    dropped = {id(by_i[i]) for i in removed} | {id(w) for w in merged}
     for w in words:
         if id(w) in dropped:
             w.merged_into = True
     return [w for w in words if id(w) not in dropped]
+
+
+def _be_able_to(token, by_i):
+    """be able to + 原形 → can と同じ話法の動詞 + 不定詞 (I will be able to come → 来ることができるだろう・Venīre poterō)。
+    時制・人称は be から。まとめた語は be の位置 (主語・否定の n't が be に掛かる)。返り値: まとめて消す語"""
+    be_token = token.head.head
+    be_word, able_word, main_word = by_i[be_token.i], by_i[token.head.i], by_i[token.i]
+    b, m = _item(be_word), _item(main_word)
+    if b is None or m is None or m.pos != 'verb':
+        return []
+    data = dict(m.item)
+    if m.attrib('gloss_lang') == 'ja':
+        from dragoman.core.japanese import attach_auxiliary
+        data['ja'] = attach_auxiliary((m.ja or '').split(',')[0], 'ことができる')
+    data.update(tense=b.attrib('tense'), person=b.attrib('person'), number=b.attrib('number'), mood=b.attrib('mood'),
+                surface=(b.attrib('surface') or be_word.surface) + ' able to ' + main_word.surface, main_ja=m.ja, modal='can',
+                form='be able to + 原形' + ('・' + b.attrib('form') if b.attrib('form') else ''))
+    data.pop('existential', None)
+    main_word.items = [type(m)(data)]
+    main_word.surface = data['surface']
+    main_word.doc_i = be_token.i
+    by_i[be_token.i] = main_word
+    return [be_word, able_word]
 
 
 PERSONAL_PRONOUNS = ('i', 'you', 'we', 'he', 'she', 'they')
@@ -746,12 +787,17 @@ def verbs_in_context(words, doc):
         objects = [c.lemma_ for c in token.children if c.dep_ in ('dobj', 'nsubjpass')] + \
             [c.lemma_ for c in token.children if c.dep_ == 'nsubj']
         found = en_ja.verb_in_context(item.attrib('lemma'), objects) if objects else []
+        found = [ja for ja in found if (item.attrib('lemma'), ja) not in CONTEXT_EXCLUDED]
         if found:
             ja = ','.join(found[:2])
             data = dict(item.item, ja=ja, gloss_lang='ja', context_gloss=True)
             if _intransitive(found[0]) and any(c.dep_ == 'dobj' for c in token.children):
                 data['acc_particle'] = 'に'   # 試験に受かる (自動詞の訳語)
             word.items = [type(item)(data)]
+
+
+# 場面の訳語で、目的語を取る文に合わないもの (meet (friends) → 遊ぶ: I met my friend は「友達に会った」)
+CONTEXT_EXCLUDED = {('meet', '遊ぶ')}
 
 
 def _intransitive(ja):

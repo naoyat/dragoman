@@ -779,6 +779,9 @@ def detect_adj_correspondances(words, trace, consumed=()):
                 continue
             if word.items[0].pos == 'conj':
                 boundaries.add(i)
+            if word.items[0].pos == 'conj' and word.items[0].attrib('clause_suffix'):
+                blocks[i] = word   # 従属接続詞を越えて付けない (Puer, quia aeger est, … の aeger は節の中の補語)
+                continue
             if word.surface in _coordinators() or word.items[0].pos == 'preposition':
                 blocks[i] = word
                 continue

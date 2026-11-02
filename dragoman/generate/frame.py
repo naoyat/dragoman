@@ -818,8 +818,8 @@ def clause_of(predicate, lang=None):
             clause.args.insert(0, ('subject', np))
             nominatives.append(np)
     if predicate.is_sum and len(nominatives) == 1 and nominatives[0].head is not None and \
-            nominatives[0].head.pos == 'participle' and not nominatives[0].modifiers:
-        # 繋辞と分詞だけ (prōgressus est「進んだ」、ortus est): 分詞は補語、主語は動詞の人称から
+            nominatives[0].head.pos in ('participle', 'adj') and not nominatives[0].modifiers:
+        # 繋辞と分詞・形容詞だけ (prōgressus est「進んだ」、ortus est、aeger est「病気だ」): 補語、主語は動詞の人称から
         clause.args = [('complement', np) if np is nominatives[0] else (r, np) for r, np in clause.args]
         nominatives = []
     if predicate.is_sum and len(nominatives) >= 2:
@@ -851,6 +851,10 @@ def clause_of(predicate, lang=None):
         if clause.verb.lemma in EN_TRANSITIVITY_SENSES:   # leave the room「部屋を去る」(quitter) と I leave「出発する」(partir)
             senses = EN_TRANSITIVITY_SENSES[clause.verb.lemma]
             clause.verb = dataclasses.replace(clause.verb, sense=senses[0 if clause.role('object') else 1])
+        objects = {np.head.lemma for np in clause.role('object') if np.head is not None}
+        for nouns, sense in EN_OBJECT_SENSES.get(clause.verb.lemma, ()):
+            if objects & nouns:   # pass the exam「試験に受かる」(bestehen。passen でなく)
+                clause.verb = dataclasses.replace(clause.verb, sense=sense)
     if clause.copula and _lang in SOURCE_NUMERALS and clause.person == 3:
         subjects = clause.role('subject')
         if subjects and (subjects[0].number == 'pl' or subjects[0].members):
@@ -911,6 +915,8 @@ _UNMARKED_RELATIVES = set()   # 相の印 (了・过) の無い中国語の関�
 
 # 英語の動詞の目的語の有無で決まる意味: 見出し → (目的語あり, なし)。各言語の語は transfer.SENSE_TARGETS
 EN_TRANSITIVITY_SENSES = {'leave': ('leave (place)', 'leave (depart)')}
+# 英語の動詞の目的語の名詞で決まる意味: 見出し → [(名詞, 意味)]。各言語の語は transfer.SENSE_TARGETS
+EN_OBJECT_SENSES = {'pass': [({'exam', 'test', 'examination'}, 'pass (exam)')]}
 # 与格を取るときの意味 (辞書の最初の訳語は別の意味: pāreō「現れる」)
 DATIVE_SENSES = {'pāreō': '従う'}
 # 目的語の名詞で決まる意味 (agō「する」は家畜を目的語にすると「駆る」: equōs agit → drives the horses)。
@@ -1123,6 +1129,12 @@ MOTION_VERBS = {'veniō', 'eō', 'redeō', 'perveniō', 'adveniō', 'conveniō',
                 'fugiō', 'migrō', 'proficīscor', 'revertor', 'currō', 'pergō', 'iter faciō', 'redūcō', 'mittō',
                 'dūcō', 'remittō', 'trānseō', 'abeō', 'veho', 'vehō'}
 DIRECTION_NOUNS = {'domus', 'rūs'}
+
+
+def at_home(role, np):
+    """場所の domī「家で」(修飾語の無い domus の地格): 各言語の「家で」の成句 (zu Hause・à la maison・дома・at home)"""
+    return role == 'place' and np.head is not None and np.head.lemma == 'domus' and np.head.lang in ('', 'la') and \
+        not np.modifiers and not np.genitives and np.number != 'pl'
 
 
 def _bare_direction(clause):

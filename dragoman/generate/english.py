@@ -17,7 +17,7 @@ import re
 import unicodedata
 
 from dragoman.core import paths, en_ja
-from .frame import Lex, on_surface
+from .frame import Lex, at_home, on_surface
 
 # 不規則動詞: 原形 → (過去形, 過去分詞)
 IRREGULAR = {
@@ -904,6 +904,8 @@ def realize(clause, capitalize=True):
             out.append('of ' + noun_phrase(np, objective=True))
         elif role == 'recipient' and verb.split(' ')[-1] in ('into', 'to', 'at', 'on', 'with', 'upon'):
             out.append(noun_phrase(np, objective=True))   # run into + 与格: 前置詞を重ねない
+        elif at_home(role, np):
+            out.append('at home')   # domī
         else:
             out.append(ROLE_PREPS.get(role, '') + ' ' + noun_phrase(np, objective=True))
     out += [adverb(adv) for adv in clause.adverbs]

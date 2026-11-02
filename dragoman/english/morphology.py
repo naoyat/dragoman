@@ -74,7 +74,7 @@ MODALS = {'can': ('ことができる', 'present'), 'could': ('ことができ�
           'ought': ('べきだ', 'present')}
 # 訳語を決めておく語 (英和の表の最初の訳語が外れるもの)
 GLOSSES = {
-    ('be', 'verb'): 'ある,いる', ('have', 'verb'): '持つ', ('do', 'verb'): 'する', ('go', 'verb'): '行く',
+    ('be', 'verb'): 'ある,いる', ('ride', 'verb'): '乗る', ('meet', 'verb'): '会う', ('have', 'verb'): '持つ', ('do', 'verb'): 'する', ('go', 'verb'): '行く',
     ('get', 'verb'): '得る', ('fine', 'adj'): '元気な,良い', ('make', 'verb'): '作る', ('take', 'verb'): '取る', ('see', 'verb'): '見る',
     ('come', 'verb'): '来る', ('know', 'verb'): '知っている', ('give', 'verb'): '与える', ('like', 'verb'): '好む',
     ('love', 'verb'): '愛する', ('want', 'verb'): '欲しい', ('live', 'verb'): '住む', ('play', 'verb'): '遊ぶ,演奏する',

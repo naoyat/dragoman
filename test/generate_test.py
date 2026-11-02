@@ -278,13 +278,13 @@ class WhQuestionTestCase(unittest.TestCase):
                 ('She had to go.', 'Она должна была идти.', 'Sie musste gehen.'),
                 ('We will have to go.', 'Мы должны будем идти.', 'Wir werden gehen müssen.'),
                 ("I can't go.", 'Я не могу идти.', 'Ich kann nicht gehen.'),      # possum → мочь
-                ('Can you help me?', 'Ты можешь помогать мне?', 'Kannst du mir helfen?'),   # 諾否の疑問文・与格の動詞
+                ('Can you help me?', 'Ты можешь помочь мне?', 'Kannst du mir helfen?'),   # 諾否の疑問文・与格の動詞 (頼みは完了体)
                 # 間接疑問 (ドイツ語は副文: 定動詞を最後に)
                 ("I don't know what you want.", 'Я не знаю, что ты хочешь.', 'Ich weiß nicht, was du willst.'),
                 ('Do you know who wrote this book?', 'Ты знаешь, кто написал эту книгу?',
                  'Weißt du, wer dieses Buch schrieb?'),
                 ('Tell me where you live.', 'Рассказывай мне, где ты живёшь.', 'Erzähl mir, wo du lebst.'),
-                ("I don't know what you're talking about.", 'Я не знаю, о чём ты поговариваешь.',
+                ("I don't know what you're talking about.", 'Я не знаю, о чём ты говоришь.',
                  'Ich weiß nicht, worüber du sprichst.')]:
             self.assertEqual(out(text, russian, 'ru'), ru)
             self.assertEqual(out(text, german, 'de'), de)
@@ -331,6 +331,31 @@ class WhQuestionTestCase(unittest.TestCase):
         self.assertEqual(out('The boy was crying.', latin, 'la'), 'Puer flēbat.')
         self.assertEqual(out("I don't know what you're talking about.", english, 'en'),
                          'I do not know what you talk about.')
+        # be able to は can と同じ話法の動詞、句動詞 give up・目的語で決まる pass the exam・thank (danken)
+        for text, la, ja in [('I will be able to come.', 'Venīre poterō.', '私は来ることができるだろう。'),
+                             ("Don't give up.", 'Nōlī dēsistere.', None),
+                             ('You will pass the exam.', None, 'あなたは試験に受かるだろう。'),   # 「に」で取る訳語
+                             ('He rides a horse.', None, '彼は馬に乗る。')]:   # rides の見出しは ride (rid でなく)
+            if la is not None:
+                self.assertEqual(out(text, latin, 'la'), la)
+            if ja is not None:
+                self.assertEqual(out(text, japanese, 'ja'), ja)
+        for text, de, ru in [('I will be able to come.', 'Ich werde kommen können.', 'Я смогу прийти.'),
+                             ("Don't give up.", 'Gib nicht auf.', 'Не сдавайся.'),   # 分離動詞の命令形
+                             ('You will pass the exam.', 'Du wirst das Examen bestehen.', 'Ты сдашь экзамен.'),
+                             ('Thank you.', 'Ich danke dir.', None),
+                             ('He left the city.', None, 'Он покинул город.')]:
+            if de is not None:
+                self.assertEqual(out(text, german, 'de'), de)
+            if ru is not None:
+                self.assertEqual(out(text, russian, 'ru'), ru)
+        if french.available():
+            for text, fr in [('I talked to him.', 'Je lui ai parlé.'),   # à + 人の代名詞は接語
+                             ("I didn't talk to her.", 'Je ne lui ai pas parlé.'),
+                             ('I think of her.', 'Je pense à elle.'),     # penser à は強勢形
+                             ('I will be able to come.', 'Je pourrai venir.'),
+                             ("Don't give up.", "N'abandonne pas.")]:
+                self.assertEqual(out(text, french, 'fr'), fr)
 
 
 class LatinVelleTestCase(unittest.TestCase):
@@ -370,6 +395,29 @@ class SmallFixesTestCase(unittest.TestCase):
         for module in modules:
             if hasattr(module, 'available') and not module.available():
                 self.skipTest('%s の辞書が無い' % module.__name__)
+
+    def test_causal_quod_and_domi(self):
+        # カンマの後ろの quod (前の語が中性単数でない) は「〜ので」、従属接続詞を越えて形容詞を付けない、domī は「家で」の成句
+        from dragoman.generate import german, french
+        self.need(german, french, russian)
+        text = 'Puer, quod aeger est, domī manet.'
+        a, = analyzer.analyze_text(text)
+        self.assertIn('}ので / 少年が / ', a.clauses[0].predicate.translate()[0])   # aeger は節の中 (病める少年 でなく)
+        for module, lang, expected in [(german, 'de', 'Weil er krank ist, bleibt der Junge'),
+                                       (french, 'fr', "Parce qu'il est malade, le garçon reste"),
+                                       (russian, 'ru', 'Потому что ')]:
+            self.assertTrue(self.out(module, lang, text).startswith(expected), lang)
+        from dragoman.generate.frame import Clause, NP
+        c = Clause(verb=Lex('maneō', 'verb', 'とどまる'), args=[('subject', NP(Lex('puer', 'noun', '少年'), number='sg')),
+                                                            ('place', NP(Lex('domus', 'noun', '家'), case='Loc', number='sg'))])
+        for module, lang, expected in [(german, 'de', 'Der Junge bleibt zu Hause.'),
+                                       (french, 'fr', 'Le garçon reste à la maison.'),
+                                       (english, 'en', 'The boy stays at home.'),
+                                       (russian, 'ru', 'Мальчик остаётся дома.'),
+                                       (japanese, 'ja', '少年は家にとどまる。')]:
+            self.assertEqual(frame.punctuate(module.sentence([c]), [c], lang), expected)
+        a, = analyzer.analyze_text('Templum, quod vīdī, magnum est.')   # 中性単数の後ろは関係代名詞のまま
+        self.assertEqual(len(a.relatives), 1)
 
     def test_latin_source(self):
         from dragoman.generate import finnish, french

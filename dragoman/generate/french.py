@@ -20,7 +20,7 @@ import sqlite3
 
 from dragoman.core import paths
 from . import transfer, english
-from .frame import NP
+from .frame import NP, at_home
 
 VOWEL_START = re.compile(r'^[aeiouyhàâéèêëîïôûœæ]', re.I)
 # 有音の h (le héros・la honte) は母音扱いしない
@@ -144,6 +144,8 @@ def elide(word, following):
     """エリジオン (le → l'、de → d'、que → qu'、ne → n'、je → j'、me → m')"""
     if following and _vowel(following) and word in ('le', 'la', 'de', 'que', 'ne', 'je', 'me', 'te', 'se', 'ce'):
         return word[:-1] + "'"
+    if following and _vowel(following) and word.endswith(' que'):
+        return word[:-1] + "'"   # parce qu'il・lorsqu'il は複数語の接続詞も
     return word
 
 
@@ -348,6 +350,9 @@ def prepositional(np, passive=False, verb=''):
     inner = dataclasses.replace(np, prep=None)
     if verb in DE_TOPIC_VERBS and np.prep is not None and np.prep.lemma == 'dē' and np.case in ('Abl', ''):
         return with_preposition('de', noun_phrase(inner, 'Str'))   # parler de son père
+    if verb in ('penser', 'songer') and np.prep is not None and \
+            (np.prep.surface or np.prep.lemma).lower() in ('of', 'about'):
+        return with_preposition('à', noun_phrase(inner, 'Str'))   # think of her → penser à elle
     if passive and np.prep is not None and np.prep.lemma in ('ā', 'ab', 'abs'):
         return with_preposition('par', noun_phrase(inner, 'Str'))
     if np.prep is not None and np.prep.lang == 'fr' and np.prep.surface:   # 元のフランス語の前置詞 (à l'école を dans にしない)
@@ -456,6 +461,20 @@ def _clitic(np, case):
     if np.head.lemma not in ('ego', 'tū', 'is', 'ille', 'sē'):
         return None
     return _pronoun(np, case)
+
+
+# à + 人の代名詞を接語 (lui・me) にしない動詞 (penser à lui・aller à lui: 強勢形のまま)
+STRESSED_A_VERBS = {'penser', 'songer', 'aller', 'venir', 'courir', 'tenir', 'être', 'renoncer', 'faire attention'}
+
+
+def _a_pronoun(np, verb):
+    """à + 人称代名詞の前置詞句 (英語の talk to him・ラテン語の ad eum) の与格の接語。そうでなければ None"""
+    if np.prep is None or verb in STRESSED_A_VERBS or not np.animate:
+        return None
+    prep = np.prep.surface if np.prep.lang == 'fr' else PREPOSITIONS.get((np.prep.lemma, np.case))
+    if prep != 'à' and not (np.prep.lang == 'en' and np.prep.surface == 'to'):
+        return None
+    return _clitic(dataclasses.replace(np, prep=None), 'Dat')
 
 
 def _negate(verb_words, negated):
@@ -701,11 +720,17 @@ def realize(clause, gap=None, antecedent=None, subjunctive=False, infinitive=Fal
             clitics.append(clitic)
         else:
             objects.append(with_preposition('à', noun_phrase(np, 'Str')))
+    for np in clause.role('prep'):
+        clitic = _a_pronoun(np, word(clause.verb, 'verb'))
+        if clitic:
+            clitics.append(clitic)   # parler à lui → lui parler (Je lui ai parlé)
     clitics.sort(key=lambda c: c in ('le', 'la', 'les'))   # me le・le lui: 1・2人称と再帰が先、3人称は le・la・les が先
     if any(c in ('lui', 'leur') for c in clitics):
         clitics.sort(key=lambda c: c in ('lui', 'leur'))
     for role, np in clause.args:
         if role in ('subject', 'object', 'recipient', 'complement', 'address'):
+            continue
+        if role == 'prep' and _a_pronoun(np, word(clause.verb, 'verb')):
             continue
         if role == 'prep':
             objects.append(prepositional(np, clause.voice == 'passive', word(clause.verb, 'verb')))
@@ -715,6 +740,8 @@ def realize(clause, gap=None, antecedent=None, subjunctive=False, infinitive=Fal
             objects.append(with_preposition('avec' if not np.animate else 'par', noun_phrase(np, 'Str')))
         elif role == 'possessor':
             objects.append(with_preposition('de', noun_phrase(np, 'Str')))
+        elif at_home(role, np):
+            objects.append('à la maison')   # domī
         else:
             objects.append(with_preposition('dans', noun_phrase(np, 'Str')))
     verb, tail = verb_group(clause, person, number, agree, subjunctive, infinitive)

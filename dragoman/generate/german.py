@@ -19,7 +19,7 @@ import sqlite3
 
 from dragoman.core import paths
 from . import transfer, english
-from .frame import NP, on_surface
+from .frame import NP, at_home, on_surface
 
 ARTICLES = {  # (格, 性 / 複数) → 定冠詞
     ('Nom', 'm'): 'der', ('Nom', 'f'): 'die', ('Nom', 'n'): 'das', ('Nom', 'p'): 'die',
@@ -586,6 +586,8 @@ def realize(clause, gap=None, subordinate=False, infinitive=False):
                 middle.append(_contract('mit', noun_phrase(np, 'Dat')))
             elif role == 'possessor':
                 middle.append(noun_phrase(np, 'Gen'))
+            elif at_home(role, np):
+                middle.append('zu Hause')   # domī
             elif noun_phrase(np, 'Dat'):   # 中身の分からない句 (辞書に無い語) は書かない
                 middle.append(_contract('in', noun_phrase(np, 'Dat')))
         verb, tail = verb_parts(clause, person, number, subordinate, infinitive)
@@ -593,9 +595,13 @@ def realize(clause, gap=None, subordinate=False, infinitive=False):
             tail = ['nicht'] + tail
     if clause.mood == 'imperative' and not clause.copula:
         lemma = word(clause.verb, 'verb')
+        prefix = next((p for p in SEPARABLE if lemma.startswith(p) and len(lemma) - len(p) > 3 and
+                       _forms(lemma[len(p):], 'verb')), '')
+        lemma = lemma[len(prefix):]   # 分離動詞の前つづりは最後に (Gib nicht auf)
         stem = (lemma[:-2] if lemma.endswith('en') else lemma)
         singular = find_form(lemma, 'verb', ('imperative', 'singular')) if number != 'pl' else None
-        return [w for w in [singular or stem + ('t' if number == 'pl' else '')] + middle + (['nicht'] if clause.negated else []) if w]
+        return [w for w in [singular or stem + ('t' if number == 'pl' else '')] + middle +
+                (['nicht'] if clause.negated else []) + [prefix] if w]
     if subordinate:   # 関係節・従属節: 動詞を最後に
         return [w for w in head_words + middle + tail + [verb] if w]
     if clause.invert or clause.question and not clause.question_word and gap is None:

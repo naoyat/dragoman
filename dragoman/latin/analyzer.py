@@ -175,6 +175,22 @@ def subordinating_cum_ubi(words):
         word.items = [type(item)(dict(item.item, pos='conj', ja='〜するとき', base=lower, _=None))]
 
 
+def causal_quod(words):
+    """カンマの後ろの quod で、前の語が中性単数でないもの (Puer, quod aeger est, …・domī manet, quod …) は
+    関係代名詞でなく従属接続詞「〜ので」(templum, quod vīdī の quod は関係代名詞のまま)"""
+    for ix, word in enumerate(words):
+        if word.surface.lower() != 'quod' or not word.items or ix < 2 or words[ix - 1].surface != ',':
+            continue
+        conj = next((i for i in word.items if i.pos == 'conj' and 'ゆえ' in (i.ja or '')), None)
+        if conj is None or word.items[0] is conj:
+            continue
+        before = words[ix - 2]
+        if before.items and any(i.pos in ('noun', 'pronoun', 'adj') and
+                                any(n == 'sg' and g == 'n' for _, n, g in i._ or []) for i in before.items):
+            continue
+        word.items = [type(conj)(dict(conj.item, base='quod'))] + [i for i in word.items if i is not conj]
+
+
 def analyze_sentence(surfaces, tags=None):
     """文 (語の列) を解析する。tags は語ごとの品詞タグ (省略するとこの文だけでタガーを呼ぶ)"""
     words = lookup_all(surfaces)
@@ -185,6 +201,7 @@ def analyze_sentence(surfaces, tags=None):
         apply_tags(words, _word_tags(words, tags))
     attach_praenomina(words)
     subordinating_cum_ubi(words)
+    causal_quod(words)
     with language.using(profile.LATIN):
         return analyze_words(surfaces, words, word_details)
 

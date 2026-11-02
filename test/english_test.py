@@ -99,6 +99,13 @@ class AnalyzerTestCase(unittest.TestCase):
     def test_dative_to(self):
         # give・show・say … + to + 人は受け手 (与格)。to は次の語の表示に
         self.assertEqual(self.ja('She gave the book to him.'), '彼女が / 彼に / 本を / 与えた')
+
+    def test_be_able_to_and_ni_objects(self):
+        self.assertEqual(self.ja('I will be able to come.'), '私が / 来ることができるだろう')   # be able to は can と同じ
+        self.assertEqual(self.ja("I won't be able to come."), '私が / 来ることができないだろう')
+        self.assertEqual(self.ja('She was able to swim.'), '彼女が / 泳ぐことができた')
+        self.assertEqual(self.ja('He rides a horse.'), '彼が / 馬に / 乗る')        # 目的語を「に」で取る訳語
+        self.assertEqual(self.ja('I met my friend.'), '私が / 私の{友達,友人}に / 会った')
         words = analyzer.lookup_all(next(analyzer.sentences('Give it to me.')))
         self.assertIn('to me', [w.surface for w in words])
         self.assertNotIn('to', [w.surface for w in words])

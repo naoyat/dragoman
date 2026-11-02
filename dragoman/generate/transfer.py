@@ -530,6 +530,12 @@ for _lang, _lemma in (('de', 'verweigern'), ('fr', 'refuser'), ('ru', 'отка�
                       ('pt', 'recusar'), ('zh', '不愿意'), ('ko', '싫어하다'), ('id', 'enggan'), ('tr', 'istememek'),
                       ('ang', 'forsacan'), ('tl', 'ayaw'), ('grc', 'ἀρνέομαι'), ('mn', 'татгалзах')):
     PREFERRED.setdefault(_lang, {})[('be unwilling', 'verb')] = (_lemma, '')
+# ロシア語の remain・stay は оставаться (語義の少ない отсиживать「座って過ごす」にしない)
+PREFERRED['ru'].update({('remain', 'verb'): ('оставаться', ''), ('stay', 'verb'): ('оставаться', ''),
+                        ('talk', 'verb'): ('говорить', ''),   # talk は говорить (поговаривать「噂する」でなく)
+                        ('talk about', 'verb'): ('рассказывать', '')})   # nārrō の筆頭の talk about は「語る」
+# サンスクリットの want は iz「望む」(icchati)、nōlō は pratyAKyA「拒む」(索引に want が無い)
+PREFERRED['sa'].update({('want', 'verb'): ('iz', '6'), ('be unwilling', 'verb'): ('pratyAKyA', '2')})
 # 文の枠で文脈から決めた意味 (frame.OBJECT_SENSES) → 言語ごとの語 (英語の drive だけでは運転の fahren と区別できない)
 SENSE_TARGETS = {}
 for _lang, _lemma in (('de', 'treiben'), ('ru', 'гнать'), ('ko', '몰다'), ('zh', '驱赶'), ('ang', 'drīfan'),
@@ -550,6 +556,17 @@ for _sense, _targets in (
                             'ko': '떠나다', 'zh': '离开'})):
     for _lang, _lemma in _targets.items():
         SENSE_TARGETS.setdefault(_lang, {})[_sense] = _lemma
+# 英語の句動詞 (give up は「諦める」。最初の語 give の dō・geben にしない)
+for _lang, _lemma in (('la', 'dēsistō'), ('de', 'aufgeben'), ('fr', 'abandonner'), ('ru', 'сдаваться'),
+                      ('pt', 'desistir'), ('ko', '포기하다'), ('zh', '放弃')):
+    PREFERRED.setdefault(_lang, {})[('give up', 'verb')] = (_lemma, '')
+# ドイツ語の thank は danken (sich bedanken は再帰動詞)
+PREFERRED.setdefault('de', {})[('thank', 'verb')] = ('danken', '')
+# 試験に受かる (frame.EN_OBJECT_SENSES): bestehen・сдать (pass の passen・проходить にしない)
+for _lang, _lemma in (('de', 'bestehen'), ('ru', 'сдавать'), ('fr', 'réussir'), ('pt', 'passar'), ('ko', '합격하다'),
+                      ('zh', '通过')):
+    SENSE_TARGETS.setdefault(_lang, {})['pass (exam)'] = _lemma
+PREFERRED.setdefault('fr', {})[('exam', 'noun')] = ('examen', 'm')
 # 英語の drive は車を運転する意味 (辞書の筆頭の verschlagen・달리다 にしない。家畜を追う意味は上の SENSE_TARGETS)
 for _lang, _lemma in (('de', 'fahren'), ('ru', 'водить'), ('ko', '운전하다'), ('zh', '驾驶')):
     PREFERRED.setdefault(_lang, {})[('drive', 'verb')] = (_lemma, '')

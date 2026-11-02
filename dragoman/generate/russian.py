@@ -13,10 +13,11 @@
 #   不定詞句: 言う → что + 節、見る → как + 節、命じる → 与格 + 不定形、補足 → 不定形
 #   独立奪格 → когда + 節、述語的な分詞 → 副動詞 (срывая, сказав)
 #
+import dataclasses
 import functools
 
 from . import transfer, english
-from .frame import Lex, NP
+from .frame import Lex, NP, at_home
 
 try:
     import pymorphy3
@@ -68,7 +69,11 @@ PERFECTIVES = {'давать': 'дать', 'видеть': 'увидеть', 'х
                'плакать': 'заплакать', 'смеяться': 'засмеяться', 'строить': 'построить', 'ранить': 'ранить',
                'уходить': 'уйти', 'бояться': 'испугаться', 'узнавать': 'узнать', 'двигать': 'двинуть',
                'умирать': 'умереть', 'трогать': 'тронуть', 'убивать': 'убить', 'встречать': 'встретить',
-               'находить': 'найти', 'спрашивать': 'спросить', 'хотеть': 'захотеть', 'получать': 'получить', 'бросать': 'бросить', 'отправляться': 'отправиться'}
+               'находить': 'найти', 'спрашивать': 'спросить', 'хотеть': 'захотеть', 'получать': 'получить', 'бросать': 'бросить', 'отправляться': 'отправиться',
+               'покидать': 'покинуть', 'помогать': 'помочь', 'сдавать': 'сдать', 'сдаваться': 'сдаться',
+               'благодарить': 'поблагодарить'}
+# 1回の結果を言う意味は未来・不定詞も完了体 (Ты сдашь экзамен。будешь сдавать「受けている」にしない)
+PERFECTIVE_SENSES = {'pass (exam)'}
 GENDERS = {'m': 'masc', 'f': 'femn', 'n': 'neut'}
 # в / на + 第二前置格 (-у) を取るよく使う名詞 (pymorphy3 の loc2 は дом → дому のような形も返すので、名詞を限る)
 LOCATIVE2 = {'сад', 'лес', 'берег', 'мост', 'угол', 'пол', 'шкаф', 'глаз', 'нос', 'рот', 'снег', 'порт', 'год',
@@ -390,7 +395,11 @@ def verb_form(clause, gender, person, number):
     tense, voice, mood = clause.tense, clause.voice, clause.mood
     num = 'plur' if number == 'pl' else 'sing'
     past = {'past', num} | ({gender} if number != 'pl' else set())
-    perfective = tense in ('perfect', 'past-perfect', 'future-perfect')
+    perfective = tense in ('perfect', 'past-perfect', 'future-perfect') or \
+        mood == 'infinitive' and clause.aspect == 'perf'
+    if clause.verb is not None and clause.verb.sense in PERFECTIVE_SENSES:
+        clause = dataclasses.replace(clause, aspect='perf')
+        perfective = perfective or mood == 'infinitive'
     from .frame import weather
     if weather(clause) in WEATHER and mood == 'indicative':
         noun, present, past_form, future = WEATHER[weather(clause)]
@@ -439,6 +448,8 @@ def verb_form(clause, gender, person, number):
     if tense == 'future' and (clause.aspect == 'perf' or (clause.verb.lang == 'ru' and perfective_lemma)):
         perf = verb_lemma(clause.verb, 'perf')   # 完了体の未来 (придёшь)
         return [_inflect(perf, 'INFN', {'futr', _person(person), num})]
+    if tense == 'future' and lemma == 'мочь':
+        return [_inflect('смочь', 'INFN', {'futr', _person(person), num})]   # смогу (буду мочь でなく)
     if tense == 'future':
         return [_inflect('быть', 'INFN', {'futr', _person(person), num}), lemma]
     if tense == 'future-perfect':
@@ -687,6 +698,9 @@ def realize(clause, capitalize=True):
             case = GOVERNMENT.get(verb, ROLE_CASES[role]) if role == 'object' else ROLE_CASES[role]
             out.append(noun_phrase(np, case))
     for inner in clause.infinitives:
+        if clause.verb is not None and clause.verb.lemma == 'possum' and (
+                clause.question and person == 2 and not clause.question_word or clause.tense == 'future'):
+            inner = dataclasses.replace(inner, aspect='perf')   # 頼み (Ты можешь мне помочь?)・未来 (смогу прийти) は完了体
         out.append(infinitive_phrase(inner, subject))
     for inner in clause.questions:
         out.append(question_phrase(inner))
@@ -695,6 +709,8 @@ def realize(clause, capitalize=True):
             continue
         if role == 'prep':
             out.append(prepositional(np, clause.voice == 'passive'))
+        elif at_home(role, np):
+            out.append('дома')   # domī
         else:
             out.append(noun_phrase(np, ROLE_CASES.get(role, 'Ins')))
     out += [adverb(adv) for adv in clause.adverbs]
