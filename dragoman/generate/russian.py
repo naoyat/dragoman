@@ -217,6 +217,26 @@ def _animate(lemma):
     return parse is not None and 'anim' in parse.tag
 
 
+# 述語では短語尾にする形容詞 (Он болен・Я рад・Она готова。長語尾の он больной は「病人だ」寄り)
+SHORT_PREDICATIVES = {'больной', 'рад', 'радостный', 'готовый', 'правый', 'занятый', 'согласный', 'здоровый',
+                      'должный', 'виноватый', 'похожий', 'нужный', 'довольный', 'уверенный'}
+
+
+def _predicative(lex, number, gender):
+    """述語の形容詞 (主格)。SHORT_PREDICATIVES は短語尾 (болен・больна・больны)"""
+    target = transfer.best(lex, 'ru', 'adj') if not lex.degree and lex.lemma not in PRONOUNS else None
+    if target is not None and target.lemma in ('рад', 'радостный'):
+        return 'рады' if number == 'pl' else {'femn': 'рада', 'neut': 'радо'}.get(gender, 'рад')   # Я рад (рад は短語尾だけ)
+    if target is not None and target.lemma in SHORT_PREDICATIVES:
+        grammemes = {'plur'} if number == 'pl' else {'sing', gender}
+        parse = _parse(target.lemma, 'ADJF')
+        short = next((f.word for f in parse.lexeme if 'ADJS' in f.tag and
+                      grammemes <= set(str(f.tag).replace(' ', ',').split(','))), None) if parse else None
+        if short:
+            return short
+    return adjective(lex, 'Nom', number, gender, False)
+
+
 def adjective(lex, case, number, gender, animate):
     positive = english._positive(lex)
     degree = lex.degree or ('++' if positive is not None else '')
@@ -685,11 +705,11 @@ def realize(clause, capitalize=True):
                 continue
         from .frame import adjective_members
         members = adjective_members(np) or ([np] if np.head is not None and np.head.pos in ('adj', 'participle')
-                                            and not np.members and np.head.lang in ('', 'la') else None)
+                                            and not np.members and np.head.lang in ('', 'la', 'en') else None)
         if members:   # 形容詞 (の並列: длинная и широкая) は主語に一致した形容詞 (名詞 bonum「善」の добро にしない)
             agreeing = _agreeing(members[0], subject)   # 並列そのものでなく要素を主語に (複数にしない)
             out.append((' %s ' % CONJUNCTIONS.get(np.conj, 'и')).join(
-                adjective(m.head, 'Nom', agreeing.number, GENDERS.get(agreeing.gender, 'masc'), False) for m in members))
+                _predicative(m.head, agreeing.number, GENDERS.get(agreeing.gender, 'masc')) for m in members))
             continue
         out.append(noun_phrase(_agreeing(np, subject), 'Nom'))
     verb = verb_lemma(clause.verb) if not clause.copula else None
@@ -738,6 +758,8 @@ def _agreeing(np, subject):
     lemma, gender = noun_lemma(subject.head) if not subject.members else ('', '')
     g = (GENDERS[subject.gender] if _foreign_name(subject) and not gender else
          _gender_of(lemma, gender or subject.gender)) if lemma else 'masc'
+    if not subject.members and subject.head is not None and subject.head.pos == 'pronoun':
+        g = GENDERS.get(subject.gender, g)   # 代名詞の主語は枠の性 (Она готова。он の男性にしない)
     return dataclasses.replace(np, number=subject.number if not subject.members else 'pl',
                                gender={'masc': 'm', 'femn': 'f', 'neut': 'n'}[g])
 

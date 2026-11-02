@@ -400,6 +400,9 @@ class SmallFixesTestCase(unittest.TestCase):
         # カンマの後ろの quod (前の語が中性単数でない) は「〜ので」、従属接続詞を越えて形容詞を付けない、domī は「家で」の成句
         from dragoman.generate import german, french
         self.need(german, french, russian)
+        from dragoman.english import analyzer as en, morphology
+        if not morphology.available():
+            self.skipTest('spaCy の英語モデルか英和の表が無い')
         text = 'Puer, quod aeger est, domī manet.'
         a, = analyzer.analyze_text(text)
         self.assertIn('}ので / 少年が / ', a.clauses[0].predicate.translate()[0])   # aeger は節の中 (病める少年 でなく)
@@ -416,6 +419,14 @@ class SmallFixesTestCase(unittest.TestCase):
                                        (russian, 'ru', 'Мальчик остаётся дома.'),
                                        (japanese, 'ja', '少年は家にとどまる。')]:
             self.assertEqual(frame.punctuate(module.sentence([c]), [c], lang), expected)
+        # 述語の短語尾 (Он болен・Она готова・Я рад)。長語尾のままの形容詞は性を代名詞の主語に (Она красивая)
+        for text, expected in [('He is sick.', 'Он болен.'), ('She is ready.', 'Она готова.'), ('I am glad.', 'Я рад.'),
+                               ('She was glad.', 'Она была рада.'), ('She is beautiful.', 'Она красивая.')]:
+            analysis, = en.analyze_text(text)
+            cs = frame.frames(analysis)
+            self.assertEqual(frame.punctuate(russian.sentence(cs), cs, 'ru'), expected)
+        from dragoman.core.japanese import copula_predicate
+        self.assertEqual(copula_predicate('病める'), '病気である')   # 文語の連体形の訳語 (aeger)
         a, = analyzer.analyze_text('Templum, quod vīdī, magnum est.')   # 中性単数の後ろは関係代名詞のまま
         self.assertEqual(len(a.relatives), 1)
 
