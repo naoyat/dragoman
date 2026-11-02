@@ -26,7 +26,8 @@
 #                 フランス語らしい語 (le, est, que …) かアクセント記号・エリジオン → fr、
 #                 ğ・ı・ş か トルコ語らしい語 → tr、フィンランド語らしい語 (ja, on, ei …) → fi、ドイツ語らしい語
 #                 (der, und, ist …) かウムラウト・ß → de、the か英語らしい語 (and, of, you …) → en、
-#                 ө・ү のあるキリル文字 → mn、ハングル → ko、かな交じりの日本語 → kobun、かなの無い漢字 → zh)
+#                 ө・ү のあるキリル文字 → mn、ハングル → ko、かな交じりの日本語 → kobun、かなの無い漢字 → zh
+#                 (助字 之・乎・也・矣・曰 … があり、的・了・吗 … の無いものは漢文 lzh))
 #   -e, --text=TEXT       引数の文を入力にする (何度でも。ファイル・標準入力の代わりに)
 #   -L, --languages       対応している言語の一覧を出す
 #
@@ -44,11 +45,17 @@ import tempfile
 LANGUAGES = {'la': 'latin', 'grc': 'greek', 'sa': 'sanskrit', 'ru': 'russian', 'he': 'hebrew', 'ar': 'arabic',
              'fa': 'persian', 'hi': 'hindi', 'ur': 'urdu', 'bo': 'tibetan', 'id': 'indonesian', 'ms': 'malay',
              'tl': 'tagalog', 'ko': 'korean', 'de': 'german', 'fr': 'french', 'tr': 'turkish', 'mn': 'mongolian', 'fi': 'finnish', 'ang': 'oldenglish', 'haw': 'hawaiian', 'ain': 'ainu', 'kobun': 'kobun', 'en': 'english',
-             'pt': 'portuguese', 'zh': 'chinese'}
+             'pt': 'portuguese', 'zh': 'chinese', 'lzh': 'kanbun'}
 NAMES = {'la': 'ラテン語', 'grc': '古典ギリシア語', 'sa': 'サンスクリット', 'ru': 'ロシア語',
          'he': '聖書ヘブライ語 (聖書アラム語も)', 'ar': 'アラビア語 (現代標準アラビア語)', 'fa': 'ペルシア語',
          'hi': 'ヒンディー語', 'ur': 'ウルドゥー語', 'bo': '古典チベット語', 'id': 'インドネシア語', 'ms': 'マレー語', 'tl': 'タガログ語', 'ko': '韓国語', 'de': 'ドイツ語', 'fr': 'フランス語', 'tr': 'トルコ語', 'mn': 'モンゴル語', 'fi': 'フィンランド語', 'ang': '古英語', 'haw': 'ハワイ語', 'ain': 'アイヌ語', 'kobun': '古文 (平安の和文。現代語に組み立て直す)', 'en': '英語 (現代英語)',
-         'pt': 'ポルトガル語 (ブラジル・ポルトガル)', 'zh': '中国語 (普通話。簡体字・繁体字)'}
+         'pt': 'ポルトガル語 (ブラジル・ポルトガル)', 'zh': '中国語 (普通話。簡体字・繁体字)',
+         'lzh': '漢文 (訓読。返り点・書き下し文・現代語訳)'}
+# 言語の符号の別名 (./dragoman.py kanbun …)
+ALIASES = {'kanbun': 'lzh'}
+# 漢文らしい字 (助字) と、現代中国語らしい字 (かなの無い漢字の文の見分け)
+CLASSICAL_CHINESE = re.compile('[之乎者也矣焉曰而於兮哉耶歟吾汝勿豈莫弗]')
+MODERN_CHINESE = re.compile('[的了吗呢这那们么吧没很]|我们|他们|什么|是不是')
 CODE = re.compile('^[a-z]{2,5}$')
 # 地域の付いた言語の符号 (pt-BR・pt-PT・pt_br) → 言語と --variety の値
 LANG_TAG = re.compile('^([a-z]{2,5})[-_]([A-Za-z]{2,4})$')
@@ -144,6 +151,8 @@ def detect(text):
             return 'en'  # ラテン文字の英語 (the, and, of, to, that …)
         if len(words & INDONESIAN_WORDS) >= 2:
             return 'ms' if words & MALAY_WORDS else 'id'  # ラテン文字のインドネシア語・マレー語
+    if best == 'zh' and len(CLASSICAL_CHINESE.findall(text)) >= 1 and not MODERN_CHINESE.search(text):
+        return 'lzh'  # 助字 (之・乎・也・矣・曰 …) があり、現代語の字 (的・了・吗 …) の無い漢字の文は漢文
     if best == 'deva':
         words = set(re.findall('[ऀ-ॣ०-ॿ]+', text))
         return 'hi' if words & HINDI_WORDS else 'sa'
@@ -329,8 +338,8 @@ def parse_args(argv):
         elif arg.startswith('-e') and len(arg) > 2:
             texts.append(arg[2:])
         elif not arg.startswith('-') and not positional_seen and lang is None and not os.path.exists(arg) \
-                and (CODE.match(arg) or LANG_TAG.match(arg)):
-            lang = arg  # ./dragoman.py grc …
+                and (CODE.match(arg) or LANG_TAG.match(arg) or arg in ALIASES):
+            lang = ALIASES.get(arg, arg)  # ./dragoman.py grc …
             positional_seen = True
         else:
             if not arg.startswith('-'):

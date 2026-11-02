@@ -23,6 +23,7 @@
 #   python3 tools/samples.py --lang=tl       # タガログ語 (samples/tagalog.txt)
 #   python3 tools/samples.py --lang=ain      # アイヌ語 (samples/ainu.txt。『アイヌ神謡集』第1話の冒頭)
 #   python3 tools/samples.py --lang=kobun    # 古文 (samples/kobun.txt)。現代語訳を表示
+#   python3 tools/samples.py --lang=lzh      # 漢文 (samples/kanbun.txt)。返り点・書き下し文・現代語訳を表示
 #   python3 tools/samples.py --lang=ms       # マレー語 (samples/malay.txt)
 #   python3 tools/samples.py --lang=ko       # 韓国語 (samples/korean.txt)。語順のままの訳 (≒) も
 #   python3 tools/samples.py --lang=de       # ドイツ語 (samples/german.txt。グリム童話の古い綴りも)
@@ -35,7 +36,7 @@
 #   python3 tools/samples.py --lang=ang      # 古英語 (samples/oldenglish.txt)
 #   python3 tools/samples.py --lang=haw      # ハワイ語 (samples/hawaiian.txt)
 #
-#   --lang=la|grc|sa|ru|he|ar|fa|hi|ur|bo|id|ms|tl|ain|kobun|ko|de|fr|tr|mn|fi|ang|haw 言語 (既定は la。ラテン語)
+#   --lang=la|grc|sa|ru|he|ar|fa|hi|ur|bo|id|ms|tl|ain|kobun|lzh|ko|de|fr|tr|mn|fi|ang|haw 言語 (既定は la。ラテン語)
 #   -f, --file=FILE     例文のファイル (既定は言語ごとの samples/*.txt)
 #   -r, --romanize      ラテン文字以外の文に転写を添える (-d なら語ごとにも)
 #   -l, --list          節の見出しの一覧を表示する
@@ -69,7 +70,8 @@ LANG_FILES = {'la': DEFAULT_FILE, 'grc': os.path.join(ROOT, 'samples', 'greek.tx
               'fi': os.path.join(ROOT, 'samples', 'finnish.txt'), 'fr': os.path.join(ROOT, 'samples', 'french.txt'),
               'ang': os.path.join(ROOT, 'samples', 'oldenglish.txt'),
               'haw': os.path.join(ROOT, 'samples', 'hawaiian.txt'),
-              'pt': os.path.join(ROOT, 'samples', 'portuguese.txt'), 'zh': os.path.join(ROOT, 'samples', 'chinese.txt')}
+              'pt': os.path.join(ROOT, 'samples', 'portuguese.txt'), 'zh': os.path.join(ROOT, 'samples', 'chinese.txt'),
+              'lzh': os.path.join(ROOT, 'samples', 'kanbun.txt')}
 # 解析器のモジュール名 (dragoman.<名前>.analyzer の analyze_text をそのまま使う言語)
 ANALYZER_MODULES = {'ko': 'korean', 'de': 'german', 'fr': 'french', 'tr': 'turkish', 'mn': 'mongolian', 'fi': 'finnish',
                     'ang': 'oldenglish', 'haw': 'hawaiian', 'pt': 'portuguese', 'zh': 'chinese'}
@@ -104,6 +106,9 @@ def analyzer_for(lang):
     if lang == 'kobun':
         from dragoman.kobun import analyzer as kobun_analyzer
         return kobun_analyzer.analyze_text
+    if lang == 'lzh':
+        from dragoman.kanbun import analyzer as kanbun_analyzer
+        return kanbun_analyzer.analyze_text
     if lang == 'bo':
         from dragoman.tibetan import analyzer as tibetan_analyzer
         return tibetan_analyzer.analyze_text
@@ -223,6 +228,15 @@ def show(sections, mode, show_descendants=False, show_etymology=False, lang='la'
                         print('  → ', analysis.modern)
                     else:
                         kobun_command.render(analysis, Options(show_word_detail=(mode == 'detail')))
+                    continue
+                if lang == 'lzh':
+                    # 漢文は返り点・書き下し文・現代語訳 (-d なら語ごとの読みと語義も)
+                    from dragoman.core.cli import Options
+                    from dragoman.kanbun import command as kanbun_command
+                    if mode == 'brief':
+                        print('  → ', analysis.kakikudashi, '|', analysis.modern)
+                    else:
+                        kanbun_command.render(analysis, Options(show_word_detail=(mode == 'detail')))
                     continue
                 if lang == 'ain':
                     from dragoman.core.cli import Options

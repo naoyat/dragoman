@@ -52,6 +52,7 @@ $ echo "लड़के ने किताब पढ़ी।" | python3 dragom
 | 韓国語 | `ko` | kiwipiepy (形態素解析) + Wiktionary (漢字語の漢字も)。助詞から格、語尾から時制・接続、補助用言をまとめる | UD Korean-Kaist: 主語 69%・目的語 83% | say (Yuna) | [docs/korean.md](docs/korean.md) |
 | アイヌ語 | `ain` | 人称の接辞の分解 + 手作りの語彙表・Wiktionary。語順のまま日本語に | — | — | [docs/ainu.md](docs/ainu.md) |
 | 古文（平安の和文） | `kobun` | MeCab + 中古和文UniDic。品詞分解して現代語に組み立て直す | — | say (Kyoko) | [docs/kobun.md](docs/kobun.md) |
+| 漢文（訓読） | `lzh` / `kanbun` | UD-Kanbun (係り受け) + 訓読の規則 (読む順序・送り仮名・置き字・再読文字) + KANJIDIC2。返り点・書き下し文・現代語訳 | — | say (Kyoko。書き下し文を読む) | [docs/kanbun.md](docs/kanbun.md) |
 
 評価は関係節の中の主語・目的語も数えます（UD では関係代名詞が関係節の主語・目的語。2026-10-12 から）。
 2026-10-13 に評価ツールの不具合（複合語の行の範囲を次の文の語にも当てていた）を直して測り直しました
@@ -399,6 +400,7 @@ dragoman/                パッケージ
                            連体形と関係節、二重主語、改訂ローマ字の簡略版)
   ainu/                    アイヌ語 (古いローマ字表記の正規化、人称の接辞の分解、後置詞・助詞から語順のままの日本語訳)
   kobun/                   古文 (中古和文UniDic による品詞分解、助動詞の連なりからの現代語への組み立て直し、係り結び)
+  kanbun/                  漢文 (UD-Kanbun の係り受けから読む順序、送り仮名・置き字・再読文字の規則で書き下し、現代語訳)
   generate/                文の生成 (frame.py 文の枠、transfer.py 英語を仲立ちにした語の置き換え、
                            latin.py greek.py russian.py sanskrit.py english.py indonesian.py tagalog.py arabic.py hebrew.py persian.py
                            hindi.py urdu.py ainu.py tibetan.py
