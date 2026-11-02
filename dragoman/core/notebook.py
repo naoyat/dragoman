@@ -430,15 +430,15 @@ class Notebook:
         self.provenance = None   # 再現条件 [(項目, 値)] (core/provenance.info。書き出す前に入れる)
 
     def add(self, analysis, header=None, word_notes=None, romanize=None, show_word_detail=True,
-            show_translation=True, rendered=None, kana=None):
+            show_translation=True, rendered=None, kana=None, extra_html=''):
         """解析結果を1文足す。rendered があれば (独自の表示の言語: 古文など) その文字列をそのまま載せる。
-        kana は文のカタカナ読み (--kana。見出しの下に)"""
+        kana は文のカタカナ読み (--kana。見出しの下に)。extra_html は言語ごとのノートの部品 (漢文の訓点付きの本文)"""
         from . import render
         if rendered is not None:   # 独自の表示の言語: 見出しと表示だけ
             text = header or ' '.join(getattr(analysis, 'surfaces', []) or [getattr(analysis, 'text', '')])
             self.sentences.append({'text': plain(text), 'words': [], 'arcs': [], 'tree': '', 'translations': [],
                                    'detail': False, 'rendered': plain(rendered), 'rtl': bool(RTL.search(text)),
-                                   'kana': kana or ''})
+                                   'kana': kana or '', 'html': extra_html})
             return
         words = []
         context = marks_context(analysis)
@@ -661,6 +661,8 @@ def sentence_html(n, s):
     out.append('<h2><span class="num">%d</span> %s</h2>' % (n, heading(s['text'])))
     if s.get('kana'):   # カタカナ読み (--kana)
         out.append('<div class="kana"><span class="ttl">カナ</span> %s</div>' % esc(s['kana']))
+    if s.get('html'):
+        out.append(s['html'])
     if s['rendered']:
         out.append('<pre class="rendered">%s</pre></section>' % esc(s['rendered']))
         return '\n'.join(out)
@@ -760,6 +762,16 @@ body.no-marks .mk { display: none; } body.no-marks .sf { text-decoration: none; 
 .note { font-size: .8rem; } .note.explain { color: var(--gen); } .note.descendants { color: #00838f; }
 .note.etymology { color: var(--dat); }
 pre.rendered { white-space: pre-wrap; font-size: .85rem; }
+/* 漢文の訓点付きの本文 (kanbun/note.py): 縦書き。字の右下に送り仮名、左下に返り点 */
+.kunten .kv { writing-mode: vertical-rl; font-size: 1.6rem; line-height: 1;
+              font-family: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif; }
+.kunten .kc { display: inline-block; position: relative; width: 2.1em; writing-mode: horizontal-tb; vertical-align: top; }
+.kunten .kj { position: absolute; top: 0; left: .55em; width: 1em; height: 1em; writing-mode: vertical-rl; }
+.kunten .ok, .kunten .kt, .kunten .ol { position: absolute; font-size: .5em; width: 1em; writing-mode: vertical-rl;
+                                        white-space: nowrap; }
+.kunten .ok { left: 3.1em; top: 1em; }
+.kunten .kt { left: .1em; top: 1.4em; }
+.kunten .ol { left: .1em; }
 .cmp { border-collapse: collapse; font-size: .78rem; width: 100%; table-layout: fixed; margin-bottom: .4rem; }
 .cmp th, .cmp td { border: 1px solid var(--line); padding: .2rem .3rem; vertical-align: top; text-align: left;
                    overflow-wrap: anywhere; }

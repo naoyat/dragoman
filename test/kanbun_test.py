@@ -73,6 +73,16 @@ class KanbunTestCase(unittest.TestCase):
         mi = a.phrases[0][0]
         self.assertEqual(a.reading_of(mi), '未だ…ず')   # 再読文字は前と後ろで読む
 
+    def test_note_units(self):
+        # ノートの縦書きの訓点: (字, 右の送り仮名, 返り点, 左の送り仮名)。置き字 於 の助詞は前の名詞に
+        from dragoman.kanbun import note
+        self.assertEqual(note.units(self.analyze('學而時習之、不亦說乎。'))[:5],
+                         [('學', 'ビテ', '', ''), ('而', '', '', ''), ('時', 'ニ', '', ''), ('習', 'フ', 'レ', ''),
+                          ('之', 'ヲ', '', '')])
+        self.assertEqual(note.units(self.analyze('將入城。'))[:2], [('將', 'ニ', 'レ', 'ス'), ('入', 'ラント', 'レ', '')])
+        self.assertIn(('人', 'ニ', '一', ''), note.units(self.analyze('己所不欲、勿施於人。')))
+        self.assertIn('class="kunten"', note.html_of(self.analyze('將入城。')).replace('part kunten', 'kunten'))
+
 
 if __name__ == '__main__':
     unittest.main()

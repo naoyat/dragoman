@@ -5,7 +5,7 @@
 #
 from dragoman.core import ansi_color
 from dragoman.core.cli import Command
-from . import analyzer, kundoku, parse, readings
+from . import analyzer, kundoku, note, parse, readings
 
 USAGE = '''
   ./dragoman.py lzh -e "學而時習之、不亦說乎。"     (kanbun でも)
@@ -82,7 +82,8 @@ def explain(t):
 
 
 def render(analysis, options):
-    print('  返り点   ' + analysis.kaeriten)
+    if not (options.html or options.pdf):   # ノートでは返り点は縦書きの訓点付きの本文に (note.py)
+        print('  返り点   ' + analysis.kaeriten)
     print('  書き下し ' + analysis.kakikudashi)
     if options.show_word_detail:
         print()
@@ -109,4 +110,5 @@ def available():
 
 COMMAND = Command(lang='lzh', name='漢文 (訓読)', analyzer=analyzer, dictionary=None, available=available,
                   usage=USAGE, header=lambda a, o: a.text, speech_text=lambda a, o: a.reading,
-                  speech_lang='ja', render=render, notes=NOTES)
+                  speech_lang='ja', render=render, notes=NOTES,
+                  note_html=note.html_of)

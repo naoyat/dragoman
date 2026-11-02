@@ -63,6 +63,7 @@ class Command:
     handle_option: object = None    # (option, arg, options) → 処理したら True。'exit' で終了
     texts_hook: object = None       # (options) → 解析の前に行うこと (表の表示など)。True を返したら終わる
     render: object = None           # (analysis, options) → 解析結果の表示 (既定は core.render。古文は品詞分解と現代語訳)
+    note_html: object = None        # (analysis) → ノートに足す HTML の部品 (漢文の縦書きの訓点付きの本文)
 
 
 def help_text(command):
@@ -248,7 +249,7 @@ def run(command, argv=None, texts=None):
                     rendered = buffer.getvalue()
                 notebook.add(analysis, header=line, word_notes=notes, show_word_detail=options.show_word_detail,
                              romanize=command.romanize if options.romanize else None, rendered=rendered,
-                             kana=kana_line)
+                             kana=kana_line, extra_html=command.note_html(analysis) if command.note_html else '')
                 continue
             render.render_sentence_header(line)
             if kana_line is not None:
