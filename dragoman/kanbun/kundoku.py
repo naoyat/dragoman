@@ -344,6 +344,18 @@ def _passive(prev):
     return ('られ', 'られ', 'らる', 'らるる', 'らるれ', 'られよ')
 
 
+TOPIC_WA = False   # 書き下しの主語に「は」を付ける (--wa)。既定は教科書に合わせて付けない (者 の後ろは付ける)
+
+
+def _topic_dropped(elems, i):
+    """主語の「は」を書き下しで省くか (現代語訳には残す)"""
+    e = elems[i]
+    if TOPIC_WA or e.kind != 'particle' or e.text != 'は':
+        return False
+    before = elems[i - 1] if i > 0 else None
+    return not (before is not None and before.token is not None and before.token.form == '者')
+
+
 def render(elems, final=END):
     """要素の列 → 書き下しの文字列 (右から左へ、後ろの語が求める形を前の用言に付ける)"""
     out = []
@@ -393,7 +405,7 @@ def render(elems, final=END):
             need = e.need
             continue
         if e.kind == 'particle':
-            out.append(e.text)
+            out.append('' if _topic_dropped(elems, i) else e.text)
             need = e.need or Need('連体')
             continue
         # noun / text

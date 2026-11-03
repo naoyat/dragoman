@@ -88,6 +88,10 @@ LANGUAGE = {
     'pt': (   # ポルトガル語
         Option('variety', value='BR|PT', help='ブラジル (br。既定) / ポルトガル (pt): 音読の声とカタカナ読みの発音'),
     ),
+    'lzh': (   # 漢文
+        Option('wa', help='書き下しの主語に「は」を付ける (既定は教科書に合わせて付けない: 春眠曉を覺えず。\n'
+                          '「者」の後ろは付ける: 知者は)'),
+    ),
     'he': (   # ヘブライ語
         Option('divine-name', value='MODE', help='音読での神の名 יְהוָה の読み方: adonai (既定。ヒリクの形はエロヒム) /\n'
                                                  'hashem「ハシェム」/ literal (字面のまま)'),

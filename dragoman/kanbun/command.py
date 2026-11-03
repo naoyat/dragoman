@@ -3,7 +3,7 @@
 #
 # 漢文のコマンドの設定 (core/cli.py)。表示は返り点・書き下し文・語ごとの読みと語義・現代語訳
 #
-from dragoman.core import ansi_color
+from dragoman.core import ansi_color, options as option_defs
 from dragoman.core.cli import Command
 from . import analyzer, kundoku, note, parse, readings
 
@@ -101,6 +101,13 @@ def render(analysis, options):
     print()
 
 
+def handle_option(option, arg, options):
+    if option == '--wa':
+        kundoku.TOPIC_WA = True
+        return True
+    return False
+
+
 def available():
     if not parse.available():
         return 'no UD-Kanbun (pip install udkanbun)'
@@ -113,4 +120,4 @@ def available():
 COMMAND = Command(lang='lzh', name='漢文 (訓読)', analyzer=analyzer, dictionary=None, available=available,
                   usage=USAGE, header=lambda a, o: a.text, speech_text=lambda a, o: a.reading,
                   speech_lang='ja', render=render, notes=NOTES,
-                  note_html=note.html_of)
+                  note_html=note.html_of, options=option_defs.LANGUAGE['lzh'], handle_option=handle_option)
