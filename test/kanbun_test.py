@@ -48,6 +48,7 @@ class KanbunTestCase(unittest.TestCase):
         self.assertReads('學而時習之、不亦說乎。', '學びて時に之を習ふ、亦た說ばしからずや。',
                          '学んで時々これを習う、またうれしいではないか。')
         self.assertReads('有朋自遠方來、不亦樂乎。', '朋有り遠方より來たる、亦た樂しからずや。')
+        self.assertReads('知者樂水。', '知者は水を樂しむ。', '知者は水を楽しむ。')   # 目的語を取る 樂 は 樂しむ
         self.assertReads('己所不欲、勿施於人。', '己の欲せざる所、人に施すこと勿かれ。',
                          '自分の望まないこと、人に施してはならない。')
 
@@ -57,7 +58,7 @@ class KanbunTestCase(unittest.TestCase):
 
     def test_okiji_and_comparison(self):
         # 置き字 於: 起点・比較は より、而 は前の用言を連用形 + て に
-        self.assertReads('青出於藍而青於藍。', '青藍より出でて藍より青し。', '青は藍から出て藍よりも青い。')
+        self.assertReads('青出於藍而青於藍。', '青は藍より出でて藍より青し。', '青は藍から出て藍よりも青い。')
 
     def test_saidoku_and_rhetorical(self):
         self.assertReads('未知生、焉知死。', '未だ生を知らず、焉くんぞ死を知らん。', 'まだ生を知らない、どうして死を知ろうか。')
@@ -98,7 +99,7 @@ class KanbunTestCase(unittest.TestCase):
         self.assertEqual(self.analyze('不入虎穴、不得虎子。').yomi, 'こけつにいらずんば、こしをえず。')
         self.assertEqual(self.analyze('未知生、焉知死。').yomi, 'いまだせいをしらず、いづくんぞしをしらん。')
         self.assertEqual(self.analyze('王使人學之。').yomi, 'わうひとをしてこれをまなばしむ。')
-        self.assertEqual(self.analyze('青出於藍而青於藍。').yomi, 'あをあゐよりいでてあゐよりあをし。')
+        self.assertEqual(self.analyze('青出於藍而青於藍。').yomi, 'あをはあゐよりいでてあゐよりあをし。')
         self.assertTrue(self.analyze('城春草木深。').yomi.endswith('ふかし。'))   # 形容詞の文語の活用
         a = self.analyze('溫故而知新、可以爲師矣。')   # 可以 の 以て は 以 の字に
         self.assertEqual(a.yomi, 'ゆゑをあたためてあたらしきをしる、もつてしとなるべし。')
@@ -108,9 +109,12 @@ class KanbunTestCase(unittest.TestCase):
         from dragoman.kanbun import kundoku
         self.assertReads('春眠不覺曉。', '春眠曉を覺えず。', '春眠は曉を覚えない。')
         self.assertEqual(self.analyze('知者樂水。').kakikudashi[:3], '知者は')
+        # 決まった言い回し (readings.WA_KEPT) は既定でも付ける
+        self.assertReads('百聞不如一見。', '百聞は一見に如かず。')
+        self.assertReads('忠言逆於耳。', '忠言は耳に逆らふ。')
         kundoku.TOPIC_WA = True
         try:
-            self.assertReads('青出於藍而青於藍。', '青は藍より出でて藍より青し。')
+            self.assertReads('春眠不覺曉。', '春眠は曉を覺えず。')
         finally:
             kundoku.TOPIC_WA = False
 
@@ -118,7 +122,7 @@ class KanbunTestCase(unittest.TestCase):
         # UD-Kanbun の係り受けの誤りを直す (parse.repair)。返り点もそれに合わせて付く
         self.assertReads('春眠不覺曉。', '春眠曉を覺えず。', '春眠は曉を覚えない。')
         self.assertEqual(self.analyze('春眠不覺曉。').kaeriten, '春眠不㆑覺㆑曉。')
-        self.assertReads('百聞不如一見。', '百聞一見に如かず。', '百聞は一見に及ばない。')
+        self.assertReads('百聞不如一見。', '百聞は一見に如かず。', '百聞は一見に及ばない。')
         self.assertReads('國破山河在。', '國破れて山河在り。', '国が破れて山河はある。')
 
 if __name__ == '__main__':

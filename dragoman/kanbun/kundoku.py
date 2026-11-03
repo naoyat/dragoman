@@ -303,6 +303,8 @@ class Reader:
             return [Elem('noun', t, text=f)]   # 名詞として読む用言 (死を知る・生を楽しむ)
         if t.upos in ('VERB', 'ADJ') or (t.upos == 'AUX' and t.rel not in ('aux', 'cop')):
             p = readings.verb(f, t.simplified, t.gloss)
+            if f in readings.WITH_OBJECT and any(k.rel == 'obj' for k in t.children):
+                p = readings.predicate(readings.WITH_OBJECT[f])
             fixed = ''.join(k.form for k in t.children if k.rel == 'fixed' and k.i > t.i)
             return [Elem('pred', t, pred=p, text=fixed)]
         if t.upos == 'NOUN' and t.rel in ('root', 'conj', 'parataxis') and t.x[2:3] == ['描写'] and f in readings.VERBS:
@@ -347,17 +349,18 @@ def _passive(prev):
 TOPIC_WA = False   # 書き下しの主語に「は」を付ける (--wa)。既定は教科書に合わせて付けない (者 の後ろは付ける)
 
 
-def _topic_dropped(elems, i):
-    """主語の「は」を書き下しで省くか (現代語訳には残す)"""
+def _topic_dropped(elems, i, kept=False):
+    """主語の「は」を書き下しで省くか (現代語訳には残す)。kept: 「は」を残す決まった言い回し (readings.WA_KEPT) の句"""
     e = elems[i]
-    if TOPIC_WA or e.kind != 'particle' or e.text != 'は':
+    if TOPIC_WA or kept or e.kind != 'particle' or e.text != 'は':
         return False
     before = elems[i - 1] if i > 0 else None
     return not (before is not None and before.token is not None and before.token.form == '者')
 
 
-def render(elems, final=END):
-    """要素の列 → 書き下しの文字列 (右から左へ、後ろの語が求める形を前の用言に付ける)"""
+def render(elems, final=END, text=''):
+    """要素の列 → 書き下しの文字列 (右から左へ、後ろの語が求める形を前の用言に付ける)。text: 句の白文"""
+    kept = any(k in text for k in readings.WA_KEPT)
     out = []
     need = final
     strong = False   # 助動詞・置き字・則 の求め (節の境目で上書きしない)
@@ -405,7 +408,7 @@ def render(elems, final=END):
             need = e.need
             continue
         if e.kind == 'particle':
-            out.append('' if _topic_dropped(elems, i) else e.text)
+            out.append('' if _topic_dropped(elems, i, kept) else e.text)
             need = e.need or Need('連体')
             continue
         # noun / text
@@ -455,7 +458,8 @@ def read(phrases):
     for n, phrase in enumerate(phrases):
         r = Reader(phrase)
         elems = _with_pre(r, r.order())
-        render(elems, _final_need(phrase, phrases[n + 1] if n + 1 < len(phrases) else None))
+        render(elems, _final_need(phrase, phrases[n + 1] if n + 1 < len(phrases) else None),
+               ''.join(t.form for t in phrase if t.upos != 'PUNCT'))
         out.append(elems)
     return out
 
