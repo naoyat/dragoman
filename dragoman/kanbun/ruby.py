@@ -44,7 +44,10 @@ RUBY_WITH = {('且', 'つ'): 'か', ('且', 'に'): 'まさ', ('何', 'ぞ'): '�
              ('自', 'り'): 'よ', ('三', 'たび'): 'み', ('爲', 'に'): 'ため', ('與', ''): 'と', ('如', 'し'): 'ごと',
              ('若', 'し'): 'ごと', ('若', 'くは'): 'し', ('見', 'る'): 'み', ('使', ''): 'し', ('令', ''): 'し',
              ('如', 'か'): 'し', ('若', 'か'): 'し', ('是', ''): 'これ', ('此', ''): 'これ', ('斯', ''): 'これ',
-             ('其', ''): 'それ', ('彼', ''): 'かれ', ('夫', ''): 'それ'}
+             ('其', ''): 'それ', ('已', 'む'): 'や',
+             ('易', 'し'): 'やす', ('易', 'く'): 'やす', ('易', 'き'): 'やす', ('易', 'から'): 'やす', ('易', 'けれ'): 'やす', ('彼', ''): 'かれ', ('夫', ''): 'それ'}
+# 同じ字で活用の型により読みの違う用言: (字, 型) → 読み (苦し: ク にが、シク くる)
+RUBY_KIND = {('苦', 'ク'): 'にが', ('苦', 'シク'): 'くる'}
 # 歴史的仮名遣いの送り仮名 → 現代仮名遣い (KANJIDIC2 の訓と行を突き合わせるため。語幹の後ろなので語頭の規則は要らない)
 MODERN_KANA = str.maketrans('はひふへほゐゑを', 'わいうえおいえお')
 ROWS = ['あいうえお', 'かきくけこ', 'がぎぐげご', 'さしすせそ', 'ざじずぜぞ', 'たちつてと', 'だぢづでど', 'なにぬねの',
@@ -160,9 +163,11 @@ def noun_reading(word, gloss=''):
             parts = split(word, reading)
             if parts is None:
                 continue
-            # 語義が合うかどうか、1字なら訓を先に (人 ひと・じん)。同じなら JMdict の見出しの順
+            # 語義が合うかどうか (語形の違う語義 harmonious ↔ harmony は語の初めの6字で)、1字なら訓を先に (人 ひと・じん)。同じなら JMdict の見出しの順
             kun = len(word) == 1 and reading in _kun(word)
-            score = (1 if wanted & _words(english) else 0, 1 if kun else 0)
+            words = _words(english)
+            match = 2 if wanted & words else 1 if {w[:6] for w in wanted if len(w) >= 6} & {w[:6] for w in words} else 0
+            score = (match, 1 if kun else 0)
             if score > best_score:
                 best, best_score = parts, score
     return best
@@ -212,7 +217,8 @@ def rubies(analysis):
             run = [e]
             while okuri == '' and n + len(run) < len(shown):
                 nxt = shown[n + len(run)]
-                noun = nxt.kind == 'noun' or nxt.token.upos in ('NOUN', 'PROPN')
+                noun = nxt.kind == 'noun' or nxt.token.upos in ('NOUN', 'PROPN') or \
+                    run[-1].token.rel == 'compound' and run[-1].token.head == nxt.token.i   # 晩成す
                 if nxt.token.i != run[-1].token.i + 1 or _okuri_of(nxt) is None or not noun:
                     break
                 run.append(nxt)
@@ -246,6 +252,8 @@ def _token_ruby(e, okuri):
             return [reading]
     if t.form in RUBY:
         return [RUBY[t.form]]
+    if e.pred is not None and (t.form, e.pred.kind) in RUBY_KIND:
+        return [RUBY_KIND[t.form, e.pred.kind]]
     if len(t.form) == 1 and (okuri or e.kind == 'pred' or t.upos == 'VERB'):
         stem = verb_stem(t.form, okuri)
         if stem:

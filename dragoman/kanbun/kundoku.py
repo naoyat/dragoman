@@ -71,6 +71,8 @@ POST = {
     '由': ('由ほ', GOTOSHI, Need('連体', 'が', 'の')), '盍': ('盍ぞ', ('ざる',) * 6, Need('未然')),
     '所': (None, ('所',) * 6, Need('連体')), '莫': (None, ('莫から', '莫く', '莫し', '莫き', '莫けれ', '莫かれ'), Need('連体')), '雖': (None, ('雖も',) * 6, Need('終止', 'と', 'と')),
     '見': (None, None, Need('未然')), '被': (None, None, Need('未然')),
+    '易': (None, ('易から', '易く', '易し', '易き', '易けれ', '易かれ'), Need('連用')),   # 老い易し
+    '難': (None, ('難から', '難く', '難し', '難き', '難けれ', '難かれ'), Need('連用')),   # 成り難し
 }
 # 禁止の 無・莫 (副詞、否定、禁止)
 PROHIBIT = {'無': '無かれ'}
@@ -104,7 +106,8 @@ def _subtree(t):
 def _single_compound(child, head):
     """隣り合った1字ずつの修飾 (虎穴・遠方・百獸) は熟語として送り仮名・助詞を付けない"""
     return child.rel in ('nmod', 'amod', 'nummod', 'compound', 'flat') and not child.children and \
-        abs(child.i - head.i) == 1 and len(child.form) == 1 and child.form not in readings.DETERMINERS
+        abs(child.i - head.i) == 1 and len(child.form) == 1 and child.form not in readings.DETERMINERS and \
+        (child.form + head.form if child.i < head.i else head.form + child.form) not in readings.WITH_NO
 
 
 def _bare_advcl(t):
@@ -159,7 +162,7 @@ class Reader:
                 out.append(Elem('particle', None, text='と'))
                 continue
             if c.rel in ('conj', 'parataxis') and c.upos != 'PUNCT':
-                out.append(Elem('boundary', need=Need('連用') if c.rel == 'conj' else END))
+                out.append(Elem('boundary', need=Need('連用') if c.rel == 'conj' or _easy(c) and _easy(t) else END))
             out += self._child(c, t)
         return out
 
@@ -300,9 +303,11 @@ class Reader:
         if t.upos == 'DET' or t.rel == 'det':
             return [Elem('text', t, text=readings.DETERMINERS.get(f, f))]
         if t.upos == 'VERB' and t.rel in ('obj', 'nsubj') and not t.children and t.x[2:3] != ['描写']:
-            return [Elem('noun', t, text=f)]   # 名詞として読む用言 (死を知る・生を楽しむ)
+            return [Elem('noun', t, text=readings.NOMINAL_VERBS.get(f, f))]   # 名詞として読む用言 (死を知る・生を楽しむ)
         if t.upos in ('VERB', 'ADJ') or (t.upos == 'AUX' and t.rel not in ('aux', 'cop')):
             p = readings.verb(f, t.simplified, t.gloss)
+            if any(k.rel == 'compound' and k.i == t.i - 1 and k.form + f in readings.SAHEN for k in t.children):
+                p = readings.predicate(f + 'す/サ変')   # 晩成す (前の字は熟語として _child が付ける)
             if f in readings.WITH_OBJECT and any(k.rel == 'obj' for k in t.children):
                 p = readings.predicate(readings.WITH_OBJECT[f])
             fixed = ''.join(k.form for k in t.children if k.rel == 'fixed' and k.i > t.i)
@@ -318,7 +323,8 @@ class Reader:
             text = CASES.get(f, '')
             if f in ('於', '于', '乎'):
                 gov = self.head_of(head)
-                if gov is not None and (gov.form in FROM_VERBS or gov.x[2:3] == ['描写'] and
+                # 形容詞の比較 (藍より青し)。体の部分は感じる所で に (良藥は口に苦し)
+                if gov is not None and (gov.form in FROM_VERBS or gov.x[2:3] == ['描写'] and head.x[3:4] != ['身体'] and
                                         readings.verb(gov.form, gov.simplified, gov.gloss).adjective):
                     text = 'より'
             if f == '之':
@@ -437,6 +443,11 @@ def _root(phrase):
     return next((t for t in phrase if t.rel == 'root'), None)
 
 
+def _easy(t):
+    """V易し・V難し の用言か (並ぶ二つの節は前を連用形で: 少年老い易く學成り難し)"""
+    return any(k.rel == 'advmod' and k.form in ('易', '難') for k in t.children)
+
+
 def _final_need(phrase, following):
     """句の終わりの用言の形: 疑問・反語の副詞があれば 未然形 + ん (焉くんぞ死を知らん)、不A不B の前の句は ずんば"""
     root = _root(phrase)
@@ -446,6 +457,8 @@ def _final_need(phrase, following):
             not any(k.form in FINALS for k in root.children):
         return Need('未然', 'ん')
     nxt = _root(following) if following else None
+    if nxt is not None and _easy(root) and _easy(nxt):
+        return Need('連用')   # 少年老い易く、學成り難し
     if nxt is not None and any(_neg(k) for k in root.children) and any(_neg(k) for k in nxt.children) and \
             not any(k.rel in ('cc', 'mark', 'nsubj') for k in nxt.children + root.children):
         return Need('連用', 'んば')   # 虎穴に入らずんば、虎子を得ず

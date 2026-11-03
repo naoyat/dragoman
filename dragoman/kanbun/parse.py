@@ -60,6 +60,8 @@ def _entry(text):
 
 NEGATIVE = '副詞,否定'
 NOMINAL_DEPS = ('nummod', 'obl:tmod', 'nmod', 'amod', 'obl')
+TIME_SUBJECTS = {'歲月', '歳月', '光陰', '日月', '時日', '少年'}   # 主語になる時の名詞 (歲月は人を待たず・少年老い易し)
+EASY = {'易', '難'}
 
 
 def _sentences(entry):
@@ -80,7 +82,16 @@ def repair(entry):
     (2) 二つの節の主語を前の動詞の目的語と読んだもの: 「N1 V1 N2 V2」で V2 が V1 に並ぶ節か V1 が V2 の主語の節、
         N2 が V1 の目的語で、V2 に主語も目的語も無いとき、N2 を V2 の主語に、V1 を V2 に係る節に:
         國破山河在 → 國破れて山河在り
-    (3) 句読点も與も無く並ぶ1字の名詞 (山河) は熟語に"""
+    (3) 句読点も與も無く並ぶ1字の名詞 (山河) は熟語に
+    (4) 助動詞 (可・能) の係る 已 (句末の のみ と読んだもの) は動詞に: 學不可以已 → 學は以て已むべからず
+    (5) 文頭の時の名詞 (歲月・光陰) が述語に主語の無い文の時の補語 (obl:tmod) なら主語に: 歲月不待人 → 歲月は人を待たず
+    (6) 文頭の子の無い動詞が副詞の前で述語の連用修飾 (advmod) なら主語に (名詞に読む): 過猶不及 → 過ぎたるは猶ほ…
+    (7) 如 の補文の形容詞の動詞 (描写) に、すぐ前の名詞の主語だけが係るとき、名詞の句 (目的語) に:
+        地利不如人和 → 人の和に如かず
+    (8) 易・難 のすぐ後ろの用言を 易・難 の目的語と読んだものは、易・難 をその用言に係る連用修飾に (V易し・V難し):
+        少年易老 → 少年老い易し。その用言の前の、子の補文だけを持つ1字の動詞は主語に: 學難成 → 學成り難し
+    (9) すぐ後ろの用言に係る1字の形容詞の動詞 (advmod) で、二つで熟語のサ変 (readings.SAHEN) になるものは熟語に:
+        大器晩成 → 大器は晩成す"""
     for sent in _sentences(entry):
         kids = {t.id: [] for t in sent}
         for t in sent:
@@ -137,6 +148,74 @@ def repair(entry):
             if t.deprel == 'conj' and h is not t and h.id == t.id - 1 and t.upos == h.upos == 'NOUN' and \
                     len(t.form) == len(h.form) == 1 and not any(k.deprel == 'cc' for k in kids[t.id]):
                 t.head, t.deprel, h.head, h.deprel = (h.head.id if h.head is not h else 0), h.deprel, t.id, 'compound'
+        kids = {t.id: [] for t in sent}
+        for t in sent:
+            if t.head is not t:
+                kids[t.head.id].append(t)
+        # (4)
+        for t in sent:
+            if t.form == '已' and t.upos == 'PART' and any(k.deprel == 'aux' for k in kids[t.id]):
+                t.upos, t.xpos = 'VERB', 'v,動詞,行為,動作'
+        root = next((t for t in sent if t.deprel == 'root'), None)
+        if root is not None and not any(k.deprel.startswith('nsubj') or k.deprel == 'csubj' for k in kids[root.id]):
+            first = sent[0]
+            # (5)
+            if first.deprel == 'compound' and first.head.deprel == 'obl:tmod' and first.head.head is root and \
+                    first.form + first.head.form in TIME_SUBJECTS:
+                first.head.deprel = 'nsubj'
+            # (6)
+            elif first.upos == 'VERB' and first.deprel == 'advmod' and first.head is root and not kids[first.id] and \
+                    len(sent) > 1 and sent[1].upos == 'ADV':
+                first.deprel = 'nsubj'
+        # (8)
+        for x in sent:
+            if x.form not in EASY or x.upos != 'VERB':
+                continue
+            v = next((k for k in kids[x.id] if k.id == x.id + 1 and k.deprel in ('obj', 'ccomp')), None)
+            if v is not None:
+                v.head, v.deprel = (0 if x.head is x else x.head.id), x.deprel
+                if v.deprel == 'root':
+                    for k in kids[x.id]:
+                        if k is not v:
+                            k.head = v.id
+                x.head, x.deprel = v.id, 'advmod'
+                if v.upos == 'NOUN':
+                    v.upos, v.xpos = 'VERB', 'v,動詞,変化,生物'
+            elif not (x.deprel == 'advmod' and x.head.id == x.id + 1):
+                continue
+            v = sent[x.id]   # 易・難 の係る用言
+            subj = sent[x.id - 2] if x.id >= 2 else None
+            if subj is not None and subj.upos == 'VERB' and len(subj.form) == 1 and v.head is subj and \
+                    v.deprel == 'ccomp' and all(k is v or k.deprel == 'punct' for k in sent if k.head is subj and k is not subj):
+                v.head, v.deprel = (0 if subj.head is subj else subj.head.id), subj.deprel
+                for k in sent:
+                    if k.head is subj and k is not subj and k is not v:
+                        k.head = v.id
+                subj.head, subj.deprel, subj.upos = v.id, 'nsubj', 'NOUN'
+        kids = {t.id: [] for t in sent}
+        for t in sent:
+            if t.head is not t:
+                kids[t.head.id].append(t)
+        root = next((t for t in sent if t.deprel == 'root'), None)
+        # (5) の続き: 修飾語の付いた名詞 (少年)
+        if root is not None and not any(k.deprel.startswith('nsubj') for k in kids[root.id]):
+            for t in sent:
+                if t.deprel == 'obl:tmod' and t.head is root and \
+                        ''.join(k.form for k in kids[t.id] if k.id < t.id) + t.form in TIME_SUBJECTS:
+                    t.deprel = 'nsubj'
+        # (9)
+        from .readings import SAHEN
+        for t in sent:
+            if t.deprel == 'advmod' and t.upos == 'VERB' and t.head.id == t.id + 1 and t.form + t.head.form in SAHEN:
+                t.deprel = 'compound'
+        # (7)
+        for t in sent:
+            if t.deprel == 'ccomp' and t.upos == 'VERB' and t.head.form == '如' and '描写' in t.xpos and \
+                    len(kids[t.id]) == 1 and kids[t.id][0].deprel == 'nsubj' and kids[t.id][0].id == t.id - 1 and \
+                    kids[t.id][0].upos == 'NOUN':
+                t.upos, t.deprel = 'NOUN', 'obj'
+                kids[t.id][0].deprel = 'nmod'
+
 
 def _misc(misc, key):
     for part in misc.split('|'):

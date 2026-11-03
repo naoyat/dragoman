@@ -124,6 +124,22 @@ class KanbunTestCase(unittest.TestCase):
         self.assertEqual(self.analyze('春眠不覺曉。').kaeriten, '春眠不㆑覺㆑曉。')
         self.assertReads('百聞不如一見。', '百聞は一見に如かず。', '百聞は一見に及ばない。')
         self.assertReads('國破山河在。', '國破れて山河在り。', '国が破れて山河はある。')
+        self.assertReads('歲月不待人。', '歲月は人を待たず。', '歳月は人を待たない。')
+        self.assertReads('學不可以已。', '學は以て已むべからず。')
+        self.assertReads('過猶不及。', '過ぎたるは猶ほ及ばざるがごとし。')
+        self.assertReads('天時不如地利、地利不如人和。', '天の時は地の利に如かず、地の利は人の和に如かず。')
+        self.assertReads('少年易老、學難成。', '少年老い易く、學成り難し。')
+        self.assertReads('大器晩成。', '大器は晩成す。', '大器は晩成する。')
+
+    def test_set_phrases(self):
+        # 決まった言い回しの読み: 体の部分の 於 は に、苦し (ク) は にがし、良藥 りやうやく
+        a = self.analyze('良藥苦於口。')
+        self.assertEqual(a.kakikudashi, '良藥は口に苦し。')
+        self.assertEqual(a.modern, '良薬は口に苦い。')
+        self.assertEqual(a.yomi, 'りやうやくはくちににがし。')
+        self.assertEqual(self.analyze('學不可以已。').yomi, 'がくはもつてやむべからず。')
+        self.assertEqual(self.analyze('地利不如人和。').yomi, 'ちのりはひとのわにしかず。')
+        self.assertEqual(self.analyze('大器晩成。').yomi, 'たいきはばんせいす。')
 
 if __name__ == '__main__':
     unittest.main()

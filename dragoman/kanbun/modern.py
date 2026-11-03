@@ -19,9 +19,13 @@ MODERN = {'出づ': '出る', '破る': '破れる', '死す': '死ぬ', '施す
           '誨ふ': '教える', '釈つ': '捨てる', '冀ふ': '願う', '鬻ぐ': '売る', '陥す': '突き通す', '敏す': '素早くする',
           '訥す': '口が重い', '如く': '及ぶ', '若く': '及ぶ', '然り': 'そうだ', '安んず': '安心する', '過つ': '間違える',
           '悪む': '憎む', '因る': '基づく', '彫む': 'しぼむ', '慍る': '怒る', '省みる': '反省する', '学問す': '学問する',
-          '為る': 'なる', '爲る': 'なる', '可なり': 'よい', '訥す': 'ゆっくり話す', '敏す': 'すばやく行う'}
+          '為る': 'なる', '爲る': 'なる', '可なり': 'よい', '已む': 'やめる', '訥す': 'ゆっくり話す', '敏す': 'すばやく行う'}
+# 同じ終止形で活用の型の違う語: (終止形, 型) → 現代語 (苦し: ク にがし → 苦い、シク くるし → 苦しい)
+MODERN_KIND = {('苦し', 'ク'): '苦い', ('苦し', 'シク'): '苦しい'}
 # 用言の名詞の形 (是を過ちと謂ふ)
 NOUNS = {'過つ': '過ち'}
+# 名詞に読む用言 (readings.NOMINAL_VERBS) の現代語
+NOMINAL_VERBS = {'過ぎたる': '過ぎたこと'}
 # 最後に置き換える言い回し
 PHRASES = {'何如': 'どうだろうか', '如何': 'どうしようか'}
 # 代名詞・副詞などの現代語
@@ -58,10 +62,14 @@ def _hiragana_modern(text):
 def modern_word(pred):
     """Predicate → (現代語の見出し, Modern の種類 verb / adj / fixed)"""
     base = readings.shinjitai(pred.base)
+    if (base, pred.kind) in MODERN_KIND:
+        return MODERN_KIND[base, pred.kind], 'adj'
     if base in MODERN:
         word = MODERN[base]
         return word, 'adj' if word.endswith('い') and pred.adjective else 'verb'
     lemma = _unidic_lemma(base, pred)
+    if lemma == base and pred.kind == 'サ変':   # 晩成す の 成す (四段の なす でなく 成する)
+        lemma = None
     if lemma:
         return lemma, 'adj' if pred.adjective else 'verb'
     kind = pred.kind
@@ -196,6 +204,10 @@ def _apply(m, aux, following):
         if m.kind == 'verb':
             m.prefix += Modern.volitional(m.last)
             m.last, m.kind = 'とする', 'verb'
+    elif f in ('易', '難'):   # 老い易し → 老いやすい、成り難し → 成りにくい
+        if m.kind == 'verb':
+            m.prefix += Modern.masu_stem(m.last)
+            m.last, m.kind = 'やすい' if f == '易' else 'にくい', 'adj'
     elif f == '所':
         m.attach('こと', 'fixed')
     elif f == '雖':
@@ -222,7 +234,7 @@ def _noun_text(e):
     text = e.text
     if e.token is not None and e.token.upos == 'PRON':
         return PRONOUNS.get(text, PRONOUNS.get(e.token.form, readings.shinjitai(text)))
-    return readings.shinjitai(text)
+    return NOMINAL_VERBS.get(text, readings.shinjitai(text))
 
 
 def translate(elems):
