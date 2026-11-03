@@ -91,12 +91,24 @@ class KanbunTestCase(unittest.TestCase):
     @unittest.skipUnless(HAVE_DATA and os.path.exists(os.path.join(paths.data(), 'ja-readings.tsv')), 'no ja-readings.tsv')
     def test_yomi(self):
         # 振り仮名: 用言は KANJIDIC2 の訓の語幹 (送り仮名の行で)、名詞・熟語は JMdict (語義で選び、1字なら訓を先に)、
-        # 助字・副詞・代名詞は手作りの表 (歴史的仮名遣い)
-        self.assertEqual(self.analyze('有朋自遠方來、不亦樂乎。').yomi, 'ともありえんぽうよりきたる、またたのしからずや。')
+        # 助字・副詞・代名詞は手作りの表。どれも歴史的仮名遣いに (Wiktionary の語から作った表: 遠方 ゑんぱう・王 わう)
+        self.assertEqual(self.analyze('有朋自遠方來、不亦樂乎。').yomi, 'ともありゑんぱうよりきたる、またたのしからずや。')
         self.assertEqual(self.analyze('己所不欲、勿施於人。').yomi, 'おのれのほつせざるところ、ひとにほどこすことなかれ。')
         self.assertEqual(self.analyze('子曰、學而不思則罔。').yomi, 'しいはく、まなびておもはざればすなはちくらし。')
         self.assertEqual(self.analyze('不入虎穴、不得虎子。').yomi, 'こけつにいらずんば、こしをえず。')
         self.assertEqual(self.analyze('未知生、焉知死。').yomi, 'いまだせいをしらず、いづくんぞしをしらん。')
+        self.assertEqual(self.analyze('王使人學之。').yomi, 'わうはひとをしてこれをまなばしむ。')
+        self.assertEqual(self.analyze('青出於藍而青於藍。').yomi, 'あをはあゐよりいでてあゐよりあをし。')
+        self.assertEqual(self.analyze('城春草木深。').yomi.split('は')[-1], 'ふかし。')   # 形容詞の文語の活用
+        a = self.analyze('溫故而知新、可以爲師矣。')   # 可以 の 以て は 以 の字に
+        self.assertEqual(a.yomi, 'ゆゑをあたためてあたらしきをしる、もつてしとなるべし。')
+
+    def test_parse_repair(self):
+        # UD-Kanbun の係り受けの誤りを直す (parse.repair)。返り点もそれに合わせて付く
+        self.assertReads('春眠不覺曉。', '春眠は曉を覺えず。', '春眠は曉を覚えない。')
+        self.assertEqual(self.analyze('春眠不覺曉。').kaeriten, '春眠不㆑覺㆑曉。')
+        self.assertReads('百聞不如一見。', '百聞は一見に如かず。', '百聞は一見に及ばない。')
+        self.assertReads('國破山河在。', '國破れて山河は在り。', '国が破れて山河はある。')
 
 if __name__ == '__main__':
     unittest.main()

@@ -107,6 +107,11 @@ def _single_compound(child, head):
         abs(child.i - head.i) == 1 and len(child.form) == 1 and child.form not in readings.DETERMINERS
 
 
+def _bare_advcl(t):
+    """接続の助字の無い前の節で 連用形 + て でつなぐもの (parse.repair が advcl:te にする 國破 山河在)"""
+    return t.deprel == 'advcl:te'
+
+
 class Reader:
     def __init__(self, phrase):
         self.phrase = phrase
@@ -182,6 +187,9 @@ class Reader:
         if pre and _single_compound(c, head):
             return [Elem('text', c, text=''.join(e.token.form for e in elems if e.token))] if \
                 all(e.kind in ('noun', 'pred', 'text') for e in elems) else elems
+        if pre and _bare_advcl(c):   # 而 の無い前の節 (國破山河在) は 連用形 + て でつなぐ
+            elems.append(Elem('drop', None, need=Need('連用', 'て')))
+            return elems
         particle = self._particle(c, head)
         if particle is not None:
             if particle and elems and elems[-1].kind == 'noun' and elems[-1].token is c and c.upos == 'PRON':
@@ -195,8 +203,8 @@ class Reader:
         if any(k.rel == 'case' for k in c.children):
             return None
         if rel in ('nsubj', 'csubj'):
-            if head.form in ('曰', '云', '言'):
-                return None
+            if head.form in ('曰', '云', '言') or _bare_advcl(head):
+                return None   # 國破れて
             if head.form == '謂' and c.form in THIS:
                 return 'を'
             if head.form in ('有', '無') and any(k.rel == 'obj' for k in head.children):
@@ -456,10 +464,12 @@ def _with_pre(reader, elems):
         if t.form in POST and POST[t.form][0] and t.rel in ('advmod', 'aux'):
             reading = POST[t.form][0]
         fixed = [k for k in t.children if k.rel == 'fixed' and k.form == '以']
-        if t.form == '可' and fixed:
-            reading = (reading or '') + '以て'
+        place = None
         if reading:
-            inserts.setdefault(_first_in_order(elems, head, t), []).append((reading, t))
+            place = _first_in_order(elems, head, t)
+            inserts.setdefault(place, []).append((reading, t))
+        if t.form == '可' and fixed:   # 以て は 以 の字の要素に (振り仮名・送り仮名が 以 に付くように)
+            inserts.setdefault(_first_in_order(elems, head, t) if place is None else place, []).append(('以て', fixed[0]))
     if not inserts:
         return elems
     out = []

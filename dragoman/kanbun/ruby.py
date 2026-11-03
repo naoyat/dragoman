@@ -9,7 +9,9 @@
 #                           語義 (UD-Kanbun の Gloss) が合い、字ごとの音・訓に分けられる読み (遠方 えん・ぽう)
 #   字を仮名で読む助字      書き下しの仮名の初めの字 (不 ず・可 べ)
 #
-# 表に無い用言・名詞の読みは KANJIDIC2・JMdict の現代仮名遣い
+# 用言・名詞の読み (KANJIDIC2・JMdict は現代仮名遣い) は、Wiktionary の語の歴史的仮名遣いから作った表
+# ($DRAGOMAN_DATA/ja/historical-kana.tsv。tools/build_ja_historical.py) で歴史的仮名遣いに (王 わう・遠方 ゑんぱう)。
+# 表に無いものは現代仮名遣いのまま
 #
 import functools
 import os
@@ -72,6 +74,36 @@ def _jmdict():
 
 def available():
     return bool(_jmdict())
+
+
+@functools.lru_cache(maxsize=1)
+def _historical_table():
+    """→ ({語: (字ごとの現代仮名遣い, 字ごとの歴史的仮名遣い)}, {(字, 現代仮名遣い): 歴史的仮名遣い})"""
+    words, chars = {}, {}
+    path = paths.data('ja', 'historical-kana.tsv')
+    if os.path.exists(path):
+        with open(path, encoding='utf-8') as f:
+            for line in f:
+                row = line.rstrip('\n').split('\t')
+                if row[0] == 'W':
+                    words[row[1]] = (tuple(row[2].split('|')), tuple(row[3].split('|')))
+                elif row[0] == 'C':
+                    chars.setdefault((row[1], row[2]), row[3])   # 語の多いものが先
+    return words, chars
+
+
+def historical(word, parts):
+    """字ごとの現代仮名遣いの読み → 歴史的仮名遣い (遠方 [えん, ぽう] → [ゑん, ぱう])。語の表、無ければ字の表で"""
+    words, chars = _historical_table()
+    new = readings.shinjitai(word)
+    entry = words.get(new) or words.get(word)
+    if entry and entry[0] == tuple(parts):
+        return list(entry[1])
+    out = []
+    for c, p in zip(word, parts):
+        key = readings.shinjitai(c)
+        out.append(chars.get((key, p)) or chars.get((c, p)) or p)
+    return out
 
 
 @functools.lru_cache(maxsize=10000)
@@ -149,6 +181,8 @@ def verb_stem(char, okuri):
             return stem
         if ROW.get(tail[0]) == ROW.get(modern[0]):
             return stem
+        if tail in ('い', 'しい') and modern[0] in 'しきくけか':   # 形容詞の文語の活用 (深し・深く ↔ ふか.い)
+            return stem
         whole = stem + tail   # き.たる と きた.る のように区切りの違う訓
         for k in range(1, len(whole)):
             if ROW.get(whole[k]) == ROW.get(modern[0]) and fallback is None:
@@ -188,6 +222,7 @@ def rubies(analysis):
                 word = ''.join(x.token.form for x in run)
                 parts = noun_reading(word, ' '.join(x.token.gloss or '' for x in run))
                 if parts:
+                    parts = historical(word, parts)
                     k = 0
                     for x in run:
                         out[id(x.token)] = parts[k:k + len(x.token.form)]
@@ -214,11 +249,9 @@ def _token_ruby(e, okuri):
     if len(t.form) == 1 and (okuri or e.kind == 'pred' or t.upos == 'VERB'):
         stem = verb_stem(t.form, okuri)
         if stem:
-            return [stem]
-    parts = noun_reading(t.form, t.gloss)
-    if parts:
-        return parts
-    return [(_char_readings(c) or ('',))[0] for c in t.form]
+            return historical(t.form, [stem])
+    parts = noun_reading(t.form, t.gloss) or [(_char_readings(c) or ('',))[0] for c in t.form]
+    return historical(t.form, parts)
 
 
 def yomi(analysis):

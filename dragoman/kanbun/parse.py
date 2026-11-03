@@ -50,6 +50,94 @@ def _pipeline():
     return udkanbun.load()
 
 
+@functools.lru_cache(maxsize=256)
+def _entry(text):
+    """UD-Kanbun の解析 (係り受けを repair で直したもの。句の Token と返り点はこれから)"""
+    entry = _pipeline()(text)
+    repair(entry)
+    return entry
+
+
+NEGATIVE = '副詞,否定'
+NOMINAL_DEPS = ('nummod', 'obl:tmod', 'nmod', 'amod', 'obl')
+
+
+def _sentences(entry):
+    tokens = list(entry[1:])
+    out = []
+    for t in tokens:
+        if t.id == 1:
+            out.append([])
+        out[-1].append(t)
+    return out
+
+
+def repair(entry):
+    """UD-Kanbun の係り受けのよくある誤りを直す (返り点もこれに合わせて付く)。
+    (1) 名詞の主語を述語と読んだもの: 「X 不 V …」で X が根、V が X の補文 (ccomp) で、X に前から名詞の修飾
+        (百聞・春眠) だけが係るとき、V を根に、X をその主語 (名詞) に。V の目的語が数詞だけを伴う動詞なら名詞に
+        (一見): 百聞不如一見 → 百聞は一見に如かず、春眠不覺曉 → 春眠 曉を覺えず
+    (2) 二つの節の主語を前の動詞の目的語と読んだもの: 「N1 V1 N2 V2」で V2 が V1 に並ぶ節か V1 が V2 の主語の節、
+        N2 が V1 の目的語で、V2 に主語も目的語も無いとき、N2 を V2 の主語に、V1 を V2 に係る節に:
+        國破山河在 → 國破れて山河在り
+    (3) 句読点も與も無く並ぶ1字の名詞 (山河) は熟語に"""
+    for sent in _sentences(entry):
+        kids = {t.id: [] for t in sent}
+        for t in sent:
+            if t.head is not t:
+                kids[t.head.id].append(t)
+        for v1 in sent:
+            if v1.deprel != 'root' or v1.upos != 'VERB':
+                continue
+            right = [k for k in kids[v1.id] if k.id > v1.id and k.deprel != 'punct']
+            left = [k for k in kids[v1.id] if k.id < v1.id]
+            # (1)
+            if len(right) == 1 and right[0].deprel == 'ccomp' and left and \
+                    all(k.deprel in NOMINAL_DEPS for k in left):
+                v2 = right[0]
+                if any(k.id < v2.id and NEGATIVE in k.xpos for k in kids[v2.id]):
+                    v2.head, v2.deprel = 0, 'root'
+                    for k in kids[v1.id]:
+                        if k is not v2 and k.deprel == 'punct':
+                            k.head = v2.id
+                    v1.head, v1.deprel, v1.upos = v2.id, 'nsubj', 'NOUN'
+                    for k in left:
+                        if k.deprel == 'obl:tmod':
+                            k.deprel = 'nmod'
+                    for o in kids[v2.id]:
+                        if o.deprel in ('obj', 'ccomp') and o.upos == 'VERB' and kids[o.id] and \
+                                all(k.upos == 'NUM' and k.id < o.id for k in kids[o.id]):
+                            o.upos, o.deprel = 'NOUN', 'obj'
+                            for k in kids[o.id]:
+                                k.deprel = 'nummod'
+                    break
+            # (2) 根 V1 に主語 N1 と目的語 N2 があり、N2 のすぐ後ろの V2 が V1 に並ぶ節 (parataxis) か、V1 が V2 の
+            #     主語の節 (csubj) で、V2 に主語も目的語も無いとき
+            pairs = [(v1, k) for k in right if k.deprel == 'parataxis'] + \
+                    [(k, v1) for k in left if k.deprel == 'csubj']
+            for a, b in pairs:
+                objs = [k for k in kids[a.id] if k.deprel == 'obj' and a.id < k.id < b.id]
+                if len(objs) != 1 or not any(k.deprel == 'nsubj' and k.id < a.id for k in kids[a.id]) or \
+                        any(k.deprel in ('nsubj', 'obj') for k in kids[b.id]):
+                    continue
+                o = objs[0]
+                if max([o.id] + [k.id for k in kids[o.id]]) != b.id - 1:
+                    continue
+                if b.head is a:
+                    b.head, b.deprel = 0, 'root'
+                    for k in kids[a.id]:
+                        if k.deprel == 'punct':
+                            k.head = b.id
+                o.head, o.deprel = b.id, 'nsubj'
+                a.head, a.deprel = b.id, 'advcl:te'   # 連用形 + て でつなぐ (kundoku._bare_advcl)
+                break
+        # (3) 句読点の無い1字の名詞の並び (山河・父母) は熟語に: 並列 (conj) を compound に
+        for t in sent:
+            h = t.head
+            if t.deprel == 'conj' and h is not t and h.id == t.id - 1 and t.upos == h.upos == 'NOUN' and \
+                    len(t.form) == len(h.form) == 1 and not any(k.deprel == 'cc' for k in kids[t.id]):
+                t.head, t.deprel, h.head, h.deprel = (h.head.id if h.head is not h else 0), h.deprel, t.id, 'compound'
+
 def _misc(misc, key):
     for part in misc.split('|'):
         if part.startswith(key + '='):
@@ -59,7 +147,7 @@ def _misc(misc, key):
 
 def phrases(text):
     """文 (白文。句読点があればそこで区切る) → [[Token]] (句ごと。句読点の Token も含む)"""
-    entry = _pipeline()(text)
+    entry = _entry(text)
     out, current = [], []
     for t in entry[1:]:
         if t.id == 1 and current:
@@ -81,4 +169,4 @@ def phrases(text):
 
 def kaeriten(text):
     """UD-Kanbun の返り点付きの白文 (學而時習㆑之、不㆓亦說㆒乎。)"""
-    return ''.join(_pipeline()(text).kaeriten().split())
+    return ''.join(_entry(text).kaeriten().split())

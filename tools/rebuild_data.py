@@ -51,6 +51,8 @@ STEPS = [
     Step('ja', 'ja', ['build_ja_en.py'], [('JMdict_e.gz',) + JMDICT], ['ja-en.tsv']),
     Step('ja', 'ja', ['build_ja_transitivity.py'], [('JMdict_e.gz',) + JMDICT], ['ja-transitivity.tsv']),
     Step('ja', 'ja', ['build_ja_readings.py'], [('JMdict_e.gz',) + JMDICT], ['ja-readings.tsv']),
+    Step('ja', 'ja', ['build_ja_historical.py'], [_kaikki('ja', 'kaikki.org-dictionary-Japanese.jsonl', 'Japanese')],
+         ['ja/historical-kana.tsv']),
     Step('dic', 'la', ['build_wiktionary_dic.py'], [_kaikki('', 'kaikki-Latin.jsonl.gz', 'Latin')], ['wiktionary.sqlite']),
     Step('dic', 'la', ['build_latin_english.py'], [_kaikki('', 'kaikki-Latin.jsonl.gz', 'Latin')], ['la-en.tsv']),
     Step('dic', 'ar', ['build_arabic_dic.py'], [_kaikki('ar', 'kaikki-Arabic.jsonl.gz', 'Arabic')], ['ar/wiktionary.sqlite']),
