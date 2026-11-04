@@ -142,6 +142,8 @@ def _connect(m, used, nxt):
     if suffix == 'ん':
         return (m.prefix + Modern.volitional(m.last) if m.kind == 'verb' else m.text() + 'だろう') + 'か'
     if form == '連用' and not suffix:
+        if m.kind == 'adj':   # 形容詞の連用中止 (老いやすく、学は成りにくい)
+            return m.final('adverbial')
         if nxt is not None and nxt.kind == 'punct':
             return m.text()
         return m.final('te')

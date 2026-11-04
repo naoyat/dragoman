@@ -128,7 +128,8 @@ class KanbunTestCase(unittest.TestCase):
         self.assertReads('學不可以已。', '學は以て已むべからず。')
         self.assertReads('過猶不及。', '過ぎたるは猶ほ及ばざるがごとし。')
         self.assertReads('天時不如地利、地利不如人和。', '天の時は地の利に如かず、地の利は人の和に如かず。')
-        self.assertReads('少年易老、學難成。', '少年老い易く、學成り難し。')
+        self.assertReads('少年易老、學難成。', '少年老い易く、學成り難し。', '少年は老いやすく、学は成りにくい。')
+        self.assertReads('少年易老學難成。', '少年老い易く學成り難し。', '少年は老いやすく学は成りにくい。')
         self.assertReads('大器晩成。', '大器は晩成す。', '大器は晩成する。')
 
     def test_set_phrases(self):
