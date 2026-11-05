@@ -20,6 +20,7 @@ class LettersTestCase(unittest.TestCase):
     def test_labels(self):
         self.assertEqual(letters.unicode_label('ة'), 'teh marbuta')
         self.assertEqual(letters.unicode_label('ि'), '母音記号 i')
+        self.assertEqual(letters.unicode_label('ा'), '母音記号 ā')
         self.assertEqual(letters.unicode_label('᠎'), '母音分離記号')
 
     def test_forms(self):
@@ -34,6 +35,17 @@ class LettersTestCase(unittest.TestCase):
         self.assertEqual(letters._form(seq, 2), 'ر')                   # ZWNJ の後ろはつなげない
         self.assertEqual(letters.words_of('لڑکا کتاب پڑھتا ہے۔'), ['لڑکا', 'کتاب', 'پڑھتا', 'ہے'])   # ۔ は句点
         self.assertIn('lang="ur"', letters.part_html(['کتاب'], lang='ur'))   # 書体を言語で (ナスタアリーク体)
+
+    def test_native_names(self):
+        from dragoman.core import letter_names
+        self.assertEqual(letter_names.native('ar')('ب'), ('باء', 'bāʾ'))
+        self.assertEqual(letter_names.native('ur')('ے'), ('بڑی یے', 'baṛī ye'))
+        self.assertEqual(letter_names.native('ko')('\u11a8'), ('기역', 'giyeok'))     # 終声の ㄱ
+        self.assertEqual(letter_names.native('sa')('ि'), ('इकार', 'ikāra'))
+        self.assertEqual(letter_names.native('hi')('ा'), ('आ की मात्रा', 'ā kī mātrā'))
+        self.assertIsNone(letter_names.native('mn'))
+        self.assertIn('باء', letters.part_html(['كتاب'], lang='ar'))
+        self.assertEqual(letters.unicode_label('ढ'), 'ḍha')
 
     def test_part(self):
         self.assertEqual(letters.part_html(['Puella', 'rosam']), '')   # ラテン文字は図にしない

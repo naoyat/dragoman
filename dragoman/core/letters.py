@@ -9,7 +9,8 @@
 # 塊: 文字 + 後ろの結合記号 (母音記号・点・字形の選択の記号)。ヴィラーマ (्) の後ろの子音は同じ塊に (結合文字)。
 # ハングルの音節は字母 (初声・中声・終声) に分ける。凡例の字はアラビア文字・モンゴル文字などのつなげて書く文字なら
 # ゼロ幅接合子 (ZWJ) で語の中の形 (語頭・語中・語末) にする。字の名前は言語ごとの関数 (label) が無ければ
-# Unicode の名前から (ARABIC LETTER TEH MARBUTA → teh marbuta、DEVANAGARI VOWEL SIGN I → 母音記号 i)
+# Unicode の名前から (ARABIC LETTER TEH MARBUTA → teh marbuta、DEVANAGARI VOWEL SIGN I → 母音記号 i)。その言語での
+# 呼び名の表があれば (core/letter_names.py) 下に添える (ب → باء bāʾ、ㄱ → 기역 giyeok)
 #
 import html
 import re
@@ -39,6 +40,11 @@ def unicode_label(ch):
     """Unicode の名前からの字の名前 (ARABIC LETTER TEH MARBUTA → teh marbuta、DEVANAGARI SIGN VIRAMA → 記号 virama)"""
     if ch in SPECIAL:
         return SPECIAL[ch]
+    from .letter_names import IAST, MATRAS
+    if ch in IAST:   # デーヴァナーガリーは IAST で (ढ → ḍha。Unicode の名前の ddha でなく)
+        return IAST[ch]
+    if ch in MATRAS:
+        return '母音記号 ' + IAST[MATRAS[ch]]
     name = unicodedata.name(ch, '')
     for script in SCRIPTS:
         if name.startswith(script + ' '):
@@ -91,8 +97,17 @@ def wanted(word):
     return bool(COMPLEX.search(word))
 
 
-def word_html(word, label=None):
-    """語の図: 塊ごとに色を変えた語と、同じ色の凡例 (塊の字と、部品ごとの字と名前)"""
+def _native_html(native, ch):
+    """その言語での字の呼び名 (呼び名の字と転写: باء bāʾ)"""
+    found = native(ch) if native else None
+    if not found:
+        return ''
+    script, roman = found
+    return '<span class="ln"><bdi>%s</bdi> %s</span>' % (html.escape(script), html.escape(roman))
+
+
+def word_html(word, label=None, native=None):
+    """語の図: 塊ごとに色を変えた語と、同じ色の凡例 (塊の字と、部品ごとの字と名前、その言語での呼び名)"""
     label = label or (lambda ch, w: unicode_label(ch))
     seq = clusters(word)
     colored = ''.join('<span class="l%d">%s</span>' % (k % COLORS, html.escape(c)) for k, c in enumerate(seq))
@@ -100,10 +115,11 @@ def word_html(word, label=None):
     for k, c in enumerate(seq):
         parts = _parts(c)
         if len(parts) == 1:   # 1字の塊は名前だけ
-            names = '<span class="lp">%s</span>' % html.escape(label(parts[0], word))
+            names = '<span class="lp">%s</span>%s' % (html.escape(label(parts[0], word)), _native_html(native, parts[0]))
         else:
-            names = ''.join('<span class="lp"><span class="lc">%s</span>%s</span>'
-                            % (html.escape(_carrier(p)), html.escape(label(p, word))) for p in parts)
+            names = ''.join('<span class="lp"><span class="lc">%s</span>%s</span>%s'
+                            % (html.escape(_carrier(p)), html.escape(label(p, word)), _native_html(native, p))
+                            for p in parts)
         form = _carrier(c) if unicodedata.category(c[0]).startswith('M') else _form(seq, k)
         cells.append('<span class="lk l%d"><span class="lf">%s</span>%s</span>' % (k % COLORS, html.escape(form), names))
     vertical = ' lv' if MONGOLIAN.search(word) else ''
@@ -139,5 +155,7 @@ def part_html(words, label=None, lang=''):
             seen.append(w)
     if not seen:
         return ''
+    from .letter_names import native
+    names = native(lang)
     return ('<div class="part letters"%s><div class="ttl">文字の図 (色は語の中の文字と対応。◌・ـ は前の字に付く記号)</div>'
-            '<div class="lws">%s</div></div>' % (' lang="%s"' % lang if lang else '', ''.join(word_html(w, label) for w in seen)))
+            '<div class="lws">%s</div></div>' % (' lang="%s"' % lang if lang else '', ''.join(word_html(w, label, names) for w in seen)))

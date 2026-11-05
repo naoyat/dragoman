@@ -785,6 +785,8 @@ pre.rendered { white-space: pre-wrap; font-size: .85rem; }
 .letters .lf { font-size: 1.4rem; line-height: 1.5; }
 .letters .lp { display: flex; gap: .25rem; align-items: baseline; font-size: .68rem; font-family: sans-serif; white-space: nowrap; }
 .letters .lc { font-size: 1rem; font-family: serif; }
+.letters .ln { font-size: .68rem; color: var(--sub); white-space: nowrap; }   /* その言語での字の呼び名 */
+.letters .ln bdi { font-size: .85rem; font-family: serif; }
 .letters .lws:has(.lv) { display: flex; flex-wrap: wrap; gap: .5rem 1.6rem; }
 .letters .lv .lword, .letters .lv .lf, .letters .lv .lc { writing-mode: vertical-lr;
                font-family: "Noto Sans Mongolian", "Mongolian Baiti", sans-serif; }
