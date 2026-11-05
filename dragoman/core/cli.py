@@ -283,7 +283,7 @@ def letters_part(command, analysis, line):
         words, label = command.letters(analysis)
     else:
         words, label = letters.words_of(line), None
-    return letters.part_html(words, label)
+    return letters.part_html(words, label, command.lang)   # 言語で書体を選ぶ (ウルドゥー語はナスタアリーク体)
 
 
 def kana_text(command, analysis, options):

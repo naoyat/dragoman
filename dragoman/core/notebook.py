@@ -796,6 +796,10 @@ pre.rendered { white-space: pre-wrap; font-size: .85rem; }
 .letters .l3 { color: #ef6c00; } .letters .l4 { color: #6a1b9a; } .letters .l5 { color: #00838f; }
 .letters .l6 { color: #ad1457; } .letters .l7 { color: #5d4037; }
 body.no-letters .letters { display: none; }
+/* 語と凡例を同じ書体に (字ごとの代わりのフォントの選び方で語と凡例の書体が分かれないように) */
+.letters[lang=ar] .lword, .letters[lang=ar] .lf, .letters[lang=ar] .lc,
+.letters[lang=fa] .lword, .letters[lang=fa] .lf, .letters[lang=fa] .lc { font-family: "Geeza Pro", "Noto Naskh Arabic", serif; }
+.letters[lang=ur] .lword, .letters[lang=ur] .lf, .letters[lang=ur] .lc { font-family: "Noto Nastaliq Urdu", serif; line-height: 2.2; }
 /* モンゴル語の伝統的なモンゴル文字 (mongolian/note.py): 縦書き (列は左から右へ) と、キリル文字との対照の表 */
 .mongol .mv { writing-mode: vertical-lr; font-family: "Noto Sans Mongolian", "Mongolian Baiti", sans-serif;
               font-size: 1.6rem; line-height: 2.1; max-height: 11em; overflow-wrap: normal; }

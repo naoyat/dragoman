@@ -74,7 +74,7 @@ def _parts(cluster):
 def _joins_left(cluster):
     base = cluster[0]
     return bool(JOINING.match(base)) and base not in RIGHT_JOINING and base not in '᠎  ' and \
-        unicodedata.category(base).startswith('L')
+        unicodedata.category(base).startswith('L') and '‌' not in cluster   # ZWNJ の後ろはつなげない (می‌روم)
 
 
 def _form(seq, k):
@@ -104,7 +104,7 @@ def word_html(word, label=None):
         else:
             names = ''.join('<span class="lp"><span class="lc">%s</span>%s</span>'
                             % (html.escape(_carrier(p)), html.escape(label(p, word))) for p in parts)
-        form = _carrier(c) if len(c) == 1 else _form(seq, k)
+        form = _carrier(c) if unicodedata.category(c[0]).startswith('M') else _form(seq, k)
         cells.append('<span class="lk l%d"><span class="lf">%s</span>%s</span>' % (k % COLORS, html.escape(form), names))
     vertical = ' lv' if MONGOLIAN.search(word) else ''
     direction = ' dir="rtl"' if RTL.search(word) else ''
@@ -119,7 +119,7 @@ def _carrier(p):
     return ('ـ' if ARABIC_MARK.match(p) else '◌') + p
 
 
-WORD = re.compile('[^\\s.,;:!?"“”«»()\\[\\]、。،؛؟।॥་།]+')
+WORD = re.compile('[^\\s.,;:!?"“”«»()\\[\\]、。،؛؟۔।॥་།]+')
 BIDI = re.compile('[‎‏‪-‮⁦-⁩]')   # 方向の制御の文字 (図に載せない)
 RTL = re.compile('[֐-ࣿיִ-﷿ﹰ-﻿]')
 ARABIC_MARK = re.compile('[ؐ-ًؚ-ٰٟۖ-ۭ࣓-ࣿ]')
@@ -130,7 +130,7 @@ def words_of(text):
     return WORD.findall(text)
 
 
-def part_html(words, label=None):
+def part_html(words, label=None, lang=''):
     """文の「文字の図」の部品 (図にする文字の語だけ。同じ語は1度)"""
     seen = []
     for w in words:
@@ -139,5 +139,5 @@ def part_html(words, label=None):
             seen.append(w)
     if not seen:
         return ''
-    return ('<div class="part letters"><div class="ttl">文字の図 (色は語の中の文字と対応。◌・ـ は前の字に付く記号)</div>'
-            '<div class="lws">%s</div></div>' % ''.join(word_html(w, label) for w in seen))
+    return ('<div class="part letters"%s><div class="ttl">文字の図 (色は語の中の文字と対応。◌・ـ は前の字に付く記号)</div>'
+            '<div class="lws">%s</div></div>' % (' lang="%s"' % lang if lang else '', ''.join(word_html(w, label) for w in seen)))

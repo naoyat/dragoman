@@ -28,6 +28,13 @@ class LettersTestCase(unittest.TestCase):
         self.assertEqual(letters._form(seq, 1), '‍ت‍')     # 語中
         self.assertEqual(letters._form(seq, 3), 'ب')                 # ا は後ろにつながらない
 
+    def test_persian_urdu(self):
+        seq = letters.clusters('می\u200cروم')                          # ZWNJ は前の字の塊に
+        self.assertEqual(seq[1], 'ی\u200c')
+        self.assertEqual(letters._form(seq, 2), 'ر')                   # ZWNJ の後ろはつなげない
+        self.assertEqual(letters.words_of('لڑکا کتاب پڑھتا ہے۔'), ['لڑکا', 'کتاب', 'پڑھتا', 'ہے'])   # ۔ は句点
+        self.assertIn('lang="ur"', letters.part_html(['کتاب'], lang='ur'))   # 書体を言語で (ナスタアリーク体)
+
     def test_part(self):
         self.assertEqual(letters.part_html(['Puella', 'rosam']), '')   # ラテン文字は図にしない
         html = letters.part_html(['⁧كتاب⁩', 'كتاب'])            # 方向の制御の文字は除き、同じ語は1度
