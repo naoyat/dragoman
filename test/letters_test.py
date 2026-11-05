@@ -51,6 +51,17 @@ class LettersTestCase(unittest.TestCase):
         self.assertIn('باء', letters.part_html(['كتاب'], lang='ar'))
         self.assertEqual(letters.unicode_label('ढ'), 'ḍha')
 
+    def test_greek_cyrillic(self):
+        from dragoman.core import letter_names
+        self.assertEqual(letters._parts('ἄ'), ['α', '\u0313', '\u0301'])   # 合成済みの字は分解して
+        self.assertEqual(letters.unicode_label('Ω'), '大文字 omega')
+        self.assertEqual(letter_names.native('grc')('\u0314'), ('δασεῖα', 'daseia (有気記号)'))
+        self.assertEqual(letter_names.native('ru')('Ь'), ('мягкий знак', 'myagkiy znak'))   # 大文字も小文字の表で
+        self.assertEqual(letter_names.native('mn')('ө', 'өгсөн'), ('ө', 'ö'))             # モンゴル語のキリル文字
+        self.assertEqual(letter_names.native('mn')('л', 'ном'), ('эл', 'el'))
+        self.assertIn('final sigma', letters.part_html(['λόγος']))   # ギリシア文字も図に
+        self.assertEqual(letters.part_html(['Puella']), '')
+
     def test_part(self):
         self.assertEqual(letters.part_html(['Puella', 'rosam']), '')   # ラテン文字は図にしない
         html = letters.part_html(['⁧كتاب⁩', 'كتاب'])            # 方向の制御の文字は除き、同じ語は1度

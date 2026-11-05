@@ -145,9 +145,46 @@ MONGOLIAN_FRONT = {'ᠬ': ('ᠬᠡ', 'ke (кэ)'), 'ᠭ': ('ᠭᠡ', 'ge (гэ)'
 
 
 def _mongolian(ch, word=''):
+    if ch.lower() in MONGOLIAN_CYRILLIC and not ('\u1800' <= ch <= '\u18af'):   # キリル文字の語
+        return MONGOLIAN_CYRILLIC[ch.lower()]
     if ch in MONGOLIAN_FRONT and word and not any(c in word for c in 'ᠠᠣᠤ'):
         return MONGOLIAN_FRONT[ch]
     return MONGOLIAN.get(ch)
+
+# ギリシア文字 (古典ギリシア語の呼び名) と、アクセント・気息記号 (分解した結合記号)
+GREEK = {
+    'α': ('ἄλφα', 'alpha'), 'β': ('βῆτα', 'bēta'), 'γ': ('γάμμα', 'gamma'), 'δ': ('δέλτα', 'delta'),
+    'ε': ('ἒ ψιλόν', 'e psilon'), 'ζ': ('ζῆτα', 'zēta'), 'η': ('ἦτα', 'ēta'), 'θ': ('θῆτα', 'thēta'), 'ι': ('ἰῶτα', 'iōta'),
+    'κ': ('κάππα', 'kappa'), 'λ': ('λάμβδα', 'lambda'), 'μ': ('μῦ', 'mu'), 'ν': ('νῦ', 'nu'), 'ξ': ('ξῖ', 'xi'),
+    'ο': ('ὂ μικρόν', 'o mikron'), 'π': ('πῖ', 'pi'), 'ρ': ('ῥῶ', 'rhō'), 'σ': ('σῖγμα', 'sigma'),
+    'ς': ('σῖγμα τελικόν', 'sigma telikon'), 'τ': ('ταῦ', 'tau'), 'υ': ('ὖ ψιλόν', 'u psilon'), 'φ': ('φῖ', 'phi'),
+    'χ': ('χῖ', 'chi'), 'ψ': ('ψῖ', 'psi'), 'ω': ('ὦ μέγα', 'ō mega'),
+    '\u0301': ('ὀξεῖα', 'oxeia (鋭アクセント)'), '\u0300': ('βαρεῖα', 'bareia (重アクセント)'),
+    '\u0342': ('περισπωμένη', 'perispōmenē (曲アクセント)'), '\u0313': ('ψιλή', 'psilē (無気記号)'),
+    '\u0314': ('δασεῖα', 'daseia (有気記号)'), '\u0345': ('ὑπογεγραμμένη', 'hypogegrammenē (下書きのイオタ)'),
+    '\u0308': ('διαλυτικά', 'dialytika (分音記号)'),
+}
+RUSSIAN = {
+    'а': ('а', 'a'), 'б': ('бэ', 'be'), 'в': ('вэ', 've'), 'г': ('гэ', 'ge'), 'д': ('дэ', 'de'), 'е': ('е', 'ye'),
+    'ё': ('ё', 'yo'), 'ж': ('жэ', 'zhe'), 'з': ('зэ', 'ze'), 'и': ('и', 'i'), 'й': ('и краткое', 'i kratkoye'),
+    'к': ('ка', 'ka'), 'л': ('эль', 'el'), 'м': ('эм', 'em'), 'н': ('эн', 'en'), 'о': ('о', 'o'), 'п': ('пэ', 'pe'),
+    'р': ('эр', 'er'), 'с': ('эс', 'es'), 'т': ('тэ', 'te'), 'у': ('у', 'u'), 'ф': ('эф', 'ef'), 'х': ('ха', 'kha'),
+    'ц': ('цэ', 'tse'), 'ч': ('че', 'che'), 'ш': ('ша', 'sha'), 'щ': ('ща', 'shcha'), 'ъ': ('твёрдый знак', 'tvyordyy znak'),
+    'ы': ('ы', 'y'), 'ь': ('мягкий знак', 'myagkiy znak'), 'э': ('э', 'e'), 'ю': ('ю', 'yu'), 'я': ('я', 'ya'),
+    '\u0301': ('знак ударения', 'znak udareniya (アクセント記号)'),
+}
+# モンゴル語のキリル文字 (ロシア語の字に ө・ү を足し、呼び名はモンゴル語の)
+MONGOLIAN_CYRILLIC = dict(RUSSIAN)
+MONGOLIAN_CYRILLIC.update({
+    'л': ('эл', 'el'), 'й': ('хагас и', 'khagas i'), 'ө': ('ө', 'ö'), 'ү': ('ү', 'ü'), 'ф': ('фэ', 'fe'),
+    'х': ('хэ', 'khe'), 'ч': ('чэ', 'che'), 'ъ': ('хатуугийн тэмдэг', 'khatuugiin temdeg'),
+    'ь': ('зөөлний тэмдэг', 'zööln temdeg'), 'е': ('йе', 'ye'), 'ё': ('йо', 'yo'), 'ю': ('йү', 'yü'), 'я': ('йа', 'ya'),
+})
+
+
+def _lower_table(table):
+    return lambda ch, word='': table.get(ch.lower())
+
 
 TABLES = {'ar': ARABIC, 'fa': PERSIAN, 'ur': URDU, 'he': HEBREW, 'bo': TIBETAN}
 FUNCTIONS = {'ko': _korean, 'sa': _sanskrit, 'hi': _hindi, 'mn': _mongolian}
@@ -156,6 +193,10 @@ FUNCTIONS = {'ko': _korean, 'sa': _sanskrit, 'hi': _hindi, 'mn': _mongolian}
 def native(lang):
     """言語の字の呼び名の関数 ((字, 語) → (呼び名の字, 転写) / None。語は母音調和で呼び名の変わる字のため)。
     呼び名の表の無い言語は None"""
+    if lang in ('grc', 'el'):
+        return _lower_table(GREEK)
+    if lang == 'ru':
+        return _lower_table(RUSSIAN)
     if lang in TABLES:
         table = TABLES[lang]
         return lambda ch, word='': table.get(ch)

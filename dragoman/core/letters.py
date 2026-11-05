@@ -17,21 +17,24 @@ import re
 import unicodedata
 
 ZWJ = '‍'
-# 図にする文字 (ラテン文字・キリル文字・ギリシア文字・漢字・かなは図にしない)
-COMPLEX = re.compile('[֐-ࣿऀ-෿฀-࿿က-႟ᄀ-ᇿ᠀-᢯'
-                     '가-힯יִ-﷿ﹰ-﻿]')
+# 図にする文字 (ラテン文字・漢字・かなは図にしない)
+COMPLEX = re.compile('[Ͱ-ϿЀ-ӿἀ-῿֐-ࣿऀ-෿฀-࿿က-႟'
+                     'ᄀ-ᇿ᠀-᢯가-힯יִ-﷿ﹰ-﻿]')
 # つなげて書く文字 (凡例の字を語の中の形にする): アラビア文字・シリア文字・ンコ文字・モンゴル文字
 JOINING = re.compile('[؀-ࣿ܀-ݏ߀-߿᠀-᢯ﭐ-﷿ﹰ-﻿]')
 # 右 (前) の字にだけつながる字 (後ろの字につながらない)
-RIGHT_JOINING = set('اأإآٱدذرزوؤةژڈڑےۀەۇۆۈۋڕۆۊۉآأإا')
+RIGHT_JOINING = set('اأإآٱدذرزوؤةژڈڑےۀەۇۆۈۋڕۊۉ')
 VIRAMAS = set('्্੍્୍்్್്්ฺ྄္')
 MONGOLIAN = re.compile('[᠀-᢯]')
 COLORS = 8
 # Unicode の名前の部分 → 日本語の添え書き
-KINDS = [('VOWEL SIGN ', '母音記号 '), ('SUBJOINED LETTER ', '下に付く '), ('LETTER ', ''), ('POINT ', '点 '),
-         ('SIGN ', '記号 '), ('MARK ', '記号 '), ('CHOSEONG ', '初声 '), ('JUNGSEONG ', '中声 '), ('JONGSEONG ', '終声 ')]
-SCRIPTS = ('ARABIC', 'HEBREW', 'SYRIAC', 'THAANA', 'DEVANAGARI', 'BENGALI', 'GURMUKHI', 'GUJARATI', 'ORIYA', 'TAMIL',
-           'TELUGU', 'KANNADA', 'MALAYALAM', 'SINHALA', 'THAI', 'LAO', 'TIBETAN', 'MYANMAR', 'MONGOLIAN', 'HANGUL')
+KINDS = [('SMALL LETTER ', ''), ('CAPITAL LETTER ', '大文字 '), ('VOWEL SIGN ', '母音記号 '),
+         ('SUBJOINED LETTER ', '下に付く '), ('LETTER ', ''), ('POINT ', '点 '), ('SIGN ', '記号 '), ('MARK ', '記号 '),
+         ('CHOSEONG ', '初声 '), ('JUNGSEONG ', '中声 '), ('JONGSEONG ', '終声 ')]
+SCRIPTS = ('GREEK', 'CYRILLIC', 'COMBINING GREEK', 'COMBINING', 'ARABIC', 'HEBREW', 'SYRIAC', 'THAANA', 'DEVANAGARI',
+           'BENGALI', 'GURMUKHI', 'GUJARATI', 'ORIYA', 'TAMIL', 'TELUGU', 'KANNADA', 'MALAYALAM', 'SINHALA', 'THAI', 'LAO',
+           'TIBETAN', 'MYANMAR', 'MONGOLIAN', 'HANGUL')
+JOINERS = '‌‍᠋᠌᠍᠏'   # 前の字に付ける制御の字 (ZWNJ・ZWJ・字形の選択の記号)
 SPECIAL = {'‌': 'ZWNJ (つなげない)', '‍': 'ZWJ (つなげる)', '᠎': '母音分離記号', ' ': '狭い空白',
            '᠋': '字形の選択 1', '᠌': '字形の選択 2', '᠍': '字形の選択 3', '᠏': '字形の選択 4'}
 
@@ -61,7 +64,7 @@ def clusters(word):
     out = []
     for ch in word:
         cat = unicodedata.category(ch)
-        attach = out and (cat.startswith('M') or ch in '‌‍᠋᠌᠍᠏' or
+        attach = out and (cat.startswith('M') or ch in JOINERS or
                           out[-1][-1] in VIRAMAS)
         if attach:
             out[-1] += ch
@@ -71,10 +74,8 @@ def clusters(word):
 
 
 def _parts(cluster):
-    """塊の部品 (ハングルの音節は字母に)"""
-    if len(cluster) == 1 and '가' <= cluster <= '힣':
-        return list(unicodedata.normalize('NFD', cluster))
-    return list(cluster)
+    """塊の部品 (合成済みの字は分解して: ハングルの音節は字母に、ἄ は α + ̓ + ́、أ は ا + ٔ)"""
+    return list(unicodedata.normalize('NFD', cluster))
 
 
 def _joins_left(cluster):

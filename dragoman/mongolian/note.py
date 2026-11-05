@@ -41,8 +41,8 @@ def lines(analysis, options):
 
 
 def letters(analysis):
-    """文字の図に載せる語: 伝統文字の綴り (接尾辞は狭い空白の前後で別に) と、字の転写 (ᠬ は語の母音調和で q / k)"""
-    words = []
+    """文字の図に載せる語: キリル文字の語と伝統文字の綴り (接尾辞は狭い空白の前後で別に)、字の転写 (ᠬ は語の母音調和で q / k)"""
+    words = [w['cyrillic'] for w in _words(analysis)]   # キリル文字の語 (呼び名はモンゴル語の: бэ・ө・ү)
     for w in _words(analysis):
         words += [p for p in w['script'].replace(traditional.NNBSP, ' ').split(' ') if p]
 

@@ -702,8 +702,9 @@ TEMPLATE = r'''<!doctype html>
 <style>
 :root { --ink: #222; --sub: #666; --line: #ccc; --bg: #fff; --box: #f6f6f4;
         --nom: #1f5fbf; --acc: #222; --gen: #2e7d32; --abl: #a07000; --dat: #a0309a; --verb: #c62828; }
-body { font-family: "Gentium Plus", "Noto Serif", "Times New Roman", "Noto Serif Hebrew", "Noto Naskh Arabic",
+body { --text-font: "Gentium Plus", "Noto Serif", "Times New Roman", "Noto Serif Hebrew", "Noto Naskh Arabic",
        "Noto Serif Devanagari", "Hiragino Mincho ProN", "Noto Serif CJK JP", serif;
+       font-family: var(--text-font);
        color: var(--ink); background: var(--bg); margin: 0 auto; max-width: 60rem; padding: 1rem; line-height: 1.5; }
 .controls { font-family: sans-serif; font-size: .8rem; color: var(--sub); border-bottom: 1px solid var(--line);
             padding-bottom: .5rem; margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: .25rem 1rem; }
@@ -784,9 +785,9 @@ pre.rendered { white-space: pre-wrap; font-size: .85rem; }
                border-radius: 4px; padding: .1rem .35rem; min-width: 2.2rem; }
 .letters .lf { font-size: 1.4rem; line-height: 1.5; }
 .letters .lp { display: flex; gap: .25rem; align-items: baseline; font-size: .68rem; font-family: sans-serif; white-space: nowrap; }
-.letters .lc { font-size: 1rem; font-family: serif; }
+.letters .lc { font-size: 1rem; font-family: var(--text-font); }
 .letters .ln { font-size: .68rem; color: var(--sub); white-space: nowrap; }   /* その言語での字の呼び名 */
-.letters .ln bdi { font-size: .85rem; font-family: serif; }
+.letters .ln bdi { font-size: .85rem; font-family: var(--text-font); }   /* 総称の serif は日本語の明朝 (全角のキリル文字) になる */
 .letters .lws:has(.lv) { display: flex; flex-wrap: wrap; gap: .5rem 1.6rem; }
 .letters .lv .lword, .letters .lv .lf, .letters .lv .lc { writing-mode: vertical-lr;
                font-family: "Noto Sans Mongolian", "Mongolian Baiti", sans-serif; }
