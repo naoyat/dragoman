@@ -97,9 +97,9 @@ def wanted(word):
     return bool(COMPLEX.search(word))
 
 
-def _native_html(native, ch):
+def _native_html(native, ch, word=''):
     """その言語での字の呼び名 (呼び名の字と転写: باء bāʾ)"""
-    found = native(ch) if native else None
+    found = native(ch, word) if native else None
     if not found:
         return ''
     script, roman = found
@@ -115,10 +115,10 @@ def word_html(word, label=None, native=None):
     for k, c in enumerate(seq):
         parts = _parts(c)
         if len(parts) == 1:   # 1字の塊は名前だけ
-            names = '<span class="lp">%s</span>%s' % (html.escape(label(parts[0], word)), _native_html(native, parts[0]))
+            names = '<span class="lp">%s</span>%s' % (html.escape(label(parts[0], word)), _native_html(native, parts[0], word))
         else:
             names = ''.join('<span class="lp"><span class="lc">%s</span>%s</span>%s'
-                            % (html.escape(_carrier(p)), html.escape(label(p, word)), _native_html(native, p))
+                            % (html.escape(_carrier(p)), html.escape(label(p, word)), _native_html(native, p, word))
                             for p in parts)
         form = _carrier(c) if unicodedata.category(c[0]).startswith('M') else _form(seq, k)
         cells.append('<span class="lk l%d"><span class="lf">%s</span>%s</span>' % (k % COLORS, html.escape(form), names))

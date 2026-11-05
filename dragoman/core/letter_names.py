@@ -140,13 +140,26 @@ MONGOLIAN_LETTERS = [('ᠠ', 'a', 'а'), ('ᠡ', 'e', 'э'), ('ᠢ', 'i', 'и'),
                      ('ᠽ', 'za', 'за'), ('ᠾ', 'ha', 'һа')]
 MONGOLIAN = {ch: (ch if roman in 'aeiouöü' else ch + 'ᠠ', '%s (%s)' % (roman, cyr)) for ch, roman, cyr in MONGOLIAN_LETTERS}
 MONGOLIAN['ᠩ'] = ('ᠠᠩ', 'ang (анг)')
+# 前舌母音の語 (a・o・u の無い語) の ᠬ・ᠭ は ke・ge (転写の k・g に合わせて)
+MONGOLIAN_FRONT = {'ᠬ': ('ᠬᠡ', 'ke (кэ)'), 'ᠭ': ('ᠭᠡ', 'ge (гэ)')}
 
-TABLES = {'ar': ARABIC, 'fa': PERSIAN, 'ur': URDU, 'he': HEBREW, 'bo': TIBETAN, 'mn': MONGOLIAN}
-FUNCTIONS = {'ko': _korean, 'sa': _sanskrit, 'hi': _hindi}
+
+def _mongolian(ch, word=''):
+    if ch in MONGOLIAN_FRONT and word and not any(c in word for c in 'ᠠᠣᠤ'):
+        return MONGOLIAN_FRONT[ch]
+    return MONGOLIAN.get(ch)
+
+TABLES = {'ar': ARABIC, 'fa': PERSIAN, 'ur': URDU, 'he': HEBREW, 'bo': TIBETAN}
+FUNCTIONS = {'ko': _korean, 'sa': _sanskrit, 'hi': _hindi, 'mn': _mongolian}
 
 
 def native(lang):
-    """言語の字の呼び名の関数 (字 → (呼び名の字, 転写) / None)。呼び名の表の無い言語は None"""
+    """言語の字の呼び名の関数 ((字, 語) → (呼び名の字, 転写) / None。語は母音調和で呼び名の変わる字のため)。
+    呼び名の表の無い言語は None"""
     if lang in TABLES:
-        return TABLES[lang].get
-    return FUNCTIONS.get(lang)
+        table = TABLES[lang]
+        return lambda ch, word='': table.get(ch)
+    f = FUNCTIONS.get(lang)
+    if f is None:
+        return None
+    return f if f is _mongolian else (lambda ch, word='': f(ch))
