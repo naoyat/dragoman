@@ -17,6 +17,7 @@
 #
 from . import script
 
+
 def _row(kana):
     """'キャキクケコ' のような行 → [a, i, u, e, o]"""
     out = []
@@ -47,12 +48,52 @@ CONSONANTS = set('kKgGNcCjJYwWqQRtTdDnpPbBmyrlvSzsh')
 # 有気音と無気音の組 (dd・ddh・tth …: 同じ子音の重なりとして「ッ」)
 PLAIN = {'K': 'k', 'G': 'g', 'C': 'c', 'J': 'j', 'W': 'w', 'Q': 'q', 'T': 't', 'D': 'd', 'P': 'p', 'B': 'b'}
 
-# 規則に合わない慣用の読み (SLP1 → カタカナ)
-WORDS = {
-    'oM': 'オン', 'AUM': 'オン', 'om': 'オン', 'hUM': 'ウン', 'svAhA': 'ソワカ', 'namaH': 'ノウマク', 'namo': 'ノウモ', 'vajra': 'バザラ',
-    'padme': 'ハンドメイ', 'BrUM': 'ボロン', 'Paw': 'ハッタ', 'samanta': 'サマンダ', 'budDAnAm': 'ボダナン',
-    'pArasaMgate': 'ハラソウギャテイ',
+# 規則に合わない慣用の読み (IAST → カタカナ)。真言ごとに
+MANTRA_WORDS = {
+    # よく出る語
+    'oṃ': 'オン', 'om': 'オン', 'hūṃ': 'ウン', 'svāhā': 'ソワカ', 'namaḥ': 'ノウマク', 'namo': 'ノウボウ',
+    'vajra': 'バザラ', 'samanta': 'サンマンダ', 'buddhānāṃ': 'ボダナン', 'phaṭ': 'ハッタ', 'bhrūṃ': 'ボロン',
+    # 光明真言: oṃ amogha vairocana mahāmudrā maṇi padma jvāla pravartaya hūṃ
+    #   → オン アボキャ ベイロシャノウ マカボダラ マニ ハンドマ ジンバラ ハラバリタヤ ウン
+    'amogha': 'アボキャ', 'vairocana': 'ベイロシャノウ', 'mahāmudrā': 'マカボダラ', 'padma': 'ハンドマ', 'padme': 'ハンドメイ',
+    'jvāla': 'ジンバラ', 'jvala': 'ジンバラ', 'pravartaya': 'ハラバリタヤ', 'pravarttaya': 'ハラバリタヤ',
+    # 不動明王 (慈救呪): namaḥ samanta vajrāṇāṃ caṇḍa mahāroṣaṇa sphoṭaya hūṃ trāṭ hāṃ māṃ
+    #   → ノウマク サンマンダ バザラダン センダ マカロシャダ ソワタヤ ウン タラタ カン マン
+    'vajrāṇāṃ': 'バザラダン', 'caṇḍa': 'センダ', 'mahāroṣaṇa': 'マカロシャダ', 'sphoṭaya': 'ソワタヤ', 'trāṭ': 'タラタ',
+    # 大日如来: (胎蔵) namaḥ samanta buddhānāṃ a vi ra hūṃ khaṃ、(金剛界) oṃ vajradhātu vaṃ
+    #   → ノウマク サンマンダ ボダナン ア ビ ラ ウン ケン、オン バザラダト バン
+    'khaṃ': 'ケン', 'vajradhātu': 'バザラダト',
+    # 阿弥陀: oṃ amṛta teje hara hūṃ → オン アミリタ テイゼイ カラ ウン
+    'amṛta': 'アミリタ', 'teje': 'テイゼイ',
+    # 薬師: oṃ huru huru caṇḍāli mātaṅgi svāhā → オン コロコロ センダリ マトウギ ソワカ
+    'huru': 'コロ', 'caṇḍāli': 'センダリ', 'mātaṅgi': 'マトウギ',
+    # 観音: oṃ ārolik svāhā → オン アロリキャ ソワカ。千手観音: oṃ vajradharma hrīḥ → オン バザラタラマ キリク
+    'ārolik': 'アロリキャ', 'vajradharma': 'バザラタラマ',
+    # 文殊: oṃ arapacana → オン アラハシャノウ
+    'arapacana': 'アラハシャノウ',
+    # 地蔵: oṃ ha ha ha vismaye svāhā → オン カカカ ビサンマエイ ソワカ
+    'vismaye': 'ビサンマエイ',
+    # 虚空蔵: namo ākāśagarbhāya oṃ ārya kamari mauli svāhā → ノウボウ アキャシャギャラバヤ オン アリ キャマリ ボリ ソワカ
+    'ākāśagarbhāya': 'アキャシャギャラバヤ', 'ārya': 'アリ', 'mauli': 'ボリ',
+    # 普賢: oṃ samayas tvaṃ → オン サンマヤ サトバン
+    'samayas': 'サンマヤ', 'tvaṃ': 'サトバン',
+    # 弥勒: oṃ maitreya svāhā → オン マイタレイヤ ソワカ
+    'maitreya': 'マイタレイヤ',
+    # 愛染: oṃ mahārāga vajroṣṇīṣa vajrasattva jaḥ hūṃ vaṃ hoḥ → オン マカラギャ バゾロウシュニシャ バザラサトバ ジャク ウン バン コク
+    'mahārāga': 'マカラギャ', 'vajroṣṇīṣa': 'バゾロウシュニシャ', 'vajrasattva': 'バザラサトバ', 'hoḥ': 'コク',
+    # 般若心経: gate gate pāragate pārasaṃgate bodhi svāhā → ギャテイ ギャテイ ハラギャテイ ハラソウギャテイ ボウジ ソワカ
+    'pārasaṃgate': 'ハラソウギャテイ',
 }
+
+
+def _key(slp1):
+    """表の鍵: 語末の m は ṃ と同じに (buddhānām = buddhānāṃ)"""
+    return slp1[:-1] + 'M' if slp1.endswith('m') else slp1
+
+
+WORDS = {_key(script.to_slp1(w)): kana for w, kana in MANTRA_WORDS.items()}
+WORDS[_key('AUM')] = 'オン'   # ॐ (vidyut は AUM に)
+
 
 def _syllables(slp1):
     """SLP1 の語 → 音節 (子音の列, 母音, 末尾の ṃ・ḥ) の列。語末の子音は母音 '' の音節に"""
@@ -96,8 +137,8 @@ def _mora(key, vowel):
 
 
 def _word(slp1):
-    if slp1 in WORDS:
-        return WORDS[slp1]
+    if _key(slp1) in WORDS:
+        return WORDS[_key(slp1)]
     out = []
     sylls = _syllables(slp1)
     for n, (cons, vowel, coda) in enumerate(sylls):

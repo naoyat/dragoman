@@ -62,6 +62,15 @@ class ShittanTestCase(unittest.TestCase):
                          'ギャテイ ギャテイ ハラギャテイ ハラソウギャテイ ボウジ ソワカ')
         self.assertEqual(reading('prajñā sarva dharma kṣa'), 'ハラジャ サラバ ダラマ キシャ')
 
+    def test_mantras(self):
+        from dragoman.sanskrit.shittan import reading
+        self.assertEqual(reading('oṃ amogha vairocana mahāmudrā maṇi padma jvāla pravartaya hūṃ'),   # 光明真言
+                         'オン アボキャ ベイロシャノウ マカボダラ マニ ハンドマ ジンバラ ハラバリタヤ ウン')
+        self.assertEqual(reading('namaḥ samanta vajrāṇāṃ caṇḍa mahāroṣaṇa sphoṭaya hūṃ trāṭ hāṃ māṃ'),   # 不動明王
+                         'ノウマク サンマンダ バザラダン センダ マカロシャダ ソワタヤ ウン タラタ カン マン')
+        self.assertEqual(reading('namaḥ samanta buddhānām a vi ra hūṃ khaṃ'),   # 語末の m も ṃ と同じに
+                         'ノウマク サンマンダ ボダナン ア ビ ラ ウン ケン')
+
 
 @unittest.skipUnless(HAVE_DATA, 'vidyut のデータかサンスクリットの辞書 (tools/build_sanskrit_dic.py) が無い')
 class MorphologyTestCase(unittest.TestCase):
