@@ -98,3 +98,26 @@ Wiktionary の訳語は一般の意味なので（śāri「チェスの駒」、
 * 般若心経（`samples/heart-sutra.sa.txt`）: evaṃ mayā śrutam → このように / 私 / 聞いた、na rūpaṃ na vedanā … → 色・受・想・行・識
   が無い、など。連声で語がつながった箇所（tasmācchāriputra、pṛthakśūnyatā、cakṣuḥśrotra…）はまだ分け損なう。
 
+
+## 悉曇文字（梵字）
+
+日本に伝わった悉曇文字（Unicode の Siddham）でも入力できます（Vidyut で SLP1 に変換）。悉曇文字の入力か `--siddham` なら、
+見出しに悉曇文字を添え、ノートの文字の図も悉曇文字で描きます（書体は macOS 付属の Noto Sans Siddham）。
+文字の図の呼び名は日本の字母の読み（ka → キャ、na → ナウ、ā の画 → 修行点、ṃ → 空点、ḥ → 涅槃点、ँ → 仰月点）。
+
+```
+echo "oṃ maṇi padme hūṃ" | python3 dragoman.py --lang=sa --siddham --kana --kana-reading=shittan
+  → oṃ maṇi padme hūm  (ॐ मणि पद्मे हूम् / 𑖌𑖽 𑖦𑖜𑖰 𑖢𑖟𑖿𑖦𑖸 𑖮𑖳𑖽)
+    カナ: オン マニ ハンドメイ ウン
+```
+
+`--kana-reading=shittan` は、カタカナ読みを日本の悉曇・真言の読み方にします（`dragoman/sanskrit/shittan.py`。
+既定の modern は発音どおり: オーム・フーム）。
+
+* 種字: hrīḥ → キリーク、trāḥ → タラーク、vaṃ → バン、hāṃ → カン、aḥ → アク、saḥ → サク。ṃ は「ン」、ḥ は「ク」。
+* ka・ga・ca・ja・śa の a は字母の読み（キャ・ギャ・シャ・ジャ）、e・o は「エイ・オウ」、有気音は無気音と同じ、v は b と同じ。
+* 子音の連なりは前の子音にも音節の母音を付けます（trā → タラ、sarva → サラバ、dharma → ダラマ）。鼻音 + 子音は「ン」。
+* 長音の「ー」は1音節の語（種字）だけ。真言の語は短く読みます（gate gate pāragate pārasaṃgate bodhi svāhā →
+  ギャテイ ギャテイ ハラギャテイ ハラソウギャテイ ボウジ ソワカ）。
+* 真言の読みは漢字音写を経た慣用なので、規則に合わない語は表で（oṃ → オン、hūṃ → ウン、svāhā → ソワカ、
+  namaḥ → ノウマク、vajra → バザラ、padme → ハンドメイ）。宗派・流派で読みの違う語もあります。

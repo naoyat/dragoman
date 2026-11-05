@@ -15,9 +15,9 @@ from dragoman.core import language
 from dragoman.core.Word import Word
 from . import compound, dictionary, morphology, script
 
-PUNCTUATION = {'।': 'period', '॥': 'period', '.': 'period', ',': 'comma', ';': 'comma', '?': 'question', '!': 'period'}
-TOKEN = re.compile(r"[ऀ-ॣ०-ॿ᳐-᳿'ऽ]+|[A-Za-zĀāĪīŪūṚṛṜṝḶḷṂṃḤḥṄṅÑñṬṭḌḍṆṇŚśṢṣ"
-                   r"̀́'’]+|[।॥.,;?!]")
+PUNCTUATION = {'।': 'period', '॥': 'period', '\U000115c2': 'period', '\U000115c3': 'period', '.': 'period', ',': 'comma', ';': 'comma', '?': 'question', '!': 'period'}
+TOKEN = re.compile(r"[ऀ-ॣ०-ॿ᳐-᳿'ऽ]+|[\U00011580-\U000115c0\U000115d8-\U000115dd]+|[A-Za-zĀāĪīŪūṚṛṜṝḶḷṂṃḤḥṄṅÑñṬṭḌḍṆṇŚśṢṣ"
+                   r"̀́'’]+|[।॥\U000115c2\U000115c3.,;?!]")
 
 
 def _root_items(root):
@@ -210,7 +210,9 @@ def analyze_sentence(surfaces):
     words = lookup_all(surfaces)
     word_details = [word.detail() for word in words]
     with language.using(SANSKRIT):
-        return common.analyze_words([w.surface for w in words], words, word_details, [])
+        analysis = common.analyze_words([w.surface for w in words], words, word_details, [])
+    analysis.tokens = list(surfaces)   # 入力のままの語 (悉曇文字の見出し・悉曇の読みに)
+    return analysis
 
 
 def analyze_text(text):

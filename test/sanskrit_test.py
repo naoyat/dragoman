@@ -40,6 +40,28 @@ class ScriptTestCase(unittest.TestCase):
     def test_danda_does_not_make_iast_devanagari(self):
         self.assertEqual(script.to_slp1('yadā ।'), 'yadA ।')
 
+    def test_siddham(self):
+        om = '\U0001158c\U000115bd'   # 悉曇文字の oṃ
+        self.assertTrue(script.is_siddham(om))
+        self.assertEqual(script.to_slp1(om), 'oM')
+        self.assertEqual(script.siddham('hrIH'), '\U000115ae\U000115bf\U000115a8\U000115b1\U000115be')
+
+
+@unittest.skipUnless(HAVE_VIDYUT, 'vidyut が無い')
+class ShittanTestCase(unittest.TestCase):
+    """日本の悉曇 (梵字) の読み (sanskrit/shittan.py)"""
+    def test_seed_syllables(self):
+        from dragoman.sanskrit.shittan import reading
+        self.assertEqual(reading('hrīḥ trāḥ vaṃ hāṃ aḥ saḥ'), 'キリーク タラーク バン カン アク サク')
+        self.assertEqual(reading('ॐ oṃ hūṃ'), 'オン オン ウン')
+        self.assertEqual(reading('\U0001158c\U000115bd'), 'オン')   # 悉曇文字でも
+
+    def test_mantra_words(self):
+        from dragoman.sanskrit.shittan import reading
+        self.assertEqual(reading('gate gate pāragate pārasaṃgate bodhi svāhā'),
+                         'ギャテイ ギャテイ ハラギャテイ ハラソウギャテイ ボウジ ソワカ')
+        self.assertEqual(reading('prajñā sarva dharma kṣa'), 'ハラジャ サラバ ダラマ キシャ')
+
 
 @unittest.skipUnless(HAVE_DATA, 'vidyut のデータかサンスクリットの辞書 (tools/build_sanskrit_dic.py) が無い')
 class MorphologyTestCase(unittest.TestCase):

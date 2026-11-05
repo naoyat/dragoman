@@ -105,6 +105,9 @@ LANGUAGE = {
         Option('buddhist', help='仏典の語彙 (漢訳語: rūpa → 色、prajñā → 般若) を使う\n'
                                 '(既定は文章に bodhisattva, śāriputra, prajñāpāramitā などがあれば使う)'),
         Option('no-buddhist', help='仏典の語彙を使わない'),
+        Option('siddham', help='悉曇文字 (梵字) も表示する (見出しとノートの文字の図。悉曇文字の入力なら既定で)'),
+        Option('kana-reading', value='STYLE', help='カタカナ読み: modern (既定。発音どおり: オーム・フーム) / shittan\n'
+                                                 '(日本の悉曇・真言の読み: オン・ウン・キリーク・ソワカ)'),
     ),
     'grc': (   # 古典ギリシア語
         Option('pron', value='PRON', help='音読の発音: attic (古典期アッティカ式。既定) / modern (現代ギリシア語式)'),

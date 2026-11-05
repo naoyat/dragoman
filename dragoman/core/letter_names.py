@@ -102,7 +102,36 @@ def _devanagari_roman(ch):
     return IAST.get(ch, '')
 
 
+# 悉曇文字 (梵字) の字母の日本の読み (IAST → 読み)。ka の a は「キャ」、na は「ナウ」(悉曇の字母表の読み)
+SHITTAN = {'a': 'ア', 'ā': 'アー', 'i': 'イ', 'ī': 'イー', 'u': 'ウ', 'ū': 'ウー', 'ṛ': 'キリ', 'ṝ': 'キリー',
+           'ḷ': 'リョ', 'ḹ': 'リョー', 'e': 'エイ', 'ai': 'アイ', 'o': 'オウ', 'au': 'アウ',
+           'ka': 'キャ', 'kha': 'キャ', 'ga': 'ギャ', 'gha': 'ギャ', 'ṅa': 'ギャウ',
+           'ca': 'シャ', 'cha': 'シャ', 'ja': 'ジャ', 'jha': 'ジャ', 'ña': 'ジャ',
+           'ṭa': 'タ', 'ṭha': 'タ', 'ḍa': 'ダ', 'ḍha': 'ダ', 'ṇa': 'ダ',
+           'ta': 'タ', 'tha': 'タ', 'da': 'ダ', 'dha': 'ダ', 'na': 'ナウ',
+           'pa': 'ハ', 'pha': 'ハ', 'ba': 'バ', 'bha': 'バ', 'ma': 'マ',
+           'ya': 'ヤ', 'ra': 'ラ', 'la': 'ラ', 'va': 'バ', 'śa': 'シャ', 'ṣa': 'シャ', 'sa': 'サ', 'ha': 'カ'}
+# 悉曇文字の点 (日本の名前と読み): ā の画は修行点、ṃ は空点 (菩提点)、ḥ は涅槃点、ँ は仰月点
+SHITTAN_SIGNS = {'\U000115af': ('修行点', 'アー'), '\U000115bd': ('空点', 'ン'), '\U000115be': ('涅槃点', 'ク'),
+                 '\U000115bc': ('仰月点', 'ン')}
+
+
+def _siddham(ch):
+    """悉曇文字の字の日本の読み (\U0001158e → キャ、\U000115bd → 空点 ン)。同じ名前のデーヴァナーガリーの字から"""
+    if ch in SHITTAN_SIGNS:
+        return SHITTAN_SIGNS[ch]
+    try:
+        d = unicodedata.lookup('DEVANAGARI' + unicodedata.name(ch)[len('SIDDHAM'):])
+    except KeyError:
+        return None
+    roman = IAST.get(MATRAS.get(d, d), '')
+    reading = SHITTAN.get(roman)
+    return (reading, '') if reading else None
+
+
 def _sanskrit(ch):
+    if unicodedata.name(ch, '').startswith('SIDDHAM '):
+        return _siddham(ch)
     if ch in SANSKRIT_SIGNS:
         return SANSKRIT_SIGNS[ch]
     if ch in MATRAS:   # ि → इकार ikāra

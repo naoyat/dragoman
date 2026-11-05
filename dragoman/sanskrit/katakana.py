@@ -6,12 +6,16 @@
 #
 #   rāma → ラーマ、kṛṣṇa → クリシュナ、śiva → シヴァ、buddha → ブッダ、gaṅgā → ガンガー
 #
-# 入力は IAST (デーヴァナーガリーも可。sanskrit/script で SLP1 に)。長母音 (ā ī ū ṝ と e o) は「ー」、音節の ṛ・ḷ は「リ」、
+# --kana-reading=shittan なら日本の悉曇 (梵字) の伝統の読み (sanskrit/shittan.py: hrīḥ → キリーク、oṃ → オン)
+#
+# 入力は IAST (デーヴァナーガリー・悉曇文字も可。sanskrit/script で SLP1 に)。長母音 (ā ī ū ṝ と e o) は「ー」、音節の ṛ・ḷ は「リ」、
 # そり舌音 (ṭ ḍ ṇ ṣ) は t・d・n・ʃ に、有気音・つぶやきの ʰ・ʱ・ɦ (bh・dh …) は書かない、v は「ヴ」
 #
 from dragoman.core.kana import kana
 from . import phonology, script
 
+READINGS = ('modern', 'shittan')   # --kana-reading: 発音どおり (既定) / 日本の悉曇の読み
+READING = 'modern'
 RETROFLEX = {'ʈ': 't', 'ɖ': 'd', 'ɳ': 'n', 'ʂ': 'ʃ', 'ɭ': 'l', 'ɽ': 'r'}
 
 
@@ -36,6 +40,9 @@ def ipa(slp1):
 
 
 def katakana(word, **options):
+    if READING == 'shittan':
+        from .shittan import reading
+        return reading(word)
     phonemes = []
     for w in word.split():
         if phonemes:

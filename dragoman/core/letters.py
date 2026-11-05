@@ -19,12 +19,12 @@ import unicodedata
 ZWJ = '‍'
 # 図にする文字 (ラテン文字・漢字・かなは図にしない)
 COMPLEX = re.compile('[Ͱ-ϿЀ-ӿἀ-῿֐-ࣿऀ-෿฀-࿿က-႟'
-                     'ᄀ-ᇿ᠀-᢯가-힯יִ-﷿ﹰ-﻿]')
+                     'ᄀ-ᇿ᠀-᢯가-힯יִ-﷿ﹰ-﻿\U00011580-\U000115ff]')
 # つなげて書く文字 (凡例の字を語の中の形にする): アラビア文字・シリア文字・ンコ文字・モンゴル文字
 JOINING = re.compile('[؀-ࣿ܀-ݏ߀-߿᠀-᢯ﭐ-﷿ﹰ-﻿]')
 # 右 (前) の字にだけつながる字 (後ろの字につながらない)
 RIGHT_JOINING = set('اأإآٱدذرزوؤةژڈڑےۀەۇۆۈۋڕۊۉ')
-VIRAMAS = set('्্੍્୍்్್്්ฺ྄္')
+VIRAMAS = set('्্੍્୍்్್്්ฺ྄္' + '\U000115bf')
 MONGOLIAN = re.compile('[᠀-᢯]')
 COLORS = 8
 # Unicode の名前の部分 → 日本語の添え書き
@@ -33,7 +33,7 @@ KINDS = [('SMALL LETTER ', ''), ('CAPITAL LETTER ', '大文字 '), ('VOWEL SIGN 
          ('CHOSEONG ', '初声 '), ('JUNGSEONG ', '中声 '), ('JONGSEONG ', '終声 ')]
 SCRIPTS = ('GREEK', 'CYRILLIC', 'COMBINING GREEK', 'COMBINING', 'ARABIC', 'HEBREW', 'SYRIAC', 'THAANA', 'DEVANAGARI',
            'BENGALI', 'GURMUKHI', 'GUJARATI', 'ORIYA', 'TAMIL', 'TELUGU', 'KANNADA', 'MALAYALAM', 'SINHALA', 'THAI', 'LAO',
-           'TIBETAN', 'MYANMAR', 'MONGOLIAN', 'HANGUL')
+           'TIBETAN', 'MYANMAR', 'MONGOLIAN', 'HANGUL', 'SIDDHAM')
 JOINERS = '‌‍᠋᠌᠍᠏'   # 前の字に付ける制御の字 (ZWNJ・ZWJ・字形の選択の記号)
 SPECIAL = {'‌': 'ZWNJ (つなげない)', '‍': 'ZWJ (つなげる)', '᠎': '母音分離記号', ' ': '狭い空白',
            '᠋': '字形の選択 1', '᠌': '字形の選択 2', '᠍': '字形の選択 3', '᠏': '字形の選択 4'}
@@ -80,6 +80,11 @@ def unicode_label(ch):
         key = unicodedata.name(ch, '')[len(prefix):]
         if unicodedata.name(ch, '').startswith(prefix) and key in HANGUL:
             return kind + HANGUL[key][1]
+    if unicodedata.name(ch, '').startswith('SIDDHAM '):   # 悉曇文字は同じ名前のデーヴァナーガリーの字の IAST で (\U0001158e → ka)
+        try:
+            return unicode_label(unicodedata.lookup('DEVANAGARI' + unicodedata.name(ch)[len('SIDDHAM'):]))
+        except KeyError:
+            pass
     if ch in IAST:   # デーヴァナーガリーは IAST で (ढ → ḍha。Unicode の名前の ddha でなく)
         return IAST[ch]
     if ch in MATRAS:

@@ -703,7 +703,7 @@ TEMPLATE = r'''<!doctype html>
 :root { --ink: #222; --sub: #666; --line: #ccc; --bg: #fff; --box: #f6f6f4;
         --nom: #1f5fbf; --acc: #222; --gen: #2e7d32; --abl: #a07000; --dat: #a0309a; --verb: #c62828; }
 body { --text-font: "Gentium Plus", "Noto Serif", "Times New Roman", "Noto Serif Hebrew", "Noto Naskh Arabic",
-       "Noto Serif Devanagari", "Hiragino Mincho ProN", "Noto Serif CJK JP", serif;
+       "Noto Serif Devanagari", "Noto Sans Siddham", "Hiragino Mincho ProN", "Noto Serif CJK JP", serif;
        font-family: var(--text-font);
        color: var(--ink); background: var(--bg); margin: 0 auto; max-width: 60rem; padding: 1rem; line-height: 1.5; }
 .controls { font-family: sans-serif; font-size: .8rem; color: var(--sub); border-bottom: 1px solid var(--line);

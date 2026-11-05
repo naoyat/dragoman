@@ -79,6 +79,18 @@ class LettersTestCase(unittest.TestCase):
         self.assertIn('dir="rtl"', html)
         self.assertIn(' lv', letters.part_html(['ᠨᠣᠮ']))                 # モンゴル文字は縦に
 
+    def test_siddham(self):
+        hrih = '\U000115ae\U000115bf\U000115a8\U000115b1\U000115be'   # 悉曇文字の hrīḥ は1つの塊
+        self.assertEqual(letters.clusters(hrih), [hrih])
+        self.assertEqual(letters.unicode_label('\U0001158e'), 'ka')      # 同じ名前のデーヴァナーガリーの字の IAST
+        self.assertEqual(letters.unicode_label('\U000115b1'), '母音記号 ī')
+        from dragoman.core import letter_names
+        names = letter_names.native('sa')
+        self.assertEqual(names('\U0001158e'), ('キャ', ''))              # 日本の字母の読み
+        self.assertEqual(names('\U000115bd'), ('空点', 'ン'))
+        self.assertEqual(names('\U000115af'), ('修行点', 'アー'))
+        self.assertEqual(names('क'), ('ककार', 'kakāra'))                # デーヴァナーガリーはそのまま
+
 
 if __name__ == '__main__':
     unittest.main()
