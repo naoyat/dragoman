@@ -39,10 +39,20 @@ SPECIAL = {'‌': 'ZWNJ (つなげない)', '‍': 'ZWJ (つなげる)', '᠎': 
            '᠋': '字形の選択 1', '᠌': '字形の選択 2', '᠍': '字形の選択 3', '᠏': '字形の選択 4'}
 
 
+# Unicode の綴りの名前を慣用の名前に (λ: lamda → lambda、е: ie → ye、ӧ・ү …)。小文字で引く
+CONVENTIONAL = {
+    'λ': 'lambda', '\u0313': 'smooth breathing', '\u0314': 'rough breathing', '\u0342': 'circumflex',
+    '\u0345': 'iota subscript',
+    'е': 'ye', 'ё': 'yo', 'г': 'ge', 'х': 'kha', 'ы': 'yery', 'й': 'short i', 'ө': 'ö', 'ү': 'ü',
+}
+
+
 def unicode_label(ch):
     """Unicode の名前からの字の名前 (ARABIC LETTER TEH MARBUTA → teh marbuta、DEVANAGARI SIGN VIRAMA → 記号 virama)"""
     if ch in SPECIAL:
         return SPECIAL[ch]
+    if ch.lower() in CONVENTIONAL:
+        return ('大文字 ' if ch != ch.lower() else '') + CONVENTIONAL[ch.lower()]
     from .letter_names import IAST, MATRAS
     if ch in IAST:   # デーヴァナーガリーは IAST で (ढ → ḍha。Unicode の名前の ddha でなく)
         return IAST[ch]

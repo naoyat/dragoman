@@ -55,6 +55,9 @@ class LettersTestCase(unittest.TestCase):
         from dragoman.core import letter_names
         self.assertEqual(letters._parts('ἄ'), ['α', '\u0313', '\u0301'])   # 合成済みの字は分解して
         self.assertEqual(letters.unicode_label('Ω'), '大文字 omega')
+        self.assertEqual(letters.unicode_label('λ'), 'lambda')          # 慣用の名前 (Unicode は lamda)
+        self.assertEqual(letters.unicode_label('Е'), '大文字 ye')       # Unicode は ie
+        self.assertEqual(letters.unicode_label('\u0314'), 'rough breathing')
         self.assertEqual(letter_names.native('grc')('\u0314'), ('δασεῖα', 'daseia (有気記号)'))
         self.assertEqual(letter_names.native('ru')('Ь'), ('мягкий знак', 'myagkiy znak'))   # 大文字も小文字の表で
         self.assertEqual(letter_names.native('mn')('ө', 'өгсөн'), ('ө', 'ö'))             # モンゴル語のキリル文字
