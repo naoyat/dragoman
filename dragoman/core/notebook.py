@@ -794,6 +794,8 @@ pre.rendered { white-space: pre-wrap; font-size: .85rem; }
 .letters .lv .lkeys { flex-direction: column; flex-wrap: nowrap; gap: .15rem; }
 .letters .lv .lk { flex-direction: row; gap: .3rem; padding: 0 .3rem; min-width: 0; }
 .letters .lv .lf { font-size: 1.3rem; }
+.letters .lv .ln bdi { display: inline-block; writing-mode: vertical-lr; vertical-align: middle;
+                       font-family: "Noto Sans Mongolian", "Mongolian Baiti", sans-serif; font-size: 1rem; }
 .letters .l0 { color: #d32f2f; } .letters .l1 { color: #1565c0; } .letters .l2 { color: #2e7d32; }
 .letters .l3 { color: #ef6c00; } .letters .l4 { color: #6a1b9a; } .letters .l5 { color: #00838f; }
 .letters .l6 { color: #ad1457; } .letters .l7 { color: #5d4037; }

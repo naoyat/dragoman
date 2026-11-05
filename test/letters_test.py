@@ -43,7 +43,9 @@ class LettersTestCase(unittest.TestCase):
         self.assertEqual(letter_names.native('ko')('\u11a8'), ('기역', 'giyeok'))     # 終声の ㄱ
         self.assertEqual(letter_names.native('sa')('ि'), ('इकार', 'ikāra'))
         self.assertEqual(letter_names.native('hi')('ा'), ('आ की मात्रा', 'ā kī mātrā'))
-        self.assertIsNone(letter_names.native('mn'))
+        self.assertEqual(letter_names.native('mn')('ᠨ'), ('ᠨᠠ', 'na (на)'))   # 子音は a を付けた音節
+        self.assertEqual(letter_names.native('mn')('ᠥ'), ('ᠥ', 'ö (ө)'))
+        self.assertIsNone(letter_names.native('la'))
         self.assertIn('باء', letters.part_html(['كتاب'], lang='ar'))
         self.assertEqual(letters.unicode_label('ढ'), 'ḍha')
 

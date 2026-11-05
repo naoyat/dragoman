@@ -5,7 +5,7 @@
 #
 #   ar: ب → باء bāʾ    fa: ب → بِ be    ur: ب → بے be、ے → بڑی یے baṛī ye    he: ב → בית bet
 #   ko: ㄱ (初声・終声) → 기역 giyeok    sa: क → ककार kakāra、ि → इकार ikāra    hi: ि → इ की मात्रा i kī mātrā
-#   bo: ི → གི་གུ gi gu、ྱ → ཡ་བཏགས ya btags
+#   bo: ི → གི་གུ gi gu、ྱ → ཡ་བཏགས ya btags    mn: ᠨ → ᠨᠠ na (на)、ᠠ → ᠠ a (а)、ᠩ → ᠠᠩ ang (анг)
 #
 import unicodedata
 
@@ -130,7 +130,18 @@ def _korean(ch):
     return None
 
 
-TABLES = {'ar': ARABIC, 'fa': PERSIAN, 'ur': URDU, 'he': HEBREW, 'bo': TIBETAN}
+# モンゴル文字: 母音は字そのもの、子音は a を付けた音節 (字母表の呼び方: na・ba・qa …)。ᠩ は ang。
+# 呼び名は伝統文字の綴りと、転写 (キリル文字の書き方)
+MONGOLIAN_LETTERS = [('ᠠ', 'a', 'а'), ('ᠡ', 'e', 'э'), ('ᠢ', 'i', 'и'), ('ᠣ', 'o', 'о'), ('ᠤ', 'u', 'у'), ('ᠥ', 'ö', 'ө'),
+                     ('ᠦ', 'ü', 'ү'), ('ᠨ', 'na', 'на'), ('ᠪ', 'ba', 'ба'), ('ᠬ', 'qa', 'ха'), ('ᠭ', 'γa', 'га'),
+                     ('ᠮ', 'ma', 'ма'), ('ᠯ', 'la', 'ла'), ('ᠰ', 'sa', 'са'), ('ᠱ', 'ša', 'ша'), ('ᠲ', 'ta', 'та'),
+                     ('ᠳ', 'da', 'да'), ('ᠴ', 'ča', 'ча'), ('ᠵ', 'ǰa', 'жа'), ('ᠶ', 'ya', 'яа'), ('ᠷ', 'ra', 'ра'),
+                     ('ᠸ', 'wa', 'ва'), ('ᠫ', 'pa', 'па'), ('ᠹ', 'fa', 'фа'), ('ᠺ', 'ka', 'ка'), ('ᠼ', 'ca', 'ца'),
+                     ('ᠽ', 'za', 'за'), ('ᠾ', 'ha', 'һа')]
+MONGOLIAN = {ch: (ch if roman in 'aeiouöü' else ch + 'ᠠ', '%s (%s)' % (roman, cyr)) for ch, roman, cyr in MONGOLIAN_LETTERS}
+MONGOLIAN['ᠩ'] = ('ᠠᠩ', 'ang (анг)')
+
+TABLES = {'ar': ARABIC, 'fa': PERSIAN, 'ur': URDU, 'he': HEBREW, 'bo': TIBETAN, 'mn': MONGOLIAN}
 FUNCTIONS = {'ko': _korean, 'sa': _sanskrit, 'hi': _hindi}
 
 
