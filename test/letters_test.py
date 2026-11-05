@@ -18,7 +18,9 @@ class LettersTestCase(unittest.TestCase):
         self.assertEqual(letters._parts('학'), ['ᄒ', 'ᅡ', 'ᆨ'])  # ハングルは字母に
 
     def test_labels(self):
-        self.assertEqual(letters.unicode_label('ة'), 'teh marbuta')
+        self.assertEqual(letters.unicode_label('ة'), 'ta marbuta')        # 慣用の名前 (Unicode は teh marbuta)
+        self.assertEqual(letters.unicode_label('ھ'), 'do-chashmi he')    # Unicode は heh doachashmee
+        self.assertEqual(letters.unicode_label('འ'), "'a (a chung)")       # Unicode は -a
         self.assertEqual(letters.unicode_label('ि'), '母音記号 i')
         self.assertEqual(letters.unicode_label('ा'), '母音記号 ā')
         self.assertEqual(letters.unicode_label('᠎'), '母音分離記号')

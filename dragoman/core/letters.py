@@ -9,7 +9,7 @@
 # 塊: 文字 + 後ろの結合記号 (母音記号・点・字形の選択の記号)。ヴィラーマ (्) の後ろの子音は同じ塊に (結合文字)。
 # ハングルの音節は字母 (初声・中声・終声) に分ける。凡例の字はアラビア文字・モンゴル文字などのつなげて書く文字なら
 # ゼロ幅接合子 (ZWJ) で語の中の形 (語頭・語中・語末) にする。字の名前は言語ごとの関数 (label) が無ければ
-# Unicode の名前から (ARABIC LETTER TEH MARBUTA → teh marbuta、DEVANAGARI VOWEL SIGN I → 母音記号 i)。その言語での
+# 慣用の名前の表 (CONVENTIONAL: ة → ta marbuta、λ → lambda) か Unicode の名前から (DEVANAGARI VOWEL SIGN I → 母音記号 i)。その言語での
 # 呼び名の表があれば (core/letter_names.py) 下に添える (ب → باء bāʾ、ㄱ → 기역 giyeok)
 #
 import html
@@ -48,6 +48,21 @@ CONVENTIONAL = {
     'ח': 'ḥet', 'ט': 'ṭet', '\u05b0': '点 shva', '\u05b1': '点 ḥataf segol', '\u05b2': '点 ḥataf pataḥ',
     '\u05b3': '点 ḥataf qamats', '\u05b4': '点 ḥiriq', '\u05b7': '点 pataḥ', '\u05b9': '点 ḥolam',
     '\u05ba': '点 ḥolam ḥaser', '\u05bc': '点 dagesh',
+    # アラビア文字 (Unicode の綴り beh・jeem・teh marbuta → 慣用の ba・jim・ta marbuta。ペルシア語・ウルドゥー語の字は
+    # その言語の名前: keheh → kaf、heh doachashmee → do-chashmi he)
+    'ا': 'alif', 'ب': 'ba', 'ت': 'ta', 'ث': 'tha', 'ج': 'jim', 'ح': 'ḥa', 'خ': 'kha', 'د': 'dal', 'ذ': 'dhal',
+    'ر': 'ra', 'ز': 'zay', 'س': 'sin', 'ش': 'shin', 'ص': 'ṣad', 'ض': 'ḍad', 'ط': 'ṭa', 'ظ': 'ẓa', 'ع': 'ʿayn',
+    'غ': 'ghayn', 'ف': 'fa', 'ق': 'qaf', 'ك': 'kaf', 'ل': 'lam', 'م': 'mim', 'ن': 'nun', 'ه': 'ha', 'و': 'waw',
+    'ي': 'ya', 'ء': 'hamza', 'ة': 'ta marbuta', 'ى': 'alif maqsura', 'أ': 'alif with hamza above',
+    'إ': 'alif with hamza below', 'آ': 'alif madda', 'ؤ': 'waw with hamza', 'ئ': 'ya with hamza', 'ٱ': 'alif wasla',
+    'پ': 'pe', 'چ': 'che', 'ژ': 'zhe', 'ک': 'kaf', 'گ': 'gaf', 'ی': 'ye', 'ٹ': 'ṭe', 'ڈ': 'ḍal', 'ڑ': 'ṛe',
+    'ں': 'nun ghunna', 'ھ': 'do-chashmi he', 'ہ': 'gol he', 'ے': 'bari ye', 'ۓ': 'bari ye with hamza',
+    '\u064e': 'fatḥa', '\u064f': 'ḍamma', '\u0650': 'kasra', '\u064b': 'tanwin fatḥ', '\u064c': 'tanwin ḍamm',
+    '\u064d': 'tanwin kasr', '\u0652': 'sukun', '\u0651': 'shadda', '\u0654': 'hamza above',
+    '\u0653': 'madda above', '\u0670': 'dagger alif', '\u0640': 'tatwil',
+    # チベット文字 (Wylie の綴り: -a → 'a、vowel sign aa → long ā)
+    'འ': "'a (a chung)", '\u0f71': 'long ā (a chung below)', '\u0f84': 'virama (srog med)',
+    '\u0f7e': 'anusvara (rjes su nga ro)', '\u0f7f': 'visarga (rnam bcad)',
 }
 # ハングルの字母の名前 (Unicode の綴り KIYEOK・CIEUC → 改訂ローマ字の呼び名 giyeok・jieut。letter_names.HANGUL)
 JAMO_KINDS = [('HANGUL CHOSEONG ', '初声 '), ('HANGUL JUNGSEONG ', '中声 '), ('HANGUL JONGSEONG ', '終声 '),
@@ -55,7 +70,7 @@ JAMO_KINDS = [('HANGUL CHOSEONG ', '初声 '), ('HANGUL JUNGSEONG ', '中声 '),
 
 
 def unicode_label(ch):
-    """Unicode の名前からの字の名前 (ARABIC LETTER TEH MARBUTA → teh marbuta、DEVANAGARI SIGN VIRAMA → 記号 virama)"""
+    """字の英語の名前: 慣用の名前の表 (ة → ta marbuta) か、Unicode の名前から (DEVANAGARI SIGN VISARGA → 記号 visarga)"""
     if ch in SPECIAL:
         return SPECIAL[ch]
     if ch.lower() in CONVENTIONAL:
