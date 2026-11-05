@@ -44,7 +44,14 @@ CONVENTIONAL = {
     'λ': 'lambda', '\u0313': 'smooth breathing', '\u0314': 'rough breathing', '\u0342': 'circumflex',
     '\u0345': 'iota subscript',
     'е': 'ye', 'ё': 'yo', 'г': 'ge', 'х': 'kha', 'ы': 'yery', 'й': 'short i', 'ө': 'ö', 'ү': 'ü',
+    # ヘブライ文字 (呼び名の転写と同じ綴りに: het → ḥet、dagesh or mapiq → dagesh)
+    'ח': 'ḥet', 'ט': 'ṭet', '\u05b0': '点 shva', '\u05b1': '点 ḥataf segol', '\u05b2': '点 ḥataf pataḥ',
+    '\u05b3': '点 ḥataf qamats', '\u05b4': '点 ḥiriq', '\u05b7': '点 pataḥ', '\u05b9': '点 ḥolam',
+    '\u05ba': '点 ḥolam ḥaser', '\u05bc': '点 dagesh',
 }
+# ハングルの字母の名前 (Unicode の綴り KIYEOK・CIEUC → 改訂ローマ字の呼び名 giyeok・jieut。letter_names.HANGUL)
+JAMO_KINDS = [('HANGUL CHOSEONG ', '初声 '), ('HANGUL JUNGSEONG ', '中声 '), ('HANGUL JONGSEONG ', '終声 '),
+              ('HANGUL LETTER ', '')]
 
 
 def unicode_label(ch):
@@ -53,7 +60,11 @@ def unicode_label(ch):
         return SPECIAL[ch]
     if ch.lower() in CONVENTIONAL:
         return ('大文字 ' if ch != ch.lower() else '') + CONVENTIONAL[ch.lower()]
-    from .letter_names import IAST, MATRAS
+    from .letter_names import IAST, MATRAS, HANGUL
+    for prefix, kind in JAMO_KINDS:
+        key = unicodedata.name(ch, '')[len(prefix):]
+        if unicodedata.name(ch, '').startswith(prefix) and key in HANGUL:
+            return kind + HANGUL[key][1]
     if ch in IAST:   # デーヴァナーガリーは IAST で (ढ → ḍha。Unicode の名前の ddha でなく)
         return IAST[ch]
     if ch in MATRAS:

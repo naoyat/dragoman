@@ -58,6 +58,11 @@ class LettersTestCase(unittest.TestCase):
         self.assertEqual(letters.unicode_label('λ'), 'lambda')          # 慣用の名前 (Unicode は lamda)
         self.assertEqual(letters.unicode_label('Е'), '大文字 ye')       # Unicode は ie
         self.assertEqual(letters.unicode_label('\u0314'), 'rough breathing')
+        self.assertEqual(letters.unicode_label('ח'), 'ḥet')                      # ヘブライ文字
+        self.assertEqual(letters.unicode_label('\u05bc'), '点 dagesh')          # Unicode は dagesh or mapiq
+        self.assertEqual(letters.unicode_label('\u110c'), '初声 jieut')         # ハングル (Unicode は cieuc)
+        self.assertEqual(letters.unicode_label('\u11a8'), '終声 giyeok')
+        self.assertEqual(letters.unicode_label('\u1165'), '中声 eo')
         self.assertEqual(letter_names.native('grc')('\u0314'), ('δασεῖα', 'daseia (有気記号)'))
         self.assertEqual(letter_names.native('ru')('Ь'), ('мягкий знак', 'myagkiy znak'))   # 大文字も小文字の表で
         self.assertEqual(letter_names.native('mn')('ө', 'өгсөн'), ('ө', 'ö'))             # モンゴル語のキリル文字
