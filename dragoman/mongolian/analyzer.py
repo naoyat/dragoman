@@ -519,6 +519,8 @@ def analyze_sentence(surfaces):
     analysis.original = list(surfaces)
     from .literal import literal
     analysis.literal = literal(recs)
+    from .traditional import sentence
+    analysis.traditional = sentence(recs)   # 伝統的なモンゴル文字の綴り (語ごと)
     return analysis
 
 

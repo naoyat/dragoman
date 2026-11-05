@@ -23,6 +23,32 @@ class ScriptTestCase(unittest.TestCase):
         self.assertEqual(script.from_latin('Сайн байна уу'), 'Сайн байна уу')
 
 
+class TraditionalTestCase(unittest.TestCase):
+    # 伝統的なモンゴル文字 (mongolian/traditional.py): 転写との対応、規則での推定、接尾辞
+    def test_script(self):
+        from dragoman.mongolian import traditional as t
+        self.assertEqual(t.to_script('köbegün'), 'ᠬᠥᠪᠡᠭᠦᠨ')
+        self.assertEqual(t.to_script('aq-a'), 'ᠠᠬ\u180eᠠ')            # 語末の母音の前は母音分離記号
+        self.assertEqual(t.to_script('ökin-dür'), 'ᠥᠬᠢᠨ\u202fᠳᠦᠷ')    # 接尾辞の前は狭い空白
+        self.assertEqual(t.latin('ᠵᠠᠬᠢᠶ᠎ᠠ'), 'ǰaqiy-a')
+        self.assertEqual(t.latin('ᠪᠢᠴᠢᠬᠦ'), 'bičikü')                # 前舌母音の語の ᠬ は k
+        self.assertEqual(t._guess('урт'), 'urtu')                      # 語末の子音の連続に u
+        self.assertEqual(t._guess('бага'), 'baγ-a')
+        self.assertEqual(t._case('ger', 'Dat', False), 'ger-tür')       # r の後ろは -tür
+        self.assertEqual(t._case('mongγol', 'Dat', True), 'mongγol-dur')
+        self.assertEqual(t._case('sirege', 'Gen', False), 'sirege-yin')
+
+    @unittest.skipUnless(HAVE_DATA, 'モンゴル語の辞書が無い')
+    def test_sentence(self):
+        a = next(analyzer.analyze_text('Хүү өчигдөр охинд ном өгсөн.'))
+        self.assertEqual(' '.join(w['latin'] for w in a.traditional), 'köbegün öčügedür ökin-dür nom ögügsen')
+        a = next(analyzer.analyze_text('Тэр сандал дээр суугаад ном уншиж байна.'))
+        self.assertEqual(' '.join(w['latin'] for w in a.traditional),
+                         'tere sandali degere saγuγad nom ungsiǰu bayin-a')
+        a = next(analyzer.analyze_text('Бид өчигдөр кино үзсэнгүй.'))
+        self.assertEqual(a.traditional[-1]['latin'], 'üǰegsen ügei')   # 否定は別の語
+
+
 @unittest.skipUnless(HAVE_DATA, 'モンゴル語の辞書が無い')
 class AnalyzerTestCase(unittest.TestCase):
     def lit(self, text):

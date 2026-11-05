@@ -33,6 +33,20 @@ CASE_TAGS = {'nominative': 'Nom', 'genitive': 'Gen', 'accusative': 'Acc', 'dativ
              'dative-locative': 'Dat', 'ablative': 'Abl', 'instrumental': 'Ins', 'comitative': 'Com',
              'directive': 'Dir', 'directional': 'Dir'}
 CYRILLIC = re.compile('^[а-яёөүА-ЯЁӨҮ-]+$')
+SCRIPT = re.compile('^[\u1800-\u18af\u202f]+$')   # 伝統的なモンゴル文字の綴り
+
+
+def script_of(entry):
+    """伝統的なモンゴル文字の綴り: 見出しの形 (Mongolian の印)、無ければ語源の「Classical Mongolian から受け継いだ」の綴り
+    (ном ← ᠨᠣᠮ、байх ← ᠪᠠᠶ᠋ᠢᠬᠤ)"""
+    script = next((x['form'] for x in entry.get('forms', []) if 'Mongolian' in (x.get('tags') or [])), None)
+    if script:
+        return script
+    for t in entry.get('etymology_templates', []):
+        args = t.get('args') or {}
+        if t.get('name') in ('inh', 'der', 'bor', 'lbor') and args.get('2') == 'cmg' and SCRIPT.match(args.get('3') or ''):
+            return args['3']
+    return None
 
 
 def main():
@@ -47,7 +61,7 @@ def main():
         CREATE TABLE lemmas (key TEXT, pos TEXT, en TEXT, roman TEXT, script TEXT, target TEXT, senses INTEGER);
         CREATE TABLE forms (form TEXT, lemma TEXT, pos TEXT, case_ TEXT, number TEXT, tags TEXT);
     ''')
-    rows, forms = [], set()
+    rows, forms, extra = [], set(), {}
     with open(path, encoding='utf-8') as f:
         for line in f:
             entry = json.loads(line)
@@ -55,6 +69,11 @@ def main():
                 continue
             pos = POS.get(entry.get('pos'))
             word = entry.get('word', '')
+            if pos is not None and SCRIPT.match(word.replace(' ', '')):   # 伝統文字の見出し (ᠤᠷᠲᠤ: Cyrillic урт)
+                for x in entry.get('forms', []):
+                    if 'Cyrillic' in (x.get('tags') or []) and CYRILLIC.match(x.get('form', '')):
+                        extra.setdefault(x['form'].lower(), word)
+                continue
             if pos is None or not CYRILLIC.match(word):
                 continue
             senses, target = [], None
@@ -72,7 +91,7 @@ def main():
             if pos == 'adj':
                 en = ','.join(re.sub(r'^be ', '', g) for g in en.split(','))
             roman = next((x['form'] for x in entry.get('forms', []) if 'romanization' in (x.get('tags') or [])), None)
-            script = next((x['form'] for x in entry.get('forms', []) if 'Mongolian' in (x.get('tags') or [])), None)
+            script = script_of(entry)
             if not en and not target:
                 continue
             rows.append((word.lower(), pos, en, roman, script, target, len(senses)))
@@ -86,6 +105,7 @@ def main():
                     continue
                 number = 'pl' if 'plural' in tags else 'sg'
                 forms.add((form.lower(), word, pos, case or 'Nom', number, ','.join(sorted(tags))))
+    rows = [r[:4] + (r[4] or extra.get(r[0]),) + r[5:] for r in rows]
     db.executemany('INSERT INTO lemmas VALUES (?, ?, ?, ?, ?, ?, ?)', rows)
     db.executemany('INSERT INTO forms VALUES (?, ?, ?, ?, ?, ?)', sorted(forms))
     db.executescript('CREATE INDEX lemmas_key ON lemmas (key); CREATE INDEX forms_form ON forms (form);')

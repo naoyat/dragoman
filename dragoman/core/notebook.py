@@ -432,7 +432,7 @@ class Notebook:
     def add(self, analysis, header=None, word_notes=None, romanize=None, show_word_detail=True,
             show_translation=True, rendered=None, kana=None, extra_html=''):
         """解析結果を1文足す。rendered があれば (独自の表示の言語: 古文など) その文字列をそのまま載せる。
-        kana は文のカタカナ読み (--kana。見出しの下に)。extra_html は言語ごとのノートの部品 (漢文の訓点付きの本文)"""
+        kana は文のカタカナ読み (--kana。見出しの下に)。extra_html は言語ごとのノートの部品 (漢文の訓点付きの本文・モンゴル文字)"""
         from . import render
         if rendered is not None:   # 独自の表示の言語: 見出しと表示だけ
             text = header or ' '.join(getattr(analysis, 'surfaces', []) or [getattr(analysis, 'text', '')])
@@ -472,7 +472,7 @@ class Notebook:
         comparison = self._comparison(analysis) if self.compare else []
         self.sentences.append({'text': plain(text), 'words': words, 'compare': comparison, 'arcs': arcs_of(analysis) if rendered is None else [],
                                'tree': trees, 'translations': translations, 'detail': show_word_detail,
-                               'rendered': plain(rendered) if rendered else '', 'kana': kana or '',
+                               'rendered': plain(rendered) if rendered else '', 'kana': kana or '', 'html': extra_html,
                                'rtl': bool(RTL.search(' '.join(analysis.surfaces)))})
 
     def _comparison(self, analysis):
@@ -773,6 +773,16 @@ pre.rendered { white-space: pre-wrap; font-size: .85rem; }
 .kunten .rb { color: var(--sub); }
 .kunten .kt { left: .1em; top: 1.4em; }
 .kunten .ol { left: .1em; }
+/* モンゴル語の伝統的なモンゴル文字 (mongolian/note.py): 縦書き (列は左から右へ) と、キリル文字との対照の表 */
+.mongol .mv { writing-mode: vertical-lr; font-family: "Noto Sans Mongolian", "Mongolian Baiti", sans-serif;
+              font-size: 1.6rem; line-height: 2.1; max-height: 11em; overflow-wrap: normal; }
+.mongol .mv .g { color: var(--sub); }   /* 規則で推定した綴り */
+.mongol table { border-collapse: collapse; font-size: .8rem; margin-top: .5rem; }
+.mongol th, .mongol td { border-top: 1px solid var(--line); padding: .2rem .5rem; text-align: left; vertical-align: middle; }
+.mongol th { font-family: sans-serif; font-weight: normal; font-size: .68rem; color: var(--sub); }
+.mongol td.ms { writing-mode: vertical-lr; font-family: "Noto Sans Mongolian", "Mongolian Baiti", sans-serif;
+                font-size: 1.15rem; padding: .3rem .5rem; }
+.mongol td.src, .mongol td.df { font-family: sans-serif; font-size: .7rem; color: var(--sub); } .mongol th, .mongol td.src { white-space: nowrap; }
 .cmp { border-collapse: collapse; font-size: .78rem; width: 100%; table-layout: fixed; margin-bottom: .4rem; }
 .cmp th, .cmp td { border: 1px solid var(--line); padding: .2rem .3rem; vertical-align: top; text-align: left;
                    overflow-wrap: anywhere; }

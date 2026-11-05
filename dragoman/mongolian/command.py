@@ -4,7 +4,7 @@
 # モンゴル語のコマンドの設定 (core/cli.py)
 #
 from dragoman.core.cli import Command
-from . import analyzer, dictionary, morphology
+from . import analyzer, dictionary, morphology, note
 
 
 USAGE = '''
@@ -54,4 +54,5 @@ def katakana(analysis, kana_options):
 
 COMMAND = Command(lang='mn', name='モンゴル語', analyzer=analyzer, dictionary=dictionary, available=available,
                   usage=USAGE, header=lambda a, o: original(a), speech_text=lambda a, o: original(a), explain=explain,
-                  descendant_langs=('en', 'ja'), speech_lang='mn', katakana=katakana)
+                  descendant_langs=('en', 'ja'), speech_lang='mn', katakana=katakana,
+                  note_html=note.html_of, extra_lines=note.lines)
