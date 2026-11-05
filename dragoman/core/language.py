@@ -36,6 +36,7 @@ class Language:
     dictionary: object = None      # 子孫語・語源を引く辞書 (descendants(lemma), etymology(lemma) を持つモジュール)
     pronoun_subject: bool = False  # 繋辞の文で代名詞も名詞と同じく主語になる (tat tvam asi, Он студент)
     genitive_follows_head: bool = False  # 属格は前の名詞にだけ掛かり、動詞を越えない (ロシア語の книга брата)
+    adjectives_precede_head: bool = False  # 形容詞は後ろの名詞を先に探す (モンゴル語の олон хүн「多くの人」)
     genitive_precedes_head: bool = False  # 属格は後ろの名詞にだけ掛かる (ヒンディー語の लड़के की किताब「少年の本」)
     objects_follow_verb: bool = False  # 目的語が動詞の後ろに来る語順 (ロシア語)。2つの動詞の間の語を前の動詞に
     topic_first: bool = False      # 主題 (「は」の句) を訳の先頭に置く (タガログ語の焦点)

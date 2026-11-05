@@ -59,6 +59,7 @@ MONGOLIAN = language.Language(
     dictionary=dictionary,
     pronoun_subject=True,
     genitive_precedes_head=True,
+    adjectives_precede_head=True,
     topic_first=True,
     possessor_cases=('Dat', 'Gen'),
     relatives_before_head=True,
@@ -446,9 +447,14 @@ def supply_copula(words):
     if case == 'Dat':
         cop.items[0].item.update(ja='ある,いる', existential=True, copula=False)
         cop.items = [type(cop.items[0])(cop.items[0].item)]
+    elif case == 'Com':   # 共同格の述語は所有「〜を持つ」(Заан хоёр том соёотой「象は二本の大きな牙を持つ」)
+        cop = _copula(surface='(-тай)')   # 繋辞 (байх) でない表層形 (訳を「である」にしない)
+        cop.items[0].item.update(ja='持つ', copula=False, pres1sg='(-тай)', lemma='(-тай)', base='-тай (所有)')
+        cop.items = [type(cop.items[0])(cop.items[0].item)]
+        _item(last)._ = [('Acc',) + c[1:] for c in _item(last)._[:1]]
     cop.token_ix = getattr(last, 'token_ix', None)
     if getattr(last, 'record', None) is not None:
-        last.record['supplied'] = 'existential' if case == 'Dat' else 'copula'
+        last.record['supplied'] = {'Dat': 'existential', 'Com': 'possessive'}.get(case, 'copula')
     first = words[nominals[0]]
     if len(nominals) > 1 and _item(first)._ and _item(first)._[0][0] == 'Nom':
         first.topic = True
@@ -466,11 +472,22 @@ def bare_objects(words):
         item = _item(w)
         if item is None or item.pos != 'noun' or w is first or not item._ or item._[0][0] != 'Nom':
             continue
-        if _pos(nxt) == 'verb' and not _item(nxt).attrib('copula') and not _item(nxt).attrib('existential') or \
-                getattr(nxt, 'attributive', False):
+        intransitive = (getattr(nxt, 'record', None) or {}).get('lemma') in morphology.INTRANSITIVE
+        if _pos(nxt) == 'verb' and not intransitive and not _item(nxt).attrib('copula') and \
+                not _item(nxt).attrib('existential') or getattr(nxt, 'attributive', False):
             item._ = [('Acc',) + c[1:] for c in item._[:1]]
             if getattr(w, 'record', None) is not None:
                 w.record['bare_object'] = True
+
+
+def apposition(words):
+    """名前のすぐ後ろの場所の名詞 (Улаанбаатар хотод「ウランバートル市に」) は、名前をその名詞に掛ける (属格のように)"""
+    for w, nxt in zip(words, words[1:]):
+        rec, nrec = getattr(w, 'record', None), getattr(nxt, 'record', None)
+        if rec and nrec and rec.get('proper') and (rec.get('case') or 'Nom') == 'Nom' and \
+                nrec.get('kind') == 'noun' and nrec.get('lemma') in morphology.PLACE_NOUNS and _item(w) is not None:
+            _item(w)._ = [('Gen',) + c[1:] for c in _item(w)._[:1]]
+            rec['apposition'] = True
 
 
 def mark_topic(words):
@@ -494,6 +511,7 @@ def lookup_all(surfaces):
     words = build_words(recs)
     global _display
     _display = list(words)
+    apposition(words)
     bare_objects(words)
     words = mark_participles(words)
     words = supply_copula(words)

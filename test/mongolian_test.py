@@ -47,6 +47,22 @@ class TraditionalTestCase(unittest.TestCase):
                          'tere sandali degere saγuγad nom ungsiǰu bayin-a')
         a = next(analyzer.analyze_text('Бид өчигдөр кино үзсэнгүй.'))
         self.assertEqual(a.traditional[-1]['latin'], 'üǰegsen ügei')   # 否定は別の語
+        a = next(analyzer.analyze_text('Багш оюутнуудад ном заасан.'))
+        self.assertEqual(a.traditional[1]['latin'], 'oyutad-tur')   # n の語幹の複数は n を d に
+
+    @unittest.skipUnless(HAVE_DATA, 'モンゴル語の辞書が無い')
+    def test_dative_after_cluster(self):
+        # 子音の連続の後の与位格 -од・-ад (хотод は хот。хото + д の хотон でなく)、複数 + 与位格
+        first = lambda w: morphology.analyses(w)[0]
+        self.assertEqual((first('хотод')['lemma'], first('хотод')['case']), ('хот', 'Dat'))
+        r = first('оюутнуудад')
+        self.assertEqual((r['lemma'], r['case'], r['number']), ('оюутан', 'Dat', 'pl'))
+        self.assertEqual(first('байхдаа')['kind'], 'verb')
+        self.assertEqual(self.lit_('Улаанбаатар хотод олон хүн амьдардаг.'), 'ウランバートルの 町に 多くの 人が 住む。')
+        self.assertEqual(self.lit_('Заан хоёр том соёотой.'), '象は 二つの 大きい 牙を 持つ。')   # 共同格の述語は所有
+
+    def lit_(self, text):
+        return next(analyzer.analyze_text(text)).literal
 
 
 @unittest.skipUnless(HAVE_DATA, 'モンゴル語の辞書が無い')

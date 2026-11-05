@@ -247,15 +247,16 @@ def _case(stem, case, back, reflexive=False):
     return out
 
 
-def _plural(stem, surface, back):
+def _plural(stem, surface, back, lemma=''):
     low = surface.lower()
-    if 'нууд' in low or 'нүүд' in low:
+    if ('нууд' in low or 'нүүд' in low) and not lemma.lower().endswith('н'):   # н の語幹 (оюутан → оюутнууд) は -ud
         return stem + ('nuγud' if back else 'nügüd')
     if 'чууд' in low or 'чүүд' in low:
         return stem + ('čuγud' if back else 'čügüd')
     if 'нар' in low:
         return stem + '-' + ('nar' if back else 'ner')
-    stem = stem[:-1] if stem.endswith('n') and len(stem) > 2 else stem
+    if stem.endswith('n') and len(stem) > 2:   # n の語幹は n を d に (oyutan → oyutad)
+        return stem[:-1] + 'd'
     return stem + ('ud' if back else 'üd')
 
 
@@ -291,7 +292,7 @@ def _noun(rec):
     stem, source = stem_spelling(rec['lemma'], 'name' if rec.get('proper') else 'noun')
     back = _harmony(stem, rec['lemma'])
     if rec.get('number') == 'pl':
-        stem = _plural(stem, rec['surface'], back)
+        stem = _plural(stem, rec['surface'], back, rec['lemma'])
     case = rec.get('case') or 'Nom'
     if case != 'Nom' or rec.get('reflexive'):
         return _case(stem, case, back, rec.get('reflexive')), source

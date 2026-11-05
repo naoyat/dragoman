@@ -79,6 +79,8 @@ def _noun(rec, nxt):
         return ja + 'に ある'
     if rec.get('supplied') == 'copula':
         return ja + 'だ'
+    if rec.get('supplied') == 'possessive':
+        return ja + 'を 持つ'
     if nxt is not None and nxt['kind'] == 'postposition':
         return ja   # 後置詞の側で「の上で」…
     if nxt is not None and nxt['kind'] == 'negation' and nxt['lemma'] == 'биш':

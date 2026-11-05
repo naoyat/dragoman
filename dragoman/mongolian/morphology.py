@@ -28,6 +28,7 @@ CASE_SUFFIXES = [
     ('тай', 'Com'), ('тэй', 'Com'), ('той', 'Com'),
     ('руу', 'Dir'), ('рүү', 'Dir'), ('луу', 'Dir'), ('лүү', 'Dir'),
     ('нд', 'Dat'), ('д', 'Dat'), ('т', 'Dat'),
+    ('ад', 'Dat'), ('эд', 'Dat'), ('од', 'Dat'), ('өд', 'Dat'),   # 子音の連続の後の与位格 (хотод、оюутнуудад)
 ]
 REFLEXIVE = ('гаа', 'гээ', 'гоо', 'гөө', 'аа', 'ээ', 'оо', 'өө', 'яа', 'ёо', 'еэ')
 PLURALS = ('нууд', 'нүүд', 'чууд', 'чүүд', 'ууд', 'үүд', 'нар')
@@ -138,6 +139,14 @@ NUMBERS = {'нэг': '一', 'хоёр': '二', 'гурав': '三', 'гурва�
            'таван': '五', 'зургаа': '六', 'долоо': '七', 'найм': '八', 'ес': '九', 'арав': '十', 'зуу': '百', 'мянга': '千'}
 ANIMATE = {'хүн', 'хүү', 'охин', 'ах', 'эгч', 'дүү', 'найз', 'багш', 'ээж', 'аав', 'эх', 'эцэг', 'нохой', 'муур', 'морь',
            'заан', 'сурагч', 'оюутан'}
+# 形容詞 (辞書の品詞が名詞だけのものも形容詞に)
+ADJECTIVES = {'том', 'жижиг', 'сайн', 'муу', 'шинэ', 'хуучин', 'сайхан', 'гоё', 'хөөрхөн', 'хурдан', 'удаан', 'өндөр',
+              'урт', 'хэцүү', 'амархан', 'хүйтэн', 'халуун'}
+# 目的語を取らない動詞 (直前の格の無い名詞を目的語にしない: олон хүн амьдардаг「多くの人が住む」)
+INTRANSITIVE = {'амьдрах', 'явах', 'ирэх', 'очих', 'байх', 'болох', 'унтах', 'суух', 'босох', 'гарах', 'орох', 'буцах',
+                'ажиллах', 'тоглох', 'гүйх', 'нисэх', 'үхэх', 'төрөх', 'инээх', 'уйлах', 'хүрэх', 'зогсох'}
+# 名前の後ろに同格で付く場所の名詞 (Улаанбаатар хот「ウランバートル市」)
+PLACE_NOUNS = {'хот', 'улс', 'нуур', 'уул', 'гол', 'аймаг', 'сум', 'дүүрэг', 'тосгон', 'арал', 'тэнгис', 'далай'}
 TIME_WORDS = {'өчигдөр', 'өнөөдөр', 'маргааш', 'одоо', 'өглөө', 'орой', 'шөнө', 'үргэлж', 'энд', 'тэнд', 'хаана'}
 
 
@@ -219,6 +228,8 @@ def analyses(word):
                 'verb': None, 'postposition': 'postposition', 'conj': 'conj', 'particle': 'particle'}.get(row['pos'], 'adv')
         if kind is None:
             continue
+        if kind == 'noun' and low in ADJECTIVES:
+            kind = 'adj'   # 辞書が名詞としか載せない形容詞 (том「大きい」)
         reading = {'kind': kind, 'lemma': row['key'], 'case': 'Nom', 'number': 'sg', 'pos': row['pos']}
         if reading not in out:
             out.append(reading)
@@ -261,6 +272,7 @@ def _verb_readings(low):
 
 def _noun_readings(low):
     out = []
+    exact = []
     for reflexive in ('',) + REFLEXIVE:
         body = low[:-len(reflexive)] if reflexive and low.endswith(reflexive) else (low if not reflexive else None)
         if body is None:
@@ -279,11 +291,16 @@ def _noun_readings(low):
                 # 未来分詞 -х の名詞化 + 格 (байхдаа「いる時に」、уншихыг「読むことを」)
                 out.append({'kind': 'verb', 'lemma': lemma, 'form': 'participle', 'tense': 'future', 'negated': False,
                             'case': case, 'reflexive': bool(reflexive), 'ending': 'х'})
+                exact.append(True)
             elif lemma and (suffix or reflexive or number == 'pl'):
-                out.append({'kind': 'noun', 'lemma': lemma, 'case': case, 'number': number, 'reflexive': bool(reflexive)})
+                reading = {'kind': 'noun', 'lemma': lemma, 'case': case, 'number': number, 'reflexive': bool(reflexive)}
+                if reading not in out:
+                    out.append(reading)
+                    exact.append(lemma == stem)
         if out:
             break
-    return out
+    # 語幹そのままの見出しを、脱落母音・н を戻した見出しより先に (хотод は хот + од。хото + д の хотон でなく)
+    return [r for _, r in sorted(zip(exact, out), key=lambda x: not x[0])]
 
 
 # ----------------------------------------------------------------------

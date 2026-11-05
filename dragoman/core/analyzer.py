@@ -835,6 +835,10 @@ def detect_adj_correspondances(words, trace, consumed=()):
                     return i
             return -1
 
+        if language.current().adjectives_precede_head:
+            post = sub(adj_ix+1, M, 1)
+            if post >= 0: return post
+
         pre = sub(adj_ix-1, -1, -1)
         if pre >= 0: return pre
 
