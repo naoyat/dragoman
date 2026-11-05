@@ -55,4 +55,4 @@ def katakana(analysis, kana_options):
 COMMAND = Command(lang='mn', name='モンゴル語', analyzer=analyzer, dictionary=dictionary, available=available,
                   usage=USAGE, header=lambda a, o: original(a), speech_text=lambda a, o: original(a), explain=explain,
                   descendant_langs=('en', 'ja'), speech_lang='mn', katakana=katakana,
-                  note_html=note.html_of, extra_lines=note.lines)
+                  note_html=note.html_of, extra_lines=note.lines, letters=note.letters)

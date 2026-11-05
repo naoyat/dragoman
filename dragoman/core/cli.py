@@ -65,6 +65,8 @@ class Command:
     render: object = None           # (analysis, options) → 解析結果の表示 (既定は core.render。古文は品詞分解と現代語訳)
     note_html: object = None        # (analysis) → ノートに足す HTML の部品 (漢文の縦書きの訓点付きの本文)
     extra_lines: object = None      # (analysis, options) → 見出しの後ろに出す行 (モンゴル語の伝統文字の綴り)
+    letters: object = None          # (analysis) → (図にする語の列, 字の名前の関数 (字, 語) → 名前 / None)。
+                                    # ノートの文字の図 (core/letters.py)。無ければ見出しの語 (Unicode の名前で)
 
 
 def help_text(command):
@@ -250,7 +252,8 @@ def run(command, argv=None, texts=None):
                     rendered = buffer.getvalue()
                 notebook.add(analysis, header=line, word_notes=notes, show_word_detail=options.show_word_detail,
                              romanize=command.romanize if options.romanize else None, rendered=rendered,
-                             kana=kana_line, extra_html=command.note_html(analysis) if command.note_html else '')
+                             kana=kana_line, extra_html=command.note_html(analysis) if command.note_html else '',
+                             letters_html=letters_part(command, analysis, line))
                 continue
             render.render_sentence_header(line)
             for extra in (command.extra_lines(analysis, options) if command.extra_lines else ()):
@@ -271,6 +274,16 @@ def run(command, argv=None, texts=None):
                 speech.pause_while_speaking()
     if notebook is not None:
         save_notebook(notebook, options, command.lang)
+
+
+def letters_part(command, analysis, line):
+    """ノートの文字の図 (つながって書く文字・字を組み合わせる文字の語の、どの部分が何の文字か)"""
+    from . import letters
+    if command.letters:
+        words, label = command.letters(analysis)
+    else:
+        words, label = letters.words_of(line), None
+    return letters.part_html(words, label)
 
 
 def kana_text(command, analysis, options):

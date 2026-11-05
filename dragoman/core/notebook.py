@@ -430,15 +430,15 @@ class Notebook:
         self.provenance = None   # 再現条件 [(項目, 値)] (core/provenance.info。書き出す前に入れる)
 
     def add(self, analysis, header=None, word_notes=None, romanize=None, show_word_detail=True,
-            show_translation=True, rendered=None, kana=None, extra_html=''):
+            show_translation=True, rendered=None, kana=None, extra_html='', letters_html=''):
         """解析結果を1文足す。rendered があれば (独自の表示の言語: 古文など) その文字列をそのまま載せる。
-        kana は文のカタカナ読み (--kana。見出しの下に)。extra_html は言語ごとのノートの部品 (漢文の訓点付きの本文・モンゴル文字)"""
+        kana は文のカタカナ読み (--kana。見出しの下に)。extra_html は言語ごとのノートの部品 (漢文の訓点付きの本文・モンゴル文字)、letters_html は文字の図 (core/letters.py)"""
         from . import render
         if rendered is not None:   # 独自の表示の言語: 見出しと表示だけ
             text = header or ' '.join(getattr(analysis, 'surfaces', []) or [getattr(analysis, 'text', '')])
             self.sentences.append({'text': plain(text), 'words': [], 'arcs': [], 'tree': '', 'translations': [],
                                    'detail': False, 'rendered': plain(rendered), 'rtl': bool(RTL.search(text)),
-                                   'kana': kana or '', 'html': extra_html})
+                                   'kana': kana or '', 'html': extra_html, 'letters': letters_html})
             return
         words = []
         context = marks_context(analysis)
@@ -473,7 +473,7 @@ class Notebook:
         self.sentences.append({'text': plain(text), 'words': words, 'compare': comparison, 'arcs': arcs_of(analysis) if rendered is None else [],
                                'tree': trees, 'translations': translations, 'detail': show_word_detail,
                                'rendered': plain(rendered) if rendered else '', 'kana': kana or '', 'html': extra_html,
-                               'rtl': bool(RTL.search(' '.join(analysis.surfaces)))})
+                               'letters': letters_html, 'rtl': bool(RTL.search(' '.join(analysis.surfaces)))})
 
     def _comparison(self, analysis):
         """文の枠の節ごとの比較の行 [[(要素の名前, {言語: (形, 手段)})]]。枠にできない文は []"""
@@ -508,7 +508,8 @@ class Notebook:
         if self.provenance and not self.legend:
             body.append(provenance_html(self.provenance))
         parts = {'%TITLE%': html.escape(self.title), '%BODY%': '\n'.join(body), '%DATA%': data,
-                 '%CONTROLS%': controls_html(self.marks, bool(self.provenance), bool(self.compare))}
+                 '%CONTROLS%': controls_html(self.marks, bool(self.provenance), bool(self.compare),
+                                             any(x.get('letters') for x in self.sentences))}
         # 置換はテンプレートに一度だけ (差し込んだ本文の中の %DATA% などはもう一度置き換えない)
         return PLACEHOLDER.sub(lambda m: parts[m.group(0)], TEMPLATE)
 
@@ -532,14 +533,14 @@ class Notebook:
 
 
 PLACEHOLDER = re.compile('%(TITLE|BODY|DATA|CONTROLS)%')
-PARTS = [('translation', '訳'), ('interlinear', '行間逐語訳'), ('marks', '確かさの印'), ('arcs', '図A 弧'),
+PARTS = [('letters', '文字の図'), ('translation', '訳'), ('interlinear', '行間逐語訳'), ('marks', '確かさの印'), ('arcs', '図A 弧'),
          ('tree', '図B 入れ子'), ('compare', '要素ごとの比較'), ('detail', '語の詳細'), ('provenance', '再現条件')]
 
 
-def controls_html(marks, provenance, compare=False):
+def controls_html(marks, provenance, compare=False, letters=False):
     """画面で表示する部分を選ぶチェックボックス (ノートに載せた部分だけ。印刷では隠れる)"""
     shown = [(k, name) for k, name in PARTS if (k != 'marks' or marks) and (k != 'provenance' or provenance)
-             and (k != 'compare' or compare)]
+             and (k != 'compare' or compare) and (k != 'letters' or letters)]
     return '\n'.join('  <label><input type="checkbox" data-part="%s" checked> %s</label>' % (k, name) for k, name in shown)
 
 
@@ -663,6 +664,8 @@ def sentence_html(n, s):
         out.append('<div class="kana"><span class="ttl">カナ</span> %s</div>' % esc(s['kana']))
     if s.get('html'):
         out.append(s['html'])
+    if s.get('letters'):
+        out.append(s['letters'])
     if s['rendered']:
         out.append('<pre class="rendered">%s</pre></section>' % esc(s['rendered']))
         return '\n'.join(out)
@@ -773,6 +776,26 @@ pre.rendered { white-space: pre-wrap; font-size: .85rem; }
 .kunten .rb { color: var(--sub); }
 .kunten .kt { left: .1em; top: 1.4em; }
 .kunten .ol { left: .1em; }
+/* 文字の図 (core/letters.py): 塊ごとに色を変えた語と、同じ色の凡例 (語の中の形と、部品の字と名前) */
+.letters .lw { display: flex; align-items: flex-start; gap: 1rem; margin: .4rem 0; break-inside: avoid-page; }
+.letters .lword { font-size: 1.9rem; line-height: 1.6; white-space: nowrap; }
+.letters .lkeys { display: flex; flex-wrap: wrap; gap: .3rem; }
+.letters .lk { display: inline-flex; flex-direction: column; align-items: center; border: 1px solid currentColor;
+               border-radius: 4px; padding: .1rem .35rem; min-width: 2.2rem; }
+.letters .lf { font-size: 1.4rem; line-height: 1.5; }
+.letters .lp { display: flex; gap: .25rem; align-items: baseline; font-size: .68rem; font-family: sans-serif; white-space: nowrap; }
+.letters .lc { font-size: 1rem; font-family: serif; }
+.letters .lws:has(.lv) { display: flex; flex-wrap: wrap; gap: .5rem 1.6rem; }
+.letters .lv .lword, .letters .lv .lf, .letters .lv .lc { writing-mode: vertical-lr;
+               font-family: "Noto Sans Mongolian", "Mongolian Baiti", sans-serif; }
+.letters .lw.lv { gap: .5rem; }   /* モンゴル文字: 縦の語の横に凡例を上から (語の中の字の位置にそろえて) */
+.letters .lv .lkeys { flex-direction: column; flex-wrap: nowrap; gap: .15rem; }
+.letters .lv .lk { flex-direction: row; gap: .3rem; padding: 0 .3rem; min-width: 0; }
+.letters .lv .lf { font-size: 1.3rem; }
+.letters .l0 { color: #d32f2f; } .letters .l1 { color: #1565c0; } .letters .l2 { color: #2e7d32; }
+.letters .l3 { color: #ef6c00; } .letters .l4 { color: #6a1b9a; } .letters .l5 { color: #00838f; }
+.letters .l6 { color: #ad1457; } .letters .l7 { color: #5d4037; }
+body.no-letters .letters { display: none; }
 /* モンゴル語の伝統的なモンゴル文字 (mongolian/note.py): 縦書き (列は左から右へ) と、キリル文字との対照の表 */
 .mongol .mv { writing-mode: vertical-lr; font-family: "Noto Sans Mongolian", "Mongolian Baiti", sans-serif;
               font-size: 1.6rem; line-height: 2.1; max-height: 11em; overflow-wrap: normal; }
