@@ -26,6 +26,7 @@ python3 dragoman.py --lang=sa samples/sanskrit.txt        # 解析の詳細 (-w 
 ```
 
 * 語末の連声を戻して引きます（rāmo → rāmaḥ、vanaṃ → vanam、sa → saḥ）。引けなければ Vidyut の分解器で連声・複合語を分けます。
+  見出しは入力のままの形（rāmaḥ vanaṃ）で、戻した形（rāmas・vanam）は語の表に出します。
 * 後置の ca・vā（A B ca）は前の語の手前に移し、ラテン語と同じ並列（et A et B）として扱います。
 * 同綴の語根は、Vidyut の類（gaṇa）と使役かどうかを Wiktionary の動詞の見出し（class 1, root पा）と合わせて選びます
   （pibati → pā「飲む」、pāti → pā「守る」）。接頭辞の付いた語根は、辞書に無ければ接頭辞を除いて引きます（udeti → ud-行く）。
@@ -117,7 +118,8 @@ echo "oṃ maṇi padme hūṃ" | python3 dragoman.py --lang=sa --siddham --kana
 * 種字: hrīḥ → キリーク、trāḥ → タラーク、vaṃ → バン、hāṃ → カン、aḥ → アク、saḥ → サク。ṃ は「ン」、ḥ は「ク」。
 * ka・ga・ca・ja・śa の a は字母の読み（キャ・ギャ・シャ・ジャ）、e・o は「エイ・オウ」、有気音は無気音と同じ、v は b と同じ。
 * 子音の連なりは前の子音にも音節の母音を付けます（trā → タラ、sarva → サラバ、dharma → ダラマ）。鼻音 + 子音は「ン」。
-* 長音の「ー」は1音節の語（種字）だけ。真言の語は短く読みます（gate gate pāragate pārasaṃgate bodhi svāhā →
+* 長音の「ー」は種字1字だけの行だけ（hrīḥ → キリーク）。真言の中では種字も短く（oṃ vajradharma hrīḥ → オン バザラタラマ キリク）、
+  真言の語も短く読みます（gate gate pāragate pārasaṃgate bodhi svāhā →
   ギャテイ ギャテイ ハラギャテイ ハラソウギャテイ ボウジ ソワカ）。
 * 真言の読みは漢字音写を経た慣用なので、規則に合わない語は表で（`MANTRA_WORDS`: oṃ → オン、hūṃ → ウン、
   svāhā → ソワカ、namaḥ → ノウマク、vajra → バザラ）。表にある真言: 光明真言、不動明王（慈救呪）、大日如来（胎蔵・金剛界）、
@@ -132,4 +134,6 @@ namaḥ samanta vajrāṇāṃ caṇḍa mahāroṣaṇa sphoṭaya hūṃ trā�
 
 * 見本: `samples/mantras.sa.txt`（光明真言・不動明王など17の真言と10の種字、悉曇文字で書いた行も。各行の注に慣用の読み）。
   `./dragoman.py sa --kana-only --kana-reading=shittan samples/mantras.sa.txt` で読みだけを出せます。
-* 種字の「ー」は語ごとに決めるので、真言の中の hrīḥ も「キリーク」です（千手観音の真言の慣用は「キリク」）。
+* 真言の文（oṃ・hūṃ・svāhā・phaṭ・namaḥ samanta を含む文）と種字1字だけの行では、種字を辞書より先に引きます
+  （`dragoman/sanskrit/mantra.py`: hrīḥ → 種字 (阿弥陀如来・千手観音)、bhaḥ → 種字 (釈迦如来)、a vi ra hūṃ khaṃ → 五大の種字）。
+  hrīḥ を hrīs「恥」と読まないように。ふつうの文の saḥ・sa（彼）は今までどおりです。oṃ はどの文でも「聖音」。

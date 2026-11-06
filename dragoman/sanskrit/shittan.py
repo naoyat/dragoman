@@ -136,7 +136,8 @@ def _mora(key, vowel):
     return kana + tail
 
 
-def _word(slp1):
+def _word(slp1, alone=True):
+    """1語の読み。alone は種字1字だけの行 (長母音を「ー」で: hrīḥ → キリーク。真言の中では キリク)"""
     if _key(slp1) in WORDS:
         return WORDS[_key(slp1)]
     out = []
@@ -164,13 +165,17 @@ def _word(slp1):
                 kana = kana[:-1]
             out.append(kana + 'ン')
         else:
-            if len(sylls) > 1:   # 真言の語の長母音は書かない (種字の hrīḥ・trāḥ は「キリーク・タラーク」)
+            if len(sylls) > 1 or not alone:   # 長母音は書かない (種字1字だけの行の hrīḥ・trāḥ は「キリーク・タラーク」)
                 vowel = {'A': 'a', 'I': 'i', 'U': 'u', 'F': 'f', 'X': 'x'}.get(vowel, vowel)
             out.append(_mora(key, vowel) + ('ク' if coda == 'H' else ''))
     return ''.join(out)
 
 
-def reading(text):
-    """語 (デーヴァナーガリー・IAST・悉曇文字) → 悉曇の読みのカタカナ (語の間は空白)"""
-    return ' '.join(_word(script.to_slp1(w)) for w in text.split())
+def reading(text, alone=None):
+    """語 (デーヴァナーガリー・IAST・悉曇文字) → 悉曇の読みのカタカナ (語の間は空白)。
+    alone: 種字1字だけの行か (省くと text が1語か: hrīḥ → キリーク、oṃ vajradharma hrīḥ → … キリク)"""
+    words = text.split()
+    if alone is None:
+        alone = len(words) == 1
+    return ' '.join(_word(script.to_slp1(w), alone) for w in words)
 

@@ -28,17 +28,22 @@ def _convert(text, f):
     return ' '.join(out)
 
 
+def _iast(slp1):
+    return script.iast('oM' if slp1 == 'AUM' else slp1)   # ॐ は oṃ
+
+
 def _siddham(slp1):
     return script.siddham('oM' if slp1 == 'AUM' else slp1)   # ॐ (vidyut は AUM に) は 𑖌𑖽
 
 
 def header(analysis, options):
-    original = ' '.join(analysis.surfaces)
-    shown = _convert(original, script.devanagari)
-    if script.siddham_wanted(' '.join(getattr(analysis, 'tokens', []))):   # 悉曇文字も (--siddham か、入力が悉曇文字)
-        tokens = ' '.join(analysis.tokens)   # 悉曇文字は入力のままの語から (連声を解いた om ではなく oṃ を 𑖌𑖽 に)
+    """見出し: 入力のままの語 (連声を解く前の形: rāmaḥ・vanaṃ。解いた形 rāmas・vanam は語の表に) を
+    IAST とデーヴァナーガリーで (悉曇文字を表示するなら悉曇文字も)"""
+    tokens = ' '.join(getattr(analysis, 'tokens', analysis.surfaces))
+    shown = _convert(tokens, script.devanagari)
+    if script.siddham_wanted(tokens):   # 悉曇文字も (--siddham か、入力が悉曇文字)
         shown += ' / ' + _convert(tokens, _siddham).replace('।', '\U000115c2').replace('॥', '\U000115c3')
-    return '%s  (%s)' % (original.replace('\U000115c2', '।').replace('\U000115c3', '॥'), shown)
+    return '%s  (%s)' % (_convert(tokens, _iast), shown)
 
 
 def letters(analysis):
@@ -59,9 +64,11 @@ def katakana(analysis, kana_options):
     """カタカナ読み (--kana): 語ごとに発音から (sanskrit/katakana.py)。--kana-reading=shittan なら日本の悉曇の読み
     (入力のままの語から: 連声を解いた語ではなく)"""
     from . import katakana as kana
-    if kana.READING == 'shittan':
-        return [kana.katakana(w) for w in getattr(analysis, 'tokens', analysis.surfaces)
-                if w not in analyzer.PUNCTUATION and _has_letter(w)]
+    if kana.READING == 'shittan':   # 長母音の「ー」は種字1字だけの行に (hrīḥ → キリーク、真言の中では キリク)
+        from .shittan import reading
+        words = [w for w in getattr(analysis, 'tokens', analysis.surfaces)
+                 if w not in analyzer.PUNCTUATION and _has_letter(w)]
+        return [reading(w, alone=len(words) == 1) for w in words]
     return [kana.katakana(w, **kana_options) for w in analysis.surfaces if _has_letter(w)]
 
 

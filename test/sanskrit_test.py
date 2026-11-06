@@ -52,7 +52,9 @@ class ShittanTestCase(unittest.TestCase):
     """日本の悉曇 (梵字) の読み (sanskrit/shittan.py)"""
     def test_seed_syllables(self):
         from dragoman.sanskrit.shittan import reading
-        self.assertEqual(reading('hrīḥ trāḥ vaṃ hāṃ aḥ saḥ'), 'キリーク タラーク バン カン アク サク')
+        self.assertEqual(reading('hrīḥ trāḥ vaṃ hāṃ aḥ saḥ', alone=True), 'キリーク タラーク バン カン アク サク')
+        self.assertEqual(reading('hrīḥ'), 'キリーク')                    # 種字1字だけなら長母音を「ー」で
+        self.assertEqual(reading('oṃ vajradharma hrīḥ'), 'オン バザラタラマ キリク')   # 真言の中では短く
         self.assertEqual(reading('ॐ oṃ hūṃ'), 'オン オン ウン')
         self.assertEqual(reading('\U0001158c\U000115bd'), 'オン')   # 悉曇文字でも
 
@@ -70,6 +72,35 @@ class ShittanTestCase(unittest.TestCase):
                          'ノウマク サンマンダ バザラダン センダ マカロシャダ ソワタヤ ウン タラタ カン マン')
         self.assertEqual(reading('namaḥ samanta buddhānām a vi ra hūṃ khaṃ'),   # 語末の m も ṃ と同じに
                          'ノウマク サンマンダ ボダナン ア ビ ラ ウン ケン')
+
+
+@unittest.skipUnless(HAVE_VIDYUT, 'vidyut が無い')
+class MantraTestCase(unittest.TestCase):
+    """真言の語と種字の訳語 (sanskrit/mantra.py)"""
+    def test_is_mantra(self):
+        from dragoman.sanskrit import mantra
+        self.assertTrue(mantra.is_mantra(['oṃ', 'maṇi', 'padme', 'hūṃ']))
+        self.assertTrue(mantra.is_mantra(['namaḥ', 'samanta', 'buddhānāṃ', 'bhaḥ']))
+        self.assertTrue(mantra.is_mantra(['hrīḥ']))                     # 種字1字だけの行
+        self.assertFalse(mantra.is_mantra(['saḥ', 'gacchati']))
+
+    def test_gloss(self):
+        from dragoman.sanskrit import mantra
+        self.assertEqual(mantra.gloss('ॐ', False), '聖音 (真言の始めに唱える)')   # oṃ はどの文でも
+        self.assertIn('千手観音', mantra.gloss('hrīḥ', True))
+        self.assertIsNone(mantra.gloss('saḥ', False))                   # ふつうの文では「彼」
+        self.assertIn('種字', mantra.gloss('hūm', True))                 # 語末の m も ṃ と同じに
+
+
+@unittest.skipUnless(HAVE_DATA, 'vidyut のデータかサンスクリットの辞書 (tools/build_sanskrit_dic.py) が無い')
+class HeaderTestCase(unittest.TestCase):
+    def test_header_keeps_input_forms(self):
+        from dragoman.sanskrit import analyzer, command
+        analysis = next(analyzer.analyze_text('रामः वनं गच्छति ।'))
+        self.assertEqual(command.header(analysis, None), 'rāmaḥ vanaṃ gacchati ।  (रामः वनं गच्छति ।)')
+        self.assertEqual(analysis.surfaces[:2], ['rāmas', 'vanam'])     # 語の表は連声を解いた形
+        analysis = next(analyzer.analyze_text('hrīḥ ।'))
+        self.assertEqual(analysis.surfaces[0], 'hrīḥ')                  # 種字は hrīs「恥」に戻さない
 
 
 @unittest.skipUnless(HAVE_DATA, 'vidyut のデータかサンスクリットの辞書 (tools/build_sanskrit_dic.py) が無い')

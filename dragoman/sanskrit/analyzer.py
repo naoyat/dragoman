@@ -13,7 +13,7 @@ import re
 from dragoman.core import analyzer as common
 from dragoman.core import language
 from dragoman.core.Word import Word
-from . import compound, dictionary, morphology, script
+from . import compound, dictionary, mantra, morphology, script
 
 PUNCTUATION = {'।': 'period', '॥': 'period', '\U000115c2': 'period', '\U000115c3': 'period', '.': 'period', ',': 'comma', ';': 'comma', '?': 'question', '!': 'period'}
 TOKEN = re.compile(r"[ऀ-ॣ०-ॿ᳐-᳿'ऽ]+|[\U00011580-\U000115c0\U000115d8-\U000115dd]+|[A-Za-zĀāĪīŪūṚṛṜṝḶḷṂṃḤḥṄṅÑñṬṭḌḍṆṇŚśṢṣ"
@@ -191,8 +191,11 @@ def choose_agreeing_nouns(words):
 
 def lookup_all(surfaces):
     words = []
+    in_mantra = mantra.is_mantra([s for s in surfaces if s not in PUNCTUATION])   # 真言の文なら種字も (mantra.py)
     for ix, surface in enumerate(surfaces):
-        for word in _words(surface):
+        text = surface not in PUNCTUATION and mantra.gloss(surface, in_mantra)
+        item = mantra.item(surface, text) if text else None
+        for word in ([Word(item['surface'], [item])] if item else _words(surface)):
             word.token_ix = ix  # 元の語の位置 (連声の分解・後置の ca の移動の後も)
             words.append(word)
     choose_verbs(words)
