@@ -130,4 +130,6 @@ namaḥ samanta vajrāṇāṃ caṇḍa mahāroṣaṇa sphoṭaya hūṃ trā�
   → ノウマク サンマンダ バザラダン センダ マカロシャダ ソワタヤ ウン タラタ カン マン
 ```
 
+* 見本: `samples/mantras.sa.txt`（光明真言・不動明王など17の真言と10の種字、悉曇文字で書いた行も。各行の注に慣用の読み）。
+  `./dragoman.py sa --kana-only --kana-reading=shittan samples/mantras.sa.txt` で読みだけを出せます。
 * 種字の「ー」は語ごとに決めるので、真言の中の hrīḥ も「キリーク」です（千手観音の真言の慣用は「キリク」）。

@@ -1,0 +1,75 @@
+# 真言と種字 (日本の悉曇・真言の読みの見本)
+#
+# 真言宗などでよく唱えられる真言と、仏・菩薩の種字。真言・種字は古い伝承でパブリックドメイン。綴りは
+# 日本の悉曇の伝承で通っているもの (流派・資料で綴り・読みの違うものがある)。各行の注は日本の慣用の読み。
+#
+#   ./dragoman.py sa --kana --kana-reading=shittan --siddham samples/mantras.sa.txt
+#   ./dragoman.py sa --kana-only --kana-reading=shittan samples/mantras.sa.txt      (読みだけ)
+
+## 真言
+# 光明真言: オン アボキャ ベイロシャノウ マカボダラ マニ ハンドマ ジンバラ ハラバリタヤ ウン
+oṃ amogha vairocana mahāmudrā maṇi padma jvāla pravartaya hūṃ ।
+# 不動明王 (慈救呪): ノウマク サンマンダ バザラダン センダ マカロシャダ ソワタヤ ウン タラタ カン マン
+namaḥ samanta vajrāṇāṃ caṇḍa mahāroṣaṇa sphoṭaya hūṃ trāṭ hāṃ māṃ ।
+# 大日如来 (胎蔵): ノウマク サンマンダ ボダナン ア ビ ラ ウン ケン
+namaḥ samanta buddhānāṃ a vi ra hūṃ khaṃ ।
+# 大日如来 (金剛界): オン バザラダト バン
+oṃ vajradhātu vaṃ ।
+# 阿弥陀如来: オン アミリタ テイゼイ カラ ウン
+oṃ amṛta teje hara hūṃ ।
+# 薬師如来: オン コロ コロ センダリ マトウギ ソワカ
+oṃ huru huru caṇḍāli mātaṅgi svāhā ।
+# 釈迦如来: ノウマク サンマンダ ボダナン バク
+namaḥ samanta buddhānāṃ bhaḥ ।
+# 聖観音: オン アロリキャ ソワカ
+oṃ ārolik svāhā ।
+# 千手観音: オン バザラタラマ キリーク
+oṃ vajradharma hrīḥ ।
+# 文殊菩薩: オン アラハシャノウ
+oṃ arapacana ।
+# 地蔵菩薩: オン カ カ カ ビサンマエイ ソワカ
+oṃ ha ha ha vismaye svāhā ।
+# 虚空蔵菩薩: ノウボウ アキャシャギャラバヤ オン アリ キャマリ ボリ ソワカ
+namo ākāśagarbhāya oṃ ārya kamari mauli svāhā ।
+# 普賢菩薩: オン サンマヤ サトバン
+oṃ samayas tvaṃ ।
+# 弥勒菩薩: オン マイタレイヤ ソワカ
+oṃ maitreya svāhā ।
+# 愛染明王: オン マカラギャ バゾロウシュニシャ バザラサトバ ジャク ウン バン コク
+oṃ mahārāga vajroṣṇīṣa vajrasattva jaḥ hūṃ vaṃ hoḥ ।
+# 六字大明呪: オン マニ ハンドメイ ウン
+oṃ maṇi padme hūṃ ।
+# 般若心経の真言: ギャテイ ギャテイ ハラギャテイ ハラソウギャテイ ボウジ ソワカ
+gate gate pāragate pārasaṃgate bodhi svāhā ।
+
+## 種字 (1字で仏・菩薩を表す)
+# 阿弥陀如来・千手観音: キリーク
+hrīḥ ।
+# 虚空蔵菩薩: タラーク
+trāḥ ।
+# 大日如来 (金剛界): バン
+vaṃ ।
+# 不動明王: カン
+hāṃ ।
+# 文殊菩薩: マン
+maṃ ।
+# 釈迦如来: バク
+bhaḥ ।
+# 勢至菩薩: サク
+saḥ ।
+# 普賢菩薩: アン
+aṃ ।
+# 聖観音: サ
+sa ।
+# 大日如来 (胎蔵): アク
+aḥ ।
+
+## 悉曇文字で (入力も悉曇文字で書ける)
+# 光明真言
+𑖌𑖽 𑖀𑖦𑖺𑖑 𑖪𑖹𑖨𑖺𑖓𑖡 𑖦𑖮𑖯𑖦𑖲𑖟𑖿𑖨𑖯 𑖦𑖜𑖰 𑖢𑖟𑖿𑖦 𑖕𑖿𑖪𑖯𑖩 𑖢𑖿𑖨𑖪𑖨𑖿𑖝𑖧 𑖮𑖳𑖽 𑗂
+# 不動明王 (慈救呪)
+𑖡𑖦𑖾 𑖭𑖦𑖡𑖿𑖝 𑖪𑖕𑖿𑖨𑖯𑖜𑖯𑖽 𑖓𑖜𑖿𑖚 𑖦𑖮𑖯𑖨𑖺𑖬𑖜 𑖭𑖿𑖣𑖺𑖘𑖧 𑖮𑖳𑖽 𑖝𑖿𑖨𑖯𑖘𑖿 𑖮𑖯𑖽 𑖦𑖯𑖽 𑗂
+# 六字大明呪
+𑖌𑖽 𑖦𑖜𑖰 𑖢𑖟𑖿𑖦𑖸 𑖮𑖳𑖽 𑗂
+# 般若心経の真言
+𑖐𑖝𑖸 𑖐𑖝𑖸 𑖢𑖯𑖨𑖐𑖝𑖸 𑖢𑖯𑖨𑖭𑖽𑖐𑖝𑖸 𑖤𑖺𑖠𑖰 𑖭𑖿𑖪𑖯𑖮𑖯 𑗂
