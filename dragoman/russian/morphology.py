@@ -328,6 +328,10 @@ def analyze(word):
             for item in _analyze(script.strip_stress(word).lower())]
 
 
+# 同じ見出し語の中で強勢の違う形 (дома: до́ма「家で・家の」/ дома́「家々」) は、文脈なしではよく使う方を
+PREFERRED_STRESS = {'дома': 'до́ма'}
+
+
 def stressed(word, lemma=None):
     """語形に強勢記号を付けた形 (Wiktionary の変化表から)。同じ形で強勢の違うもの (моя: мо́я「洗いながら」/ моя́「私の」) は
     見出し語 lemma (無ければ pymorphy3 の一番の読みの見出し語: мой) の変化形を先に。決まらなければ最初のもの"""
@@ -340,6 +344,9 @@ def stressed(word, lemma=None):
         matching = [s for s, l in rows if l == wanted]
         if matching:
             forms = matching + [f for f in forms if f not in matching]
+    preferred = None if lemma else PREFERRED_STRESS.get(script.strip_stress(word).lower())
+    if preferred in forms:
+        forms = [preferred] + [f for f in forms if f != preferred]
     # ё と е・大文字と小文字が元の表記と同じ候補を先に (всё → всё、все → все́、сча́стья は小文字の形)
     plain = script.strip_stress(word)
     form = min(forms, key=lambda f: (('ё' in script.strip_stress(f).lower()) != ('ё' in plain.lower()),

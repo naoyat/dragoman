@@ -120,6 +120,8 @@ class LanguageKatakanaTestCase(unittest.TestCase):
             self.skipTest('ロシア語の辞書が無い')
         # 同じ綴りで強勢の違う形 (мо́я「洗いながら」/ моя́「私の」) は一番ありそうな見出し語 (мой) の形を
         self.assertEqual([katakana(morphology.stressed(w)) for w in ('моя', 'мою')], ['マヤー', 'マユー'])
+        # 同じ見出し語で強勢の違う形は、よく使う方 (до́ма「家で」。дома́「家々」ではなく)
+        self.assertEqual(katakana(morphology.stressed('дома')), 'ドーマ')
 
     def test_russian_yo(self):
         from dragoman.russian import morphology
