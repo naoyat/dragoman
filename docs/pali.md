@@ -1,4 +1,4 @@
-# パーリ語（作りかけ）
+# パーリ語
 
 サンスクリットと同じく、辞書引きだけをパーリ語用に書き、解析・訳は共通の解析器を使います。
 語形・連声の分解・訳語は [Digital Pāḷi Dictionary](https://github.com/digitalpalidictionary/dpd-db)（DPD。

@@ -1,4 +1,4 @@
-# ロシア語（作りかけ）
+# ロシア語
 
 語形の解析は [pymorphy3](https://github.com/no-plagiarism/pymorphy3)（MIT。OpenCorpora の辞書）、訳語・強勢の位置・語源は
 Wiktionary から取り、解析・訳は共通の解析器（`core/`）をロシア語の設定で使います。

@@ -1,4 +1,4 @@
-# アラビア語（作りかけ）
+# アラビア語
 
 現代標準アラビア語（MSA）。語形の解析と曖昧性解消（母音記号の無い語の読みの選択）は
 [CAMeL Tools](https://github.com/CAMeL-Lab/camel_tools)（MIT。形態素辞書 calima-msa-r13 と MLE の曖昧性解消のモデルは

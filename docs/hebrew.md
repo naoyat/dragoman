@@ -1,4 +1,4 @@
-# 聖書ヘブライ語（作りかけ）
+# 聖書ヘブライ語
 
 [Open Scriptures Hebrew Bible](https://github.com/openscriptures/morphhb)（本文は Westminster Leningrad Codex、パブリック
 ドメイン。語形の解析は CC BY 4.0）の全語（約26万語）の解析を語形の辞書にし、見出し語の番号は
