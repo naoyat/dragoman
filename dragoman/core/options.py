@@ -109,6 +109,10 @@ LANGUAGE = {
         Option('kana-reading', value='STYLE', help='カタカナ読み: modern (既定。発音どおり: オーム・フーム) / shittan\n'
                                                  '(日本の悉曇・真言の読み: オン・ウン・キリーク・ソワカ)'),
     ),
+    'pi': (   # パーリ語
+        Option('script', value='SCRIPT', help='見出しに添える文字: sinhala / thai / myanmar / devanagari\n'
+                                              '(既定は入力の文字。ローマ字の入力なら添えない)'),
+    ),
     'grc': (   # 古典ギリシア語
         Option('pron', value='PRON', help='音読の発音: attic (古典期アッティカ式。既定) / modern (現代ギリシア語式)'),
     ),

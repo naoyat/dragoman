@@ -1,0 +1,48 @@
+# 法句経 (Dhammapada) 第1章 双要品 (Yamakavagga) 第1〜20偈
+#
+# パーリ語の原文は SuttaCentral (bilara-data、Mahāsaṅgīti 版) から。原典はパブリックドメイン、SuttaCentral の
+# 素材は CC0。niggahīta の ṁ は ṃ に。偈ごとに改行 (半偈の ; は文の途中の区切り)。各偈の前の注は因縁物語の題
+#
+#   ./dragoman.py pi samples/dhammapada.pi.txt
+#   ./dragoman.py pi --kana --script=sinhala samples/dhammapada.pi.txt    (シンハラ文字も添えて)
+
+# 1 (Cakkhupālattheravatthu)
+Manopubbaṅgamā dhammā, manoseṭṭhā manomayā; Manasā ce paduṭṭhena, bhāsati vā karoti vā; Tato naṃ dukkhamanveti, cakkaṃva vahato padaṃ.
+# 2 (Maṭṭhakuṇḍalīvatthu)
+Manopubbaṅgamā dhammā, manoseṭṭhā manomayā; Manasā ce pasannena, bhāsati vā karoti vā; Tato naṃ sukhamanveti, chāyāva anapāyinī.
+# 3 (Tissattheravatthu)
+Akkocchi maṃ avadhi maṃ, ajini maṃ ahāsi me; Ye ca taṃ upanayhanti, veraṃ tesaṃ na sammati.
+# 4
+Akkocchi maṃ avadhi maṃ, ajini maṃ ahāsi me; Ye ca taṃ nupanayhanti, veraṃ tesūpasammati.
+# 5 (Kāḷayakkhinīvatthu)
+Na hi verena verāni, sammantīdha kudācanaṃ; Averena ca sammanti, esa dhammo sanantano.
+# 6 (Kosambakavatthu)
+Pare ca na vijānanti, mayamettha yamāmase; Ye ca tattha vijānanti, tato sammanti medhagā.
+# 7 (Mahākāḷattheravatthu)
+Subhānupassiṃ viharantaṃ, indriyesu asaṃvutaṃ; Bhojanamhi cāmattaññuṃ, kusītaṃ hīnavīriyaṃ; Taṃ ve pasahati māro, vāto rukkhaṃva dubbalaṃ.
+# 8
+Asubhānupassiṃ viharantaṃ, Indriyesu susaṃvutaṃ; Bhojanamhi ca mattaññuṃ, Saddhaṃ āraddhavīriyaṃ; Taṃ ve nappasahati māro, Vāto selaṃva pabbataṃ.
+# 9 (Devadattavatthu)
+Anikkasāvo kāsāvaṃ, yo vatthaṃ paridahissati; Apeto damasaccena, na so kāsāvamarahati.
+# 10
+Yo ca vantakasāvassa, sīlesu susamāhito; Upeto damasaccena, sa ve kāsāvamarahati.
+# 11 (Sāriputtattheravatthu)
+Asāre sāramatino, sāre cāsāradassino; Te sāraṃ nādhigacchanti, micchāsaṅkappagocarā.
+# 12
+Sārañca sārato ñatvā, asārañca asārato; Te sāraṃ adhigacchanti, sammāsaṅkappagocarā.
+# 13 (Nandattheravatthu)
+Yathā agāraṃ ducchannaṃ, vuṭṭhī samativijjhati; Evaṃ abhāvitaṃ cittaṃ, rāgo samativijjhati.
+# 14
+Yathā agāraṃ suchannaṃ, vuṭṭhī na samativijjhati; Evaṃ subhāvitaṃ cittaṃ, rāgo na samativijjhati.
+# 15 (Cundasūkarikavatthu)
+Idha socati pecca socati, Pāpakārī ubhayattha socati; So socati so vihaññati, Disvā kammakiliṭṭhamattano.
+# 16 (Dhammikaupāsakavatthu)
+Idha modati pecca modati, Katapuñño ubhayattha modati; So modati so pamodati, Disvā kammavisuddhimattano.
+# 17 (Devadattavatthu)
+Idha tappati pecca tappati, Pāpakārī ubhayattha tappati; “Pāpaṃ me katan”ti tappati, Bhiyyo tappati duggatiṃ gato.
+# 18 (Sumanadevīvatthu)
+Idha nandati pecca nandati, Katapuñño ubhayattha nandati; “Puññaṃ me katan”ti nandati, Bhiyyo nandati suggatiṃ gato.
+# 19 (Dvesahāyakabhikkhuvatthu)
+Bahumpi ce saṃhita bhāsamāno, Na takkaro hoti naro pamatto; Gopova gāvo gaṇayaṃ paresaṃ, Na bhāgavā sāmaññassa hoti.
+# 20
+Appampi ce saṃhita bhāsamāno, Dhammassa hoti anudhammacārī; Rāgañca dosañca pahāya mohaṃ, Sammappajāno suvimuttacitto; Anupādiyāno idha vā huraṃ vā, Sa bhāgavā sāmaññassa hoti. Yamakavaggo paṭhamo.

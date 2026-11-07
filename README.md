@@ -30,6 +30,7 @@ $ echo "लड़के ने किताब पढ़ी।" | python3 dragom
 | ラテン語 | `la` | 手作りの辞書 + Wiktionary、品詞タガー、マクロンの推定 | PROIEL (カエサル): 主語 47%・目的語 56% | MBROLA / espeak-ng / Piper | [docs/latin.md](docs/latin.md) |
 | 古典ギリシア語 | `grc` | Wiktionary、Morpheus | 新約聖書: 主語 62%・目的語 50% | MBROLA (古典式 / 現代式) | [docs/greek.md](docs/greek.md) |
 | サンスクリット | `sa` | Vidyut (連声・複合語)、Wiktionary | Vedic: 主語 41%・目的語 54% | MBROLA (in1 / in2) | [docs/sanskrit.md](docs/sanskrit.md) |
+| パーリ語 | `pi` | Digital Pāḷi Dictionary (語形・連声の分解・語義)、サンスクリットの仏典の訳語。シンハラ文字・タイ文字・ビルマ文字も | — | — | [docs/pali.md](docs/pali.md) |
 | ロシア語 | `ru` | pymorphy3、Wiktionary (訳語・強勢) | SynTagRus: 主語 68%・目的語 46% | say (Milena) | [docs/russian.md](docs/russian.md) |
 | 聖書ヘブライ語・アラム語 | `he` | OSHB、HebrewLexicon (Strong・BDB) | (OSHB の解析の選択 97%) | say (Carmit) | [docs/hebrew.md](docs/hebrew.md) |
 | アラビア語 (MSA) | `ar` | CAMeL Tools、Wiktionary | PADT: 主語 66%・目的語 54% | say (Majed) | [docs/arabic.md](docs/arabic.md) |
@@ -101,7 +102,7 @@ python3 tools/build_en_ja.py        # → ~/.local/share/dragoman-data/en-ja.sql
 言語を省略すると文字から推定します（ラテン文字 → ラテン語、ギリシア文字 → 古典ギリシア語、キリル文字 → ロシア語（ө・ү があればモンゴル語）、
 ヘブライ文字 → ヘブライ語、アラビア文字はウルドゥー語の字（ٹ ڈ ڑ ں ے ھ）があればウルドゥー語、ペルシア語の字の多さで
 ペルシア語かアラビア語、デーヴァナーガリーはヒンディー語らしい語の有無でヒンディー語かサンスクリット、チベット文字 →
-古典チベット語、インドネシア語らしい語のあるラテン文字はインドネシア語かマレー語、タガログ語らしい語（ang, ng, mga, ay …）
+古典チベット語、シンハラ文字・ビルマ文字と点 (ฺ・ํ) のあるタイ文字 → パーリ語、ṃ・ṅ・ñ と重子音 (mm・ss・kkh …) があり ś・ṣ・ṛ・ḥ の無いローマ字 → パーリ語、インドネシア語らしい語のあるラテン文字はインドネシア語かマレー語、タガログ語らしい語（ang, ng, mga, ay …）
 があればタガログ語、ğ・ı・ş・İ かトルコ語らしい語（bir, ve, bu, için …）があればトルコ語、フィンランド語らしい語（ja, on, ei, että …）があればフィンランド語、ã・õ・-ção・lh・nh かポルトガル語らしい語（não, você, um, com …）があればポルトガル語、かなの無い漢字の文は中国語、フランス語らしい語（le, la, est, que, pas …）かアクセント記号・エリジオン（é・è・l'）があればフランス語、ドイツ語らしい語（der, die, das, und, ist …）かウムラウト・ß があればドイツ語、the か英語らしい語（and, of, to, you …）が
 あれば英語、ʻokina があればハワイ語、þ・ð・ƿ があれば古英語、ハングル → 韓国語、かな交じりの日本語は古文）。
 共通のオプションの一覧は `./dragoman.py --help` でも出ます。
@@ -376,6 +377,7 @@ dragoman/                パッケージ
                            発音と韻律)
   sanskrit/                サンスクリット (文字の変換、Vidyut による語形の解析と連声を戻す辞書引き、複合語、Wiktionary の訳語、
                            発音と韻律)
+  pali/                    パーリ語 (文字の変換、Digital Pāḷi Dictionary の語形の表と分解による辞書引き、訳語、カタカナ読み)
   russian/                 ロシア語 (pymorphy3 による語形の解析、前置詞の格、繋辞の補い、Wiktionary の訳語と強勢)
   hebrew/                  聖書ヘブライ語 (OSHB の語形の解析、接頭辞・人称接尾辞の切り分け、格の代わりの手がかり、転写)
   arabic/                  アラビア語 (CAMeL Tools による語形の解析と読みの選択、接語の切り分け、連語・inna・名詞文、

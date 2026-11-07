@@ -45,12 +45,12 @@ import tempfile
 LANGUAGES = {'la': 'latin', 'grc': 'greek', 'sa': 'sanskrit', 'ru': 'russian', 'he': 'hebrew', 'ar': 'arabic',
              'fa': 'persian', 'hi': 'hindi', 'ur': 'urdu', 'bo': 'tibetan', 'id': 'indonesian', 'ms': 'malay',
              'tl': 'tagalog', 'ko': 'korean', 'de': 'german', 'fr': 'french', 'tr': 'turkish', 'mn': 'mongolian', 'fi': 'finnish', 'ang': 'oldenglish', 'haw': 'hawaiian', 'ain': 'ainu', 'kobun': 'kobun', 'en': 'english',
-             'pt': 'portuguese', 'zh': 'chinese', 'lzh': 'kanbun'}
+             'pt': 'portuguese', 'zh': 'chinese', 'lzh': 'kanbun', 'pi': 'pali'}
 NAMES = {'la': 'ラテン語', 'grc': '古典ギリシア語', 'sa': 'サンスクリット', 'ru': 'ロシア語',
          'he': '聖書ヘブライ語 (聖書アラム語も)', 'ar': 'アラビア語 (現代標準アラビア語)', 'fa': 'ペルシア語',
          'hi': 'ヒンディー語', 'ur': 'ウルドゥー語', 'bo': '古典チベット語', 'id': 'インドネシア語', 'ms': 'マレー語', 'tl': 'タガログ語', 'ko': '韓国語', 'de': 'ドイツ語', 'fr': 'フランス語', 'tr': 'トルコ語', 'mn': 'モンゴル語', 'fi': 'フィンランド語', 'ang': '古英語', 'haw': 'ハワイ語', 'ain': 'アイヌ語', 'kobun': '古文 (平安の和文。現代語に組み立て直す)', 'en': '英語 (現代英語)',
          'pt': 'ポルトガル語 (ブラジル・ポルトガル)', 'zh': '中国語 (普通話。簡体字・繁体字)',
-         'lzh': '漢文 (訓読。返り点・書き下し文・現代語訳)'}
+         'lzh': '漢文 (訓読。返り点・書き下し文・現代語訳)', 'pi': 'パーリ語'}
 # 言語の符号の別名 (./dragoman.py kanbun …)
 ALIASES = {'kanbun': 'lzh'}
 # 漢文らしい字 (助字) と、現代中国語らしい字 (かなの無い漢字の文の見分け)
@@ -100,6 +100,7 @@ def detect(text):
         'arabic-script': len(re.findall('[؀-ۿ]', text)),
         'deva': len(re.findall('[ऀ-ॿ]', text)),
         'bo': len(re.findall('[\u0f00-\u0fff]', text)),
+        'pi': len(re.findall('[\u0d80-\u0dff\u1000-\u109f]|[\u0e3a\u0e4d]', text)) * 3,   # シンハラ文字・ビルマ文字・タイ文字のパーリ語
         'ko': len(re.findall('[\uac00-\ud7a3\u1100-\u11ff\u3130-\u318f]', text)) * 3,  # ハングル
         'la': len(re.findall('[A-Za-zāēīōūȳĀĒĪŌŪ]', text)),
         'kobun': len(re.findall('[\u3040-\u30ff]', text)) * 2,  # かな (日本語の文は古文として)
@@ -117,7 +118,14 @@ def detect(text):
             return 'ur'  # ٹ ڈ ڑ ں ے ۓ ھ
         persian = len(re.findall('[پچژگکی‌]', text))
         return 'fa' if persian > len(re.findall('[كي]', text)) else 'ar'
+    if best == 'pi' and not re.search('[\u0d80-\u0dff\u1000-\u109f]', text) and \
+            counts['pi'] * 4 < len(re.findall('[\u0e00-\u0e7f]', text)):
+        return None   # タイ文字は、パーリ語の印 (ฺ・ํ) が少なければタイ語として扱わない
     if best == 'la':
+        low = text.lower()
+        if re.search('[ṃṁṅñṭḍṇḷ]', low) and not re.search('[śṣṛḥ]', low) and \
+                re.search('(?:kkh|ggh|ṭṭh|ḍḍh|bbh|ññ|ṇṇ|mm|ss|kk|pp|bb|ll)[aāiīuūeo]', low):
+            return 'pi'  # ローマ字のパーリ語 (ṃ・ṅ・ñ …と、サンスクリットに少ない重子音 mm・ss・kkh・ṭṭh … があり、ś ṣ ṛ ḥ の無い文)
         words = set(re.findall('[a-z]+', text.lower()))
         if len(words & AINU_WORDS) >= 3 and len(words & AINU_WORDS) > len(words & TAGALOG_WORDS):
             return 'ain'  # ラテン文字のアイヌ語 (kamuy, kotan, wa, kor, ne …)
