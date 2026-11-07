@@ -71,10 +71,10 @@ LANG_FILES = {'la': DEFAULT_FILE, 'grc': os.path.join(ROOT, 'samples', 'greek.tx
               'ang': os.path.join(ROOT, 'samples', 'oldenglish.txt'),
               'haw': os.path.join(ROOT, 'samples', 'hawaiian.txt'),
               'pt': os.path.join(ROOT, 'samples', 'portuguese.txt'), 'zh': os.path.join(ROOT, 'samples', 'chinese.txt'),
-              'lzh': os.path.join(ROOT, 'samples', 'kanbun.txt')}
+              'lzh': os.path.join(ROOT, 'samples', 'kanbun.txt'), 'vi': os.path.join(ROOT, 'samples', 'vietnamese.txt')}
 # 解析器のモジュール名 (dragoman.<名前>.analyzer の analyze_text をそのまま使う言語)
 ANALYZER_MODULES = {'ko': 'korean', 'de': 'german', 'fr': 'french', 'tr': 'turkish', 'mn': 'mongolian', 'fi': 'finnish',
-                    'ang': 'oldenglish', 'haw': 'hawaiian', 'pt': 'portuguese', 'zh': 'chinese'}
+                    'ang': 'oldenglish', 'haw': 'hawaiian', 'pt': 'portuguese', 'zh': 'chinese', 'vi': 'vietnamese'}
 
 
 def analyzer_for(lang):

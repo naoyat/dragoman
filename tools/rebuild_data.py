@@ -98,6 +98,13 @@ STEPS = [
          [_kaikki('bo', 'kaikki/kaikki.org-dictionary-Tibetan.jsonl', 'Tibetan'),
           ('bo/hill/lex/Lexicons/classical-lexicon.txt', 'doi:10.5281/zenodo.574876 (Hill & Garrett 2017)', 'CC BY 4.0')],
          ['bo/tibetan.sqlite']),
+    Step('dic', 'vi', ['build_vietnamese_dic.py'],
+         [_kaikki('vi', 'kaikki.org-dictionary-Vietnamese.jsonl', 'Vietnamese'),
+          ('vi/unihan/Unihan_Readings.txt', 'https://www.unicode.org/Public/UCD/latest/ucd/Unihan.zip (展開)',
+           'Unicode License v3'),
+          ('vi/stanza', 'https://huggingface.co/stanfordnlp/stanza-vi (tokenize vtb_charlm・pos・depparse vtb_charlm・'
+           'pretrain conll17・charlm。tools/build_vietnamese_dic.py の注)', 'Apache 2.0 (Stanza)、学習データ UD Vietnamese-VTB (CC BY-SA 4.0)')],
+         ['vi/vietnamese.sqlite']),
     Step('dic', 'zh', ['build_chinese_dic.py'],
          [('zh/cedict_1_0_ts_utf-8_mdbg.txt.gz', 'https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz',
            'CC BY-SA 4.0 (CC-CEDICT)')], ['zh/cedict.sqlite']),

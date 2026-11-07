@@ -1,0 +1,65 @@
+# ベトナム語のサンプル (python3 tools/samples.py --lang=vi で表示する)
+#
+# 自作の文と、パブリックドメインの文 (グエン・ズー『金雲翹』(Truyện Kiều、19世紀初め) の冒頭、ことわざ)。
+# 「## 見出し」で節を分ける。
+#
+#   ./dragoman.py vi samples/vietnamese.txt
+#   ./dragoman.py vi --kana samples/vietnamese.txt     (カタカナ読み。ハノイの発音)
+
+## 基本の語順 (主語-動詞-目的語)、là の文
+Tôi là sinh viên.
+Tôi đọc sách.
+Người Việt Nam thích ăn phở.
+
+## 形容詞の述語、程度の副詞
+Hôm nay trời đẹp quá.
+Cái nhà này rất to.
+
+## 量詞・数詞・指示詞・複数
+Hai con chó này rất to.
+Tôi có hai người bạn.
+Những cuốn sách đó rất hay.
+
+## 所有 (của、名詞 + 代名詞)
+Con mèo của tôi đang ngủ trên bàn.
+Ngày mai tôi sẽ đi chợ với mẹ tôi.
+
+## 相・時制 (đã・đang・sẽ・vừa・từng・rồi)
+Tôi đã đọc quyển sách đó.
+Chúng tôi đang học tiếng Việt ở trường đại học.
+Anh ấy vừa đến.
+Tôi đã từng đi Hà Nội.
+Tôi ăn cơm rồi.
+
+## 否定・命令
+Tôi không biết.
+Đừng nói nữa!
+Anh hãy ngồi xuống.
+
+## 助動詞
+Tôi muốn đi Hà Nội.
+Tôi có thể nói tiếng Việt.
+
+## 受動 (bị・được)
+Tôi bị mẹ mắng.
+Cuốn sách này được viết bởi một nhà văn nổi tiếng.
+
+## 疑問 (có … không・chưa・疑問詞)
+Bạn có khỏe không?
+Bạn ăn cơm chưa?
+Anh tên là gì?
+Em đi đâu đấy?
+
+## 関係節・補文・従属節
+Tôi đã đọc quyển sách mà anh cho tôi.
+Tôi không biết anh ấy ở đâu.
+Tôi nghĩ rằng anh ấy là người tốt.
+Nếu trời mưa thì tôi sẽ ở nhà.
+Vì tôi mệt nên tôi đi ngủ sớm.
+
+## ことわざ
+Uống nước nhớ nguồn.
+Học, học nữa, học mãi.
+
+## 金雲翹 (Truyện Kiều) の冒頭
+Trăm năm trong cõi người ta, chữ tài chữ mệnh khéo là ghét nhau.

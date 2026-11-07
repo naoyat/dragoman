@@ -45,12 +45,12 @@ import tempfile
 LANGUAGES = {'la': 'latin', 'grc': 'greek', 'sa': 'sanskrit', 'ru': 'russian', 'he': 'hebrew', 'ar': 'arabic',
              'fa': 'persian', 'hi': 'hindi', 'ur': 'urdu', 'bo': 'tibetan', 'id': 'indonesian', 'ms': 'malay',
              'tl': 'tagalog', 'ko': 'korean', 'de': 'german', 'fr': 'french', 'tr': 'turkish', 'mn': 'mongolian', 'fi': 'finnish', 'ang': 'oldenglish', 'haw': 'hawaiian', 'ain': 'ainu', 'kobun': 'kobun', 'en': 'english',
-             'pt': 'portuguese', 'zh': 'chinese', 'lzh': 'kanbun', 'pi': 'pali'}
+             'pt': 'portuguese', 'zh': 'chinese', 'lzh': 'kanbun', 'pi': 'pali', 'vi': 'vietnamese'}
 NAMES = {'la': 'ラテン語', 'grc': '古典ギリシア語', 'sa': 'サンスクリット', 'ru': 'ロシア語',
          'he': '聖書ヘブライ語 (聖書アラム語も)', 'ar': 'アラビア語 (現代標準アラビア語)', 'fa': 'ペルシア語',
          'hi': 'ヒンディー語', 'ur': 'ウルドゥー語', 'bo': '古典チベット語', 'id': 'インドネシア語', 'ms': 'マレー語', 'tl': 'タガログ語', 'ko': '韓国語', 'de': 'ドイツ語', 'fr': 'フランス語', 'tr': 'トルコ語', 'mn': 'モンゴル語', 'fi': 'フィンランド語', 'ang': '古英語', 'haw': 'ハワイ語', 'ain': 'アイヌ語', 'kobun': '古文 (平安の和文。現代語に組み立て直す)', 'en': '英語 (現代英語)',
          'pt': 'ポルトガル語 (ブラジル・ポルトガル)', 'zh': '中国語 (普通話。簡体字・繁体字)',
-         'lzh': '漢文 (訓読。返り点・書き下し文・現代語訳)', 'pi': 'パーリ語'}
+         'lzh': '漢文 (訓読。返り点・書き下し文・現代語訳)', 'pi': 'パーリ語', 'vi': 'ベトナム語'}
 # 言語の符号の別名 (./dragoman.py kanbun …)
 ALIASES = {'kanbun': 'lzh'}
 # 漢文らしい字 (助字) と、現代中国語らしい字 (かなの無い漢字の文の見分け)
@@ -88,6 +88,9 @@ PORTUGUESE_WORDS = {'o', 'os', 'de', 'que', 'em', 'e', 'não', 'você', 'vocês'
                     'mas', 'como', 'isso', 'isto', 'meu', 'minha', 'pelo', 'pela', 'do', 'da', 'dos', 'das', 'no', 'na',
                     'nos', 'nas', 'ao', 'aos', 'também', 'são', 'foi', 'tem', 'há', 'sim', 'obrigado', 'obrigada',
                     'seu', 'sua', 'até', 'quando', 'onde', 'porque', 'então', 'agora', 'aqui', 'ainda', 'já', 'nós'}
+VIETNAMESE_WORDS = {'tôi', 'là', 'và', 'của', 'không', 'có', 'người', 'những', 'các', 'một', 'này', 'đã', 'sẽ', 'đang',
+                    'được', 'cho', 'với', 'xin', 'chào', 'bạn', 'anh', 'em', 'chị', 'ông', 'bà', 'rất', 'trong', 'cũng',
+                    'nhiều', 'nhưng', 'thì', 'mà', 'vì', 'nếu', 'khi', 'ở', 'đi', 'làm', 'gì', 'ai', 'đâu', 'nào'}
 HINDI_WORDS = {'है', 'हैं', 'का', 'की', 'के', 'में', 'नहीं', 'को', 'से', 'ने', 'था', 'थी', 'और', 'पर', 'भी'}
 
 
@@ -123,6 +126,9 @@ def detect(text):
         return None   # タイ文字は、パーリ語の印 (ฺ・ํ) が少なければタイ語として扱わない
     if best == 'la':
         low = text.lower()
+        if len(re.findall('[ăđơư\u1ea0-\u1ef9]', low)) >= 2 or \
+                len(set(re.findall(r'[^\W\d_]+', low)) & VIETNAMESE_WORDS) >= 2:
+            return 'vi'  # ベトナム語 (ă đ ơ ư と声調記号付きの字 ạ ả ấ … ỹ。フランス語の â ê ô は数えない。か tôi, của, không …)
         if re.search('[ṃṁṅñṭḍṇḷ]', low) and not re.search('[śṣṛḥ]', low) and \
                 re.search('(?:kkh|ggh|ṭṭh|ḍḍh|bbh|ññ|ṇṇ|mm|ss|kk|pp|bb|ll)[aāiīuūeo]', low):
             return 'pi'  # ローマ字のパーリ語 (ṃ・ṅ・ñ …と、サンスクリットに少ない重子音 mm・ss・kkh・ṭṭh … があり、ś ṣ ṛ ḥ の無い文)
