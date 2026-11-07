@@ -85,8 +85,10 @@ def phonemes(word):
     if tsa:
         plain = plain[:-4] if plain.endswith('ться') else plain[:-3]
     vowel_positions = [k for k, c in enumerate(plain) if c in HARD_VOWELS or c in SOFT_VOWELS]
-    if plain in UNSTRESSED:
-        stress = -1                          # 強勢の無い語 (не → ニ、на → ナ)
+    if plain in UNSTRESSED and stress is None:
+        stress = -1                          # 強勢の無い語 (не → ニ、на → ナ。強勢記号を付けた не́ は強勢のある語)
+    elif plain in STRESS_TO_NE and stress is None:
+        stress = -1                          # 強勢を не に譲った было (shift_stress): ブィラ
     elif stress is None and len(vowel_positions) == 1:
         stress = vowel_positions[0]
     segs = _segments(plain)
@@ -172,12 +174,25 @@ def _open(rest):
     return len(consonants) == 2 and consonants[1] in SONORANTS and consonants[0] != consonants[1]
 
 
+STRESS_TO_NE = ('был', 'было', 'были')   # не の後ろで強勢を не に譲る語 (не́ был・не́ было・не́ были。не была́ は譲らない)
+
+
+def shift_stress(words):
+    """強勢記号を付けた語の列で、強勢が не に移る組み合わせを直す: не + бы́ло → не́ + было (ネー ブィラ)"""
+    out = list(words)
+    for k in range(len(out) - 1):
+        if script.strip_stress(out[k]).lower() == 'не' and script.strip_stress(out[k + 1]).lower() in STRESS_TO_NE:
+            out[k] = script.strip_stress(out[k]) + '\u0301'
+            out[k + 1] = script.strip_stress(out[k + 1])
+    return out
+
+
 def sentence(words, **options):
     """文のカタカナ読み (強勢記号を付けた語の列 → 語ごとの列)。母音の無い前置詞 (в・к・с) は次の語に続ける
     (в Москве́ → ヴマスクヴェー、с дру́гом →ズドルーガム)"""
     out = []
     prefix = ''
-    for w in words:
+    for w in shift_stress(words):
         if not any(c.isalpha() for c in w):
             continue
         plain = script.strip_stress(w).lower()
@@ -195,7 +210,7 @@ def katakana(word, long='phonetic', style=None, **options):
     """強勢記号を付けた語 (Москва́) → カタカナ。style='sung' は歌の読み: 否定の не は母音を弱めず「ニェ」
     (話し言葉は [nʲɪ]「ニ」で ни と同じ。歌では音符1つに1音節を当てて綴りどおりの [nʲe] に近く歌うことが多い)"""
     if style == 'sung' and script.strip_stress(word).lower() == 'не':
-        return 'ニェ'
+        return 'ニェー' if script.stress_index(word) is not None and long == 'phonetic' else 'ニェ'   # не́ было → ニェー
     if script.strip_stress(word).lower() == 'б':
         return 'ブ'   # бы を縮めた助詞 б は前の語に続けて読む (語末の無声化をしない: сколько б → スコリカ ブ)
     return kana(phonemes(word), long=long, **options)

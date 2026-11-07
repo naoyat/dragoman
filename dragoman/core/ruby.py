@@ -200,7 +200,7 @@ def russian_ruby_words(words, liaison='next', **options):
     次の語に、'prev' なら前置詞だけの読み)。次の語が子音で始まるなら前置詞だけで読む (SEPARATE_BEFORE_CONSONANT)"""
     from dragoman.russian import morphology, katakana, script
     from dragoman.core.kana import CODA, CONSONANTS
-    stressed = [morphology.stressed(w) for w in words]
+    stressed = katakana.shift_stress([morphology.stressed(w) for w in words])   # не + бы́ло → не́ + было
     out, links = [], [False] * max(0, len(words) - 1)
     k = 0
     while k < len(words):

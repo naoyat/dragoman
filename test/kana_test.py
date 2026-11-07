@@ -106,6 +106,12 @@ class LanguageKatakanaTestCase(unittest.TestCase):
         # 歌の読み (--kana-style=sung): 否定の не は「ニェ」、ни は「ニ」のまま。既定 (話し言葉) は не も「ニ」
         self.assertEqual([katakana(w) for w in ('не', 'ни')], ['ニ', 'ニ'])
         self.assertEqual([katakana(w, style='sung') for w in ('не', 'Не', 'ни', 'Москва́')], ['ニェ', 'ニェ', 'ニ', 'マスクヴァー'])
+        # не + был・было・были は強勢が не に移る (не́ было → ネー ブィラ)。не была́ は移らない
+        from dragoman.russian.katakana import sentence
+        self.assertEqual(sentence(['Его́', 'не', 'бы́ло']), ['イヴォー', 'ネー', 'ブィラ'])
+        self.assertEqual(sentence(['Он', 'не', 'бы́л', 'там']), ['オン', 'ネー', 'ブィル', 'タム'])
+        self.assertEqual(sentence(['Она́', 'не', 'была́']), ['アナー', 'ニ', 'ブィラー'])
+        self.assertEqual(sentence(['Не', 'бы́ло'], style='sung'), ['ニェー', 'ブィラ'])
 
     def test_russian_ambiguous_stress(self):
         from dragoman.russian import morphology
