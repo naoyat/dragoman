@@ -3,8 +3,10 @@
 #
 # 発音 (IPA の音素の列) → カタカナの共通の規則 (core/kana.py)
 #
+import os
 import unittest
 
+from dragoman.core import paths
 from dragoman.core.kana import kana
 
 
@@ -258,6 +260,10 @@ class SpellingKanaTestCase(unittest.TestCase):
                  'tsinelas': 'ツィネラス'}
         for word, expected in cases.items():
             self.assertEqual(katakana(word), expected, word)
+        if os.path.exists(paths.data('en/cmudict.dict')):   # 英語からの語は英語の読み (スペイン語からの Jose はハ行)
+            cases = {'Mag-enjoy': 'マグエンジョイ', 'joy': 'ジョイ', 'Jose': 'ホセ', 'mag-aral': 'マグアラル'}
+            for word, expected in cases.items():
+                self.assertEqual(katakana(word), expected, word)
 
     def test_hindi(self):
         from dragoman.hindi.katakana import word_katakana
