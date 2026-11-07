@@ -112,6 +112,9 @@ def _case_of(token):
         return ('Acc',)
     if dep == 'iobj':
         return ('Dat',)
+    if dep == 'compound:nn' and token.tag_ == 'PN' and token.head.dep_ in ('dobj', 'obj') and \
+            token.head.head.text in GIVE_VERBS:
+        return ('Dat',)   # 给我书「私に 本を 与える」: spaCy は 我 を 书 の複合語の前の名詞にする
     if dep == 'compound:nn' and token.head.tag_ in ('NN', 'NR') and token.head.i > token.i:
         return ('Gen',)   # 名詞 + 名詞の複合語 (主体大修工程「本体の 改修の 工事」): 前の名詞は後ろの名詞に掛かる
     if dep in ('nmod:assmod', 'nmod:poss'):
@@ -121,6 +124,7 @@ def _case_of(token):
     return ('Nom', 'Acc')
 
 
+GIVE_VERBS = {'给', '送', '送给', '告诉', '教', '借', '还', '问', '递'}
 PLACE_PRONOUNS = {'这里', '那里', '这儿', '那儿', '哪里', '哪儿'}
 MOTION_VERBS = {'去', '来', '回', '到', '上', '进', '出', '走'}
 
@@ -274,6 +278,11 @@ def _drop(word):
     word.merged_into = True
 
 
+def _key(word):
+    """解析に使う語 (簡体字。広東語は置き換えた普通話の語: 佢 → 他)。表示の語 (surface) は元の字のまま"""
+    return getattr(word, 'key', None) or segment.simplified(word.surface)
+
+
 PERSON_WORDS = ('person', 'people', 'friend', 'student', 'teacher', 'child', 'man', 'woman', 'boy', 'girl', 'worker',
                 'doctor', 'brother', 'sister', 'son', 'daughter', 'colleague', 'classmate', 'guest', 'customer')
 
@@ -318,7 +327,7 @@ def plurals(words):
     """名詞 + 们 (士兵们「兵士たち」) を複数の名詞1つに"""
     out = []
     for word in words:
-        if word.surface == '们' and out and _pos(out[-1]) == 'noun':
+        if _key(word) == '们' and out and _pos(out[-1]) == 'noun':
             prev = _item(out[-1])
             out[-1].items = [type(prev)(dict(prev.item, ja=prev.ja.split(',')[0] + 'たち', noun_ja=prev.ja, animate=True,
                                              _=[t for t in prev._ or [] if t[1] == 'pl'] or prev._))]
@@ -334,12 +343,12 @@ def localizers(words):
     out = []
     for word in words:
         item = _item(word)
-        if item is not None and (_tag(word) == 'LC' or len(word.surface) > 1 and word.surface in morphology.LOCALIZERS) and \
+        if item is not None and (_tag(word) == 'LC' or len(_key(word)) > 1 and _key(word) in morphology.LOCALIZERS) and \
                 out and _pos(out[-1]) in ('noun', 'pronoun'):
             prev = _item(out[-1])
-            place = morphology.LOCALIZERS.get(word.surface, item.attrib('base'))
+            place = morphology.LOCALIZERS.get(_key(word), item.attrib('base'))
             out[-1].items = [type(prev)(dict(prev.item, ja=prev.ja.split(',')[0] + 'の' + place, pos='noun',
-                                             gloss_lang='ja', localizer=word.surface,
+                                             gloss_lang='ja', localizer=_key(word),
                                              noun_ja=prev.attrib('noun_ja') or prev.ja))]
             out[-1].surface += word.surface
             _drop(word)
@@ -480,7 +489,7 @@ def complements(words):
     while k < len(words):
         word = words[k]
         item = _item(word)
-        nxt_surface = words[k + 1].surface if k + 1 < len(words) else ''
+        nxt_surface = _key(words[k + 1]) if k + 1 < len(words) else ''
         if item is None or item.pos != 'verb' or item.attrib('lemma') in morphology.MODALS and \
                 (item.attrib('lemma'), nxt_surface) not in morphology.COMPLEMENT_GLOSSES:   # 想起来「思い出す」は補語
             out.append(word)
@@ -488,12 +497,12 @@ def complements(words):
             continue
         j = k + 1
         middle = None
-        if j < len(words) and (_tag(words[j]) == 'DER' or words[j].surface == '不' and j + 1 < len(words) and
-                               (words[j + 1].surface in morphology.COMPLEMENTS)):
+        if j < len(words) and (_tag(words[j]) == 'DER' or _key(words[j]) == '不' and j + 1 < len(words) and
+                               (_key(words[j + 1]) in morphology.COMPLEMENTS)):
             middle = words[j]
             j += 1
         nxt = words[j] if j < len(words) else None
-        surface = nxt.surface if nxt is not None else ''
+        surface = _key(nxt) if nxt is not None else ''
         complement = surface[:-1] if surface.endswith('了') and surface[:-1] in morphology.COMPLEMENTS else surface
         if nxt is not None and complement in morphology.COMPLEMENTS and (middle is not None or _pos(nxt) == 'verb'):
             ja = morphology.COMPLEMENT_GLOSSES.get((item.attrib('lemma'), complement)) or \
@@ -522,7 +531,7 @@ def complements(words):
         if middle is not None and _tag(middle) == 'DER' and nxt is not None:
             # 様態の補語 (跑得很快「とても速く走る」): 形容詞を副詞の形にして動詞の前に
             adv, m = '', j
-            if nxt.surface in ('很', '非常', '太', '真', '挺', '特别', '比较'):
+            if _key(nxt) in ('很', '非常', '太', '真', '挺', '特别', '比较'):
                 adv = (_item(nxt).ja or '').split(',')[0]
                 m += 1
             adj = words[m] if m < len(words) else None
@@ -552,7 +561,7 @@ def aspects(words):
             continue
         data = dict(item.item)
         after = [w for w in words[k + 1:k + 4]]
-        marks = [w.surface for w in after if _tag(w) in ('AS', 'SP')]
+        marks = [_key(w) for w in after if _tag(w) in ('AS', 'SP')]
         before = words[max(0, k - 2):k]
         if '过' in marks or '過' in marks:
             data.update(tense='present', form='経験 (动词 + 过「〜したことがある」)', experiential=True)
@@ -565,7 +574,7 @@ def aspects(words):
         if any(_item(w) is not None and _item(w).attrib('neg_past') for w in before) and not data.get('experiential'):
             data['tense'] = 'perfect'   # 没 + 動詞「〜しなかった」(没 + 动词 + 过 は「〜したことがない」)
         word.items = [type(item)(data)]
-    return [w for w in words if not (_tag(w) in ('AS',) or _tag(w) == 'SP' and w.surface in ('了',)) and
+    return [w for w in words if not (_tag(w) in ('AS',) or _tag(w) == 'SP' and _key(w) in ('了',)) and
             not (_item(w) is not None and _item(w).attrib('progressive'))]
 
 
@@ -578,7 +587,7 @@ def modals(words):
         item = _item(word)
         nxt = words[k + 1] if k + 1 < len(words) else None
         if item is not None and item.pos == 'verb' and item.attrib('lemma') in morphology.MODALS and nxt is not None and \
-                _pos(nxt) == 'verb':
+                _pos(nxt) == 'verb' and not (item.attrib('lemma') in ('去', '来') and _item(nxt).attrib('lemma') in ('去', '来')):
             m = _item(nxt)
             from dragoman.core.japanese import attach_auxiliary
             suffix = morphology.MODALS[item.attrib('lemma')]
@@ -586,7 +595,12 @@ def modals(words):
                                                                for w in out)
             if prediction:
                 suffix = 'だろう'   # 補文の 会 は見込み (我觉得他会来「{彼が 来るだろう}と 思う」)。文の枠では未来
-            ja = ','.join(attach_auxiliary(j, suffix) for j in m.ja.split(',')[:1]) if m.attrib('gloss_lang') == 'ja' else m.ja
+            if m.attrib('gloss_lang') != 'ja':
+                ja = m.ja
+            elif suffix == 'のが好きだ':
+                ja = m.ja.split(',')[0] + suffix   # 喜欢看电影「映画を 見るのが好きだ」
+            else:
+                ja = ','.join(attach_auxiliary(j, suffix) for j in m.ja.split(',')[:1])
             data = dict(m.item, ja=ja, surface=word.surface + nxt.surface, modal=item.attrib('lemma'), main_ja=m.ja,
                         form='助動詞 %s + 動詞' % item.attrib('lemma'), tense=item.attrib('tense'))
             if prediction:   # 文の枠では未来の時制 (generate/frame.py)
@@ -649,12 +663,13 @@ def hen_adjectives(words):
     out = []
     for k, word in enumerate(words):
         item = _item(word)
-        if item is not None and item.pos == 'adj' and out and out[-1].surface in ('很', '非常', '太', '真', '挺', '比较', '最', '更'):
+        if item is not None and item.pos == 'adj' and out and _key(out[-1]) in ('很', '非常', '太', '真', '挺', '比较', '最', '更'):
             adv = _item(out[-1])
             together = out[-1].surface + word.surface
-            if adv is not None and adv.pos == 'adv' and segment.simplified(together) in morphology.DETERMINERS and \
+            key = _key(out[-1]) + _key(word)
+            if adv is not None and adv.pos == 'adv' and key in morphology.DETERMINERS and \
                     k + 1 < len(words) and _pos(words[k + 1]) == 'noun':
-                word.items = [type(item)(dict(item.item, ja=morphology.DETERMINERS[segment.simplified(together)],
+                word.items = [type(item)(dict(item.item, ja=morphology.DETERMINERS[key],
                                               surface=together, determiner=True, predicative=False))]   # 很多书「たくさんの本」
                 word.surface = together
                 _drop(out.pop())
@@ -664,6 +679,29 @@ def hen_adjectives(words):
                 word.surface = out[-1].surface + word.surface
                 _drop(out.pop())
         out.append(word)
+    return out
+
+
+def comparatives(words):
+    """比 + 名詞 (我比他高「私は 彼より 高い」) は「〜より」の副詞1つに"""
+    out = []
+    k = 0
+    while k < len(words):
+        word = words[k]
+        item = _item(word)
+        nxt = words[k + 1] if k + 1 < len(words) else None
+        if item is not None and item.pos == 'preposition' and item.attrib('base') == '比' and _pos(nxt) in ('noun', 'pronoun'):
+            it = _item(nxt)
+            ja = it.ja.split(',')[0] + 'より'
+            nxt.items = [type(it)({'surface': word.surface + nxt.surface, 'pos': 'adv', 'base': it.attrib('base'),
+                                   'ja': ja, 'gloss_lang': 'ja', 'form': '比較 (比 + 名詞「〜より」)'})]
+            nxt.surface = word.surface + nxt.surface
+            _drop(word)
+            out.append(nxt)
+            k += 2
+            continue
+        out.append(word)
+        k += 1
     return out
 
 
@@ -701,11 +739,11 @@ def subject_adverbs(words):
     """主語の後ろの也「〜も」・都「みな」は主語に付ける (我也去「私も 行く」)。主語の格の助詞の代わり"""
     out = []
     for k, word in enumerate(words):
-        if word.surface in ('也', '都') and _pos(word) == 'adv' and out:
+        if _key(word) in ('也', '都') and _pos(word) == 'adv' and out:
             prev = out[-1]
             it = _item(prev)
             if it is not None and it.pos in ('noun', 'pronoun') and it._ and it._[0][0] == 'Nom':
-                particle = 'も' if word.surface == '也' else 'はみな'
+                particle = 'も' if _key(word) == '也' else 'はみな'
                 prev.items = [type(it)(dict(it.item, nom_particle=particle))]
                 _drop(word)
                 continue
@@ -715,9 +753,9 @@ def subject_adverbs(words):
 
 def question_particles(words, surfaces):
     """文末の吗は疑問: 文末の？が無ければ補う。吧・呢・啊・嘛は訳さない"""
-    if any(w.surface in ('吗', '嗎') for w in words) and surfaces and surfaces[-1] not in ('？', '?'):
+    if any(_key(w) in ('吗', '嗎') for w in words) and surfaces and surfaces[-1] not in ('？', '?'):
         surfaces.append('？')
-    return [w for w in words if not (_tag(w) == 'SP' and w.surface in ('吗', '嗎', '吧', '呢', '啊', '嘛', '呀', '啦'))]
+    return [w for w in words if not (_tag(w) == 'SP' and _key(w) in ('吗', '嗎', '吧', '呢', '啊', '嘛', '呀', '啦'))]
 
 
 # 看 の目的語が読むもの (看书「本を読む」) なら訳を「読む」に (ほかは「見る」: 看电影)
@@ -733,13 +771,17 @@ def reading_objects(words, doc):
             by_i[token.i].items = [type(it)(dict(it.item, ja='読む'))]
 
 
-def lookup_all(surfaces):
-    simple = [segment.simplified(s) for s in surfaces]
+def lookup_all(surfaces, simple=None):
+    """語の列 → 語の項目。simple は解析に使う簡体字の語 (広東語の 佢 → 他 のように置き換えたもの。無ければ OpenCC で)"""
+    given = simple is not None
+    simple = list(simple) if given else [segment.simplified(s) for s in surfaces]
     doc = morphology.parse(simple)
     words = []
     for token in doc:
         data = item_of(token, doc, surfaces[token.i])
         word = Word(surfaces[token.i], None if data is None else [data])
+        if given:
+            word.key = simple[token.i]   # 置き換えた語 (広東語)。普通話は表示の語を簡体字にしたもの (_key)
         word.token_ix = token.i
         word.doc_i = token.i
         words.append(word)
@@ -758,6 +800,7 @@ def lookup_all(surfaces):
     words = modals(words)
     words = subject_adverbs(words)
     words = hen_adjectives(words)
+    words = comparatives(words)
     words = adjective_predicates(words)
     place_datives(words)
     words = [w for w in words if not getattr(w, 'merged_into', False) and _pos(w) != 'particle']
@@ -769,9 +812,11 @@ def lookup_all(surfaces):
 _display = []
 
 
-def analyze_sentence(surfaces):
+def analyze_sentence(surfaces, simple=None, original=None, lang=None):
+    """simple: 解析に使う語 (lookup_all)。original: 見出しに出す元の語の列 (広東語で語順を入れ替えたときの元の順)。
+    lang: 共通の解析器の言語の設定 (無ければ CHINESE)"""
     surfaces = list(surfaces)
-    words = lookup_all(surfaces)
+    words = lookup_all(surfaces, simple)
     marks = list(surfaces)
     words = question_particles(words, marks)
     if marks[-1:] == ['？'] and (not words or words[-1].surface not in ('？', '?')):
@@ -781,9 +826,9 @@ def analyze_sentence(surfaces):
     for i, word in enumerate(words):
         word.index = i
     word_details = [word.detail() for word in words]
-    with language.using(CHINESE):
+    with language.using(lang or CHINESE):
         analysis = common.analyze_words([w.surface for w in words], words, word_details, [])
-    analysis.original = list(surfaces)
+    analysis.original = list(original if original is not None else surfaces)
     return analysis
 
 

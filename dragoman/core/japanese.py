@@ -590,7 +590,7 @@ def attach_auxiliary(verb, suffix):
     try:
         if suffix.startswith('て'):
             return Modern.te(verb) + suffix[1:]
-        if suffix in ('たい', 'たがる'):
+        if suffix in ('たい', 'たがる', 'に行く', 'に来る'):   # 連用形 + に行く (飲みに行く)
             return Modern.masu_stem(verb) + suffix
         if suffix == 'なければならない':
             return Modern.neg_stem(verb) + suffix

@@ -108,6 +108,10 @@ STEPS = [
     Step('dic', 'zh', ['build_chinese_dic.py'],
          [('zh/cedict_1_0_ts_utf-8_mdbg.txt.gz', 'https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz',
            'CC BY-SA 4.0 (CC-CEDICT)')], ['zh/cedict.sqlite']),
+    Step('dic', 'yue', ['build_cantonese_dic.py'],
+         [('yue/cccanto-webdist.txt', 'https://cantonese.org/cccanto-170202.zip (展開)', 'CC BY-SA 3.0 (CC-Canto)'),
+          ('yue/cccedict-canto-readings-150923.txt', 'https://cantonese.org/cccedict-canto-readings-150923.zip (展開)',
+           'CC BY-SA 3.0 (CC-Canto)')], ['yue/cantonese.sqlite']),
 ]
 # 英語の索引 (辞書から。ロシア語などは生データから): tools/build_english_index.py
 INDEX_INPUTS = {'ru': 'ru/wiktionary.sqlite', 'sa': 'sa/wiktionary.sqlite', 'grc': 'grc/wiktionary.sqlite',

@@ -43,6 +43,7 @@ $ echo "लड़के ने किताब पढ़ी।" | python3 dragom
 | ドイツ語 | `de` | spaCy (de_core_news_sm。品詞・格・依存関係) + Wiktionary。動詞の組 (枠構造)・分離動詞をまとめる | UD German-GSD: 主語 90%・目的語 80% | say (Anna) | [docs/german.md](docs/german.md) |
 | フランス語 | `fr` | spaCy (fr_core_news_sm) + Wiktionary。格は役割から、接語の代名詞・複合過去・部分冠詞 | UD French-GSD: 主語 79%・目的語 69% | say (Thomas) | [docs/french.md](docs/french.md) |
 | ポルトガル語 (ブラジル・ポルトガル) | `pt` | spaCy (pt_core_news_sm) + Wiktionary。格は依存関係から、接語の代名詞 (前・後ろ・中)・動詞の組・縮約形 | まだ | say (Luciana / Joana) | [docs/portuguese.md](docs/portuguese.md) |
+| 広東語 (香港。繁体字) | `yue` | 語の切り分け (PyCantonese + CC-Canto・CC-CEDICT) + 普通話の語に置き換えて (佢 → 他、咗 → 了、我高過佢 → 我比他高) 中国語の解析器で。粤拼 | まだ | say (Sinji) | [docs/cantonese.md](docs/cantonese.md) |
 | 中国語 (普通話。簡体字・繁体字) | `zh` | 語の切り分け (pkuseg + CC-CEDICT) + spaCy (zh_core_web_sm)。量詞・的・了 / 过 / 着・把 / 被・方位詞 | まだ | say (Tingting) | [docs/chinese.md](docs/chinese.md) |
 | ベトナム語 | `vi` | 語の切り分け (Stanza + Wiktionary の見出し) + Stanza (UD Vietnamese-VTB)。量詞・của・đã / đang / sẽ・bị / được・có … không・mà の関係節。漢越語の漢字 (Wiktionary・Unihan) | まだ | say (Linh) | [docs/vietnamese.md](docs/vietnamese.md) |
 | トルコ語 | `tr` | zeyrek (形態素解析) + Wiktionary。格・所有・時制・人称の接尾辞、分詞の関係節、副動詞。語順のままの訳も | UD Turkish-BOUN・Kenet: 主語 40%・目的語 37% | say (Yelda) | [docs/turkish.md](docs/turkish.md) |
@@ -104,7 +105,7 @@ python3 tools/build_en_ja.py        # → ~/.local/share/dragoman-data/en-ja.sql
 ヘブライ文字 → ヘブライ語、アラビア文字はウルドゥー語の字（ٹ ڈ ڑ ں ے ھ）があればウルドゥー語、ペルシア語の字の多さで
 ペルシア語かアラビア語、デーヴァナーガリーはヒンディー語らしい語の有無でヒンディー語かサンスクリット、チベット文字 →
 古典チベット語、シンハラ文字・ビルマ文字と点 (ฺ・ํ) のあるタイ文字 → パーリ語、ṃ・ṅ・ñ と重子音 (mm・ss・kkh …) があり ś・ṣ・ṛ・ḥ の無いローマ字 → パーリ語、インドネシア語らしい語のあるラテン文字はインドネシア語かマレー語、タガログ語らしい語（ang, ng, mga, ay …）
-があればタガログ語、ğ・ı・ş・İ かトルコ語らしい語（bir, ve, bu, için …）があればトルコ語、フィンランド語らしい語（ja, on, ei, että …）があればフィンランド語、ã・õ・-ção・lh・nh かポルトガル語らしい語（não, você, um, com …）があればポルトガル語、かなの無い漢字の文は中国語、ă・đ・ơ・ư と声調記号付きの字 (ạ ả … ỹ) かベトナム語らしい語（tôi, của, không …）があればベトナム語、フランス語らしい語（le, la, est, que, pas …）かアクセント記号・エリジオン（é・è・l'）があればフランス語、ドイツ語らしい語（der, die, das, und, ist …）かウムラウト・ß があればドイツ語、the か英語らしい語（and, of, to, you …）が
+があればタガログ語、ğ・ı・ş・İ かトルコ語らしい語（bir, ve, bu, için …）があればトルコ語、フィンランド語らしい語（ja, on, ei, että …）があればフィンランド語、ã・õ・-ção・lh・nh かポルトガル語らしい語（não, você, um, com …）があればポルトガル語、かなの無い漢字の文は中国語（佢・嘅・咗・唔・冇・喺 … があれば広東語）、ă・đ・ơ・ư と声調記号付きの字 (ạ ả … ỹ) かベトナム語らしい語（tôi, của, không …）があればベトナム語、フランス語らしい語（le, la, est, que, pas …）かアクセント記号・エリジオン（é・è・l'）があればフランス語、ドイツ語らしい語（der, die, das, und, ist …）かウムラウト・ß があればドイツ語、the か英語らしい語（and, of, to, you …）が
 あれば英語、ʻokina があればハワイ語、þ・ð・ƿ があれば古英語、ハングル → 韓国語、かな交じりの日本語は古文）。
 共通のオプションの一覧は `./dragoman.py --help` でも出ます。
 
@@ -392,6 +393,8 @@ dragoman/                パッケージ
   indonesian/              インドネシア語 (接辞・接語・重複の解析、語順からの格の枠、受動、関係節、見えない繋辞)
   malay/                   マレー語 (解析は indonesian/。マレー語の辞書の項目を先に)
   tagalog/                 タガログ語 (焦点の接辞・アスペクトの重複の解析、ang / ng / sa と焦点からの格、繋ぎ、関係節)
+  cantonese/               広東語 (PyCantonese と辞書による語の切り分け、普通話の語への置き換えと語順の並べ替え (比較・二重目的語・
+                           反復疑問・文末の 未)。解析は chinese/。粤拼とカタカナ読み)
   vietnamese/              ベトナム語 (Stanza と辞書による語の切り分け、依存関係からの格、量詞・所有・相・否定・助動詞・受動・
                            疑問の助詞・関係節のまとめ、漢越語の漢字、ハノイの発音のカタカナ読み)
   german/                  ドイツ語 (spaCy の格・依存関係による語の項目、冠詞の掛け先、動詞の組 (完了・受動・未来・話法の助動詞)、

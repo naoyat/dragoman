@@ -3,6 +3,7 @@
 #
 # 中国語の辞書 ($DRAGOMAN_DATA/zh/cedict.sqlite。tools/build_chinese_dic.py で CC-CEDICT から作る) を引く
 #
+import contextlib
 import functools
 import os
 import sqlite3
@@ -25,15 +26,34 @@ def available():
     return _connect() is not None
 
 
-@functools.lru_cache(maxsize=100000)
+# CC-CEDICT に無い語を引くほかの辞書 (広東語の解析の間だけ cantonese/dictionary.py を: with extra(...))
+_extra = [None]
+
+
+@contextlib.contextmanager
+def extra(fn):
+    _extra.append(fn)
+    try:
+        yield
+    finally:
+        _extra.pop()
+
+
 def lookup(word):
     """語 (簡体字か繁体字) → [{simplified, traditional, pinyin, en, classifiers, proper, senses}] (普通名詞を固有名詞より、
-    語義の多い順に)"""
+    語義の多い順に)。CC-CEDICT に無ければ extra() の辞書で"""
+    return _lookup(word, _extra[-1])
+
+
+@functools.lru_cache(maxsize=100000)
+def _lookup(word, fallback):
     db = _connect()
     if db is None or not word:
         return ()
     rows = [dict(zip(FIELDS, r)) for r in db.execute(
         'SELECT %s FROM words WHERE simplified = ? OR traditional = ?' % ', '.join(FIELDS), (word, word)).fetchall()]
+    if not rows and fallback is not None:
+        return tuple(fallback(word))
     return tuple(sorted(rows, key=lambda r: (r['proper'], -(r['senses'] or 0))))
 
 
