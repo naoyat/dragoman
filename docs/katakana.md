@@ -128,6 +128,10 @@ dragoman に頼めるよう、外から呼びやすい口を用意する。
      `--kana-long=phonemic|phonetic`・`--kana-wa=ワ|ウァ`。語の区切りは空白。言語のコマンドの `katakana(analysis, kana_options)`
      が、解析で選んだ読みの綴り（ラテン語の格の決まったマクロン付きの形、古英語・ハワイ語の辞書の綴り）から語ごとに作る。
      ラテン語の入口（latin/main.py）にも同じ選択肢
+   * （2026-11-07）`--kana-style=speech|sung`（`--kana` にも `--kana-json` にも）: 既定の speech は話し言葉の発音、sung は歌の読み
+     （話し言葉で弱まる母音をはっきり書く。歌では音符1つに1音節を当て、綴りに近い発音で歌うことが多い。シャンソンの巻き舌の r や
+     歌の「を」の wo と同じ類）。曲によって使い分けるので呼ぶ側で選ぶ。今はロシア語の否定の не だけ「ニェ」（話し言葉は [nʲɪ]
+     「ニ」で ни と同じ。ни は sung でも「ニ」）。ほかの言語は受け付けて何もしない
    * （済 2026-10-21）ルビ（フリガナ）用: `core/ruby.ruby(text, lang, liaison='next', **options)` とコマンドの
      `./dragoman.py LANG --kana-json`（入力の1行ごとに `{"text": 行, "ruby": [{text, start, end, kana}]}` の JSON。解析はしない）。
      元の文の文字の範囲ごとにカナ（句読点はカナを空に）。語をまたぐ音は `--kana-liaison`: next（既定。次の語に: les enfants →

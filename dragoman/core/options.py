@@ -47,6 +47,8 @@ COMMON = (
                                             '/ tiberian (母音記号どおりのティベリア式: ベレーシース・ダーヴァール)'),
     Option('kana-kobun', value='STYLE', help='古文のカタカナ読み: modern (既定。今の発音: オモウ・サブライ) / historical\n'
                                            '(歴史的仮名遣い: オモフ・サブラヒ)'),
+    Option('kana-style', value='STYLE', help='カタカナ読みの様式: speech (既定。話し言葉の発音) / sung (歌の読み: 話し言葉で\n'
+                                           '弱まる母音をはっきり。ロシア語の не → ニェ (ни は ニ))'),
     Option('kana-json', help='ルビ (フリガナ) 用のカタカナを JSON で出す (入力の1行ごとに {"text", "ruby": [{text, start, end,\n'
                               'kana}]}。解析はしない)'),
     Option('kana-liaison', value='MODE', help='ルビの語をまたぐ音 (リエゾンなど) の載せ方: next (既定。次の語に) / prev (前の語に)\n'
@@ -73,7 +75,7 @@ COMMON = (
 # ラテン語のコマンド (latin/main.py) が受け付ける共通のオプション (-r・--no-explain などはラテン語では使わない。
 # --sentence-per-line は入口 main.py が処理する) と、ラテン語だけのもの
 LATIN_COMMON = ('no-word-detail', 'descendants', 'etymology', 'speech', 'tts', 'html', 'pdf', 'marks', 'legend',
-                'provenance', 'compare', 'gaps', 'help', 'kana', 'kana-only', 'kana-long', 'kana-wa', 'kana-si', 'kana-oe', 'kana-accent', 'kana-small', 'kana-kobun', 'kana-hebrew', 'kana-pt', 'kana-json',
+                'provenance', 'compare', 'gaps', 'help', 'kana', 'kana-only', 'kana-long', 'kana-wa', 'kana-si', 'kana-oe', 'kana-accent', 'kana-small', 'kana-kobun', 'kana-hebrew', 'kana-pt', 'kana-style', 'kana-json',
                 'kana-liaison', 'kana-unit')
 LATIN = tuple(o for o in COMMON if o.long in LATIN_COMMON) + (
     Option('no-translation', 'q', help='訳 (日本語) を表示しない'),

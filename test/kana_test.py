@@ -103,6 +103,9 @@ class LanguageKatakanaTestCase(unittest.TestCase):
                          ['シャスチヤ', 'クルィリヤ', 'ムノーガ', 'タヴォー', 'フスョー', 'マシーヌィ'])   # сч → щ、ы → ウ段 + ィ
         self.assertEqual([katakana(w) for w in ('си́ла', 'сы́р', 'Росси́я', 'звёздной')],
                          ['シーラ', 'スィル', 'ラッシーヤ', 'ズヴョーズナイ'])   # си は「シ」、сы は「スィ」、軟らかい с・з・в + ё は「スョ」「ヴョ」
+        # 歌の読み (--kana-style=sung): 否定の не は「ニェ」、ни は「ニ」のまま。既定 (話し言葉) は не も「ニ」
+        self.assertEqual([katakana(w) for w in ('не', 'ни')], ['ニ', 'ニ'])
+        self.assertEqual([katakana(w, style='sung') for w in ('не', 'Не', 'ни', 'Москва́')], ['ニェ', 'ニェ', 'ニ', 'マスクヴァー'])
 
     def test_russian_ambiguous_stress(self):
         from dragoman.russian import morphology

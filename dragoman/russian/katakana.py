@@ -191,8 +191,11 @@ def sentence(words, **options):
     return out
 
 
-def katakana(word, long='phonetic', **options):
-    """強勢記号を付けた語 (Москва́) → カタカナ"""
+def katakana(word, long='phonetic', style=None, **options):
+    """強勢記号を付けた語 (Москва́) → カタカナ。style='sung' は歌の読み: 否定の не は母音を弱めず「ニェ」
+    (話し言葉は [nʲɪ]「ニ」で ни と同じ。歌では音符1つに1音節を当てて綴りどおりの [nʲe] に近く歌うことが多い)"""
+    if style == 'sung' and script.strip_stress(word).lower() == 'не':
+        return 'ニェ'
     if script.strip_stress(word).lower() == 'б':
         return 'ブ'   # бы を縮めた助詞 б は前の語に続けて読む (語末の無声化をしない: сколько б → スコリカ ブ)
     return kana(phonemes(word), long=long, **options)
