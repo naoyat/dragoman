@@ -135,7 +135,7 @@ dragoman に頼めるよう、外から呼びやすい口を用意する。
    * （2026-11-07）ロシア語の не + был・было・были は強勢が не に移る（`russian/katakana.shift_stress`: не́ было → ネー ブィラ、
      не́ был → ネー ブィル。не была́ → ニ ブィラーは移らない）。`--kana` も `--kana-json` も。sung では не́ は「ニェー」
    * （2026-11-07）同じ見出し語の中で強勢の違う形は、文脈なしではよく使う方（`russian/morphology.PREFERRED_STRESS`: дома →
-     до́ма「家で」ドーマ。дома́「家々」ではなく）
+     до́ма「家で」ドーマ。дома́「家々」ではなく。города → го́рода「町の」ゴーラダ、руки → ру́ки「両手」ルーキ）
    * （済 2026-10-21）ルビ（フリガナ）用: `core/ruby.ruby(text, lang, liaison='next', **options)` とコマンドの
      `./dragoman.py LANG --kana-json`（入力の1行ごとに `{"text": 行, "ruby": [{text, start, end, kana}]}` の JSON。解析はしない）。
      元の文の文字の範囲ごとにカナ（句読点はカナを空に）。語をまたぐ音は `--kana-liaison`: next（既定。次の語に: les enfants →
