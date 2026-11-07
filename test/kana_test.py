@@ -77,6 +77,8 @@ class LanguageKatakanaTestCase(unittest.TestCase):
                                                    'Anne', 'Rousseau', 'Jean', 'Hugues')],
                          ['エマニュエル', 'ヴァンサン', 'フランソワ', 'ジュリエット', 'ピエール', 'セリーヌ', 'アンヌ',
                           'ルソー', 'ジャン', 'ユグ'])
+        self.assertEqual([fr.katakana(w) for w in ('Deneuve', 'Montesquieu', 'bleu', 'heure')],
+                         ['ドゥヌーヴ', 'モンテスキュー', 'ブルー', 'エール'])   # ø はウ段、œ はエ段
 
     def test_german(self):
         from dragoman.german import katakana as de
@@ -228,7 +230,10 @@ class SentenceKanaTestCase(unittest.TestCase):
             "Je sais que tu m'aimes.": 'ジュ セ ク テュ メム',                       # 文の中の読み (m'aimes)
             'Les enfants sont arrivés.': 'レ ザンファン ソン タリヴェ',               # リエゾンは次の語の頭に
             'Il y avait une femme.': 'イリヤヴェ テュヌ ファム',
-            'Antoine et Étienne.': 'アントワーヌ エ エティエンヌ',                   # 綴りでも読む語末の子音は動かさない
+            'Antoine et Étienne.': 'アントワー ネ エティエンヌ',                     # 読む語末の子音も次の語の頭に
+            'Je dois me résoudre aux adieux.': 'ジュ ドワ ム レズド ロー ザデュー',    # アンシェヌマン、ø はウ段
+            'Petite amie, une heure.': 'プティ タミ ユ ネール',                        # 句読点の後ろへは移さない
+            'Quatre amis.': 'カト ラミ',                                               # 移した後の t は「ッ」にしない
             'Il est arrivé.': 'イレ タリヴェ',                                         # il・elle + 母音は1語
             'Elle aime Paris.': 'エレム パリ',
             'Ils ont un chien.': 'イル ゾン タン シャン',

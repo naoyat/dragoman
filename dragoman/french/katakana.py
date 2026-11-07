@@ -8,9 +8,12 @@
 #
 # 綴りの規則でなく発音から書くので、読まない字・鼻母音・語末の子音は espeak-ng に任せる:
 #   - 鼻母音は「ン」(ɛ̃・œ̃ も今のフランス語の音 [æ̃] に近いのでアン: Vincent → ヴァンサン)。鼻母音は長くしない (Jean → ジャン)
-#   - あいまい母音 ə はウ段 (le → ル、je → ジュ、que → ク、de → ドゥ)
+#   - あいまい母音 ə はウ段 (le → ル、je → ジュ、que → ク、de → ドゥ)。[ø] もウ段 (deux → ドゥー、peu → プー、
+#     adieux → アデュー)。[œ] はエ段のまま (leur → レール、heure → エール)
 #   - 文は文全体を espeak-ng に渡して語ごとに (sentence。y → i、m'aimes → mɛm)。リエゾンの子音は次の語の頭に (Les enfants →
-#     レ ザンファン)、il y a は1語「イリヤ」、il・elle + 母音で始まる語も1語 (il est → イレ、elle est → エレ)
+#     レ ザンファン)、il y a は1語「イリヤ」、il・elle + 母音で始まる語も1語 (il est → イレ、elle est → エレ)。
+#     読む語末の子音も母音で始まる次の語の頭に (アンシェヌマン: résoudre aux → レズド ロー、petite amie → プティ タミ)。
+#     句読点の後ろへは移さない
 #   - 子音 + w + a は「ソワ」(oi)、子音 + w + i は「ルイ」(ui)
 #   - 音素としての長母音は無いので、長さは実際の発音の長さ (ˑ。既定は long='phonetic'): 強勢のある (最後の音節の) 母音のうち、
 #     語末の o・ø・ɑ (Rousseau → ルソー) と、語末の r・z・ʒ・v の前 (Pierre → ピエール)、o・ø・ɑ の後ろの語末の子音の前
@@ -70,7 +73,7 @@ def phonemes(word):
                     fixed.append('u')
                 continue
             fixed.append(p)
-        out += _final_nasal(_lengthen(fixed), spelling)
+        out += _rounded(_final_nasal(_lengthen(fixed), spelling))
         out.append(WORD_BREAK)
     return out[:-1]
 
@@ -83,13 +86,46 @@ def _french_vowel(p):
     return unicodedata.normalize('NFC', p)
 
 
+def _rounded(phs):
+    """[ø] はウ段 (deux → ドゥー、peu → プー)。長さの印はそのまま"""
+    return ['ɯ' + p[1:] if p[:1] == 'ø' else p for p in phs]
+
+
+def _is_consonant(p):
+    return bool(p) and not _is_vowel(p) and p not in ('-', WORD_BREAK) and not p.startswith('-')
+
+
+def _enchain(w, nxt):
+    """アンシェヌマン: 読む語末の子音を母音で始まる次の語の頭に (résoudre aux → レズド / ロー)。移す子音の列 (空なら移さない)。
+    語の母音の長さ (leur ami → レー / ラミ) は移す前の形で決めておく"""
+    if len(w) < 2 or not _is_consonant(w[-1]) or not nxt or not _is_vowel(nxt[0]) or \
+            not any(_is_vowel(p) for p in w[:-1]):
+        return []
+    w[:] = _lengthen(w)
+    if w[-1] in ('n', 'm') and _is_vowel(w[-2]) and not _nasal(w[-2]) and 'ˑ' not in w[-2] and \
+            sum(1 for p in w if _is_vowel(p)) >= 2:
+        w[-2] += 'ˑ'   # 語末の n・m の前の母音は長く (_final_nasal と同じ: Antoine et → アントワー / ネ)
+    return [w.pop()]
+
+
+def _breaks(text):
+    """文の語 (字のある語) の後ろに句読点があるか (語ごと)。句読点を越えては音を続けない"""
+    out = []
+    for token in text.split():
+        if any(c.isalpha() for c in token):
+            out.append(bool(token.rstrip()) and not token[-1].isalpha() and token[-1] not in "'’-")
+        elif out:
+            out[-1] = True
+    return out
+
+
 SILENT_ENDINGS = {'z': ('s', 'x', 'z'), 't': ('t', 'd'), 'p': ('p',)}   # リエゾンで読む、ふだんは読まない語末の字
 
 
 ENCHAINEMENT = ('il', 'ɛl')   # 母音で始まる次の語と続けて1語に読む代名詞 (il est → イレ、elle est → エレ)
 
 
-def _sentence_groups(text):
+def _sentence_groups(text, breaks=None):
     """(語の音素の列, 頭に続けた語の音素の数) の列。文全体を espeak-ng に渡した発音を、語ごとの音素の列に (文の中の読み: y → i、m'aimes → mɛm)。
     リエゾンの子音 (le-z enfants の z、sont arrivés の t) は次の語の頭に、il y a は1語「イリヤ」に、
     il・elle + 母音で始まる語も1語に (il est → イレ、elle aime → エレム)"""
@@ -106,8 +142,15 @@ def _sentence_groups(text):
         else:
             out.append(w)
     words = out
+    breaks = breaks if breaks is not None and len(breaks) == len(words) else _breaks(text)
+    if len(breaks) != len(words):
+        breaks = [False] * len(words)
     for k in range(len(words) - 1):
         w, nxt = words[k], words[k + 1]
+        if breaks[k]:
+            if w and w[-1].startswith('-'):
+                words[k] = w[:-1]
+            continue
         if w and w[-1].startswith('-'):   # 印の付いたリエゾン
             consonant = w[-1][1:]
             words[k] = w[:-1]
@@ -124,21 +167,32 @@ def _sentence_groups(text):
     while k < len(words):
         if ''.join(words[k]) == 'il' and k + 2 < len(words) and ''.join(words[k + 1]) == 'i' and \
                 words[k + 2] and _is_vowel(words[k + 2][0]):
-            merged.append((['i', 'l', 'i', 'j'] + words[k + 2], 4))   # イ・リ・ヤ (「リャ」にしない)
+            merged.append((['i', 'l', 'i', 'j'] + words[k + 2], 4, k + 2))   # イ・リ・ヤ (「リャ」にしない)
             k += 3
             continue
-        if ''.join(words[k]) in ENCHAINEMENT and k + 1 < len(words) and words[k + 1] and _is_vowel(words[k + 1][0]):
-            merged.append((words[k] + words[k + 1], len(words[k])))   # il est → イレ、elle a → エラ
+        if ''.join(words[k]) in ENCHAINEMENT and k + 1 < len(words) and words[k + 1] and _is_vowel(words[k + 1][0]) and \
+                not breaks[k]:
+            merged.append((words[k] + words[k + 1], len(words[k]), k + 1))   # il est → イレ、elle a → エラ
             k += 2
             continue
-        merged.append((words[k], 0))
+        merged.append((words[k], 0, k))
         k += 1
-    return [(w, head) for w, head in merged if w]
+    for n in range(len(merged) - 1):   # アンシェヌマン (résoudre aux → レズド ロー)
+        w, head, last = merged[n]
+        nxt = merged[n + 1][0]
+        if breaks[last] or len(w) - head < 2:
+            continue
+        tail = list(w[head:])
+        moved = _enchain(tail, nxt)
+        if moved:
+            merged[n] = (w[:head] + tail, head, last, True)
+            merged[n + 1] = (moved + nxt,) + merged[n + 1][1:]
+    return [(m[0], m[1], len(m) > 3) for m in merged if m[0]]
 
 
 def sentence_words(text):
     """文の発音を語ごとの音素の列に (_sentence_groups の語の列だけ)"""
-    return [w for w, _ in _sentence_groups(text)]
+    return [g[0] for g in _sentence_groups(text)]
 
 
 def _silent(consonant, spelling):
@@ -152,7 +206,7 @@ def _lengthen(phs):
     if not vowels:
         return phs
     k = vowels[-1]
-    if _nasal(phs[k]) or 'ː' in phs[k]:
+    if _nasal(phs[k]) or 'ː' in phs[k] or 'ˑ' in phs[k]:
         return phs
     rest = phs[k + 1:]
     base = unicodedata.normalize('NFD', phs[k])[0]
@@ -182,7 +236,7 @@ def sentence(text, long='phonetic', **options):
     spellings = _merge_il_y([w for w in text.split() if any(c.isalpha() for c in w)])
     groups = _sentence_groups(text)
     out = []
-    for n, (w, head) in enumerate(groups):
+    for n, (w, head, enchained) in enumerate(groups):
         fixed = []
         for k, p in enumerate(w):   # 子音 + w + 母音: oi は「オワ」、ui は「ウイ」
             p = _french_vowel(p)
@@ -194,8 +248,10 @@ def sentence(text, long='phonetic', **options):
             fixed.append(p)
         spelling = spellings[n].lower().strip('.,;:!?') if len(spellings) == len(groups) else ''
         # 長さと語末の n・m は続けた語の後ろの語だけで見る (elle aime → エレム)
-        out.append(kana(fixed[:head] + _final_nasal(_lengthen(fixed[head:]), spelling.split()[-1] if spelling else ''),
-                        long=long, **options))
+        # 語末の子音を次の語に移した語は、残った語末の閉鎖音を「ッ」にしない (quatre amis → カト ラミ)
+        opts = dict(options, final_sokuon=False) if enchained else options
+        out.append(kana(_rounded(fixed[:head] + _final_nasal(_lengthen(fixed[head:]), spelling.split()[-1] if spelling else '')),
+                        long=long, **opts))
     return out
 
 
@@ -256,10 +312,11 @@ def _elided_ipa(word):
     return re.sub(r'\([a-z-]+\)', '', ipa(word)).replace(' ', '')
 
 
-def ruby_words(words, liaison='next', long='phonetic', **options):
+def ruby_words(words, liaison='next', long='phonetic', breaks=None, **options):
     """ルビ用: 語の列 (句読点を除いた綴り) → (語ごとのカタカナ, 語の間で音がつながったか)。
     リエゾン・アンシェヌマンの子音は liaison='next' なら次の語に (les enfants → レ / ザンファン、il est → イ / レ、
-    il y a → イ / リ / ヤ)、'prev' なら前の語に残す (レズ / アンファン)"""
+    il y a → イ / リ / ヤ)、'prev' なら前の語に残す (レズ / アンファン)。読む語末の子音も 'next' なら次の語に
+    (résoudre aux → レズド / ロー)。breaks は語の後ろに句読点があるか (語ごと。句読点を越えては続けない)"""
     if not available():
         from dragoman.core.katakana_names import latin
         return [latin(w, 'fr') for w in words], [False] * max(0, len(words) - 1)
@@ -269,10 +326,14 @@ def ruby_words(words, liaison='next', long='phonetic', **options):
     phs = [list(p) for p, _ in pairs]
     links = [False] * max(0, len(words) - 1)
     kept = [[] for _ in words]
+    enchained = [False] * len(words)
+    breaks = breaks if breaks is not None and len(breaks) == len(words) else [False] * len(words)
     for k in range(len(words) - 1):
         marked = pairs[k][1]
         nxt = phs[k + 1]
         moved = []
+        if breaks[k]:
+            continue
         if marked:   # 印の付いたリエゾン (le-z enfants)
             moved = marked
         elif len(phs[k]) > 1 and phs[k][-1] in LIAISON and nxt and _is_vowel(nxt[0]) and \
@@ -283,6 +344,9 @@ def ruby_words(words, liaison='next', long='phonetic', **options):
         if ''.join(phs[k] + moved) in ('i', 'li') and spellings[k] == 'y' and nxt and _is_vowel(nxt[0]):
             phs[k + 1] = ['j'] + nxt   # il y a の y + a は「ヤ」(イ / リ / ヤ)
             links[k] = True
+        if not moved and liaison != 'prev':
+            moved = _enchain(phs[k], nxt)   # アンシェヌマン (résoudre aux → レズド / ロー、petite amie → プティ / タミ)
+            enchained[k] = bool(moved)
         if not moved:
             continue
         links[k] = True
@@ -291,7 +355,7 @@ def ruby_words(words, liaison='next', long='phonetic', **options):
         else:
             phs[k + 1] = moved + phs[k + 1]
     out = []
-    for w, spelling, extra in zip(phs, spellings, kept):
+    for w, spelling, extra, chained in zip(phs, spellings, kept, enchained):
         fixed = []
         for k, p in enumerate(w):   # 子音 + w + 母音: oi は「オワ」、ui は「ウイ」
             p = _french_vowel(p)
@@ -301,7 +365,8 @@ def ruby_words(words, liaison='next', long='phonetic', **options):
                 fixed += ['o', 'w'] if nxt[:1] in ('a', 'ɑ') else ['u']
                 continue
             fixed.append(p)
-        text = kana(_final_nasal(_lengthen(fixed), spelling.strip(".,;:!?")), long=long, **options) if fixed else ''
+        opts = dict(options, final_sokuon=False) if chained else options   # quatre amis → カト / ラミ
+        text = kana(_rounded(_final_nasal(_lengthen(fixed), spelling.strip(".,;:!?"))), long=long, **opts) if fixed else ''
         if extra and not (extra == ['n'] and text.endswith('ン')):   # 鼻母音の後ろの n は「ン」に含まれる (un ami)
             from dragoman.core.kana import CODA, CONSONANTS
             text += ''.join(CODA.get(CONSONANTS.get(p, p), '') for p in extra)

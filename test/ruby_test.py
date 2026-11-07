@@ -28,6 +28,10 @@ class RubyTestCase(unittest.TestCase):
         self.assertEqual([k for _, k in kanas(ruby.ruby('Il y a un chat.', 'fr'))][:3], ['イ', 'リ', 'ヤ'])   # il y a
         self.assertEqual([k for _, k in kanas(ruby.ruby('Les enfants sont arrivés.', 'fr', liaison='prev'))][:4],
                          ['レズ', 'アンファン', 'ソント', 'アリヴェ'])   # 前の語に残す
+        self.assertEqual([k for _, k in kanas(ruby.ruby('me résoudre aux adieux', 'fr'))],
+                         ['ム', 'レズド', 'ロー', 'ザデュー'])   # 読む語末の子音も次の語に (アンシェヌマン)
+        self.assertEqual([k for _, k in kanas(ruby.ruby('Antoine et elle, une heure', 'fr'))],
+                         ['アントワー', 'ネ', 'エル', '', 'ユ', 'ネール'])   # 句読点を越えては続けない
         self.assertEqual(kanas(ruby.ruby('Les enfants sont arrivés.', 'fr', liaison='merge'))[:2],
                          [('Les enfants', 'レザンファン'), ('sont arrivés', 'ソンタリヴェ')])   # つながった語をまとめる
 

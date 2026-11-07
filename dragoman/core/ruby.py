@@ -132,13 +132,15 @@ def tokens(text):
     return out
 
 
-def _word_kana(lang, words, liaison, options):
-    """語の列 → (カナの列, 語の間でつながったか)"""
+def _word_kana(lang, words, liaison, options, breaks=None):
+    """語の列 → (カナの列, 語の間でつながったか)。breaks は語の後ろに句読点があるか (フランス語: 句読点を越えて音を続けない)"""
     if lang in RUBY_WORDS:
         module = importlib.import_module(RUBY_WORDS[lang])
         if lang in ANALYSED:
             return analysed_ruby_words(lang, words, **options)
         func = {'ru': russian_ruby_words, 'la': latin_ruby_words}.get(lang) or module.ruby_words
+        if lang == 'fr':
+            return func(words, liaison=liaison, breaks=breaks, **options)
         return func(words, liaison=liaison, **options)
     module_name, name = WORD_KANA[lang]
     func = getattr(importlib.import_module(module_name), name)
@@ -262,7 +264,8 @@ def ruby(text, lang, liaison='next', unit='word', **options):
         return SEGMENTED[lang](text, **options)
     toks = tokens(text)
     word_ix = [k for k, t in enumerate(toks) if t[3]]
-    kanas, links = _word_kana(lang, [toks[k][0] for k in word_ix], liaison, options) if word_ix else ([], [])
+    breaks = [n + 1 < len(word_ix) and word_ix[n + 1] != k + 1 for n, k in enumerate(word_ix)]   # 間に句読点
+    kanas, links = _word_kana(lang, [toks[k][0] for k in word_ix], liaison, options, breaks) if word_ix else ([], [])
     segments = [{'text': t[0], 'start': t[1], 'end': t[2], 'kana': ''} for t in toks]
     for n, k in enumerate(word_ix):
         segments[k]['kana'] = kanas[n]
