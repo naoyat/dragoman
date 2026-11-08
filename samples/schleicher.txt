@@ -1,0 +1,16 @@
+# シュライヒャーの寓話「羊と馬」 (python3 tools/samples.py --lang=ine で表示する)
+#
+# August Schleicher, "Eine Fabel in indogermanischer Ursprache", Beiträge zur vergleichenden Sprachforschung 5
+# (1868), pp. 206–208。原文 (パブリックドメイン)。後の研究者の書き直し (Lehmann・Zgusta 1979、Byrd 2013 など) は入れない
+#
+#   ./dragoman.py ine samples/schleicher.txt
+#   ./dragoman.py ine --kana samples/schleicher.txt
+
+## 表題
+Avis akvāsas ka.
+
+## 本文
+Avis, jasmin varnā na ā ast, dadarka akvams, tam, vāgham garum vaghantam, tam, bhāram magham, tam, manum āku bharantam.
+Avis akvabhjams ā vavakat: "kard aghnutai mai vidanti manum akvams agantam."
+Akvāsas ā vavakant: "krudhi avai, kard aghnutai vividvant-svas: manus patis varnām avisāms karnauti svabhjam gharmam vastram avibhjams ka varnā na asti."
+Tat kukruvants avis agram ā bhugat.

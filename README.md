@@ -45,6 +45,7 @@ $ echo "लड़के ने किताब पढ़ी।" | python3 dragom
 | ポルトガル語 (ブラジル・ポルトガル) | `pt` | spaCy (pt_core_news_sm) + Wiktionary。格は依存関係から、接語の代名詞 (前・後ろ・中)・動詞の組・縮約形 | まだ | say (Luciana / Joana) | [docs/portuguese.md](docs/portuguese.md) |
 | 広東語 (香港。繁体字) | `yue` | 語の切り分け (PyCantonese + CC-Canto・CC-CEDICT) + 普通話の語に置き換えて (佢 → 他、咗 → 了、我高過佢 → 我比他高) 中国語の解析器で。粤拼 | まだ | say (Sinji) | [docs/cantonese.md](docs/cantonese.md) |
 | 中国語 (普通話。簡体字・繁体字) | `zh` | 語の切り分け (pkuseg + CC-CEDICT) + spaCy (zh_core_web_sm)。量詞・的・了 / 过 / 着・把 / 被・方位詞 | まだ | say (Tingting) | [docs/chinese.md](docs/chinese.md) |
+| 印欧祖語 (シュライヒャーの寓話の表記) | `ine` | シュライヒャーの寓話 (1868) の語の手作りの辞書。語ごとに今の再建形とラテン語・ギリシア語・サンスクリットの同源の語 | — | — | [docs/pie.md](docs/pie.md) |
 | ベトナム語 | `vi` | 語の切り分け (Stanza + Wiktionary の見出し) + Stanza (UD Vietnamese-VTB)。量詞・của・đã / đang / sẽ・bị / được・có … không・mà の関係節。漢越語の漢字 (Wiktionary・Unihan) | まだ | say (Linh) | [docs/vietnamese.md](docs/vietnamese.md) |
 | トルコ語 | `tr` | zeyrek (形態素解析) + Wiktionary。格・所有・時制・人称の接尾辞、分詞の関係節、副動詞。語順のままの訳も | UD Turkish-BOUN・Kenet: 主語 40%・目的語 37% | say (Yelda) | [docs/turkish.md](docs/turkish.md) |
 | モンゴル語 | `mn` | 辞書 (Wiktionary) と規則で格・時制・副動詞・分詞の接尾辞を分ける。語順のままの訳も。ラテン文字の転写も読む | UD Mongolian-GDUD (88文): 主語 73%・目的語 31% | — | [docs/mongolian.md](docs/mongolian.md) |
@@ -397,6 +398,7 @@ dragoman/                パッケージ
                            反復疑問・文末の 未)。解析は chinese/。粤拼とカタカナ読み)
   vietnamese/              ベトナム語 (Stanza と辞書による語の切り分け、依存関係からの格、量詞・所有・相・否定・助動詞・受動・
                            疑問の助詞・関係節のまとめ、漢越語の漢字、ハノイの発音のカタカナ読み)
+  pie/                     印欧祖語 (シュライヒャーの寓話の語の手作りの辞書 lexicon.py、加音 ā・後置の ka、カタカナ読み)
   german/                  ドイツ語 (spaCy の格・依存関係による語の項目、冠詞の掛け先、動詞の組 (完了・受動・未来・話法の助動詞)、
                            分離動詞、前置詞の格による訳の選択、es gibt)
   french/                  フランス語 (spaCy の語の項目と読み誤りの補正、役割からの格、接語の代名詞、動詞の組 (複合過去・受動・
