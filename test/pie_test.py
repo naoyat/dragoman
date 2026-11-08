@@ -29,12 +29,15 @@ class PieTestCase(unittest.TestCase):
     def test_sentences(self):
         cases = {
             'Avis akvabhjams ā vavakat:': '羊が / 馬に / 言った',
-            'Tat kukruvants avis agram ā bhugat.': '羊が / {それを 聞いて} / 野を / 逃げた',
+            'Tat kukruvants avis agram ā bhugat.': '羊が / {それを 聞いて} / 野へ / 逃げた'   # 方向の対格,
         }
         for text, expected in cases.items():
             self.assertEqual(tr(text), expected, text)
         self.assertIn('羊には / 羊毛が / ない', tr('avibhjams ka varnā na asti.'))
         self.assertIn('{羊毛が なかった}羊が', tr('Avis, jasmin varnā na ā ast, dadarka akvams.'))
+        # 配分の tam「一頭は」: 分詞は tam に掛け、名詞はその目的語。分詞の無い区切りは次の区切りの分詞を補う
+        self.assertIn('馬={重い車を 引いている}一頭={大きい荷を 運んでいる}一頭={人を 速く 運んでいる}一頭を / 見た',
+                      tr('Avis dadarka akvams, tam, vāgham garum vaghantam, tam, bhāram magham, tam, manum āku bharantam.'))
 
     def test_title(self):   # 動詞の無い表題 (後置の ka の並列)
         import subprocess

@@ -620,6 +620,10 @@ def _participle_complements(nodes, i, active):
         nominal = _nominal_tuples(node)
         if _agrees(nominal, participle):
             head = j
+            if active and language.current().distributive_pronouns and not _is_pronominal(node) and j > 1 and \
+                    isinstance(nodes[j - 1], Word) and nodes[j - 1].surface == ',' and \
+                    _is_pronominal(nodes[j - 2]) and _agrees(_nominal_tuples(nodes[j - 2]), participle):
+                start, head = j, j - 2   # tam, vāgham … vaghantam: 名詞は目的語、コンマの前の代名詞が掛かり先
             break
         cases = {case for case, _, _ in nominal}
         if nominal and ((active and 'Acc' in cases) or cases & {'Abl', 'Dat', 'Gen'}):

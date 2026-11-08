@@ -40,6 +40,8 @@ class Language:
     genitive_precedes_head: bool = False  # 属格は後ろの名詞にだけ掛かる (ヒンディー語の लड़के की किताब「少年の本」)
     objects_follow_verb: bool = False  # 目的語が動詞の後ろに来る語順 (ロシア語)。2つの動詞の間の語を前の動詞に
     topic_first: bool = False      # 主題 (「は」の句) を訳の先頭に置く (タガログ語の焦点)
+    distributive_pronouns: bool = False  # コンマで区切った代名詞が後ろの分詞句の掛かり先 (印欧祖語の tam, vāgham garum vaghantam
+                                         # 「一頭は重い車を引いている」: 対格の vāgham は分詞の目的語に)
     possessor_cases: tuple = ('Dat',)  # 繋辞の文で所有者を表す格 (mihi est liber「私には本がある」。サンスクリットは属格)
     question_moods: tuple = ('subjunctive',)  # 間接疑問の節の動詞の法 (ギリシア語は直説法・希求法も)
     question_verbs: frozenset = frozenset()   # 間接疑問を取る動詞の見出し (知る・問う …。core/Question.py の表に加えて)

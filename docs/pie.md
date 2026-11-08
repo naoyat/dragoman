@@ -38,14 +38,16 @@ Tat kukruvants avis agram ā bhugat.
   「加音 ā 付き」と出す。
 * 後置の ka「と」（avis akvāsas ka「羊と馬」）は前の語の手前に移して、ラテン語の et と同じ並列に（パーリ語の ca と同じ）。
 * 引用の前の「:」で文を分ける（Avis akvabhjams ā vavakat: / kard aghnutai …）。vividvant-svas はハイフンで2語に分けて引く。
+* 1文目の akvams, tam, …, tam, …, tam「馬たちを、一頭は〜、一頭は〜、一頭は〜」: コンマで区切った tam が2つ以上並ぶと
+  tam は「一頭」で、分詞（vaghantam「引いている」）は tam に掛け、分詞の前の対格の名詞（vāgham「車を」）は分詞の目的語にする
+  （共通の解析器の `distributive_pronouns`）。分詞の無い区切り（tam, bhāram magham「一頭は大きな荷を」）には次の区切りの分詞
+  （bharantam「運んでいる」）を括弧付きで補う。語の解説に「省略を補った語」と出る。
+* 移動の動詞（bhug「逃げる」）の対格は方向の「へ」（agram ā bhugat「野へ逃げた」）。
 * 存在の ast（jasmin varnā na ā ast「その上に羊毛の無かった」）は繋辞にしない（「羊毛ではなかった」にならないように）。
 * カタカナ（`pie/katakana.py`）は綴りから: 長母音は「ー」、v は「ヴ」、j はヤ行、有気音 bh・dh・gh は b・d・g と同じ
   （avis → アヴィス、bhāram → バーラム、jasmin → ヤスミン）。
 
 ## 今の訳の穴
 
-* 1文目の akvams, tam, …, tam, …, tam「馬たちを、一頭は〜、一頭は〜、一頭は〜」: tam を馬の言い換え（=）にして、分詞（vaghantam
-  「引いている」・bharantam「運んでいる」）を後ろの名詞（車・人）に掛けてしまう（本来は tam「その一頭」に掛かる）。
 * 関係節の空所の処格（jasmin「その上に」）は訳に出ない。
-* agram「野へ」（方向の対格）は「野を」。
 * 辞書は寓話の語だけ。ほかの文は引けない語が多い（広げるなら Wiktionary の印欧祖語の項目から）。

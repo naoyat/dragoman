@@ -35,6 +35,8 @@ def explain(word):
         return []
     lemma = item.attrib('base')
     out = []
+    if item.attrib('implied'):
+        out.append('省略を補った語 (本文には無い)')
     if item.attrib('augment'):
         out.append('加音 ā (過去の印) 付き')
     modern = dictionary.modern(lemma)

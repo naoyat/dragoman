@@ -18,6 +18,15 @@ from .lexicon import AUGMENT
 PUNCTUATION = {'.': 'period', ',': 'comma', ';': 'comma', ':': 'period', '?': 'question', '!': 'period'}   # 引用の前の : で文を分ける
 TOKEN = re.compile(r"[A-Za-zĀāĪīŪū]+(?:-[A-Za-zĀāĪīŪū]+)*|[.,;:?!]")
 
+DIRECTION_VERBS = frozenset({'bhug'})   # 方向の対格を取る移動の動詞 (agram ā bhugat「野へ逃げた」)
+
+
+def particle(case, obj, pred):
+    if case == 'Acc' and pred.first_item.attrib('pres1sg') in DIRECTION_VERBS:
+        return 'へ'
+    return None
+
+
 PIE = language.Language(
     name='ine',
     and_words=('ka',),
@@ -27,6 +36,8 @@ PIE = language.Language(
                     'Voc': 'よ'},
     absolute_case='Loc',
     pronoun_subject=True,
+    distributive_pronouns=True,
+    particle=particle,
     possessor_cases=('Dat', 'Gen'),
     lookup=dictionary.verb_items,
     dictionary=dictionary,
@@ -49,6 +60,43 @@ def sentences(text):
             current = []
     if current:
         yield current
+
+
+def _is_distributive_head(words, i):
+    word = words[i]
+    return word.items and word.items[0].pos == 'pronoun' and word.items[0].attrib('base') == 'ta' and \
+        i + 1 < len(words) and words[i + 1].surface == ','
+
+
+def _distributive(words):
+    """akvams, tam, A, tam, B, tam, C「馬を、一頭は A、一頭は B、一頭は C」: コンマで区切った tam が2つ以上並ぶとき、
+    tam は「一頭」。分詞の無い区切り (tam, bhāram magham「一頭は大きな荷を」) には次 (無ければ前) の区切りの分詞を
+    補う (括弧付きの語で、語の解説に「省略を補った語」と出す)"""
+    heads = [i for i in range(len(words)) if _is_distributive_head(words, i)]
+    if len(heads) < 2:
+        return words
+    segments = []
+    for n, h in enumerate(heads):
+        end = heads[n + 1] if n + 1 < len(heads) else len(words)
+        while end > h and words[end - 1].surface in PUNCTUATION:
+            end -= 1
+        participles = [w for w in words[h + 2:end] if w.items and w.items[0].pos == 'participle']
+        segments.append((h, end, participles[-1] if participles else None))
+    for h, _, _ in segments:
+        word = words[h]
+        new = Word(word.surface, [dict(item.item, ja='一頭') for item in word.items])
+        new.token_ix = word.token_ix
+        words[h] = new
+    for n in range(len(segments) - 1, -1, -1):
+        h, end, participle = segments[n]
+        if participle is not None:
+            continue
+        donors = [p for _, _, p in segments[n + 1:] + segments[n - 1::-1] if p is not None]
+        if donors:
+            implied = Word('(%s)' % donors[0].surface, [dict(item.item, implied=True) for item in donors[0].items])
+            implied.token_ix = None
+            words.insert(end, implied)
+    return words
 
 
 def lookup_all(surfaces):
@@ -74,6 +122,7 @@ def lookup_all(surfaces):
         words.append(word)
     choose_verbs(words)
     choose_agreeing_nouns(words)
+    words = _distributive(words)
     # 後置の ka (A B ka) は前の語の手前に移して、ラテン語の et と同じ形 (A et B) にする
     for i in range(1, len(words)):
         if words[i].surface.lower() in POSTPOSITIVE and words[i].items and words[i].items[0].pos == 'conj':
