@@ -20,7 +20,7 @@ def _item(surface, reading):
             'pos': reading['pos']}
     if 'cng' in reading:
         item['_'] = list(reading['cng'])
-    for key in ('tense', 'mood', 'voice', 'person', 'number', 'desc'):
+    for key in ('tense', 'mood', 'voice', 'person', 'number', 'desc', 'gap_ja'):
         if key in reading:
             item[key] = reading[key]
     if reading['pos'] in ('verb', 'participle'):

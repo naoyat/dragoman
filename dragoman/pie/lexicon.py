@@ -69,7 +69,7 @@ FORMS = {
     'akvams': [_n('akva', 'Acc', 'pl', 'm')],
     'akvabhjams': [_n('akva', 'Dat', 'pl', 'm')],
     'ka': [dict(lemma='ka', pos='conj')],
-    'jasmin': [_n('ja', 'Loc', 'sg', 'f', pos='pronoun', desc='関係代名詞')],
+    'jasmin': [_n('ja', 'Loc', 'sg', 'f', pos='pronoun', desc='関係代名詞', gap_ja='その上に')],   # 空所の処格を訳に出す
     'varnā': [_n('varnā', 'Nom', 'sg', 'f')],
     'varnām': [_n('varnā', 'Acc', 'sg', 'f')],
     'na': [dict(lemma='na', pos='adv')],

@@ -31,4 +31,9 @@ class RelativeClause(LatinObject):
 
     def translate(self):
         inner, _ = self.predicate.translate()
-        return (inner.replace(' / ', ' '), False)
+        inner = inner.replace(' / ', ' ')
+        items = getattr(self.pronoun, 'items', None) or []
+        gap_ja = items[0].attrib('gap_ja') if items else None
+        if gap_ja:   # 辞書が空所の訳を持つ関係代名詞 (印欧祖語の jasmin「その上に」): 節の頭に出す
+            inner = gap_ja + ' ' + inner
+        return (inner, False)

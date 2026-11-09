@@ -43,11 +43,11 @@ Tat kukruvants avis agram ā bhugat.
   （共通の解析器の `distributive_pronouns`）。分詞の無い区切り（tam, bhāram magham「一頭は大きな荷を」）には次の区切りの分詞
   （bharantam「運んでいる」）を括弧付きで補う。語の解説に「省略を補った語」と出る。
 * 移動の動詞（bhug「逃げる」）の対格は方向の「へ」（agram ā bhugat「野へ逃げた」）。
+* 関係代名詞 jasmin（処格「その上に」）は、辞書の空所の訳（`gap_ja`）を関係節の頭に出す（{その上に 羊毛が なかった}羊）。
 * 存在の ast（jasmin varnā na ā ast「その上に羊毛の無かった」）は繋辞にしない（「羊毛ではなかった」にならないように）。
 * カタカナ（`pie/katakana.py`）は綴りから: 長母音は「ー」、v は「ヴ」、j はヤ行、有気音 bh・dh・gh は b・d・g と同じ
   （avis → アヴィス、bhāram → バーラム、jasmin → ヤスミン）。
 
 ## 今の訳の穴
 
-* 関係節の空所の処格（jasmin「その上に」）は訳に出ない。
 * 辞書は寓話の語だけ。ほかの文は引けない語が多い（広げるなら Wiktionary の印欧祖語の項目から）。

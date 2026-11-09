@@ -34,7 +34,7 @@ class PieTestCase(unittest.TestCase):
         for text, expected in cases.items():
             self.assertEqual(tr(text), expected, text)
         self.assertIn('羊には / 羊毛が / ない', tr('avibhjams ka varnā na asti.'))
-        self.assertIn('{羊毛が なかった}羊が', tr('Avis, jasmin varnā na ā ast, dadarka akvams.'))
+        self.assertIn('{その上に 羊毛が なかった}羊が', tr('Avis, jasmin varnā na ā ast, dadarka akvams.'))
         # 配分の tam「一頭は」: 分詞は tam に掛け、名詞はその目的語。分詞の無い区切りは次の区切りの分詞を補う
         self.assertIn('馬={重い車を 引いている}一頭={大きい荷を 運んでいる}一頭={人を 速く 運んでいる}一頭を / 見た',
                       tr('Avis dadarka akvams, tam, vāgham garum vaghantam, tam, bhāram magham, tam, manum āku bharantam.'))
