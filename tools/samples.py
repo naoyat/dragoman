@@ -73,11 +73,11 @@ LANG_FILES = {'la': DEFAULT_FILE, 'grc': os.path.join(ROOT, 'samples', 'greek.tx
               'pt': os.path.join(ROOT, 'samples', 'portuguese.txt'), 'zh': os.path.join(ROOT, 'samples', 'chinese.txt'),
               'lzh': os.path.join(ROOT, 'samples', 'kanbun.txt'), 'vi': os.path.join(ROOT, 'samples', 'vietnamese.txt'),
               'yue': os.path.join(ROOT, 'samples', 'cantonese.txt'),
-              'ine': os.path.join(ROOT, 'samples', 'schleicher.txt')}
+              'pie1868': os.path.join(ROOT, 'samples', 'schleicher.txt')}
 # 解析器のモジュール名 (dragoman.<名前>.analyzer の analyze_text をそのまま使う言語)
 ANALYZER_MODULES = {'ko': 'korean', 'de': 'german', 'fr': 'french', 'tr': 'turkish', 'mn': 'mongolian', 'fi': 'finnish',
                     'ang': 'oldenglish', 'haw': 'hawaiian', 'pt': 'portuguese', 'zh': 'chinese', 'vi': 'vietnamese', 'yue': 'cantonese',
-                    'ine': 'pie'}
+                    'pie1868': 'pie1868'}
 
 
 def analyzer_for(lang):

@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# 印欧祖語 (dragoman/pie): シュライヒャーの寓話の語の辞書引き・訳・カタカナ読み (データは要らない)
+# シュライヒャーの印欧祖語 (dragoman/pie1868): シュライヒャーの寓話の語の辞書引き・訳・カタカナ読み (データは要らない)
 import os
 import sys
 import unittest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from dragoman.pie import analyzer, dictionary, katakana   # noqa: E402
+from dragoman.pie1868 import analyzer, dictionary, katakana   # noqa: E402
 
 
 def tr(text):
     from adverbial_test import translate
-    return translate('pie', text)
+    return translate('pie1868', text)
 
 
 class PieTestCase(unittest.TestCase):
@@ -42,7 +42,7 @@ class PieTestCase(unittest.TestCase):
     def test_title(self):   # 動詞の無い表題 (後置の ka の並列)
         import subprocess
         root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-        out = subprocess.run([sys.executable, os.path.join(root, 'dragoman.py'), 'ine', '-w', '-e', 'Avis akvāsas ka.'],
+        out = subprocess.run([sys.executable, os.path.join(root, 'dragoman.py'), 'pie1868', '-w', '-e', 'Avis akvāsas ka.'],
                              capture_output=True, text=True).stdout
         self.assertIn('→  羊と馬', out)
 

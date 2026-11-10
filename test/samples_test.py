@@ -68,7 +68,7 @@ class SamplesTestCase(unittest.TestCase):
                 langs.append((lang, importlib.import_module('dragoman.%s.command' % module).available()))
             except ImportError:
                 langs.append((lang, False))
-        langs.append(('ine', True))   # 印欧祖語は手作りの辞書だけ (データは要らない)
+        langs.append(('pie1868', True))   # シュライヒャーの印欧祖語は手作りの辞書だけ (データは要らない)
         for lang, available in langs:
             sections = samples.read_sections(samples.LANG_FILES[lang])
             self.assertTrue(all(title and sentences for title, sentences in sections), lang)

@@ -8,8 +8,8 @@ from dragoman.core.languages import lang_name
 from . import analyzer, dictionary
 
 USAGE = '''
-  ./dragoman.py ine samples/schleicher.txt          (シュライヒャーの寓話 1868)
-  echo "Avis akvāsas ka." | ./dragoman.py ine
+  ./dragoman.py pie1868 samples/schleicher.txt         (シュライヒャーの寓話 1868)
+  echo "Avis akvāsas ka." | ./dragoman.py pie1868
 '''
 
 
@@ -59,6 +59,6 @@ def available():
     return None
 
 
-COMMAND = Command(lang='ine', name='印欧祖語 (シュライヒャーの表記)', analyzer=analyzer, dictionary=dictionary,
+COMMAND = Command(lang='pie1868', name='印欧祖語のシュライヒャーの再建 (1868)', analyzer=analyzer, dictionary=dictionary,
                   available=available, usage=USAGE, header=header, explain=explain, descendant_langs=('en', 'ja'),
                   katakana=katakana, speech_text=speech_text)

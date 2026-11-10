@@ -28,7 +28,7 @@ def particle(case, obj, pred):
 
 
 PIE = language.Language(
-    name='ine',
+    name='pie1868',
     and_words=('ka',),
     copulas=frozenset({'as'}),
     negations=frozenset({'na'}),

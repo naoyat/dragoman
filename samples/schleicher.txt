@@ -1,10 +1,10 @@
-# シュライヒャーの寓話「羊と馬」 (python3 tools/samples.py --lang=ine で表示する)
+# シュライヒャーの寓話「羊と馬」 (python3 tools/samples.py --lang=pie1868 で表示する)
 #
 # August Schleicher, "Eine Fabel in indogermanischer Ursprache", Beiträge zur vergleichenden Sprachforschung 5
 # (1868), pp. 206–208。原文 (パブリックドメイン)。後の研究者の書き直し (Lehmann・Zgusta 1979、Byrd 2013 など) は入れない
 #
-#   ./dragoman.py ine samples/schleicher.txt
-#   ./dragoman.py ine --kana samples/schleicher.txt
+#   ./dragoman.py pie1868 samples/schleicher.txt
+#   ./dragoman.py pie1868 --kana samples/schleicher.txt
 
 ## 表題
 Avis akvāsas ka.
