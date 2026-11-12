@@ -160,6 +160,8 @@ def choose(token, k, surfaces, prev):
         if pos == 'Adj' and k > 0 and surfaces[k - 1].lower() == 'bir' and \
                 any(p == 'Noun' for _, p, _ in morphology.analyses(nxt)):
             s -= 1   # bir + 形容詞 + 名詞 (bir güzel kız)
+        if morphemes[-1:] == ('Equ',) and any(m[:1] == ('Verb',) for _, _, m in found):
+            s += 1   # 同等格 -ce (gelin-ce「花嫁のように」) より動詞の副動詞 (gel-ince「来ると」) を先に
         if pos == 'Interj' and nxt not in PUNCTUATION and any(p == 'Noun' for _, p, _ in found):
             s += 2   # 文中の間投詞の読み (kız「おい、娘よ」) より名詞 (Güzel bir kız「美しい娘」) を先に
         if pos == 'Adj' and morphemes == ('Adj',) and any('PresPart' in m or 'PastPart' in m for _, _, m in found) \
@@ -316,6 +318,8 @@ def _japanese_verb(rec):
     """用言の訳語 (可能・使役・必要の形を付ける)"""
     from dragoman.core.japanese import attach_auxiliary
     ja, gloss_lang, row = morphology.gloss(rec['lemma'], 'verb')
+    if rec.get('sense'):
+        ja, gloss_lang = rec['sense'], 'ja'   # 目的語で決まる意味 (şarkı söylemek「歌を歌う」)
     if ja is None:
         return rec['lemma'], 'en', None
     if gloss_lang != 'ja':
@@ -413,6 +417,10 @@ def _np_continues(word):
     return item.pos == 'adj' or item.pos in ('noun', 'pronoun') and item._ and all(c[0] == 'Gen' for c in item._)
 
 
+# 形容詞の前の程度の副詞 → 形容詞の訳語の前に付ける語
+INTENSIFIERS = {'çok': 'とても', 'pek': 'とても', 'daha': 'もっと', 'en': '最も', 'az': '少し'}
+
+
 def build_words(recs):
     words = []
     indefinite = False   # 前の bir (不定)。形容詞を挟んで次の名詞に印を付ける (bir güzel kız)
@@ -461,6 +469,8 @@ def build_words(recs):
                 new.append(Word(rec['surface'], [data]))
             else:
                 cases = ['Nom'] if rec.get('predicate') else list(ALL_CASES)
+                if rec.get('intensifier') and ja and gloss_lang == 'ja':
+                    ja = rec['intensifier'] + ja.split(',')[0]   # çok güzel「とても美しい」
                 new = [Word(rec['surface'], [{'surface': rec['surface'], 'pos': 'adj', 'base': lemma,
                                               'ja': ja or lemma, 'gloss_lang': gloss_lang or 'en',
                                               '_': _cngs(cases) + _cngs(cases, 'pl'), 'main': True,
@@ -474,6 +484,10 @@ def build_words(recs):
             new = [Word(rec['surface'], [{'surface': rec['surface'], 'pos': 'adj', 'base': lemma, 'ja': ja,
                                           'gloss_lang': 'ja', '_': _cngs(ALL_CASES) + _cngs(ALL_CASES, 'pl'),
                                           'demonstrative': True, 'compact': True}])]
+        elif kind == 'adv' and rec['lemma'] in INTENSIFIERS and nxt is not None and nxt.get('kind') == 'adj' and \
+                nxt.get('lemma') not in ('var', 'yok'):
+            nxt['intensifier'] = INTENSIFIERS[rec['lemma']]   # 形容詞の前の çok「とても」: 形容詞の訳語に付ける
+            continue
         elif kind == 'adv':
             ja, gloss_lang, row = morphology.gloss(rec['lemma'], 'adv')
             if rec['lemma'] == 'değil':
@@ -718,6 +732,20 @@ def assign_roles(words):
     return out
 
 
+def _bare_object(noun, verb):
+    """3人称の他動詞の直前のただ1つの主格の名詞 (格の接尾辞も bir も無い) で、生き物でなく、動詞の訳語が他動詞だけなら
+    不定の目的語 (Şarkı söyledi「歌を歌った」、Kitap okudu「本を読んだ」。主語は動詞の人称から)"""
+    from dragoman.core.animacy import is_animate
+    from dragoman.kobun.modernize import _transitivity
+    item = _item(noun)
+    rec = getattr(noun, 'record', None) or {}
+    if item.pos != 'noun' or rec.get('proper') or rec.get('indefinite') or rec.get('possessive') or is_animate(item):
+        return False
+    ja = (_item(verb).attrib('ja') or '').split(',')[0]
+    # 他動詞にもなる訳語 (歌う: 自他) も。生き物でない主語は他動詞の主語になりにくい
+    return _item(verb).attrib('gloss_lang') == 'ja' and 'vt' in _transitivity().get(ja, ())
+
+
 def _clause_roles(clause, supply=True):
     verbs = [w for w in clause if _pos(w) == 'verb' and not getattr(w, 'relative_participle', False)]
     relatives = [k for k, w in enumerate(clause) if getattr(w, 'relative_participle', False)]
@@ -729,7 +757,8 @@ def _clause_roles(clause, supply=True):
         verb = verbs[-1]
         vi = clause.index(verb)
         noms = [w for w in nominals if _item(w)._ and _item(w)._[0][0] == 'Nom' and clause.index(w) < vi]
-        if len(noms) >= 2 or noms and _item(verb).attrib('person') in (1, 2):
+        if len(noms) >= 2 or noms and _item(verb).attrib('person') in (1, 2) or \
+                len(noms) == 1 and _bare_object(noms[0], verb):
             last = noms[-1]
             if clause.index(last) == vi - 1 and not _item(verb).attrib('copula') and \
                     not _item(verb).attrib('existential') and _item(verb).attrib('voice') != 'passive':
@@ -756,6 +785,16 @@ def _clause_roles(clause, supply=True):
     return clause[:k] + [copula] + clause[k:]
 
 
+# 目的語の名詞で決まる動詞の意味: (名詞, 動詞) → 訳語
+OBJECT_SENSES = {('şarkı', 'söylemek'): '歌う', ('türkü', 'söylemek'): '歌う'}
+
+
+def object_senses(recs):
+    for rec, nxt in zip(recs, recs[1:]):
+        if rec.get('kind') == 'noun' and nxt.get('kind') == 'verb' and (rec.get('lemma'), nxt.get('lemma')) in OBJECT_SENSES:
+            nxt['sense'] = OBJECT_SENSES[(rec['lemma'], nxt['lemma'])]
+
+
 def lookup_all(surfaces):
     recs = []
     prev = None
@@ -767,6 +806,7 @@ def lookup_all(surfaces):
         rec = record(token, choose(token, k, surfaces, prev), k, prev['kind'] if prev else None)
         recs.append(rec)
         prev = rec
+    object_senses(recs)
     words = build_words(recs)
     for w in words:   # 語順のままの訳のため、記録に最終的な格・主題を
         rec = getattr(w, 'record', None)

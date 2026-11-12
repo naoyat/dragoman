@@ -127,7 +127,11 @@ def analyses(word):
         key = (p.lemma, p.pos, tuple(p.morphemes))
         if key not in out:
             out.append(key)
-    return out
+    # zeyrek の読みの順は実行ごとに変わる (文字列のハッシュの種): 同点の読みが揺れないよう決まった順に
+    return sorted(out, key=lambda a: (POS_ORDER.index(a[1]) if a[1] in POS_ORDER else len(POS_ORDER), len(a[2]), a))
+
+
+POS_ORDER = ('Noun', 'Adj', 'Verb', 'Pron', 'Det', 'Num', 'Postp', 'Adv', 'Conj', 'Ques', 'Interj')
 
 
 # ----------------------------------------------------------------------
@@ -142,6 +146,7 @@ def gloss(lemma, pos):
     poses = {'noun': ('noun', 'name', 'pronoun', 'num'), 'name': ('name', 'noun'), 'verb': ('verb',),
              'adj': ('adj', 'noun'), 'adv': ('adv', 'adj', 'particle', 'conj')}.get(pos, (pos,))
     rows = dictionary.lemmas(lemma, poses)
+    rows = sorted(rows, key=lambda r: r.get('key') != lemma)   # 見出しそのものの項目を先に (şarkı「歌」。şark「東」の語形でなく)
     row = rows[0] if rows else None
     if lemma in GLOSSES:
         return GLOSSES[lemma], 'ja', row

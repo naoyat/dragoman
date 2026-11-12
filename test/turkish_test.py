@@ -30,13 +30,16 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Güzel bir kız geldi.'), '美しい{娘,少女}が / 来た')   # kız は間投詞でなく名詞、bir の主語は「が」
         self.assertEqual(self.ja('Bir güzel kız geldi.'), '美しい{娘,少女}が / 来た')
         self.assertEqual(self.ja('Kız geldi.'), '{娘,少女}は / 来た')
+        self.assertEqual(self.ja('Şarkı söyledi.'), '{彼,彼女,それ}が / 歌を / 歌った')   # şarkı「歌」、不定の目的語
+        self.assertEqual(self.ja('Çok güzel bir ev aldık.'), '我々が / とても美しい家を / 取った')   # çok + 形容詞
+        self.assertEqual(self.ja('Ev güzel.'), '家は / 美しい')   # 読みの順が実行ごとに変わらない
         self.assertEqual(self.ja('Annem bana bir mektup yazdı.'), '私の母は / 私に / 手紙を / 書いた')
         self.assertEqual(self.ja("Yarın İstanbul'a gideceğiz."), '明日 / 我々が / イスタンブールに / 行くだろう')
 
     def test_copula(self):
         self.assertEqual(self.ja('Ben öğretmenim.'), '私は / 先生である')
         self.assertEqual(self.ja('Kitap masada.'), '机に / 本は / ある')     # 位格の述語は存在
-        self.assertEqual(self.ja('Bu ev çok büyük değil.'), 'とても,多い / この家は / 大きくない')
+        self.assertEqual(self.ja('Bu ev çok büyük değil.'), 'この家は / とても大きくない')
 
     def test_literal(self):
         self.assertEqual(self.lit("Ali'nin okuduğu kitap güzeldi."), 'アリが 読んだ 本は 美しかった。')
