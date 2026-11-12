@@ -1988,6 +1988,7 @@ def _attach_to_predicate(words, group, verb_ix):
         _promote_complement(pred)
     else:
         _second_nominative_as_object(pred)
+        _neuter_object(pred)
     return not_solved
 
 
@@ -2010,6 +2011,25 @@ def _second_nominative_as_object(pred):
         pred.case_slot['Nom'] = [x for x in pred.case_slot['Nom'] if x is not o]
         o.restrict_cases(('Acc',))
         pred.add_nominal('Acc', o)
+
+
+def _neuter_object(pred):
+    """主格・対格の同じ形の語 (中性名詞: Nom/Acc の枠) だけがあり、主語も目的語も無い文で、動詞の訳語が他動詞
+    だけのもの (飲む・与える) なら、その語は目的語 (Medicāmentum sūmit「薬を飲む」、φάρμακον λαμβάνει。主語は動詞の人称から)。
+    自動詞の訳語 (立つ・落ちる) はそのまま主語 (Templum stat「神殿が立つ」)"""
+    if pred.case_slot.get('Nom') or pred.case_slot.get('Acc') or len(pred.case_slot.get('Nom/Acc', [])) != 1 or \
+            pred.first_item.attrib('voice') == 'passive' or pred.first_item.attrib('mood') in ('infinitive', 'participle'):
+        return
+    obj = pred.case_slot['Nom/Acc'][0]
+    if not isinstance(obj, Word) or not obj.items or obj.items[0].pos != 'noun' or is_relative(obj):
+        return
+    from dragoman.kobun.modernize import transitive_only
+    ja = (pred.first_item.attrib('ja') or '').split(',')[0].strip()
+    if pred.first_item.attrib('gloss_lang', 'ja') != 'ja' or not transitive_only(ja):
+        return
+    del pred.case_slot['Nom/Acc']
+    obj.restrict_cases(('Acc',))
+    pred.add_nominal('Acc', obj)
 
 
 def _svo_object(pred, noms, cases):

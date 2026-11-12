@@ -16,7 +16,8 @@ CASES = [
     ('russian', 'Она плетёт нить.', '糸を / 繰る'),           # Wiktionary の語義 spin + thread
     ('russian', 'Он принимает лекарство.', '薬を / 飲む'),    # 主格・対格の同じ形の目的語 (Nom/Acc の枠)
     ('russian', 'Он говорит ложь.', '嘘を / つく'),           # 手で決めた訳語「言う」+ 嘘
-    ('greek', 'φάρμακον λαμβάνει.', '飲む'),
+    ('greek', 'φάρμακον λαμβάνει.', '薬を / 飲む'),            # 中性名詞 (主格・対格の同じ形) + 他動詞は目的語
+    ('latin', 'Medicāmentum sūmit.', '薬品}を / 飲む'),
     ('german', 'Er nimmt Medizin.', '薬を / 飲む'),           # 手で決めた訳語「取る」+ 薬
     ('german', 'Er erzählt eine Lüge.', '嘘を / つく'),
     ('french', 'Il dit un mensonge.', '嘘を / つく'),

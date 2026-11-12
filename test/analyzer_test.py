@@ -125,7 +125,9 @@ class ExistentialTestCase(unittest.TestCase):
     def test_number_agreement(self):
         # templa (中性複数の主格・対格) は単数の動詞 aedificat の主語にならない → 対格「神殿を」
         self.assertEqual(self.translate('Templa aedificat.'), '{彼,彼女,それ}が / 神殿を / 建てる')
-        self.assertEqual(self.translate('Templa aedificant.'), '神殿が / 建てる')
+        # 複数の動詞でも、主格・対格の同じ形の語だけで訳語が他動詞のみ (建てる) なら目的語 (_neuter_object)
+        self.assertEqual(self.translate('Templa aedificant.'), '{彼ら,彼女ら,それら}が / 神殿を / 建てる')
+        self.assertEqual(self.translate('Templum stat.'), '神殿が / 立つ')   # 自動詞は主語のまま
 
     def test_predicate_noun_is_not_existential(self):
         self.assertFalse(self.translate('Mārcus est agricola.').endswith(' / ある'))

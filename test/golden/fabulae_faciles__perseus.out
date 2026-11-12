@@ -332,13 +332,13 @@ Tranquillum igitur fēcit mare , et arcam ad īnsulam Serīphum perdūxit .
 
   fēcit (indicative 3sg)
     (igitur)
-    Nom/Acc:
-      mare
     prep:
       ad <Acc>
         īnsulam
+    Acc:
+      mare
 
-  →  そこで,だから,こうして / 海が / {島 (?) (?)}[の方へ,のところまで] / 作った
+  →  そこで,だから,こうして / {彼,彼女,それ}が / {島 (?) (?)}[の方へ,のところまで] / 海を / 作った
 
 
 Hūius īnsulae Polydectēs tum rēx erat .
@@ -521,10 +521,10 @@ Danaē hōc dōnum libenter accēpit , et prō tantō beneficiō rēgī grātiā
     (libenter)
     Abl:
       hōc
-    Nom/Acc:
+    Acc:
       dōnum
 
-  →  贈物が / {この,これ}で / 喜んで / 受け取った
+  →  {彼,彼女,それ}が / {この,これ}で / 贈物を / 喜んで / 受け取った
 
   ēgit (indicative 3sg)
     (et)
@@ -1429,10 +1429,10 @@ Arma rapuērunt , et Perseum occīdere volēbant .
 2 VERBS FOUND: rapuērunt, volēbant
 
   rapuērunt (indicative 3pl)
-    Nom/Acc:
+    Acc:
       Arma
 
-  →  {道具,武器}が / 奪った
+  →  {彼ら,彼女ら,それら}が / {道具,武器}を / 奪った
 
   volēbant (indicative 3pl)
     (et)
@@ -2249,12 +2249,12 @@ Tum dēsuper in mōnstrum impetum subitō fēcit , et gladiō suō collum ēius 
     Dat:
       gladiō
         suō
-    Nom/Acc:
-      collum
     Gen:
       ēius
+    Acc:
+      collum
 
-  →  その時,その頃,当時 / 首が / {怪物 (?)}[へ,の中へ,の上へ,に向かって,に対して] / 自分の剣に / {その,それ}の / 突然,だしぬけに / 作った
+  →  その時,その頃,当時 / {彼,彼女,それ}が / {怪物 (?)}[へ,の中へ,の上へ,に向かって,に対して] / 自分の剣に / {その,それ}の / 首を / 突然,だしぬけに / 作った
 
 
 Mōnstrum ubi sēnsit vulnus , fremitum horribilem ēdidit , et sine morā tōtum corpus in aquam mersit .
