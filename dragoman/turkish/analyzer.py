@@ -154,6 +154,14 @@ def choose(token, k, surfaces, prev):
             s += 1     # 属格の後ろの -ı は所有 (Ali'nin kitabı)
         if pos == 'Postp' and k == 0:
             s += 2
+        if pos == 'Adj' and nxt.lower() == 'bir' and k + 2 < len(surfaces) and \
+                any(p == 'Noun' for _, p, _ in morphology.analyses(surfaces[k + 2])):
+            s -= 1   # 形容詞 + bir + 名詞 (güzel bir kız「美しい娘」。副詞「美しく」でなく)
+        if pos == 'Adj' and k > 0 and surfaces[k - 1].lower() == 'bir' and \
+                any(p == 'Noun' for _, p, _ in morphology.analyses(nxt)):
+            s -= 1   # bir + 形容詞 + 名詞 (bir güzel kız)
+        if pos == 'Interj' and nxt not in PUNCTUATION and any(p == 'Noun' for _, p, _ in found):
+            s += 2   # 文中の間投詞の読み (kız「おい、娘よ」) より名詞 (Güzel bir kız「美しい娘」) を先に
         if pos == 'Adj' and morphemes == ('Adj',) and any('PresPart' in m or 'PastPart' in m for _, _, m in found) \
                 and not final:
             s += 1   # 分詞と同じ形の形容詞 (gelen「次の」) より分詞「来た」(Gelen adam「来た男」) を先に
@@ -407,8 +415,13 @@ def _np_continues(word):
 
 def build_words(recs):
     words = []
+    indefinite = False   # 前の bir (不定)。形容詞を挟んで次の名詞に印を付ける (bir güzel kız)
     for k, rec in enumerate(recs):
         kind = rec['kind']
+        if kind in ('noun', 'nominalized') and indefinite:
+            rec['indefinite'] = True
+        if kind != 'adj':
+            indefinite = kind == 'article'
         ix = rec['ix']
         nxt = recs[k + 1] if k + 1 < len(recs) else None
         new = []
@@ -681,7 +694,8 @@ def mark_topic(words):
         if _pos(w) == 'verb' or w.items is None:
             return
         if _pos(w) in ('noun', 'pronoun') and _item(w)._ and _item(w)._[0][0] == 'Nom':
-            w.topic = True
+            if not (getattr(w, 'record', None) or {}).get('indefinite'):
+                w.topic = True   # bir の付いた不定の名詞 (Bir kız geldi「娘が来た」) は主題にしない
             return
         if _pos(w) in ('noun', 'pronoun'):
             return

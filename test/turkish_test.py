@@ -27,6 +27,9 @@ class AnalyzerTestCase(unittest.TestCase):
 
     def test_cases(self):
         self.assertEqual(self.ja('Çocuk okulda kitap okudu.'), '子供は / 学校で / 本を / 読んだ')   # 不定の目的語
+        self.assertEqual(self.ja('Güzel bir kız geldi.'), '美しい{娘,少女}が / 来た')   # kız は間投詞でなく名詞、bir の主語は「が」
+        self.assertEqual(self.ja('Bir güzel kız geldi.'), '美しい{娘,少女}が / 来た')
+        self.assertEqual(self.ja('Kız geldi.'), '{娘,少女}は / 来た')
         self.assertEqual(self.ja('Annem bana bir mektup yazdı.'), '私の母は / 私に / 手紙を / 書いた')
         self.assertEqual(self.ja("Yarın İstanbul'a gideceğiz."), '明日 / 我々が / イスタンブールに / 行くだろう')
 
