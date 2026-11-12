@@ -49,8 +49,8 @@ def normalize_conjug_type(conjug_type, surface):
             return '五段・ガ行'
         else:
             return '五段・%s行' % row
-    elif conjug_type[1:4] == '一段-':
-        return '一段'
+    elif conjug_type[1:4] == '一段-' or conjug_type in ('助動詞-レル', '助動詞-ラレル', '助動詞-セル', '助動詞-サセル'):
+        return '一段'   # 受身・使役の れる・られる・せる・させる は一段と同じ (承認される → 承認された)
     elif conjug_type == 'サ行変格':
         return 'サ変・スル'
     elif conjug_type == 'カ行変格':

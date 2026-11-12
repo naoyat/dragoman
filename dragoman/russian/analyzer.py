@@ -115,6 +115,21 @@ def prefer_governed_cases(words):
                 break  # 名詞まで (間の形容詞も同じように)
 
 
+def prefer_demonstrative(words):
+    """это・то + 性・数・格の合う名詞 + 定動詞 (Это время прошло「この時は過ぎた」) の это は指示形容詞「この」
+    (「これが」でなく)。動詞の無い Это книга「これは本だ」は代名詞のまま"""
+    for i, word in enumerate(words[:-2]):
+        if not word.items or word.surface.lower() not in ('это', 'то'):
+            continue
+        adjs = [it for it in word.items if it.pos == 'adj']
+        noun = words[i + 1]
+        if not adjs or not noun.items or noun.items[0].pos != 'noun':
+            continue
+        agree = {c for c in adjs[0]._ or []} & {c for c in noun.items[0]._ or []}
+        if agree and any(w.items and _finite(w.items[0]) for w in words[i + 2:i + 4]):
+            word.items = adjs + [it for it in word.items if it not in adjs]
+
+
 def prefer_preverbal_nominative(words):
     """動詞の前の、主格・対格の同じ形の名詞 (Время идёт「時が過ぎる」) は、動詞と数の合う主格を先に。
     動詞の前に主格にしか読めない語 (Я письмо читаю の я) があれば触らない"""
@@ -367,6 +382,7 @@ def lookup_all(surfaces):
     choose_verbs(words)
     words = merge_compound_verbs(words)
     prefer_governed_cases(words)
+    prefer_demonstrative(words)
     prefer_preverbal_nominative(words)
     words = particle_by(words)
     words = negative_existence(words)

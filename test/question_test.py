@@ -47,6 +47,10 @@ class SecondNominativeTestCase(unittest.TestCase):
         self.assertEqual(translate('russian', 'Мать любит дочь.'), '母が / 娘を / 好む,愛する')   # 主格・対格が同じ形: 語順で
         self.assertEqual(translate('russian', 'Дочь любит мать.'), '娘が / 母を / 好む,愛する')
         self.assertEqual(translate('russian', 'Время идёт.'), '{時,時間,時刻,時期}が / 行く,歩く,降る,動く')   # 動詞の前は主格を先に
+        self.assertTrue(translate('russian', 'Это время прошло.').startswith('この{時'))   # 名詞 + 動詞の前の это は「この」
+        self.assertEqual(translate('russian', 'Это книга.').split(' / ')[0], 'これは')     # 動詞が無ければ「これは」
+        from dragoman.core.japanese import japanese_plain
+        self.assertEqual(japanese_plain('承認される', False, 'perfect', False), '承認された')   # 受身の れる は一段
 
 
 if __name__ == '__main__':
