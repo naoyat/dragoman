@@ -109,7 +109,7 @@ VERB_GLOSSES = {
     'سَأَل': '尋ねる', 'فَعَل': 'する', 'عَمِل': '働く,する', 'أَراد': '望む', 'اِسْتَطاع': '〜できる', 'وَجَد': '見つける',
     'أَخَذ': '取る', 'أَعْطَى': '与える', 'سَمِع': '聞く', 'فَهِم': '理解する', 'دَرَس': '学ぶ', 'عَلَّم': '教える',
     'تَعَلَّم': '学ぶ', 'أَحَبّ': '愛する',
-    'سَكَن': '住む',   # sakana (第1型)。母音記号の無い تسكن を sakkana「静める」(第2型) でなく
+    'سَكَن': '住む', 'فَتَح': '開ける',   # fataḥa は他動詞 (「開く」は自他どちらにも取れる)   # sakana (第1型)。母音記号の無い تسكن を sakkana「静める」(第2型) でなく
 }
 GLOSSES = {
     'وَلَد': '少年,子ども', 'بَيْت': '家', 'كِتاب': '本', 'مَدْرَسَة': '学校', 'رَجُل': '男', 'اِمْرَأَة': '女',
@@ -176,8 +176,12 @@ def compatible(word, diac):
     b = [(script.normalize(c), m) for c, m in script._clusters(diac)]
     if [c for c, _ in a] != [c for c, _ in b]:
         return False
-    for (_, ma), (_, mb) in zip(a, b):
-        if ma - {script.SUKUN} - mb:
+    for k, ((_, ma), (_, mb)) in enumerate(zip(a, b)):
+        extra = ma - {script.SUKUN} - mb
+        # 定冠詞の後ろの太陽文字の重ね (الدَّواء の ّ): CAMeL の解析の形には書かれない
+        if k == 2 and [c for c, _ in a[:2]] == ['ا', 'ل'] and extra == {script.SHADDA}:
+            continue
+        if extra:
             return False
     return True
 

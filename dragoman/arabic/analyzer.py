@@ -330,13 +330,14 @@ def _object_only(verb, word):
     """動詞の後ろのただ1つの名詞類を目的語と読むか: 主格・対格のどちらにも読め (母音記号で格を示していない)、
     生き物でなく (شرب الماء「水を飲んだ」。أكل الولد「少年が食べた」は主語)、動詞の訳語が他動詞だけ"""
     from dragoman.core.animacy import is_animate
-    from dragoman.kobun.modernize import transitive_only
+    from dragoman.kobun.modernize import _transitivity
     item = _item(word)
     cases = {c[0] for c in item._ or []}
     if not {'Nom', 'Acc'} <= cases or item.pos not in ('noun',) or item.attrib('proper') or is_animate(item):
         return False
     ja = (verb.attrib('ja') or '').split(',')[0].strip()
-    return verb.attrib('gloss_lang') == 'ja' and transitive_only(ja)
+    # 他動詞にもなる訳語 (開ける: 自他) も。生き物でない語は他動詞の主語になりにくい
+    return verb.attrib('gloss_lang') == 'ja' and 'vt' in _transitivity().get(ja, ())
 
 
 def choose_subject(words):

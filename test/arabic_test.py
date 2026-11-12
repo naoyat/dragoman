@@ -94,6 +94,8 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.translate('أخذ الدواء.')[0], '{彼,彼女,それ}が / くすりを / 飲んだ')
         self.assertEqual(self.translate('ذهب الولد.')[0], '{少年,子ども}が / 行った')   # 生き物は主語
         self.assertEqual(self.translate('يسكن أخي في القاهرة.')[0], '私の兄弟が / カイロに / 住む')   # 住む + فِي「に」、Cairo は「カイロ」
+        self.assertEqual(self.translate('فتح الباب.')[0], '{彼,彼女,それ}が / {戸,門}を / 開けた')
+        self.assertEqual(self.translate('أَخَذَ الدَّواءَ.')[0], '{彼,彼女,それ}が / くすりを / 飲んだ')   # 定冠詞の後ろの太陽文字の ّ
 
     def test_nominal_sentence(self):
         self.assertEqual(self.translate('الولد كبير.')[0].split(' / ')[-1], '大きい')
