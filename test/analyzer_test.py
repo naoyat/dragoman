@@ -128,6 +128,9 @@ class ExistentialTestCase(unittest.TestCase):
         # 複数の動詞でも、主格・対格の同じ形の語だけで訳語が他動詞のみ (建てる) なら目的語 (_neuter_object)
         self.assertEqual(self.translate('Templa aedificant.'), '{彼ら,彼女ら,それら}が / 神殿を / 建てる')
         self.assertEqual(self.translate('Templum stat.'), '神殿が / 立つ')   # 自動詞は主語のまま
+        # 自他の対の訳語 (incipiō「始める,始まる」): 生き物でない主語だけなら自動詞、目的語・不定詞・生き物の主語なら他動詞
+        self.assertEqual(self.translate('Bellum incipit.'), '戦争が / 始まる')
+        self.assertEqual(self.translate('Puer cantāre incipit.'), '少年が / {歌う}ことを / 始める')
 
     def test_predicate_noun_is_not_existential(self):
         self.assertFalse(self.translate('Mārcus est agricola.').endswith(' / ある'))

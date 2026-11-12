@@ -1473,7 +1473,7 @@ def verbs_in_context(clauses, trace):
             found = en_ja.verb_in_context(sense, objects)
             if found:
                 ja = found[0]   # 場面の訳語の1つ目だけ (take + medicine →「飲む」。2つ目の「受け付ける」は別の場面)
-                verb.item['ja'] = verb.ja = ja
+                _set_verb_gloss(pred, ja)
                 trace.append('// CONTEXT %s (%s + %s) -> %s' % (pred.surface, sense, ','.join(objects[:3]), ja))
                 break
 
@@ -1989,6 +1989,7 @@ def _attach_to_predicate(words, group, verb_ix):
     else:
         _second_nominative_as_object(pred)
         _neuter_object(pred)
+        _choose_transitivity(pred)
     return not_solved
 
 
@@ -2023,13 +2024,52 @@ def _neuter_object(pred):
     obj = pred.case_slot['Nom/Acc'][0]
     if not isinstance(obj, Word) or not obj.items or obj.items[0].pos != 'noun' or is_relative(obj):
         return
-    from dragoman.kobun.modernize import transitive_only
-    ja = (pred.first_item.attrib('ja') or '').split(',')[0].strip()
-    if pred.first_item.attrib('gloss_lang', 'ja') != 'ja' or not transitive_only(ja):
+    from dragoman.kobun.modernize import _transitivity
+    if pred.first_item.attrib('gloss_lang', 'ja') != 'ja':
+        return
+    glosses = [g.strip() for g in (pred.first_item.attrib('ja') or '').split(',') if g.strip()]
+    intransitive = [g for g in glosses if 'vi' in _transitivity().get(g, ())]
+    if intransitive:
+        return   # 自動詞の訳語もある動詞 (incipiō「始める,始まる」) は主語のまま (訳語は _choose_transitivity)
+    if not glosses or _transitivity().get(glosses[0]) != {'vt'}:
         return
     del pred.case_slot['Nom/Acc']
     obj.restrict_cases(('Acc',))
     pred.add_nominal('Acc', obj)
+
+
+# 自他の対の訳語 (他動詞 → 自動詞)。動詞の訳語がこの対の2つだけのとき _choose_transitivity で1つに
+TRANSITIVITY_PAIRS = {'始める': '始まる', '開ける': '開く', '閉める': '閉まる', '変える': '変わる', '止める': '止まる',
+                      '続ける': '続く', '終える': '終わる', '集める': '集まる', '動かす': '動く', '起こす': '起こる'}
+
+
+def _choose_transitivity(pred):
+    """他動詞と自動詞の訳語を両方持つ動詞 (incipiō「始める,始まる」): 目的語・不定詞・生き物の主語・省略された主語なら
+    他動詞 (Puer cantāre incipit「歌うことを始める」)、生き物でない主語だけなら自動詞 (Bellum incipit「戦争が始まる」)"""
+    from .animacy import is_animate
+    item = pred.first_item
+    if item.attrib('gloss_lang', 'ja') != 'ja' or item.attrib('voice') == 'passive':
+        return
+    glosses = [g.strip() for g in (item.attrib('ja') or '').split(',') if g.strip()]
+    if len(glosses) != 2 or TRANSITIVITY_PAIRS.get(glosses[0]) != glosses[1]:
+        return
+    vt, vi = glosses[:1], glosses[1:]
+    slot = pred.case_slot
+    subjects = slot.get('Nom', []) + ([] if slot.get('Nom') else slot.get('Nom/Acc', []))
+    objective = slot.get('Acc') or slot.get('Inf') or slot.get('Q') or (slot.get('Nom') and slot.get('Nom/Acc'))
+    inanimate = bool(subjects) and all(isinstance(s, Word) and s.items and not is_animate(s.items[0]) for s in subjects)
+    chosen = vi if inanimate and not objective else vt
+    _set_verb_gloss(pred, ','.join(chosen))
+
+
+def _set_verb_gloss(pred, ja):
+    """述語の動詞の訳語を、この文のためだけに変える (辞書の項目は文をまたいで使い回すので書き換えない)"""
+    item = pred.first_item
+    new = type(item)(dict(item.item, ja=ja))
+    verb = pred.verb
+    if isinstance(verb, Word) and verb.items and verb.items[0] is item:
+        verb.items = [new] + verb.items[1:]
+    pred.first_item = new
 
 
 def _svo_object(pred, noms, cases):
