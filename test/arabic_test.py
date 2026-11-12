@@ -88,6 +88,7 @@ class AnalyzerTestCase(unittest.TestCase):
 
     def test_construct(self):
         self.assertIn('先生の本を', self.translate('قرأ الولد كتاب المعلم.')[0])
+        self.assertEqual(self.translate('أين تسكن؟')[0], 'どこに / あなたが / 住むか')   # sakana「住む」(sakkana「静める」でなく)
 
     def test_nominal_sentence(self):
         self.assertEqual(self.translate('الولد كبير.')[0].split(' / ')[-1], '大きい')
