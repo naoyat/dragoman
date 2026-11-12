@@ -93,6 +93,21 @@ def _pos(word):
 # ----------------------------------------------------------------------
 # 読みの選択と記録
 
+def _pronoun_subject(k, surfaces):
+    """文頭の тэр・энэ + 格の接尾辞の無い名詞 + 他動詞の定動詞 (Тэр эм уусан「彼は薬を飲んだ」) の тэр は主語の代名詞
+    (「その薬は飲んだ」でなく)。自動詞 (Тэр хүн ирсэн「その人が来た」) は指示詞のまま"""
+    from dragoman.kobun.modernize import transitive_only
+    if k != 0 or k + 2 >= len(surfaces) or surfaces[k].lower() not in ('тэр', 'энэ'):
+        return False
+    noun = [x for x in morphology.analyses(surfaces[k + 1]) if x['kind'] == 'noun']
+    verbs = [x for x in morphology.analyses(surfaces[k + 2]) if x['kind'] == 'verb' and x.get('form') in ('finite', 'participle')
+             and not x.get('case')]   # 過去の -сан は分詞の形で文を終える
+    if not noun or noun[0].get('case') not in (None, 'Nom') or not verbs:
+        return False
+    ja, gloss_lang, _ = morphology.gloss(verbs[0]['lemma'], 'verb')
+    return gloss_lang == 'ja' and transitive_only((ja or '').split(',')[0])
+
+
 def choose(token, k, surfaces):
     readings = morphology.analyses(token)
     if not readings:
@@ -112,10 +127,11 @@ def choose(token, k, surfaces):
             s += 2   # -н の副動詞 (заан → заа-н) は名詞の読みの後ろに
         if r['kind'] == 'noun' and r.get('case') == 'Nom' and r.get('pos') is None and not r.get('reflexive'):
             s += 0.5
-        if r['kind'] == 'det' and nxt_readings and any(x['kind'] in ('noun', 'adj') for x in nxt_readings):
+        if r['kind'] == 'det' and nxt_readings and any(x['kind'] in ('noun', 'adj') for x in nxt_readings) and \
+                not _pronoun_subject(k, surfaces):
             s -= 2   # 名詞の前の指示詞 (энэ ном「この本」)
         if r['kind'] == 'pronoun' and nxt_readings and any(x['kind'] in ('noun', 'adj') for x in nxt_readings) and \
-                r['lemma'] in morphology.DETERMINERS:
+                r['lemma'] in morphology.DETERMINERS and not _pronoun_subject(k, surfaces):
             s += 1
         if r.get('pos') == 'name' and not token[:1].isupper():
             s += 1
@@ -126,6 +142,9 @@ def choose(token, k, surfaces):
             s -= 0.3   # 格の接尾辞を分けた読みを、同じ綴りの別の見出しより先に (語そのものが見出しなら見出しを)
         if r.get('lemma') == token.lower() and r['kind'] in ('adj', 'adv') and r.get('pos') != 'intj':
             s -= 0.5   # 見出しそのものの形容詞・副詞 (сайхан「美しい」。сайх + 属格でなく。間投詞の хүн は除く)
+        if r['kind'] == 'adj' and nxt_readings and all(x['kind'] == 'verb' for x in nxt_readings) and \
+                any(x['kind'] == 'noun' for x in readings):
+            s += 1   # 動詞の前の、名詞にも読める形容詞は名詞 (эм уусан「薬を飲んだ」。「女の」でなく)
         if r['kind'] == 'verb' and r.get('form') == 'participle' and not r.get('case') and nxt_readings and \
                 any(x['kind'] == 'noun' for x in nxt_readings):
             s -= 1   # 名詞の前の分詞は関係節 (Ирсэн хүн「来た人」。形容詞になった ирсэн「訪問の」でなく)

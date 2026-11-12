@@ -351,6 +351,8 @@ def item_of(token, doc):
         finite = [(l, t) for l, t in morphology.verb_forms(lower) if 'indicative' in t and t & FINITE_TAGS]
         if ja is None and finite:
             return _table_verb(token, finite)   # spaCy が形容詞と読む動詞 (O menino dorme e a menina canta の dorme)
+        if ja is None and token.dep_ in ('obj', 'nsubj', 'obl') and morphology.gloss(lower, 'noun')[0]:
+            return _noun_data(token, feats)   # spaCy が形容詞と読む、辞書に名詞しか無い語 (toma remédio「薬を」)
         data = {'surface': text, 'pos': 'adj', 'base': lemma, 'ja': ja or lemma, 'gloss_lang': gloss_lang or 'en',
                 '_': morphology.cngs(morphology.CASES + ('Gen',), feats), 'main': True}
         if token.dep_ == 'ROOT' or any(c.dep_ == 'cop' for c in token.children):

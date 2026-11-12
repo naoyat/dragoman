@@ -45,7 +45,9 @@ def jmdict_pos(pos_texts):
     for p in pos_texts:
         if 'Godan verb' in p or 'Ichidan verb' in p or 'Kuru verb' in p:
             out.append(('verb', ''))
-        elif 'suru verb' in p and 'included' not in p:
+        elif 'suru verb - special class' in p:
+            out.append(('verb', ''))
+        elif 'suru verb' in p and 'included' not in p and 'special class' not in p:   # 服する・課する は見出しが「する」付き
             out.append(('verb', 'する'))   # サ変名詞 (勉強 → 勉強する)
         elif 'adjective (keiyoushi)' in p:
             out.append(('adj', ''))
@@ -174,6 +176,7 @@ def jmdict_commonness(path):
         if entry.tag != 'entry':
             continue
         suru = any(('suru verb' in (p.text or '') or 'aux. verb suru' in (p.text or '')) and 'included' not in (p.text or '')
+                   and 'special class' not in (p.text or '')
                    for s in entry.findall('sense') for p in s.findall('pos'))
         adjective_na = any('keiyodoshi' in (p.text or '') for s in entry.findall('sense') for p in s.findall('pos'))
         for tag, pri_tag in (('k_ele', 'ke_pri'), ('r_ele', 're_pri')):

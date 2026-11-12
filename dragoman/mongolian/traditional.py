@@ -207,6 +207,9 @@ def stem_spelling(lemma, pos=None):
         [r for r in dictionary._rows(low) if r.get('script')]
     if pos is not None:
         rows = [r for r in rows if r['pos'] == pos] or rows
+    from .morphology import PREFERRED_SENSES
+    if low in PREFERRED_SENSES:   # 訳語と同じ見出しの綴り (эм「薬」は ᠡᠮ。「女」の ᠡᠮᠡ でなく)
+        rows = [r for r in rows if PREFERRED_SENSES[low] in (r.get('en') or '')] or rows
     if rows:
         return latin(rows[0]['script'].split(' ')[0]), '辞書'
     return _guess(low), '推定'

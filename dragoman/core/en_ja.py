@@ -79,8 +79,13 @@ def lookup(english, pos):
     for p in POS_GROUPS.get(pos, (pos,)):
         row = db.execute('SELECT ja FROM en_ja WHERE en = ? AND pos = ?', (phrase, p)).fetchone()
         if row:
-            return ranked(row[0].split(','))
+            return ranked(_fix_suru(row[0]).split(','))
     return []
+
+
+def _fix_suru(ja):
+    """表の作り直し前の「するする」(サ変の特別な類の 服する・課する に「する」を重ねていた) を直す"""
+    return ja.replace('するする', 'する')
 
 
 @functools.lru_cache(maxsize=100000)
@@ -247,7 +252,8 @@ def _verb_contexts(verb):
     if db is None:
         return ()
     try:
-        return tuple(db.execute('SELECT context, ja FROM verb_context WHERE verb = ?', (key(verb),)).fetchall())
+        return tuple((c, _fix_suru(ja)) for c, ja in
+                     db.execute('SELECT context, ja FROM verb_context WHERE verb = ?', (key(verb),)).fetchall())
     except sqlite3.OperationalError:
         return ()
 

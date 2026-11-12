@@ -1428,6 +1428,7 @@ def detect_adverbial_clauses(clauses, trace):
 # 訳語を手で決めた動詞 (ja_en の無いもの) で、目的語によって訳語を選び直すもの: 日本語の訳語 → (英語, 目的語の英語)。
 # 一般には選び直さない (書く + book →「書き下ろす」、送る + letter →「寄せる」にしない)
 HAND_VERB_CONTEXTS = {'取る': ('take', {'medicine', 'drug', 'drugs', 'pill', 'pharmaceuticals'}),
+                      '食べる': ('take', {'medicine', 'drug', 'drugs', 'pill', 'pharmaceuticals'}),   # 약을 먹다「薬を飲む」
                       '言う': ('tell', {'lie', 'fib', 'falsehood'}), '語る': ('tell', {'lie', 'fib', 'falsehood'})}
 
 

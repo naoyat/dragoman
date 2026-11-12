@@ -306,9 +306,18 @@ def _noun_readings(low):
 # ----------------------------------------------------------------------
 # 訳語
 
+# 同じ綴りの見出しが複数あるとき先にする語義 (эм: ᠡᠮ「薬」。ᠡᠮᠡ「雌,女」でなく)
+PREFERRED_SENSES = {'эм': 'medicine'}
+
+
 @functools.lru_cache(maxsize=50000)
 def gloss(lemma, pos):
     from dragoman.core import en_ja
+    if lemma in PREFERRED_SENSES and pos == 'noun':
+        row = next((r for r in dictionary.lemmas(lemma, ('noun',)) if PREFERRED_SENSES[lemma] in r['en']), None)
+        if row is not None:
+            ja = en_ja.translate(row['en'], 'noun', limit=2)
+            return (ja, 'ja', row) if ja else (row['en'], 'en', row)
     if lemma in GLOSSES:
         return GLOSSES[lemma], 'ja', (dictionary.lemmas(lemma) or [None])[0]
     if lemma.capitalize() in GLOSSES:

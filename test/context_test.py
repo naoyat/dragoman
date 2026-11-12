@@ -23,6 +23,9 @@ CASES = [
     ('french', 'Il dit un mensonge.', '嘘を / つく'),
     ('finnish', 'Hän ottaa lääkettä.', '薬を / 飲む'),
     ('english', 'He takes medicine.', '薬を / 飲む'),
+    ('korean', '그는 약을 먹었다.', '薬を / 飲んだ'),            # 약 は 藥 (花札の「役」でなく)、食べる + 薬
+    ('mongolian', 'Тэр эм уусан.', '彼は / {薬,薬剤}を / 飲んだ'),   # эм「薬」(「雌」でなく)、тэр は主語の代名詞
+    ('portuguese', 'Ele toma remédio.', '薬を / 飲む'),         # spaCy が形容詞と読む名詞
 ]
 
 
@@ -34,10 +37,18 @@ class ContextTestCase(unittest.TestCase):
                     self.skipTest('%s のデータが無い' % module)
                 self.assertIn(expected, translate(module, text))
 
+    def test_suru_not_doubled(self):
+        from dragoman.core import en_ja
+        self.assertNotIn('服するする', en_ja.verb_in_context('take', ['medicine']) + en_ja.lookup('impose', 'verb'))
+        self.assertNotIn('課するする', en_ja.lookup('impose', 'verb'))
+
     def test_hand_glossed_verbs_kept(self):
         # 手で決めた動詞の訳語は、表 (HAND_VERB_CONTEXTS) に無い組み合わせでは選び直さない
         if available('korean'):
             self.assertIn('送った', translate('korean', '나는 어제 친구에게 편지를 보냈습니다.'))
+            self.assertIn('ご飯を / 食べた', translate('korean', '그는 밥을 먹었다.'))
+        if available('mongolian'):
+            self.assertIn('その人は / 来た', translate('mongolian', 'Тэр хүн ирсэн.'))   # 自動詞の前の тэр は指示詞
 
 
 if __name__ == '__main__':
