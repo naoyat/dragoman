@@ -171,6 +171,15 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertTrue(tr.startswith('{神'), tr)
         self.assertIn('を / 創造した', tr)
 
+    def test_name_or_common_noun(self):
+        # הֶבֶל: 親族の名詞と並ぶとアベル、同じ文章の後の文でもアベル。コヘレトの言葉では「空しさ」
+        a = self.analyze('וַתֹּסֶף לָלֶדֶת אֶת־אָחִיו אֶת־הָבֶל׃ וַיְהִי־הֶבֶל רֹעֵה צֹאן׃')
+        for analysis in a:
+            self.assertIn('Abel', analysis.clauses[0].predicate.translate()[0])
+        tr = self.analyze('הֲבֵל הֲבָלִים הַכֹּל הָבֶל׃')[0].clauses[0].predicate.translate()[0]
+        self.assertIn('空しさの空しさ', tr)
+        self.assertNotIn('Abel', tr)
+
     def test_jussive_and_wayyiqtol(self):
         a = self.analyze('וַיֹּ֥אמֶר אֱלֹהִ֖ים יְהִ֣י א֑וֹר וַֽיְהִי־אֽוֹר׃')[0]
         trs = [c.predicate.translate()[0] for c in a.clauses]

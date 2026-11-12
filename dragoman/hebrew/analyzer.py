@@ -121,7 +121,38 @@ def _words(token, ix, prefer='H'):
         if construct is not None and item.get('state') == 'absolute':
             word.construct_item = construct
         out.append(word)
+    # 普通名詞と同じ綴りの人名 (הֶבֶל「息,空しさ」と「アベル」): 人名の項目を持っておく (choose_names)
+    if len(out) == 1 and out[0].items and not out[0].items[0].attrib('proper'):
+        name = next((a for a in found[1:] if a['morph'][1:] == 'Np' and len(a['segments']) == 1), None)
+        if name is not None:
+            out[0].name_item = morphology.segments(name)[0][1]
     return out
+
+
+# 親族の名詞 (Strong の番号): 人名と同格に並ぶ (אֶת־אָחִיו אֶת־הָבֶל「彼の弟アベルを」)
+KIN_NOUNS = ('251', '1121', '1323', '802', '1', '517', '269')   # 兄弟・息子・娘・妻・父・母・姉妹
+_names_seen = set()   # この文章で人名に読んだ語 (子音字)
+
+
+def _is_kin(word):
+    return bool(word.items) and word.items[0].pos == 'noun' and \
+        (word.items[0].attrib('lemma') or '').rstrip('abcdefgh') in KIN_NOUNS
+
+
+def choose_names(words):
+    """人名とも読める普通名詞: 親族の名詞と同格に並ぶとき (אָחִיו אֶת־הָבֶל)、または同じ文章で前に人名に読んだ語は
+    人名に (創世記4章のアベル。コヘレトの言葉の הֲבֵל הֲבָלִים「空しさの空しさ」は普通名詞のまま)"""
+    for i, word in enumerate(words):
+        name = getattr(word, 'name_item', None)
+        if name is None:
+            continue
+        skip = lambda w: w.items and (w.items[0].pos == 'article' or w.items[0].attrib('suffix'))
+        before = next((w for w in reversed(words[max(0, i - 4):i]) if not skip(w)), None)
+        after = next((w for w in words[i + 1:i + 3] if not skip(w)), None)
+        key = script.consonants(word.surface)
+        if key in _names_seen or any(w is not None and _is_kin(w) for w in (before, after)):
+            word.items = [type(word.items[0])(name)]
+            _names_seen.add(key)
 
 
 def _construct_alternative(found, k):
@@ -397,6 +428,7 @@ def lookup_all(surfaces):
     words = merge_kaasher(words)
     relative_asher(words)
     mark_vocatives(words)
+    choose_names(words)
     choose_construct(words)
     attach_markers(words)
     mark_di(words)
@@ -422,6 +454,7 @@ def analyze_sentence(surfaces):
 
 
 def analyze_text(text):
+    _names_seen.clear()
     for surfaces in sentences(text):
         analysis = analyze_sentence(surfaces)
         analysis.tokens = surfaces  # 切れ目に分ける前の語 (見出しの行に使う)
