@@ -50,6 +50,16 @@ class TagalogTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Hindi ako makatulog.'), '私は / 眠ることができない')        # 可能の maka-
         self.assertEqual(self.ja('Makakabili ako ng libro.'), '私は / 本を / 買うことができるだろう')
         self.assertEqual(self.ja('Nakasuot siya ng puting damit.'), '彼は / 白い衣服を / 着ている')   # puti「白い」
+        self.assertEqual(self.ja('Binuksan niya ang pinto.'), 'ドアは / 彼が / 開けた')    # 場所焦点でも対象 (buksan)
+
+    def test_bukas(self):
+        # bukas: 副詞「明日」、述語・名詞の前は「開いている」、bukas ng umaga「明日の朝」
+        self.assertEqual(self.ja('Pupunta ako bukas.'), '私は / 明日 / 行くだろう')
+        self.assertEqual(self.ja('Aalis kami bukas ng gabi.'), '私たちは / 明日の夜 / 出発するだろう')
+        self.assertEqual(self.ja('Bukas ang tindahan.'), '店は / 開いている')
+        self.assertEqual(self.ja('Bukas na ang tindahan.'), '店は / もう / 開いている')
+        self.assertEqual(self.ja('Ang tindahan ay bukas.'), '店は / 開いている')
+        self.assertEqual(self.ja('Isara mo ang bukas na pinto.'), '開いているドアは / あなたが / 閉める')
 
     def test_possessor_copula_relative(self):
         self.assertIn('子供の', self.ja('Binili ng lalaki ang libro ng bata.'))

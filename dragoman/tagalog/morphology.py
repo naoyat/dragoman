@@ -79,6 +79,7 @@ GLOSSES = {'saan': ('どこ', 'adv'), 'kailan': ('いつ', 'adv'), 'bakit': ('�
            'tao': ('人', 'noun'), 'mga': ('〜たち', 'plural'), 'naturan': ('前述の', 'adj'), 'marami': ('多くの', 'adj'),
            'iba': ('他の', 'adj'), 'bawat': ('それぞれの', 'adj'), 'lahat': ('すべて', 'noun'), 'isa': ('一つ', 'noun'),
            'dalawa': ('二つ', 'noun'), 'tatlo': ('三つ', 'noun'), 'pamahalaan': ('政府', 'noun'), 'bansa': ('国', 'noun'),
+           'bukas': ('明日', 'adv'),   # 述語・名詞の前の「開いている」は analyzer.choose_bukas
            'kahapon': ('昨日', 'adv'), 'ngayon': ('今', 'adv'), 'mamaya': ('後で', 'adv'), 'noon': ('その時', 'adv'),
            'palagi': ('いつも', 'adv'), 'lagi': ('いつも', 'adv'), 'sobra': ('とても', 'adv'), 'talaga': ('本当に', 'adv'),
            'lamang': ('〜だけ', 'adv'), 'muli': ('再び', 'adv'), 'agad': ('すぐに', 'adv')}
@@ -86,7 +87,7 @@ GLOSSES = {'saan': ('どこ', 'adv'), 'kailan': ('いつ', 'adv'), 'bakit': ('�
 VERB_GLOSSES = {'suot': '着る', 'bili': '買う', 'kain': '食べる', 'inom': '飲む', 'sulat': '書く', 'basa': '読む', 'bigay': '与える',
                 'kita': '見る', 'gising': '起きる', 'tulog': '眠る', 'punta': '行く', 'alis': '出発する', 'dating': '着く',
                 'luto': '料理する', 'linis': '掃除する', 'aral': '勉強する', 'turo': '教える', 'tawag': '呼ぶ',
-                'sabi': '言う', 'gawa': '作る', 'dala': '持って行く', 'kuha': '取る', 'bukas': '開ける',
+                'sabi': '言う', 'gawa': '作る', 'dala': '持って行く', 'kuha': '取る', 'bukas': '開ける', 'buksan': '開ける',
                 'sara': '閉める', 'hanap': '探す', 'tulong': '助ける', 'lakad': '歩く', 'takbo': '走る',
                 'upo': '座る', 'tayo': '立つ', 'laro': '遊ぶ', 'sayaw': '踊る', 'kanta': '歌う', 'dinig': '聞く',
                 'rinig': '聞く', 'alam': '知る', 'tira': '住む', 'gusto': '好む', 'mahal': '愛する', 'uwi': '帰る', 'balik': '戻る',

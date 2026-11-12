@@ -181,6 +181,53 @@ def _words(surfaces):
     return out
 
 
+TIME_ADVERBS = {'bukas': '明日', 'kahapon': '昨日', 'ngayon': '今日'}
+TIME_OF_DAY = {'umaga': '朝', 'tanghali': '昼', 'hapon': '午後', 'gabi': '夜'}
+SKIP_ENCLITICS = ('na', 'pa', 'ba', 'po', 'ho')
+
+
+def choose_bukas(words):
+    """bukas: 副詞「明日」と形容詞「開いている」。述語 (文頭で ang・si が続く、ay の後ろ) と
+    名詞の前 (bukas na pinto) は形容詞、標識の後ろは名詞類のまま、ほかは「明日」"""
+    keys = [script.key(w.surface) if w.items is not None else None for w in words]
+    for i, word in enumerate(words):
+        if keys[i] != 'bukas' or _pos(word) != 'adv':
+            continue
+        j = i + 1
+        while j < len(keys) and keys[j] in SKIP_ENCLITICS:
+            j += 1
+        nxt = keys[j] if j < len(keys) else None
+        first = not [k for k in keys[:i] if k is not None]
+        prev = keys[i - 1] if i else None
+        attributive = i + 2 < len(keys) and keys[i + 1] == 'na' and keys[i + 2] not in (None, 'ang', 'si', 'sina') + SKIP_ENCLITICS
+        if (first and nxt in ('ang', 'si', 'sina')) or prev == 'ay' or attributive:
+            adj = [a for a in word.alternatives if a['pos'] == 'adj']
+            if adj:
+                word.alternatives = [dict(word.items[0].item)] + [a for a in word.alternatives if a is not adj[0]]
+                word.items = [type(word.items[0])(dict(adj[0], surface=word.surface))]
+                word.original_item = dict(adj[0], surface=word.surface)
+    return words
+
+
+def merge_time_phrases(words):
+    """時の副詞 + ng + 朝・夜 (bukas ng umaga「明日の朝」、kahapon ng gabi「昨日の夜」) を1つの副詞に"""
+    out = []
+    i = 0
+    while i < len(words):
+        word = words[i]
+        key = script.key(word.surface) if word.items is not None else None
+        if key in TIME_ADVERBS and _pos(word) == 'adv' and i + 2 < len(words) and words[i + 2].items is not None and \
+                script.key(words[i + 1].surface) == 'ng' and script.key(words[i + 2].surface) in TIME_OF_DAY:
+            _rebuild(word, ja='%sの%s' % (TIME_ADVERBS[key], TIME_OF_DAY[script.key(words[i + 2].surface)]),
+                     gloss_lang='ja', base='%s ng %s' % (key, script.key(words[i + 2].surface)))
+            out.append(word)
+            i += 3
+            continue
+        out.append(word)
+        i += 1
+    return out
+
+
 def mark_linkers(words):
     """繋ぎ: 単独の na (名詞類と名詞類・動詞の間) と、語に付いた -ng。形容詞は繋ぎの向こうの名詞に掛ける。
     名詞 + 繋ぎ + 動詞は関係節の印 (relative)。単独の na は除く"""
@@ -268,6 +315,9 @@ def mark_phrases(words):
     return out
 
 
+# 場所焦点 -an でも ang の名詞が動作の対象 (を) になる語根 (binuksan niya ang pinto「彼がドアを開けた」。
+# tinuruan・sinulatan の「〜に」はそのまま)
+PATIENT_LOCATIVE = {'bukas', 'buksan', 'sara', 'linis', 'hugas', 'ting', 'tingin', 'tulong', 'tulungan', 'bayar', 'bayad'}
 NG_SLOTS = {'actor': 1, 'object': 1, 'conveyance': 1, 'locative': 2, 'existential': 1}
 
 
@@ -385,6 +435,8 @@ def assign_cases(words):
             continue
         if focus in ('object', 'conveyance'):
             ang_case, ng_cases = 'Acc', ['Nom', 'Nom']
+        elif focus == 'locative' and verb.attrib('root') in PATIENT_LOCATIVE:
+            ang_case, ng_cases = 'Acc', ['Nom', 'Nom']
         elif focus == 'locative':
             ang_case, ng_cases = 'Dat', ['Nom', 'Acc']
         elif focus == 'existential':
@@ -469,9 +521,10 @@ def drop_enclitics(words):
 
 
 def lookup_all(surfaces):
-    words = _words(surfaces)
+    words = choose_bukas(_words(surfaces))
     global _display
     _display = [w for w in words]
+    words = merge_time_phrases(words)
     words = mark_linkers(words)
     words = mark_phrases(words)
     mark_possessors(words)
