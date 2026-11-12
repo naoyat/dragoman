@@ -47,6 +47,9 @@ class TagalogTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Nakatira ako sa Maynila.'), '私は / Maynilaに / 住んでいる')   # 状態の naka-
         self.assertEqual(self.ja('Nakaupo siya sa silya.'), '彼は / 椅子に / 座っている')
         self.assertEqual(self.ja('Nakatulog ang bata.'), '子供は / 眠った')                 # naka- の完了 (行為者焦点)
+        self.assertEqual(self.ja('Hindi ako makatulog.'), '私は / 眠ることができない')        # 可能の maka-
+        self.assertEqual(self.ja('Makakabili ako ng libro.'), '私は / 本を / 買うことができるだろう')
+        self.assertEqual(self.ja('Nakasuot siya ng puting damit.'), '彼は / 白い衣服を / 着ている')   # puti「白い」
 
     def test_possessor_copula_relative(self):
         self.assertIn('子供の', self.ja('Binili ng lalaki ang libro ng bata.'))

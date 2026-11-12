@@ -63,6 +63,7 @@ ENCLITICS = {'na': ('もう', 'adv'), 'pa': ('まだ', 'adv'), 'ba': ('か', 'qu
 # 訳語を決めておく語 (Wiktionary の最初の語義が外れるもの)
 GLOSSES = {'saan': ('どこ', 'adv'), 'kailan': ('いつ', 'adv'), 'bakit': ('なぜ', 'adv'), 'paano': ('どのように', 'adv'),
            'ilan': ('いくつ', 'adv'), 'gaano': ('どれほど', 'adv'),   # 疑問の副詞
+           'puti': ('白い', 'adj'), 'itim': ('黒い', 'adj'), 'pula': ('赤い', 'adj'),   # 色 (puti「刈ること」でなく)
            'bata': ('子供', 'noun'), 'lalaki': ('男', 'noun'), 'babae': ('女', 'noun'), 'isda': ('魚', 'noun'),
            'bahay': ('家', 'noun'), 'aso': ('犬', 'noun'), 'pusa': ('猫', 'noun'), 'libro': ('本', 'noun'),
            'aklat': ('本', 'noun'), 'tindahan': ('店', 'noun'), 'paaralan': ('学校', 'noun'), 'guro': ('先生', 'noun'),
@@ -185,6 +186,10 @@ def candidates(word):
             out.append((root, voice, aspect))
 
     # 行為者焦点 mag- / nag- / mang- / nang- / maka- / naka-
+    # 可能の maka- の未然・進行 (makakabili「買えるだろう」、nakakabili「買える」): ka を重ねた形
+    for prefix, aspect in (('makaka', 'contemplative'), ('nakaka', 'progressive')):
+        if word.startswith(prefix) and len(word) > len(prefix) + 2:
+            add(word[len(prefix):].lstrip('-'), 'actor', aspect)
     for prefix, aspect_plain, aspect_redup in (('nag', 'completive', 'progressive'), ('mag', 'infinitive', 'contemplative'),
                                                ('naka', 'completive', 'progressive'), ('maka', 'infinitive', 'contemplative'),
                                                ('nakapag', 'completive', 'progressive'),
@@ -319,6 +324,21 @@ def _function_word(word):
 @functools.lru_cache(maxsize=50000)
 def analyze(word):
     """語 (照合用の形) → ([項目 (良いものから)], 繋ぎ -ng が付いていたか)"""
+    items, linked = _analyze(word)
+    abilitative = word.startswith('maka') and not word.startswith('makapag') or word.startswith('nakaka')
+    if abilitative and items and items[0].get('pos') == 'verb' and items[0].get('gloss_lang') == 'ja' and \
+            items[0].get('aspect') in ('infinitive', 'contemplative', 'progressive'):
+        # 可能の maka- (makatulog「眠ることができる」、makakabili「買えるだろう」)。完了の naka- は「〜した」のまま
+        from dragoman.core.japanese import attach_auxiliary
+        first = items[0]['ja'].split(',')[0]
+        progressive = items[0].get('aspect') == 'progressive'   # nakakatulog「眠ることができる」(「できている」でなく)
+        items = [dict(items[0], ja=attach_auxiliary(first, 'ことができる'),
+                      **({'aspect': 'infinitive', 'tense': 'present'} if progressive else {}),
+                      base=items[0]['base'].replace(')', '・可能 maka-)', 1))] + items[1:]
+    return items, linked
+
+
+def _analyze(word):
     function = _function_word(word)
     if function:
         return [function], False
@@ -326,7 +346,8 @@ def analyze(word):
     stative = word[4:].lstrip('-') if word.startswith('naka') else None
     if stative in STATIVE_NAKA and (dictionary.lemmas(stative) or stative in VERB_GLOSSES):
         # 状態の naka- (nakatira「住んでいる」、nakatayo「立っている」): 辞書の語形の表 (完了) や形容詞より先に
-        return [_verb_item(word, stative, 'actor', 'progressive')], False
+        item = _verb_item(word, stative, 'actor', 'progressive')
+        return [dict(item, base=item['base'].replace('・進行)', '・状態 naka-)'))], False   # 語の解説は「状態」
     # 辞書の語形の表 (bumibili → bumili の進行)
     variant = lambda lemma: any(re.match(r'^(apheretic|alternative|syncopic|obsolete|dialectal)', r['en'] or '')
                                 for r in dictionary.lemmas(lemma))
