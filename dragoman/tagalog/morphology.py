@@ -82,7 +82,7 @@ GLOSSES = {'saan': ('どこ', 'adv'), 'kailan': ('いつ', 'adv'), 'bakit': ('�
            'palagi': ('いつも', 'adv'), 'lagi': ('いつも', 'adv'), 'sobra': ('とても', 'adv'), 'talaga': ('本当に', 'adv'),
            'lamang': ('〜だけ', 'adv'), 'muli': ('再び', 'adv'), 'agad': ('すぐに', 'adv')}
 # 動詞の訳語を決めておく見出し (態ごとの見出しの訳語が外れるもの)
-VERB_GLOSSES = {'bili': '買う', 'kain': '食べる', 'inom': '飲む', 'sulat': '書く', 'basa': '読む', 'bigay': '与える',
+VERB_GLOSSES = {'suot': '着る', 'bili': '買う', 'kain': '食べる', 'inom': '飲む', 'sulat': '書く', 'basa': '読む', 'bigay': '与える',
                 'kita': '見る', 'gising': '起きる', 'tulog': '眠る', 'punta': '行く', 'alis': '出発する', 'dating': '着く',
                 'luto': '料理する', 'linis': '掃除する', 'aral': '勉強する', 'turo': '教える', 'tawag': '呼ぶ',
                 'sabi': '言う', 'gawa': '作る', 'dala': '持って行く', 'kuha': '取る', 'bukas': '開ける',
@@ -169,6 +169,10 @@ def _uninfix(word, infix):
     if len(word) > 4 and word[0] not in VOWELS and word[1:3] == infix:
         return word[0] + word[3:]
     return None
+
+
+# 状態の naka- を取る語根 (姿勢・身に着けたもの・住まいなど: naka- で「〜している」状態)
+STATIVE_NAKA = {'tira', 'upo', 'tayo', 'higa', 'luhod', 'dapa', 'suot', 'sakay', 'tago', 'yuko', 'sandal'}
 
 
 @functools.lru_cache(maxsize=50000)
@@ -319,16 +323,25 @@ def analyze(word):
     if function:
         return [function], False
     items = []
+    stative = word[4:].lstrip('-') if word.startswith('naka') else None
+    if stative in STATIVE_NAKA and (dictionary.lemmas(stative) or stative in VERB_GLOSSES):
+        # 状態の naka- (nakatira「住んでいる」、nakatayo「立っている」): 辞書の語形の表 (完了) や形容詞より先に
+        return [_verb_item(word, stative, 'actor', 'progressive')], False
     # 辞書の語形の表 (bumibili → bumili の進行)
     variant = lambda lemma: any(re.match(r'^(apheretic|alternative|syncopic|obsolete|dialectal)', r['en'] or '')
                                 for r in dictionary.lemmas(lemma))
     for lemma, aspect in sorted(dictionary.forms(word), key=lambda f: variant(f[0])):
         rows = [r for r in dictionary.lemmas(lemma) if r['pos'] == 'verb' and r['en']]
+        if word.startswith(('naka', 'maka')):   # naka- / maka- は行為者焦点を先に (nakatulog「眠った」。「眠らせられた」でなく)
+            rows.sort(key=lambda r: r['voice'] != 'actor')
         if rows:
             root = _root_of(lemma)
             items.append(_verb_item(word, root, rows[0]['voice'], aspect, lemma=lemma, en=rows[0]['en']))
             break
-    for row in dictionary.lemmas(word):
+    rows = list(dictionary.lemmas(word))
+    if word.startswith(('naka', 'maka')):
+        rows.sort(key=lambda r: not (r['pos'] == 'verb' and r['voice'] == 'actor'))   # 行為者焦点を先に (makatulog)
+    for row in rows:
         if row['pos'] == 'verb' and row['en'] and not items:
             root = _root_of(word)
             items.append(_verb_item(word, root, row['voice'], 'infinitive', lemma=word, en=row['en']))

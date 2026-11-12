@@ -44,6 +44,9 @@ class TagalogTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Binili ng lalaki ang isda.'), '魚は / 男が / 買った')       # 対象焦点
         self.assertEqual(self.ja('Binilhan ng lalaki ng isda ang tindahan.'), '店には / 男が / 魚を / 買った')  # 場所焦点
         self.assertEqual(self.ja('Kumakain ako ng kanin.'), '私は / ご飯を / 食べている')    # 進行
+        self.assertEqual(self.ja('Nakatira ako sa Maynila.'), '私は / Maynilaに / 住んでいる')   # 状態の naka-
+        self.assertEqual(self.ja('Nakaupo siya sa silya.'), '彼は / 椅子に / 座っている')
+        self.assertEqual(self.ja('Nakatulog ang bata.'), '子供は / 眠った')                 # naka- の完了 (行為者焦点)
 
     def test_possessor_copula_relative(self):
         self.assertIn('子供の', self.ja('Binili ng lalaki ang libro ng bata.'))
