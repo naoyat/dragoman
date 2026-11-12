@@ -89,6 +89,10 @@ class AnalyzerTestCase(unittest.TestCase):
     def test_construct(self):
         self.assertIn('先生の本を', self.translate('قرأ الولد كتاب المعلم.')[0])
         self.assertEqual(self.translate('أين تسكن؟')[0], 'どこに / あなたが / 住むか')   # sakana「住む」(sakkana「静める」でなく)
+        # 動詞の後ろのただ1つの名詞が生き物でなく、訳語が他動詞だけなら目的語 (主語は動詞の人称から)
+        self.assertEqual(self.translate('شرب الماء.')[0], '{彼,彼女,それ}が / 水を / 飲んだ')
+        self.assertEqual(self.translate('أخذ الدواء.')[0], '{彼,彼女,それ}が / くすりを / 飲んだ')
+        self.assertEqual(self.translate('ذهب الولد.')[0], '{少年,子ども}が / 行った')   # 生き物は主語
 
     def test_nominal_sentence(self):
         self.assertEqual(self.translate('الولد كبير.')[0].split(' / ')[-1], '大きい')

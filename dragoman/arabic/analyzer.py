@@ -326,6 +326,19 @@ def negate_verbs(words):
     return out
 
 
+def _object_only(verb, word):
+    """動詞の後ろのただ1つの名詞類を目的語と読むか: 主格・対格のどちらにも読め (母音記号で格を示していない)、
+    生き物でなく (شرب الماء「水を飲んだ」。أكل الولد「少年が食べた」は主語)、動詞の訳語が他動詞だけ"""
+    from dragoman.core.animacy import is_animate
+    from dragoman.kobun.modernize import transitive_only
+    item = _item(word)
+    cases = {c[0] for c in item._ or []}
+    if not {'Nom', 'Acc'} <= cases or item.pos not in ('noun',) or item.attrib('proper') or is_animate(item):
+        return False
+    ja = (verb.attrib('ja') or '').split(',')[0].strip()
+    return verb.attrib('gloss_lang') == 'ja' and transitive_only(ja)
+
+
 def choose_subject(words):
     """3人称の定動詞の主語: 動詞の後ろ (無ければ前) の、性が合い、属格に決まっていない最初の名詞類を主格に。
     動詞が前にあれば数は合わなくてよい (動詞は単数のまま)。主語の後ろの名詞類は目的語 (対格) に。
@@ -368,6 +381,8 @@ def choose_subject(words):
             if (_definite(words[j]) or item.attrib('proper')) and any(agrees(c, False) for c in item._ or []):
                 subject = j
         for j in after if not shared and subject is None else []:
+            if len(after) == 1 and _object_only(verb, words[j]):
+                break   # 動詞の後ろの名詞類が1つで、生き物でなく、動詞の訳語が他動詞だけ: 目的語 (أخذ الدواء「薬を飲んだ」)
             if any(agrees(c, True) for c in _item(words[j])._ or []):
                 subject = j
                 break
