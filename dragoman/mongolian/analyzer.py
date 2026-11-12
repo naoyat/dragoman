@@ -41,7 +41,7 @@ def _root_items(lemma):
 
 # 副詞節の副動詞の語尾 (切り出した語の見出し) → (節の後ろに付ける形, 節の動詞の時制) (core/Adverbial.py。-ж は
 # 助動詞の前 (орж байхад) にも来るので入れない)
-SUBORDINATORS = {'-вал': ('なら', None), '-аад': ('て', 'present'), '-хад': ('とき', None), '-тал': ('まで', 'present'),
+SUBORDINATORS = {'-вал': ('なら', None), '-аад': ('て', 'present'), '-хад': ('とき', 'relative'), '-тал': ('まで', 'present'),
                  '-магц': ('とすぐに', None)}
 
 
@@ -522,6 +522,10 @@ def mark_topic(words):
         if _pos(w) == 'verb' or w.items is None:
             return
         if _pos(w) in ('noun', 'pronoun'):
+            k = words.index(w)
+            if k + 1 < len(words) and (getattr(words[k + 1], 'record', None) or {}).get('converb') in \
+                    ('when', 'if', 'until', 'as_soon'):
+                return   # 副詞節の副動詞の直前の名詞は節の主語 (Тэр ирэхэд「彼が来たとき」。主題「は」でなく)
             if _item(w)._ and _item(w)._[0][0] == 'Nom' and not any((getattr(w, 'record', None) or {}).get(k) for k in ('converb_subject', 'sense_subject')):
                 w.topic = True   # 副動詞の節の主語 (Намайг ирэхэд)・天気の主語 (бороо орох) は主題にしない
             return

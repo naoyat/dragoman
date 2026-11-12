@@ -31,6 +31,9 @@ class AdverbialClause(LatinObject):
         suffix = item.attrib('clause_suffix')
         verb = self.predicate.first_item
         tense = item.attrib('clause_tense')
+        if tense == 'relative':   # 主節の時制に合わせる (モンゴル語の -хад: 主節が過去なら「来たとき」)
+            main_tense = self.main.first_item.attrib('tense') if self.main is not None else None
+            tense = 'perfect' if main_tense in ('perfect', 'past', 'imperfect', 'pluperfect', 'aorist') else 'present'
         saved = dict(verb.item)
         if tense:
             verb.item['tense'] = tense

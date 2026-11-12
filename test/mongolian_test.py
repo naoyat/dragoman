@@ -59,7 +59,8 @@ class TraditionalTestCase(unittest.TestCase):
         self.assertEqual(translate('mongolian', 'Бороо орж байна.'), '雨が / 降っている')    # 主語で決まる意味
         self.assertEqual(translate('mongolian', 'Би гэрт орсон.'), '私は / 家に / 入った')
         # 副動詞の節の対格の主語 (自動詞)
-        self.assertEqual(translate('mongolian', 'Намайг ирэхэд тэр явсан.'), '{私が 来る}とき / 彼が / 行った')
+        self.assertEqual(translate('mongolian', 'Намайг ирэхэд тэр явсан.'), '{私が 来た}とき / 彼が / 行った')   # -хад の時制は主節に合わせる
+        self.assertEqual(translate('mongolian', 'Тэр ирэхэд би түүнийг харсан.'), '{彼が 来た}とき / 私が / 彼を / 見た')
 
     @unittest.skipUnless(HAVE_DATA, 'モンゴル語の辞書が無い')
     def test_dative_after_cluster(self):
