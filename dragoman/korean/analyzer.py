@@ -543,6 +543,16 @@ def _pred_words(rec, nxt):
         neg = _negation_word()
         neg.token_ix = ix
         out.append(neg)
+    if rec['etn'] == '기' and not rec['particles'] and nxt is not None and nxt.get('kind') == 'noun' and \
+            nxt.get('lemma') == '전':
+        # -기 전에「〜する前に」: 連体形 + 전 と同じく副詞節に (mark_attributives。「行くこと」+「前」でなく)
+        word = Word(rec['surface'], [_verb_item(rec)])
+        word.attributive = rec['etn']
+        word.adjective = False
+        word.token_ix = ix
+        word.eojeol = rec['surface']
+        out.append(word)
+        return out
     if rec['etn']:   # 名詞化 (읽기「読むこと」)
         ja, gloss_lang, row = _japanese_verb(rec)
         word = Word(rec['surface'], [_base_item(rec['surface'], 'noun', rec['lemma'], ja.split(',')[0] + 'こと', 'ja',

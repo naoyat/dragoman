@@ -50,6 +50,8 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('나는 어머니가 만든 음식을 먹었다.'), '私は / {母が 作った}食べ物を / 食べた')
         self.assertEqual(self.ja('예쁜 꽃이 피었다.'), '{美しい,かわいい}花が / 咲いた')
         self.assertEqual(self.ja('고양이와 개가 마당에서 논다.'), '猫と犬が / 庭[で,から] / 遊ぶ')
+        self.assertEqual(self.ja('밥을 먹은 후에 학교에 갔어요.'), '{ご飯を 食べた}後で / 学校に / 行った')
+        self.assertEqual(self.ja('학교에 가기 전에 밥을 먹었어요.'), '{学校に 行く}前に / ご飯を / 食べた')   # -기 전에
 
     def test_literal(self):
         from dragoman.korean.literal import literal
