@@ -1425,6 +1425,12 @@ def detect_adverbial_clauses(clauses, trace):
     return out
 
 
+# 訳語を手で決めた動詞 (ja_en の無いもの) で、目的語によって訳語を選び直すもの: 日本語の訳語 → (英語, 目的語の英語)。
+# 一般には選び直さない (書く + book →「書き下ろす」、送る + letter →「寄せる」にしない)
+HAND_VERB_CONTEXTS = {'取る': ('take', {'medicine', 'drug', 'drugs', 'pill', 'pharmaceuticals'}),
+                      '言う': ('tell', {'lie', 'fib', 'falsehood'}), '語る': ('tell', {'lie', 'fib', 'falsehood'})}
+
+
 def verbs_in_context(clauses, trace):
     """英語の語義から訳した動詞 (Wiktionary の語義: плести の braid, plait, weave, spin …) の訳語を、目的語 (無ければ主語) の
     英語の語義で選ぶ (JMdict の英訳の書き込みの表 core/en_ja.verb_in_context: spin + thread → 繰る、tell + lie → つく)"""
@@ -1432,25 +1438,41 @@ def verbs_in_context(clauses, trace):
     from .Adverbial import AdverbialClause
     predicates = [c.predicate for c in clauses]
     predicates += [s.predicate for p in list(predicates) for s in p.subordinates if isinstance(s, AdverbialClause)]
+    def english(item, fallback=False):
+        """項目の英語の語義。fallback: 訳語を手で決めた名詞 (ja_en の無いもの) は、日本語の訳語の英訳 (JMdict) の初めの3つ。
+        動詞は手で決めた訳語を選び直さない (書く + book →「書き下ろす」にしない)"""
+        found = [e.strip() for e in (item.attrib('ja_en') or '').split(',') if e.strip()]
+        if not found and fallback and item.attrib('gloss_lang') == 'ja' and item.attrib('ja'):
+            found = list(en_ja.english_for(item.attrib('ja').split(',')[0])[:3])
+        return found
+
     for pred in predicates:
         verb = pred.first_item
-        senses = [s.strip() for s in (verb.attrib('ja_en') or '').split(',') if s.strip()]
-        if not senses or verb.pos != 'verb':
+        if verb.pos != 'verb' or pred.is_sum:
+            continue
+        senses = english(verb)
+        allowed = None
+        if not senses and verb.attrib('gloss_lang') == 'ja':
+            sense, allowed = HAND_VERB_CONTEXTS.get((verb.attrib('ja') or '').split(',')[0], (None, None))
+            senses = [sense] if sense else []
+        if not senses:
             continue
         objects = []
-        for case in ('Acc', 'Nom'):
+        for case in ('Acc', 'Nom/Acc', 'Nom'):   # Nom/Acc: 主格・対格の同じ形の目的語 (принимает лекарство)
             for obj in pred.case_slot.get(case, []):
                 item = obj.items[0] if isinstance(obj, Word) and obj.items else None
                 if item is not None and item.pos == 'noun':
-                    objects += [e.strip() for e in (item.attrib('ja_en') or '').split(',') if e.strip()]
+                    objects += english(item, fallback=True)
             if objects:
                 break
+        if allowed is not None:
+            objects = [o for o in objects if o in allowed]
         if not objects:
             continue
         for sense in senses:
             found = en_ja.verb_in_context(sense, objects)
             if found:
-                ja = ','.join(found[:2])
+                ja = found[0]   # 場面の訳語の1つ目だけ (take + medicine →「飲む」。2つ目の「受け付ける」は別の場面)
                 verb.item['ja'] = verb.ja = ja
                 trace.append('// CONTEXT %s (%s + %s) -> %s' % (pred.surface, sense, ','.join(objects[:3]), ja))
                 break
