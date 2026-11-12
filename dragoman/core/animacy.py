@@ -12,7 +12,7 @@ import re
 JAPANESE_SUFFIXES = ('人', '者', '王', '神', '少年', '少女', '兵', '民', '主人', '奴隷', '農夫', '水夫', '息子', '動物',
                      '獣', '鳥', 'ライオン', '狼', '熊', '犬', '猫', '馬', '牛', '羊', '山羊', '象', '蛇', '竜')
 JAPANESE_WORDS = ('子', '娘', '父', '母', '兄', '弟', '姉', '妹', '夫', '妻', '男', '女', '友', '敵', '客', '魚', '虫',
-                  '鹿', '豚', '兄弟', '姉妹', '学生', '医者', '医師', '先生', '友人')
+                  '鹿', '豚', '兄弟', '姉妹', '学生', '医者', '医師', '先生', '友人', '子供', '子ども', '友達')
 ENGLISH = {'man', 'men', 'woman', 'women', 'person', 'people', 'human', 'boy', 'girl', 'child', 'children', 'son',
            'daughter', 'father', 'mother', 'brother', 'sister', 'husband', 'wife', 'king', 'queen', 'prince',
            'princess', 'lord', 'master', 'servant', 'slave', 'soldier', 'warrior', 'farmer', 'sailor', 'poet',

@@ -20,6 +20,7 @@
 import re
 
 from dragoman.core import analyzer as common
+from dragoman.core import animacy
 from dragoman.core import language
 from dragoman.core.Word import Word
 from . import dictionary, morphology, script
@@ -170,6 +171,8 @@ def _words(surfaces):
         items, linker = morphology.analyze(key)
         first = not [w for w in out if w.items is not None]
         items = _choose(items, prev, first)
+        if key == 'linggo' and token[:1].isupper():
+            items = [dict(items[0], ja='日曜日', gloss_lang='ja')] + items[1:]   # Linggo「日曜日」、linggo「週」
         word = Word(token, [dict(items[0], surface=token)])
         word.original_item = dict(items[0], surface=token)  # 表示用 (関係節を組み込む前の訳語)
         word.alternatives = items[1:]
@@ -228,6 +231,15 @@ def merge_time_phrases(words):
     return out
 
 
+# 数詞 + 繋ぎ + 名詞: 期間の単位は「二週間」、ほかは「二つの」
+NUMERALS = {'isa': ('一', '一つの'), 'dalawa': ('二', '二つの'), 'tatlo': ('三', '三つの'), 'apat': ('四', '四つの'),
+            'lima': ('五', '五つの'), 'anim': ('六', '六つの'), 'pito': ('七', '七つの'), 'walo': ('八', '八つの'),
+            'siyam': ('九', '九つの'), 'sampu': ('十', '十の')}
+ANIMAL_COUNTERS = {'魚': '匹', '犬': '匹', '猫': '匹', '豚': '匹', '鳥': '羽', '鶏': '羽', '馬': '頭', '牛': '頭',
+                   '水牛': '頭', '山羊': '匹', '羊': '匹'}
+COUNTED_UNITS = {'linggo': '週間', 'araw': '日', 'taon': '年', 'buwan': 'か月', 'oras': '時間', 'minuto': '分'}
+
+
 def mark_linkers(words):
     """繋ぎ: 単独の na (名詞類と名詞類・動詞の間) と、語に付いた -ng。形容詞は繋ぎの向こうの名詞に掛ける。
     名詞 + 繋ぎ + 動詞は関係節の印 (relative)。単独の na は除く"""
@@ -242,10 +254,38 @@ def mark_linkers(words):
             word.is_linker = True
             continue
         out.append(word)
+    merged = set()
     for i, word in enumerate(out[:-1]):
         if not getattr(word, 'linker', False):
             continue
         nxt = out[i + 1]
+        number = NUMERALS.get(script.key(word.surface)[:-2] if script.key(word.surface).endswith('ng') else
+                              script.key(word.surface)[:-1])
+        if number and _pos(nxt) in ('noun', 'adj'):
+            unit = COUNTED_UNITS.get(script.key(nxt.surface)) if _pos(nxt) == 'noun' else None
+            if unit:
+                _rebuild(nxt, ja=number[0] + unit, gloss_lang='ja')    # dalawang linggo「二週間」
+                merged.add(i)
+                continue
+            # dalawang libro「二つの本」、isang magandang bahay「一つの美しい家」(形容詞の向こうの名詞に掛ける)
+            j = i + 1
+            while j < len(out) and _pos(out[j]) == 'adj' and getattr(out[j], 'linker', False):
+                j += 1
+            if j < len(out) and _pos(out[j]) == 'noun':
+                noun = _item(out[j])
+                counter = ANIMAL_COUNTERS.get((noun.ja or '').split(',')[0]) or ('人' if animacy.is_animate(noun) else None)
+                ja = number[0] + counter + 'の' if counter else number[1]   # isang lalaki「一人の男」
+                if j > i + 1:
+                    # 形容詞を挟む (isang magandang bahay「一つの美しい家」): 数詞を形容詞の訳語の前に付ける
+                    # (「一つの & 美しい」と並べない)
+                    adj = _item(out[i + 1])
+                    _rebuild(out[i + 1], ja=','.join(ja + g for g in (adj.ja or '').split(',')),
+                             gloss_lang=adj.attrib('gloss_lang'))
+                    merged.add(i)
+                else:
+                    _rebuild(word, pos='adj', ja=ja, gloss_lang='ja', _=morphology._adj_cngs())
+                    word.linked_to = out[j]
+            continue
         if _pos(word) == 'adj' and _pos(nxt) == 'noun':
             word.linked_to = nxt                    # magandang bahay
         elif _pos(word) == 'noun' and _pos(nxt) == 'adj':
@@ -255,7 +295,7 @@ def mark_linkers(words):
         elif _pos(word) == 'pronoun' and _item(word).attrib('marker') == 'sa' and _pos(nxt) == 'noun':
             # aking bahay「私の家」(sa の代名詞 + 繋ぎ + 名詞)
             _rebuild(word, pos='noun', _=[('Gen', 'sg', morphology.GENDER)], possessor=True)
-    return out
+    return [w for i, w in enumerate(out) if i not in merged]
 
 
 def mark_phrases(words):
@@ -439,6 +479,8 @@ def assign_cases(words):
             ang_case, ng_cases = 'Acc', ['Nom', 'Nom']
         elif focus == 'locative':
             ang_case, ng_cases = 'Dat', ['Nom', 'Acc']
+        elif focus == 'existential' and any(_pos(w) == 'noun' and getattr(w, 'marker', None) is None for w in clause):
+            ang_case, ng_cases = 'Dat', ['Nom', 'Acc']   # 所有 (May libro ako「私には本がある」)
         elif focus == 'existential':
             ang_case, ng_cases = 'Nom', ['Nom', 'Acc']
         else:
@@ -446,6 +488,10 @@ def assign_cases(words):
         for w in angs:
             _restrict(w, (ang_case,))
             w.focus = True
+        for w in clause:
+            item = _item(w)
+            if _pos(w) == 'pronoun' and item.attrib('marker') == 'sa' and not item.attrib('possessor'):
+                _restrict(w, ('Dat',))   # sa の代名詞 (dito「ここに」、sa akin「私に」)
         heads = [w for w in ngs]
         for k, w in enumerate(heads):
             _restrict(w, (ng_cases[min(k, 1)],))
@@ -454,6 +500,10 @@ def assign_cases(words):
             for w in clause:
                 if _pos(w) == 'noun' and getattr(w, 'marker', None) is None:
                     _restrict(w, ('Nom',))
+            # 生き物の存在は「いる」(May aso sa bahay「犬が家にいる」、may isang lalaki「一人の男がいる」)
+            subjects = [w for w in clause if _pos(w) == 'noun' and getattr(w, 'marker', None) is None]
+            if subjects and animacy.is_animate(_item(subjects[0])) and verb.ja in ('ある', 'ない'):
+                _rebuild(verbs[0], ja={'ある': 'いる', 'ない': 'いない'}[verb.ja])
 
 
 def handle_ay(words):

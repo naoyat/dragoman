@@ -61,6 +61,21 @@ class TagalogTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Ang tindahan ay bukas.'), '店は / 開いている')
         self.assertEqual(self.ja('Isara mo ang bukas na pinto.'), '開いているドアは / あなたが / 閉める')
 
+    def test_days_numbers_existence(self):
+        # Linggo「日曜日」(小文字の linggo は「週」)、曜日・月
+        self.assertEqual(self.ja('Bukas ay Linggo.'), '明日 / 日曜日である')
+        self.assertEqual(self.ja('Pupunta ako sa simbahan sa Linggo.'), '私は / 教会に=日曜日に / 行くだろう')
+        # 数詞 + 繋ぎ + 名詞: 期間は「一週間」、人・動物は「二人の」「三匹の」、ほかは「二つの」
+        self.assertEqual(self.ja('Isang linggo ang bakasyon.'), '休暇は / 一週間である')
+        self.assertEqual(self.ja('Bumili ako ng dalawang libro.'), '私は / 二つの本を / 買った')
+        self.assertEqual(self.ja('Bumili ako ng tatlong isda.'), '私は / 三匹の魚を / 買った')
+        self.assertEqual(self.ja('Bumili siya ng isang magandang bahay.'), '彼は / 一つの美しい家を / 買った')
+        # 存在: 生き物は「いる」、ang の代名詞は所有者「〜には」、sa の代名詞は「〜に」
+        self.assertEqual(self.ja('May aso sa bahay.'), '犬が / 家に / いる')
+        self.assertEqual(self.ja('May libro ako.'), '私には / 本が / ある')
+        self.assertEqual(self.ja('Mayroon akong kapatid.'), '私には / 兄弟が / いる')
+        self.assertEqual(self.ja('Walang tao dito.'), '人が / ここに / いない')
+
     def test_possessor_copula_relative(self):
         self.assertIn('子供の', self.ja('Binili ng lalaki ang libro ng bata.'))
         self.assertEqual(self.ja('Maganda ang bahay.'), '家は / 美しい')

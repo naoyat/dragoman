@@ -80,6 +80,14 @@ GLOSSES = {'saan': ('どこ', 'adv'), 'kailan': ('いつ', 'adv'), 'bakit': ('�
            'iba': ('他の', 'adj'), 'bawat': ('それぞれの', 'adj'), 'lahat': ('すべて', 'noun'), 'isa': ('一つ', 'noun'),
            'dalawa': ('二つ', 'noun'), 'tatlo': ('三つ', 'noun'), 'pamahalaan': ('政府', 'noun'), 'bansa': ('国', 'noun'),
            'bukas': ('明日', 'adv'),   # 述語・名詞の前の「開いている」は analyzer.choose_bukas
+           'kapatid': ('兄弟', 'noun'), 'linggo': ('週', 'noun'),   # 大文字の Linggo は「日曜日」(analyzer._words)
+           'lunes': ('月曜日', 'noun'), 'martes': ('火曜日', 'noun'), 'miyerkoles': ('水曜日', 'noun'),
+           'miyerkules': ('水曜日', 'noun'), 'huwebes': ('木曜日', 'noun'), 'biyernes': ('金曜日', 'noun'),
+           'sabado': ('土曜日', 'noun'),
+           'enero': ('1月', 'noun'), 'pebrero': ('2月', 'noun'), 'marso': ('3月', 'noun'), 'abril': ('4月', 'noun'),
+           'mayo': ('5月', 'noun'), 'hunyo': ('6月', 'noun'), 'hulyo': ('7月', 'noun'), 'agosto': ('8月', 'noun'),
+           'setyembre': ('9月', 'noun'), 'oktubre': ('10月', 'noun'), 'nobyembre': ('11月', 'noun'),
+           'disyembre': ('12月', 'noun'),
            'kahapon': ('昨日', 'adv'), 'ngayon': ('今', 'adv'), 'mamaya': ('後で', 'adv'), 'noon': ('その時', 'adv'),
            'palagi': ('いつも', 'adv'), 'lagi': ('いつも', 'adv'), 'sobra': ('とても', 'adv'), 'talaga': ('本当に', 'adv'),
            'lamang': ('〜だけ', 'adv'), 'muli': ('再び', 'adv'), 'agad': ('すぐに', 'adv')}
@@ -406,6 +414,8 @@ def _analyze(word):
                 ja = ja + 'こと'
             return [_item(word, pos='noun', base='%s (動名詞 %s-)' % (root, m.group(1)), ja=ja, gloss_lang=lang,
                           gerund=True, _=_nominal_cngs())], False
+    if items and all(i.get('proper') for i in items) and word.endswith('ng') and word[:-2] in GLOSSES:
+        return analyze(word[:-2])[0], True   # isang「一つの」(人名 Isang でなく)
     if not items:
         # 繋ぎ -ng / -g (magandang → maganda + ng、mabuting → mabuti + ng)
         for stem in ([word[:-2]] if word.endswith('ng') else []) + ([word[:-1]] if word.endswith('g') else []):
