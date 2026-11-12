@@ -175,7 +175,7 @@ class AnalyzerTestCase(unittest.TestCase):
         # הֶבֶל: 親族の名詞と並ぶとアベル、同じ文章の後の文でもアベル。コヘレトの言葉では「空しさ」
         a = self.analyze('וַתֹּסֶף לָלֶדֶת אֶת־אָחִיו אֶת־הָבֶל׃ וַיְהִי־הֶבֶל רֹעֵה צֹאן׃')
         trs = [analysis.clauses[0].predicate.translate()[0] for analysis in a]
-        self.assertIn('=ヘベルを', trs[0])        # 人名はカタカナ、人称接尾辞の -ו は並列の「と」でない
+        self.assertIn('彼の{兄,弟,兄貴,アニキ}=ヘベルを', trs[0])   # 人名はカタカナ、人称接尾辞は名詞の属格 (並列の「と」でない)
         self.assertIn('産む', trs[0])             # yālad「産む」
         self.assertEqual(trs[1], 'そして / ヘベルは / 群れの羊飼いであった')   # 連語形の分詞は「〜する人」
         tr = self.analyze('וְקַיִן הָיָה עֹבֵד אֲדָמָה׃')[0].clauses[0].predicate.translate()[0]

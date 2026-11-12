@@ -262,6 +262,23 @@ def mark_construct(words):
                         it._ = [('Gen',) + tuple(c[1:]) for c in it._ if c[0] in ('Nom', 'Acc')] or it._
 
 
+def attach_suffix_genitives(words):
+    """名詞の人称接尾辞 (属格) を名詞の属格にする (אָחִיו「彼の兄」。述語の枠の「彼の」として離さない)"""
+    out = []
+    for word in words:
+        item = word.items[0] if word.items else None
+        prev = out[-1] if out else None
+        governed = len(out) >= 2 and out[-2].items and out[-2].items[0].pos == 'preposition'
+        # 前置詞の目的語の名詞 (לְעַבְדָּךְ「あなたの僕に」) はそのまま (後ろの וּ が前置詞句と並列に読まれないように)
+        if item is not None and item.attrib('suffix') and item._ and all(c[0] == 'Gen' for c in item._) and \
+                prev is not None and prev.items and prev.items[0].pos == 'noun' and not governed and \
+                getattr(word, 'attached_to', None) is None:
+            prev.add_genitive(word)
+            continue
+        out.append(word)
+    return out
+
+
 def _finite(item):
     return item.pos == 'verb' and item.attrib('mood') in ('indicative', 'imperative', 'subjunctive')
 
@@ -463,6 +480,7 @@ def lookup_all(surfaces):
     attach_markers(words)
     mark_di(words)
     mark_construct(words)
+    words = attach_suffix_genitives(words)
     words = supply_copula(words)  # 名詞文の繋辞を先に補う (後ろの1・2人称の動詞の節と分けるため)
     choose_subject(words)
     for i, word in enumerate(words):
