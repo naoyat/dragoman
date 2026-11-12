@@ -44,6 +44,9 @@ class IndirectQuestionTestCase(unittest.TestCase):
 class SecondNominativeTestCase(unittest.TestCase):
     def test_russian(self):   # 主格にしか読めない語と並んだ、対格にも読める語は目的語
         self.assertEqual(translate('russian', 'Она любит мать.'), '彼女が / 母を / 好む,愛する')
+        self.assertEqual(translate('russian', 'Мать любит дочь.'), '母が / 娘を / 好む,愛する')   # 主格・対格が同じ形: 語順で
+        self.assertEqual(translate('russian', 'Дочь любит мать.'), '娘が / 母を / 好む,愛する')
+        self.assertEqual(translate('russian', 'Время идёт.'), '{時,時間,時刻,時期}が / 行く,歩く,降る,動く')   # 動詞の前は主格を先に
 
 
 if __name__ == '__main__':

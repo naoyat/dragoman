@@ -115,6 +115,28 @@ def prefer_governed_cases(words):
                 break  # 名詞まで (間の形容詞も同じように)
 
 
+def prefer_preverbal_nominative(words):
+    """動詞の前の、主格・対格の同じ形の名詞 (Время идёт「時が過ぎる」) は、動詞と数の合う主格を先に。
+    動詞の前に主格にしか読めない語 (Я письмо читаю の я) があれば触らない"""
+    verb_ix = next((i for i, w in enumerate(words) if w.items and _finite(w.items[0])), None)
+    if verb_ix is None:
+        return
+    verb = words[verb_ix].items[0]
+    before = words[:verb_ix]
+    if any(w.items and w.items[0].pos in ('noun', 'pronoun') and {c[0] for c in w.items[0]._ or []} == {'Nom'}
+           for w in before):
+        return
+    for i, word in enumerate(before):
+        if not word.items or word.items[0].pos != 'noun' or (i > 0 and words[i - 1].items and
+                                                            words[i - 1].items[0].pos == 'preposition'):
+            continue
+        item = word.items[0]
+        cngs = item._ or []
+        if cngs[:1] and cngs[0][0] == 'Acc' and any(c[0] == 'Nom' and c[1] == verb.attrib('number') for c in cngs):
+            item.item['_'] = sorted(cngs, key=lambda c: c[0] != 'Nom')
+            word.items = [type(item)(item.item)] + word.items[1:]
+
+
 COPULA = {'pos': 'verb', 'pres1sg': 'быть', 'base': 'быть', 'ja': '在る,居る', 'gloss_lang': 'ja', 'aspect': 'impf',
           'voice': 'active', 'mood': 'indicative', 'tense': 'present', 'person': 3, 'number': 'sg',
           'desc': '省略された繋辞'}
@@ -345,6 +367,7 @@ def lookup_all(surfaces):
     choose_verbs(words)
     words = merge_compound_verbs(words)
     prefer_governed_cases(words)
+    prefer_preverbal_nominative(words)
     words = particle_by(words)
     words = negative_existence(words)
     words = supply_copula(words)

@@ -1979,6 +1979,7 @@ def _second_nominative_as_object(pred):
     def cases(o):
         return {c[0] for c in o.items[0]._ or []} if isinstance(o, Word) and o.items else set()
     if not any(cases(o) == {'Nom'} for o in noms):
+        _svo_object(pred, noms, cases)
         return
     objects = [o for o in noms if cases(o) != {'Nom'} and 'Acc' in cases(o) and not is_relative(o)]
     if len(objects) != len(noms) - 1:
@@ -1987,6 +1988,24 @@ def _second_nominative_as_object(pred):
         pred.case_slot['Nom'] = [x for x in pred.case_slot['Nom'] if x is not o]
         o.restrict_cases(('Acc',))
         pred.add_nominal('Acc', o)
+
+
+def _svo_object(pred, noms, cases):
+    """主格・対格の同じ形の名詞が2つ (Мать любит дочь): 語順の決まった言語 (objects_follow_verb のロシア語) では
+    動詞の後ろの語を目的語に (「母が 娘を 愛する」。「母=娘が」でなく)。並列 (A и B) は1つの要素なので対象外"""
+    if not language.current().objects_follow_verb or len(noms) != 2 or pred.case_slot.get('Acc') or \
+            not all(isinstance(o, Word) and cases(o) >= {'Nom', 'Acc'} and not is_relative(o) for o in noms):
+        return
+    verb_ix = pred.verb.index
+    if verb_ix is None or any(o.index is None for o in noms):
+        return
+    first, second = sorted(noms, key=lambda o: o.index)
+    if not first.index < verb_ix < second.index:
+        return   # 動詞の前後に1つずつのときだけ (SVO)
+    pred.case_slot['Nom'] = [first]
+    first.restrict_cases(('Nom',))
+    second.restrict_cases(('Acc',))
+    pred.add_nominal('Acc', second)
 
 
 def _second_person(pred):
