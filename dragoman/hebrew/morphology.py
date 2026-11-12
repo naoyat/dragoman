@@ -11,6 +11,8 @@
 # 目的語の標識 אֵת の後ろは対格、前置詞の後ろは前置詞句、連語形 (construct) の後ろの名詞は属格に、
 # 文の解析 (hebrew/analyzer.py) で絞る
 #
+import re
+
 from . import dictionary, script
 
 NUMBERS = {'s': 'sg', 'p': 'pl', 'd': 'du'}
@@ -70,7 +72,8 @@ def _cngs(gender, number, cases=NOMINAL_CASES):
 
 # 訳語を手で決める見出し語 (神の名は伝統に従って「主」)
 GLOSSES = {'3068': '主 (ヤハウェ)', '3069': '主 (ヤハウェ)', '136': '主 (アドナイ)',
-           '1892': '空しさ'}   # hevel (現代語の「蒸気」でなく。הֲבֵל הֲבָלִים「空しさの空しさ」)
+           '1892': '空しさ',   # hevel (現代語の「蒸気」でなく。הֲבֵל הֲבָלִים「空しさの空しさ」)
+           '3205': '産む'}     # yālad (「運ぶ」でなく)
 
 
 def _lemma(aug):
@@ -78,6 +81,20 @@ def _lemma(aug):
     if aug in GLOSSES:
         entry.update(ja=GLOSSES[aug], gloss_lang='ja')
     return entry.get('word') or aug, entry.get('ja') or aug, entry.get('gloss_lang', 'en'), entry.get('xlit', '')
+
+
+def _name_ja(english, word):
+    from dragoman.core import en_ja
+    first = (english or '').split(',')[0].strip()
+    found = en_ja.lookup(first, 'noun') if first[:1].isupper() else []
+    found = [j for j in found if re.fullmatch('[ァ-ヿ・]+', j)]   # 名前の訳はカタカナのものだけ (説明の句でなく)
+    if found:
+        return found[0]
+    from .katakana import word_katakana
+    try:
+        return word_katakana(word) or first
+    except Exception:
+        return first
 
 
 def _personal(code):
@@ -144,6 +161,8 @@ def segment_item(code, lemma, surface, language='H'):
             item['_'] += _cngs(gender, 's')  # אֱלֹהִים「神」は形が複数でも単数の動詞を取る (尊厳の複数)
         if code[1:2] == 'p':
             item['proper'] = True
+            if lang != 'ja':   # 人名・地名の英語の訳 (Abel,Hebel): 日本語の名前 (Egypt → エジプト) か、ヘブライ語の読みのカタカナ (ヘベル)
+                item.update(ja=_name_ja(gloss, word), gloss_lang='ja', en_name=gloss)
             # 固有名詞の符号 (Np) には数が無い: 単数・複数のどちらにも (הַכַּשְׂדִּים「カルデア人たち」は複数の動詞の主語)
             item['_'] = _cngs('', 's') + _cngs('', 'p')
         return item

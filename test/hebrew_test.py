@@ -174,11 +174,18 @@ class AnalyzerTestCase(unittest.TestCase):
     def test_name_or_common_noun(self):
         # הֶבֶל: 親族の名詞と並ぶとアベル、同じ文章の後の文でもアベル。コヘレトの言葉では「空しさ」
         a = self.analyze('וַתֹּסֶף לָלֶדֶת אֶת־אָחִיו אֶת־הָבֶל׃ וַיְהִי־הֶבֶל רֹעֵה צֹאן׃')
-        for analysis in a:
-            self.assertIn('Abel', analysis.clauses[0].predicate.translate()[0])
+        trs = [analysis.clauses[0].predicate.translate()[0] for analysis in a]
+        self.assertIn('=ヘベルを', trs[0])        # 人名はカタカナ、人称接尾辞の -ו は並列の「と」でない
+        self.assertIn('産む', trs[0])             # yālad「産む」
+        self.assertEqual(trs[1], 'そして / ヘベルは / 群れの羊飼いであった')   # 連語形の分詞は「〜する人」
+        tr = self.analyze('וְקַיִן הָיָה עֹבֵד אֲדָמָה׃')[0].clauses[0].predicate.translate()[0]
+        self.assertIn('カインは', tr)
+        self.assertIn('耕し手であった', tr)       # 人名オベドでなく
+        tr = self.analyze('וַיֵּצְאוּ מִמִּצְרַיִם׃')[0].clauses[0].predicate.translate()[0]
+        self.assertIn('エジプトから', tr)         # 日本語の決まった名前
         tr = self.analyze('הֲבֵל הֲבָלִים הַכֹּל הָבֶל׃')[0].clauses[0].predicate.translate()[0]
         self.assertIn('空しさの空しさ', tr)
-        self.assertNotIn('Abel', tr)
+        self.assertNotIn('ヘベル', tr)
 
     def test_jussive_and_wayyiqtol(self):
         a = self.analyze('וַיֹּ֥אמֶר אֱלֹהִ֖ים יְהִ֣י א֑וֹר וַֽיְהִי־אֽוֹר׃')[0]

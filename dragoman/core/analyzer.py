@@ -367,7 +367,8 @@ def detect_and_or(words, trace):
             return True
 
         surface = word.surface
-        if surface in language.current().and_words and i+1 < len(words):
+        if surface in language.current().and_words and i+1 < len(words) and word.items[0].pos != 'pronoun':
+            # 代名詞の読みの語は除く (ヘブライ語の人称接尾辞 -ו「彼の」は接続詞 ו と同じ綴り: אָחִיו אֶת־הָבֶל)
             # print "// %d ET %s" % (i, words[i+1].surface_utf8())
             if i >= 1:
                 if not bind_two_if_same() and i >= 2:

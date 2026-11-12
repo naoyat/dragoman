@@ -126,8 +126,17 @@ def _words(token, ix, prefer='H'):
         name = next((a for a in found[1:] if a['morph'][1:] == 'Np' and len(a['segments']) == 1), None)
         if name is not None:
             out[0].name_item = morphology.segments(name)[0][1]
+    elif len(out) == 1 and out[0].items and out[0].items[0].attrib('proper'):
+        # 人名が一番多いが、連語形の分詞・名詞にも読める語 (עֹבֵד「オベド」/「仕える者」): その項目を持っておく
+        common = next((a for a in found[1:] if len(a['segments']) == 1 and a['morph'][1:2] in 'VN' and
+                       a['morph'][1:3] != 'Np' and a['morph'].endswith('c')), None)
+        if common is not None:
+            out[0].common_item = morphology.segments(common)[0][1]
     return out
 
+
+# 連語形の分詞 + 名詞の「〜する人」の訳: (分詞の見出し, 後ろの名詞の見出し) → 訳 (Strong の番号)
+AGENT_NOUNS = {('5647', '127'): '耕し手', ('7462', '6629'): '羊飼い'}   # עֹבֵד אֲדָמָה「土の耕し手」、רֹעֵה צֹאן「羊飼い」
 
 # 親族の名詞 (Strong の番号): 人名と同格に並ぶ (אֶת־אָחִיו אֶת־הָבֶל「彼の弟アベルを」)
 KIN_NOUNS = ('251', '1121', '1323', '802', '1', '517', '269')   # 兄弟・息子・娘・妻・父・母・姉妹
@@ -139,10 +148,30 @@ def _is_kin(word):
         (word.items[0].attrib('lemma') or '').rstrip('abcdefgh') in KIN_NOUNS
 
 
+def agent_nouns(words):
+    """連語形の分詞 + 名詞は「〜する人」の名詞 (עֹבֵד אֲדָמָה「土の耕し手」、רֹעֵה צֹאן「羊飼い」)"""
+    for i, word in enumerate(words):
+        item = word.items[0] if word.items else None
+        if item is None or item.pos != 'participle' or item.attrib('state') != 'construct':
+            continue
+        nxt = next((w for w in words[i + 1:i + 3] if w.items and w.items[0].pos != 'article'), None)
+        if nxt is None or nxt.items[0].pos != 'noun':
+            continue
+        key = ((item.attrib('lemma') or '').rstrip('abcdefgh'), (nxt.items[0].attrib('lemma') or '').rstrip('abcdefgh'))
+        ja = AGENT_NOUNS.get(key) or (item.attrib('ja') or '').split(',')[0] + '者'
+        word.items = [type(item)(dict(item.item, pos='noun', ja=ja, gloss_lang='ja'))] + word.items[1:]
+
+
 def choose_names(words):
     """人名とも読める普通名詞: 親族の名詞と同格に並ぶとき (אָחִיו אֶת־הָבֶל)、または同じ文章で前に人名に読んだ語は
     人名に (創世記4章のアベル。コヘレトの言葉の הֲבֵל הֲבָלִים「空しさの空しさ」は普通名詞のまま)"""
     for i, word in enumerate(words):
+        common = getattr(word, 'common_item', None)
+        if common is not None and script.consonants(word.surface) not in _names_seen:
+            nxt = next((w for w in words[i + 1:i + 3] if w.items and w.items[0].pos != 'article'), None)
+            if nxt is not None and nxt.items[0].pos == 'noun':
+                word.items = [type(word.items[0])(common)]   # 後ろに名詞: 連語形 (人名「オベド」でなく)
+            continue
         name = getattr(word, 'name_item', None)
         if name is None:
             continue
@@ -429,6 +458,7 @@ def lookup_all(surfaces):
     relative_asher(words)
     mark_vocatives(words)
     choose_names(words)
+    agent_nouns(words)
     choose_construct(words)
     attach_markers(words)
     mark_di(words)
