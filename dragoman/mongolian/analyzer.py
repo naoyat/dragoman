@@ -206,6 +206,8 @@ def _cngs(cases, number='sg'):
 def _japanese_verb(rec):
     from dragoman.core.japanese import attach_auxiliary
     ja, gloss_lang, row = morphology.gloss(rec['lemma'], 'verb')
+    if rec.get('sense'):
+        ja, gloss_lang = rec['sense'], 'ja'   # 主語で決まる意味 (бороо орох「雨が降る」)
     if ja is None:
         return rec['lemma'], 'en', None
     first = ja.split(',')[0]
@@ -501,13 +503,38 @@ def mark_topic(words):
         if _pos(w) == 'verb' or w.items is None:
             return
         if _pos(w) in ('noun', 'pronoun'):
-            if _item(w)._ and _item(w)._[0][0] == 'Nom':
-                w.topic = True
+            if _item(w)._ and _item(w)._[0][0] == 'Nom' and not any((getattr(w, 'record', None) or {}).get(k) for k in ('converb_subject', 'sense_subject')):
+                w.topic = True   # 副動詞の節の主語 (Намайг ирэхэд)・天気の主語 (бороо орох) は主題にしない
             return
+
+
+# 主語の名詞で決まる動詞の意味: 動詞 → [(名詞の見出し, 訳語)]
+SUBJECT_SENSES = {'орох': [({'бороо', 'цас', 'мөндөр'}, '降る')]}   # бороо орох「雨が降る」(「雨が入る」でなく)
+
+
+def subject_senses(recs):
+    for rec, nxt in zip(recs, recs[1:]):
+        if rec.get('kind') == 'noun' and (rec.get('case') or 'Nom') == 'Nom' and nxt.get('kind') == 'verb':
+            for nouns, ja in SUBJECT_SENSES.get(nxt.get('lemma'), ()):
+                if rec.get('lemma') in nouns:
+                    nxt['sense'] = ja
+                    rec['sense_subject'] = True   # 主題にしない (雨が降っている)
+
+
+def converb_subjects(recs):
+    """副動詞の節の対格の主語 (Намайг ирэхэд「私が来たとき」): 主節と主語が違うとき副動詞の主語は対格になる。
+    自動詞 (INTRANSITIVE) の副動詞の直前の対格の名詞・代名詞は主格 (主語) に"""
+    for rec, nxt in zip(recs, recs[1:]):
+        if rec.get('kind') in ('noun', 'pronoun') and rec.get('case') == 'Acc' and nxt.get('kind') == 'verb' and \
+                nxt.get('form') == 'converb' and nxt.get('lemma') in morphology.INTRANSITIVE:
+            rec['case'] = 'Nom'
+            rec['converb_subject'] = True
 
 
 def lookup_all(surfaces):
     recs = records(surfaces)
+    subject_senses(recs)
+    converb_subjects(recs)
     words = build_words(recs)
     global _display
     _display = list(words)

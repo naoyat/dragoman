@@ -51,6 +51,17 @@ class TraditionalTestCase(unittest.TestCase):
         self.assertEqual(a.traditional[1]['latin'], 'oyutad-tur')   # n の語幹の複数は n を d に
 
     @unittest.skipUnless(HAVE_DATA, 'モンゴル語の辞書が無い')
+    def test_translation(self):
+        import os
+        import sys
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        from adverbial_test import translate
+        self.assertEqual(translate('mongolian', 'Бороо орж байна.'), '雨が / 降っている')    # 主語で決まる意味
+        self.assertEqual(translate('mongolian', 'Би гэрт орсон.'), '私は / 家に / 入った')
+        # 副動詞の節の対格の主語 (自動詞)
+        self.assertEqual(translate('mongolian', 'Намайг ирэхэд тэр явсан.'), '{私が 来る}とき / 彼が / 行った')
+
+    @unittest.skipUnless(HAVE_DATA, 'モンゴル語の辞書が無い')
     def test_dative_after_cluster(self):
         # 子音の連続の後の与位格 -од・-ад (хотод は хот。хото + д の хотон でなく)、複数 + 与位格
         first = lambda w: morphology.analyses(w)[0]
@@ -82,7 +93,7 @@ class AnalyzerTestCase(unittest.TestCase):
     def test_literal(self):
         self.assertEqual(self.lit('Хүү өчигдөр охинд ном өгсөн.'), '少年は 昨日 少女に 本を 与えた。')
         self.assertEqual(self.lit('Би Монголд байхдаа энэ номыг авсан.'), '私は モンゴルに いる時に この 本を 取った。')
-        self.assertEqual(self.lit('Би чамайг иртэл хүлээнэ.'), '私は 君を 来るまで 待つ。')
+        self.assertEqual(self.lit('Би чамайг иртэл хүлээнэ.'), '私は 君が 来るまで 待つ。')   # 副動詞の節の対格の主語
         self.assertEqual(self.lit('Тэр сандал дээр суугаад ном уншиж байна.'), 'その 椅子の上で 座って 本を 読んでいる。')
         self.assertEqual(self.lit('Бид өчигдөр кино үзсэнгүй.'), '私たちは 昨日 映画を 見なかった。')
         self.assertEqual(self.lit('Батын бичсэн захиа ширээн дээр байна.'), 'バトが 書いた 手紙は 机の上に ある。')
