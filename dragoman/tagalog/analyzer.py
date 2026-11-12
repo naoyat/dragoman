@@ -33,6 +33,8 @@ FOCUS_PARTICLES = {'Nom': 'は', 'Acc': 'は', 'Dat': 'には'}
 
 def particle(case, obj, pred):
     """焦点の名詞 (ang) は主題「は」"""
+    if isinstance(obj, Word) and getattr(obj, 'also', False):
+        return 'にも' if case == 'Dat' else 'も'   # pati「〜も」
     if isinstance(obj, Word) and getattr(obj, 'focus', False):
         return FOCUS_PARTICLES.get(case)
     return None
@@ -57,7 +59,7 @@ SUBORDINATORS = {'nang': ('とき', None), 'noong': ('とき', None), 'kapag': (
 TAGALOG = language.Language(
     name='tl',
     subordinators=SUBORDINATORS,
-    and_words=('at',),
+    and_words=('at', 'pati'),
     or_words=('o',),
     copulas=frozenset({'ay'}),
     negations=frozenset({'hindi', 'huwag', 'di', "'di"}),
@@ -171,6 +173,8 @@ def _words(surfaces):
         items, linker = morphology.analyze(key)
         first = not [w for w in out if w.items is not None]
         items = _choose(items, prev, first)
+        if key == 'pati' and prev in (None, 'ay', 'conj'):
+            items = [dict(items[0], pos='adv', ja='〜も', base='pati (〜も)', also=True)]   # 文頭・節の頭の pati
         if key == 'linggo' and token[:1].isupper():
             items = [dict(items[0], ja='日曜日', gloss_lang='ja')] + items[1:]   # Linggo「日曜日」、linggo「週」
         word = Word(token, [dict(items[0], surface=token)])
@@ -570,13 +574,49 @@ def drop_enclitics(words):
     return out
 
 
+def collapse_pati(surfaces):
+    """pati na rin・pati rin・pati na (「〜も、それに」) は1つの pati に。名詞類の間の pati は「と」、
+    文頭・節の頭の pati (Pati si Juan ay dumating「フアンも着いた」) は「〜も」の副詞"""
+    out = []
+    i = 0
+    while i < len(surfaces):
+        token = surfaces[i]
+        if script.key(token) == 'pati':
+            if out and out[-1] == ',':
+                out.pop()   # mansanas, pati saging: 読点は並列の「と」に含める
+            j = i + 1
+            while j < len(surfaces) and script.key(surfaces[j]) in ('na', 'rin', 'din') and j - i <= 2:
+                j += 1
+            out.append(token)
+            i = j
+            continue
+        out.append(token)
+        i += 1
+    return out
+
+
+def attach_also(words):
+    """文頭の pati「〜も」は後ろの名詞類の助詞に (Pati si Juan ay dumating「Juanも着いた」)"""
+    out = []
+    for i, word in enumerate(words):
+        item = _item(word)
+        if item is not None and item.attrib('also'):
+            nxt = next((w for w in words[i + 1:] if _pos(w) in ('noun', 'pronoun')), None)
+            if nxt is not None:
+                nxt.also = True
+                continue
+        out.append(word)
+    return out
+
+
 def lookup_all(surfaces):
+    surfaces = collapse_pati(surfaces)
     words = choose_bukas(_words(surfaces))
     global _display
     _display = [w for w in words]
     words = merge_time_phrases(words)
     words = mark_linkers(words)
-    words = mark_phrases(words)
+    words = attach_also(mark_phrases(words))
     mark_possessors(words)
     words = mark_relatives(words)
     words = drop_enclitics(words)

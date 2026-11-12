@@ -50,7 +50,7 @@ PRONOUNS = {
 # sa の形の代名詞は所有にも使う (sa akin「私の」、akin + -ng)
 NEGATIONS = {'hindi': '〜ない', "'di": '〜ない', 'di': '〜ない', 'huwag': '〜するな'}
 EXISTENTIALS = {'may': 'ある', 'mayroon': 'ある', 'meron': 'ある', 'wala': 'ない'}
-CONJUNCTIONS = {'at': 'そして,〜と', 'o': 'または', 'pero': 'しかし', 'ngunit': 'しかし', 'subalit': 'しかし',
+CONJUNCTIONS = {'at': 'そして,〜と', 'pati': 'そして,〜と', 'o': 'または', 'pero': 'しかし', 'ngunit': 'しかし', 'subalit': 'しかし',
                 'kung': 'もし', 'kapag': '〜するとき', 'dahil': '〜なので', 'sapagkat': '〜なので', 'kaya': 'だから',
                 'habang': '〜する間', 'nang': '〜したとき', 'upang': '〜するために', 'para': '〜のために',
                 'kaya naman': 'だから', 'bago': '〜する前に', 'pagkatapos': '〜した後で'}

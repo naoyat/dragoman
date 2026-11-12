@@ -76,6 +76,13 @@ class TagalogTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Mayroon akong kapatid.'), '私には / 兄弟が / いる')
         self.assertEqual(self.ja('Walang tao dito.'), '人が / ここに / いない')
 
+    def test_pati(self):
+        # pati (na rin)「〜も、それに」: 名詞類の間は並列「と」、文頭は後ろの名詞の「〜も」
+        self.assertEqual(self.ja('Kumain ako ng mansanas, pati na rin saging.'), '私は / 林檎とバナナを / 食べた')
+        self.assertEqual(self.ja('Dumating si Maria pati si Juan.'), 'MariaとJuanが / 着いた')
+        self.assertEqual(self.ja('Pati si Juan ay dumating.'), 'Juanも / 着いた')
+        self.assertEqual(self.ja('Pati ako ay kumain.'), '私も / 食べた')
+
     def test_possessor_copula_relative(self):
         self.assertIn('子供の', self.ja('Binili ng lalaki ang libro ng bata.'))
         self.assertEqual(self.ja('Maganda ang bahay.'), '家は / 美しい')
