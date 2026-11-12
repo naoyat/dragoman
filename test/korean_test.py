@@ -53,6 +53,14 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('밥을 먹은 후에 학교에 갔어요.'), '{ご飯を 食べた}後で / 学校に / 行った')
         self.assertEqual(self.ja('학교에 가기 전에 밥을 먹었어요.'), '{学校に 行く}前に / ご飯を / 食べた')   # -기 전에
 
+    def test_quantities(self):
+        # 数詞 + 助数詞 (COUNTERS): 前の助詞の無い名詞と後ろの 전・후 も1語に
+        self.assertEqual(self.ja('사과 두 개를 샀어요.'), 'りんご二つを / 買った')   # 개「個」(「犬」でなく)
+        self.assertEqual(self.ja('학생 5명이 왔다.'), '学生5人が / 来た')
+        self.assertEqual(self.ja('3년 전에 왔어요.'), '3年前に / 来た')
+        self.assertEqual(self.ja('두 시간 후에 왔다.'), '二時間後に / 来た')
+        self.assertEqual(self.ja('한 사람이 왔다.'), 'ある人が / 来た')
+
     def test_literal(self):
         from dragoman.korean.literal import literal
         lit = lambda t: literal(next(analyzer.sentences(t)))

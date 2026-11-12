@@ -779,8 +779,58 @@ def _assign_clause(clause):
 
 # ----------------------------------------------------------------------
 
+def _quantity(rec, prev):
+    """数量の語の訳 (3년「3年」、두 개「二つ」、5명「5人」)。数量でなければ None"""
+    parts = rec.get('parts') or []
+    numeral = prev is not None and prev.get('kind') == 'det' and prev.get('lemma') in morphology.NATIVE_NUMERALS and \
+        (rec.get('tag') == 'NNB' or prev['lemma'] != '한')   # 한 사람「ある人」は数えない (依存名詞の 한 개 は「一つ」)
+    if rec.get('kind') != 'noun' or not numeral and not (len(parts) == 2 and parts[0][1] == 'SN'):
+        return None
+    if len(parts) == 2 and parts[0][1] == 'SN' and parts[1][0] in morphology.COUNTERS:
+        return parts[0][0] + morphology.COUNTERS[parts[1][0]]
+    if numeral and rec['lemma'] in morphology.COUNTERS:
+        number = morphology.NATIVE_NUMERALS[prev['lemma']]
+        return morphology.TSU.get(number, number + '個') if rec['lemma'] == '개' else number + morphology.COUNTERS[rec['lemma']]
+    return None
+
+
+def numeral_before(prev):
+    return prev is not None and prev.get('kind') == 'det' and prev.get('lemma') in morphology.NATIVE_NUMERALS
+
+
+def merge_quantities(recs):
+    """数量の語 (数詞 + 助数詞) を1語に: 前の助詞の無い名詞に付け (사과 두 개를「りんご二つを」、학생 5명이「学生5人が」)、
+    後ろの 전・후 (3년 전에「3年前に」) も付ける"""
+    out = []
+    for rec in recs:
+        prev = out[-1] if out else None
+        quantity = _quantity(rec, prev)
+        if quantity is None:
+            if out and out[-1].get('quantity') and rec.get('kind') == 'noun' and rec.get('lemma') in ('전', '후', '뒤') \
+                    and not out[-1]['particles']:
+                q = out[-1]   # 3년 전에「3年前に」(「3年の前に」でなく)
+                q.update(ja=q['ja'] + {'전': '前', '후': '後', '뒤': '後'}[rec['lemma']], particles=rec['particles'],
+                         surface=q['surface'] + ' ' + rec['surface'])
+                continue
+            out.append(rec)
+            continue
+        if numeral_before(prev):
+            out.pop()   # 数詞の 두 は数量の語に含める
+            prev = out[-1] if out else None
+        if prev is not None and prev.get('kind') == 'noun' and not prev['particles'] and not prev.get('quantity'):
+            ja, gloss_lang, _ = morphology.gloss(prev['lemma'], 'noun')
+            if prev.get('ja'):
+                ja, gloss_lang = prev['ja'], 'ja'
+            if ja and gloss_lang == 'ja':
+                prev.update(ja=ja.split(',')[0] + quantity, particles=rec['particles'], quantity=True,
+                            surface=prev['surface'] + ' ' + rec['surface'])
+                continue
+        out.append(dict(rec, ja=quantity, quantity=True))
+    return out
+
+
 def lookup_all(surfaces):
-    recs = merge_auxiliaries(apply_collocations(records(surfaces)))
+    recs = merge_quantities(merge_auxiliaries(apply_collocations(records(surfaces))))
     words = build_words(recs)
     global _display
     _display = list(words)
