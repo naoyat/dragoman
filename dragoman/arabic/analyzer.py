@@ -494,11 +494,24 @@ def _supply_copula(words):
     return words
 
 
+# 場所の前置詞 فِي を「〜に」と訳す動詞 (住む・いる・とどまる。「〜の中で,〜で」でなく)
+RESIDE_VERBS = {'سَكَن', 'عاش', 'بَقِي', 'أَقام', 'وَقَف', 'جَلَس', 'نَزَل'}
+
+
 def mark_prepositions(words):
-    """前置詞の後ろの名詞類 (指示詞 + 名詞は両方) を属格に (فِي مِصْرَ「エジプトで」、فِي هٰذا العامِ「この年に」)"""
+    """前置詞の後ろの名詞類 (指示詞 + 名詞は両方) を属格に (فِي مِصْرَ「エジプトで」、فِي هٰذا العامِ「この年に」)。
+    住む・いるなどの動詞の節の فِي は「〜に」(يسكن في القاهرة「カイロに住む」)"""
+    reside = False
     for i, word in enumerate(words):
+        if word.items is None or _pos(word) == 'conj':
+            reside = False
+        if _finite(_item(word)):
+            reside = _item(word).attrib('pres1sg') in RESIDE_VERBS or _item(word).attrib('lex') in RESIDE_VERBS
         if _pos(word) != 'preposition':
             continue
+        if reside and script.bare(word.surface) == 'في':
+            item = _item(word)
+            word.items = [type(item)(dict(item.item, ja='〜に'))] + word.items[1:]
         for nxt in words[i + 1:i + 3]:
             if not _nominal(nxt) or _item(nxt).attrib('suffix') and _pos(nxt) != 'pronoun':
                 break

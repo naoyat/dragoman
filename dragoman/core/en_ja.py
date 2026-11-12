@@ -31,6 +31,9 @@ OVERRIDES = {('minister', 'noun'): '大臣', ('government', 'noun'): '政府', (
              ('look', 'verb'): '見る', ('look at', 'verb'): '見る',
              ('medicine', 'noun'): '薬,医学', ('lie', 'noun'): '嘘'}   # medicine「医学」・lie「状態」を先にしない
 
+# 大文字で始まる英語 (国名) の訳: 小文字の普通名詞 (japan「漆」、turkey「七面鳥」) と表が同じなので
+PROPER_OVERRIDES = {'japan': '日本', 'turkey': 'トルコ', 'mongolia': 'モンゴル', 'korea': '韓国,朝鮮'}
+
 _db = None
 
 
@@ -74,12 +77,17 @@ def lookup(english, pos):
     phrase = re.sub(r'\s*\([^)]*\)', '', key(english)).strip()  # take (with) → take
     phrase = re.sub(r'^(to|a|an|the) ', '', phrase) if pos != 'noun' or phrase.startswith(('a ', 'an ', 'the ')) \
         else phrase
+    if english.strip()[:1].isupper() and phrase in PROPER_OVERRIDES and pos in ('noun', 'name'):
+        return PROPER_OVERRIDES[phrase].split(',')
     if (phrase, pos) in OVERRIDES:
         return OVERRIDES[(phrase, pos)].split(',')
     for p in POS_GROUPS.get(pos, (pos,)):
         row = db.execute('SELECT ja FROM en_ja WHERE en = ? AND pos = ?', (phrase, p)).fetchone()
         if row:
-            return ranked(_fix_suru(row[0]).split(','))
+            found = ranked(_fix_suru(row[0]).split(','))
+            if english.strip()[:1].isupper() and any(re.fullmatch('[ァ-ヿ]+', j) for j in found):
+                found = sorted(found, key=lambda j: 'の' in j)   # 固有名詞は説明の句 (Cairo: エジプトの首都) より名前 (カイロ) を先に
+            return found
     return []
 
 
