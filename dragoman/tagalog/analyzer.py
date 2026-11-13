@@ -173,7 +173,7 @@ def _words(surfaces):
         items, linker = morphology.analyze(key)
         first = not [w for w in out if w.items is not None]
         items = _choose(items, prev, first)
-        if key == 'pati' and prev in (None, 'ay', 'conj'):
+        if key == 'pati' and (first or prev in ('ay', 'conj')):
             items = [dict(items[0], pos='adv', ja='〜も', base='pati (〜も)', also=True)]   # 文頭・節の頭の pati
         if key == 'linggo' and token[:1].isupper():
             items = [dict(items[0], ja='日曜日', gloss_lang='ja')] + items[1:]   # Linggo「日曜日」、linggo「週」
@@ -574,25 +574,25 @@ def drop_enclitics(words):
     return out
 
 
-def collapse_pati(surfaces):
-    """pati na rin・pati rin・pati na (「〜も、それに」) は1つの pati に。名詞類の間の pati は「と」、
-    文頭・節の頭の pati (Pati si Juan ay dumating「フアンも着いた」) は「〜も」の副詞"""
-    out = []
-    i = 0
-    while i < len(surfaces):
-        token = surfaces[i]
-        if script.key(token) == 'pati':
-            if out and out[-1] == ',':
-                out.pop()   # mansanas, pati saging: 読点は並列の「と」に含める
-            j = i + 1
-            while j < len(surfaces) and script.key(surfaces[j]) in ('na', 'rin', 'din') and j - i <= 2:
-                j += 1
-            out.append(token)
-            i = j
+def collapse_pati(words):
+    """pati na rin・pati rin・pati na (「〜も、それに」) は1つの pati に: 後ろの na・rin・din と前の読点は
+    語ごとの表に残し、訳の語の列からは除く。名詞類の間の pati は「と」、文頭・節の頭の pati
+    (Pati si Juan ay dumating「Juanも着いた」) は後ろの名詞類の「〜も」 (attach_also)"""
+    drop = set()
+    keys = [script.key(w.surface) for w in words]
+    for i, key in enumerate(keys):
+        if key != 'pati':
             continue
-        out.append(token)
-        i += 1
-    return out
+        if i and words[i - 1].surface == ',':
+            drop.add(i - 1)   # mansanas, pati saging: 読点は並列の「と」に含める
+        end = i + 1
+        while end < len(words) and keys[end] in ('na', 'rin', 'din') and end - i <= 2:
+            end += 1
+        for j in range(i + 1, end):
+            item = _rebuild(words[j], ja='', base='%s (%s の一部)' % (keys[j], ' '.join(keys[i:end])))
+            words[j].original_item = dict(item.item)   # 語ごとの表も「pati na rin の一部」
+            drop.add(j)
+    return [w for i, w in enumerate(words) if i not in drop]
 
 
 def attach_also(words):
@@ -610,10 +610,10 @@ def attach_also(words):
 
 
 def lookup_all(surfaces):
-    surfaces = collapse_pati(surfaces)
     words = choose_bukas(_words(surfaces))
     global _display
     _display = [w for w in words]
+    words = collapse_pati(words)
     words = merge_time_phrases(words)
     words = mark_linkers(words)
     words = attach_also(mark_phrases(words))
