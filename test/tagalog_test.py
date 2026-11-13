@@ -64,8 +64,9 @@ class TagalogTestCase(unittest.TestCase):
     def test_days_numbers_existence(self):
         # Linggo「日曜日」(小文字の linggo は「週」)、曜日・月
         self.assertEqual(self.ja('Bukas ay Linggo.'), '明日 / 日曜日である')
-        self.assertEqual(self.ja('Pupunta ako sa simbahan sa Linggo.'), '私は / 教会に=日曜日に / 行くだろう')
+        self.assertEqual(self.ja('Pupunta ako sa simbahan sa Linggo.'), '私は / 教会に / 日曜日に / 行くだろう')   # 時の sa の句は副詞
         # 数詞 + 繋ぎ + 名詞: 期間は「一週間」、人・動物は「二人の」「三匹の」、ほかは「二つの」
+        self.assertEqual(self.ja('Nag-aaral ako sa gabi.'), '私は / 夜に / 勉強している')
         self.assertEqual(self.ja('Isang linggo ang bakasyon.'), '休暇は / 一週間である')
         self.assertEqual(self.ja('Bumili ako ng dalawang libro.'), '私は / 二つの本を / 買った')
         self.assertEqual(self.ja('Bumili ako ng tatlong isda.'), '私は / 三匹の魚を / 買った')

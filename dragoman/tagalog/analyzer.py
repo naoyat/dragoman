@@ -342,6 +342,15 @@ def mark_phrases(words):
                     if it._:
                         it._ = [(c, 'pl', g) for c, n, g in it._]
         head = heads[-1]
+        time = _item(phrase[0]) if len(phrase) == 1 and _pos(phrase[0]) == 'noun' else None
+        if kind == 'sa' and time is not None and ((time.ja or '').endswith('曜日') or re.match(r'^[0-9]+月$', time.ja or '') or
+                                                   script.key(phrase[0].surface) in TIME_OF_DAY):
+            # 時の sa の句 (sa Linggo「日曜日に」、sa Mayo「5月に」、sa gabi「夜に」) は副詞
+            # (場所の sa の句と並べて「教会に=日曜日に」としない)
+            _rebuild(phrase[0], pos='adv', ja=time.ja.split(',')[0] + 'に', gloss_lang='ja', _=None)
+            out.append(phrase[0])
+            i = j
+            continue
         if kind == 'sa':
             prep = Word(word.surface, [dict(item.item, pos='preposition', ja='に', dominates='Gen')])
             prep.token_ix = word.token_ix
