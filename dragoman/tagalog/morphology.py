@@ -52,7 +52,7 @@ NEGATIONS = {'hindi': '〜ない', "'di": '〜ない', 'di': '〜ない', 'huwag
 EXISTENTIALS = {'may': 'ある', 'mayroon': 'ある', 'meron': 'ある', 'wala': 'ない'}
 CONJUNCTIONS = {'at': 'そして,〜と', 'pati': 'それに,〜と', 'o': 'または', 'pero': 'しかし', 'ngunit': 'しかし', 'subalit': 'しかし',
                 'kung': 'もし', 'kapag': '〜するとき', 'dahil': '〜なので', 'sapagkat': '〜なので', 'kaya': 'だから',
-                'habang': '〜する間', 'nang': '〜したとき', 'upang': '〜するために', 'para': '〜のために',
+                'habang': '〜する間', 'nang': '〜したとき', 'noong': '〜したとき', 'nung': '〜したとき', 'upang': '〜するために', 'para': '〜のために',
                 'kaya naman': 'だから', 'bago': '〜する前に', 'pagkatapos': '〜した後で'}
 # 第2位の接語 (後ろに付く小辞)
 ENCLITICS = {'na': ('もう', 'adv'), 'pa': ('まだ', 'adv'), 'ba': ('か', 'question'), 'daw': ('〜そうだ', 'adv'),
@@ -104,9 +104,10 @@ VERB_GLOSSES = {'suot': '着る', 'bili': '買う', 'kain': '食べる', 'inom':
                 'damdam': '感じる', 'patak': '滴る', 'pangarap': '夢見る', 'ngarap': '夢見る', 'kilala': '知る',
                 'sama': '一緒に行く', 'tagpo': '出会う', 'kita': '見る', 'hanga': '感心する', 'asa': '期待する',
                 'tingin': '見る', 'titig': '見つめる', 'yakap': '抱きしめる', 'halik': 'キスする', 'awit': '歌う',
+                'lipat': '移る', 'panganak': '生まれる', 'silang': '生まれる',   # ipinanganak・isinilang「生まれた」(i- の焦点の ang が生まれた人)
                 'sigaw': '叫ぶ', 'takot': '恐れる', 'saya': '楽しむ', 'lungkot': '悲しむ', 'ibig': '愛する'}
 # 対象焦点・場所焦点で訳語の変わる語根 (gumising「起きる」/ ginising「起こす」)
-TRANSITIVE_GLOSSES = {'gising': '起こす', 'tulog': '寝かせる', 'balik': '返す', 'uwi': '持ち帰る', 'labas': '出す',
+TRANSITIVE_GLOSSES = {'lipat': '移す', 'gising': '起こす', 'tulog': '寝かせる', 'balik': '返す', 'uwi': '持ち帰る', 'labas': '出す',
                       'pasok': '入れる', 'alis': '取り除く', 'upo': '座らせる', 'tayo': '立てる'}
 LINKER = 'linker'
 

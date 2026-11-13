@@ -230,9 +230,31 @@ def merge_time_phrases(words):
             out.append(word)
             i += 3
             continue
+        nxt = words[i + 1] if i + 1 < len(words) else None
+        if key in ('noong', 'nung') and nxt is not None and nxt.items is not None and _time_gloss(nxt):
+            # noong + 年・曜日・月・時 (noong 1990「1990年に」、noong Lunes「月曜日に」): 過去の時の副詞
+            _rebuild(nxt, pos='adv', ja=_time_gloss(nxt) + 'に', gloss_lang='ja', base='noong ' + script.key(nxt.surface),
+                     _=morphology._nominal_cngs())
+            item = _rebuild(word, ja='', base='noong (過去の時)')
+            word.original_item = dict(item.item, surface=word.surface)   # 語ごとの表は「過去の時」(noo「額」でなく)
+            out.append(nxt)
+            i += 2
+            continue
         out.append(word)
         i += 1
     return out
+
+
+def _time_gloss(word):
+    """時を表す語の訳 (年 1990 → 1990年、曜日・月・朝・夜)。時の語でなければ None"""
+    surface = word.surface
+    if re.match(r'^[0-9]{3,4}$', surface):
+        return surface + '年'
+    item = _item(word)
+    ja = (item.ja or '').split(',')[0] if item is not None else ''
+    if _pos(word) == 'noun' and (ja.endswith('曜日') or re.match(r'^[0-9]+月$', ja) or script.key(surface) in TIME_OF_DAY):
+        return ja
+    return None
 
 
 # 数詞 + 繋ぎ + 名詞: 期間の単位は「二週間」、ほかは「二つの」
@@ -342,12 +364,11 @@ def mark_phrases(words):
                     if it._:
                         it._ = [(c, 'pl', g) for c, n, g in it._]
         head = heads[-1]
-        time = _item(phrase[0]) if len(phrase) == 1 and _pos(phrase[0]) == 'noun' else None
-        if kind == 'sa' and time is not None and ((time.ja or '').endswith('曜日') or re.match(r'^[0-9]+月$', time.ja or '') or
-                                                   script.key(phrase[0].surface) in TIME_OF_DAY):
-            # 時の sa の句 (sa Linggo「日曜日に」、sa Mayo「5月に」、sa gabi「夜に」) は副詞
+        when = _time_gloss(phrase[0]) if len(phrase) == 1 else None
+        if kind == 'sa' and when:
+            # 時の sa の句 (sa Linggo「日曜日に」、sa Mayo「5月に」、sa gabi「夜に」、sa 2020「2020年に」) は副詞
             # (場所の sa の句と並べて「教会に=日曜日に」としない)
-            _rebuild(phrase[0], pos='adv', ja=time.ja.split(',')[0] + 'に', gloss_lang='ja', _=None)
+            _rebuild(phrase[0], pos='adv', ja=when + 'に', gloss_lang='ja', _=morphology._nominal_cngs())
             out.append(phrase[0])
             i = j
             continue
@@ -371,6 +392,10 @@ def mark_phrases(words):
 # 場所焦点 -an でも ang の名詞が動作の対象 (を) になる語根 (binuksan niya ang pinto「彼がドアを開けた」。
 # tinuruan・sinulatan の「〜に」はそのまま)
 PATIENT_LOCATIVE = {'bukas', 'buksan', 'sara', 'linis', 'hugas', 'ting', 'tingin', 'tulong', 'tulungan', 'bayar', 'bayad'}
+# 場所の sa の句を「〜で」と訳す動作の語根 (移動・存在・授受・置くは「〜に」のまま)
+ACTIVITY_VERBS = {'kain', 'inom', 'aral', 'laro', 'luto', 'basa', 'trabaho', 'kanta', 'awit', 'sayaw', 'linis', 'bili',
+                  'hugas', 'tulog', 'lakad', 'takbo', 'langoy', 'hintay', 'kita', 'tagpo', 'nood', 'turo', 'gawa',
+                  'panganak', 'silang', 'ligo', 'usap', 'laba'}
 NG_SLOTS = {'actor': 1, 'object': 1, 'conveyance': 1, 'locative': 2, 'existential': 1}
 
 
@@ -501,6 +526,16 @@ def assign_cases(words):
         for w in angs:
             _restrict(w, (ang_case,))
             w.focus = True
+        if verb.attrib('root') in ACTIVITY_VERBS:
+            # 動作の場所の sa は「で」(Kumain kami sa bahay「家で食べた」)。人の sa (受け手) は「に」のまま
+            for k, w in enumerate(clause[:-1]):
+                if _pos(w) != 'preposition' or getattr(w, 'marker', None) != 'sa' or _pos(clause[k + 1]) != 'noun':
+                    continue
+                person = w.surface.lower() in ('kay', 'kina') or animacy.is_animate(_item(clause[k + 1]))
+                if not person:
+                    _rebuild(w, ja='で')
+                elif verb.attrib('root') == 'bili':
+                    _rebuild(w, ja='から')   # bumili kay Juan「Juanから買った」
         for w in clause:
             item = _item(w)
             if _pos(w) == 'pronoun' and item.attrib('marker') == 'sa' and not item.attrib('possessor'):

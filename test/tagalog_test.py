@@ -77,6 +77,19 @@ class TagalogTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Mayroon akong kapatid.'), '私には / 兄弟が / いる')
         self.assertEqual(self.ja('Walang tao dito.'), '人が / ここに / いない')
 
+    def test_place_and_time(self):
+        # 動作の場所の sa は「で」、移動・存在は「に」、買う相手は「から」
+        self.assertEqual(self.ja('Kumain kami sa bahay ni Juan sa Sabado.'), '私たちは / Juanの家で / 土曜日に / 食べた')
+        self.assertEqual(self.ja('Bumili ako ng isda sa palengke.'), '私は / 市場で / 魚を / 買った')
+        self.assertEqual(self.ja('Bumili ako ng libro kay Juan.'), '私は / Juanから / 本を / 買った')
+        self.assertEqual(self.ja('Pumunta ako sa Maynila.'), '私は / Maynilaに / 行った')
+        self.assertEqual(self.ja('Nakatira ako sa Maynila.'), '私は / Maynilaに / 住んでいる')
+        # ipinanganak「生まれた」、noong・sa + 年・月
+        self.assertEqual(self.ja('Ipinanganak ako sa Mayo.'), '私は / 5月に / 生まれた')
+        self.assertEqual(self.ja('Ipinanganak siya noong 1990.'), '彼は / 1990年に / 生まれた')
+        self.assertEqual(self.ja('Dumating siya noong Lunes.'), '彼は / 月曜日に / 着いた')
+        self.assertEqual(self.ja('Lumipat kami sa Cebu sa 2020.'), '私たちは / Cebuに / 2020年に / 移った')
+
     def test_pati(self):
         # pati (na rin)「〜も、それに」: 名詞類の間は並列「と」、文頭は後ろの名詞の「〜も」
         self.assertEqual(self.ja('Kumain ako ng mansanas, pati na rin saging.'), '私は / 林檎とバナナを / 食べた')
