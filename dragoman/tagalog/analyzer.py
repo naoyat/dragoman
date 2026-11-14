@@ -28,6 +28,7 @@ from . import dictionary, morphology, script
 PUNCTUATION = {'.': 'period', '!': 'period', '?': 'question', ',': 'comma', ';': 'comma', ':': 'comma',
                '"': None, '“': None, '”': None, '(': 'comma', ')': 'comma', '–': 'comma', '—': 'comma'}
 TOKEN = re.compile(r"[A-Za-zÀ-ÿñÑ']+(?:-[A-Za-zÀ-ÿñÑ']+)*|[0-9]+(?:[.,][0-9]+)*|[.!?,;:\"“”()–—]")
+CLAUSE_PARTICLES = {'Nom': 'が', 'Acc': 'を', 'Dat': 'に'}
 FOCUS_PARTICLES = {'Nom': 'は', 'Acc': 'は', 'Dat': 'には'}
 
 
@@ -36,6 +37,8 @@ def particle(case, obj, pred):
     if isinstance(obj, Word) and getattr(obj, 'also', False):
         return 'にも' if case == 'Dat' else 'も'   # pati「〜も」
     if isinstance(obj, Word) and getattr(obj, 'focus', False):
+        if pred is not None and pred.first_item.attrib('in_clause'):
+            return CLAUSE_PARTICLES.get(case)   # 副詞節の中の焦点は主題にしない ({私が 子供だった}とき)
         return FOCUS_PARTICLES.get(case)
     return None
 
@@ -52,7 +55,8 @@ def _root_items(lemma):
 
 
 # 副詞節の従属接続詞 → (節の後ろに付ける形, 節の動詞の時制) (core/Adverbial.py)
-SUBORDINATORS = {'nang': ('とき', None), 'noong': ('とき', None), 'kapag': ('とき', None), 'pag': ('とき', None),
+# (nang は主節に合わせる: Nang makita ko siya, umiyak ako「{私が 彼を 見た}とき」。kapag・pag は条件「〜たら」)
+SUBORDINATORS = {'nang': ('とき', 'relative'), 'noong': ('とき', None), 'kapag': ('ら', 'perfect'), 'pag': ('ら', 'perfect'),
                  'dahil': ('ので', None), 'sapagkat': ('ので', None), 'kasi': ('ので', None), 'bagaman': ('けれども', None),
                  'kahit': ('けれども', None), 'bago': ('前に', 'present'), 'habang': ('間に', None)}
 
@@ -669,7 +673,25 @@ def lookup_all(surfaces):
     for i, word in enumerate(words):
         word.index = i
     assign_cases(words)
+    past_context(words)
     return words
+
+
+def past_context(words):
+    """noong「〜したとき」の節のある文は過去のこと: 進行・状態は「〜していた」、不定・繋辞は「〜した・だった」
+    (Noong bata pa ako, nakatira ako sa Maynila「{私が まだ 子供だった}とき 私は マニラに 住んでいた」)。
+    タガログ語の動詞は相だけで時制を持たないので、過去の時の節に合わせる"""
+    if not any(_pos(w) == 'conj' and script.key(w.surface) in ('noong', 'nung') for w in words):
+        return
+    for word in words:
+        item = _item(word)
+        if item is None or item.pos != 'verb':
+            continue
+        tense = item.attrib('tense')
+        if tense == 'progressive':
+            _rebuild(word, tense='imperfect')
+        elif tense in (None, 'present'):
+            _rebuild(word, tense='perfect')
 
 
 def analyze_sentence(surfaces):

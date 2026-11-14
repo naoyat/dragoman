@@ -39,6 +39,7 @@ class AdverbialClause(LatinObject):
             verb.item['tense'] = tense
         if item.attrib('clause_negate') and not self.predicate._negative():
             verb.item['negative'] = True   # sans que「〜しないまま」(否定の無い節を否定に。ne の付いた節はそのまま)
+        verb.item['in_clause'] = True   # 節の中の印 (タガログ語の焦点の「は」を節の中では「が」に)
         if self._shares_subject():
             verb.item['shared_subject'] = True   # 主語の無い節の人称・数が主節と同じなら、主語は補わない
         try:

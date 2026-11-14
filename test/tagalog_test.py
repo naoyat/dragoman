@@ -90,6 +90,14 @@ class TagalogTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Dumating siya noong Lunes.'), '彼は / 月曜日に / 着いた')
         self.assertEqual(self.ja('Lumipat kami sa Cebu sa 2020.'), '私たちは / Cebuに / 2020年に / 移った')
 
+    def test_clause_tense(self):
+        # noong の文は過去 (進行・状態は「〜していた」)、節の中の焦点は「が」、nang は主節の時制、kapag は「〜たら」
+        self.assertEqual(self.ja('Noong bata pa ako, nakatira ako sa Maynila.'),
+                         '私は / {私が まだ 子供であった}とき / Maynilaに / 住んでいた')
+        self.assertEqual(self.ja('Noong dumating siya, kumakain kami.'), '私たちは / {彼が 着いた}とき / 食べていた')
+        self.assertEqual(self.ja('Nang makita ko siya, umiyak ako.'), '私は / {私が 彼を 見た}とき / 泣いた')
+        self.assertEqual(self.ja('Kapag dumating siya, kakain kami.'), '私たちは / {彼が 着いた}ら / 食べるだろう')
+
     def test_pati(self):
         # pati (na rin)「〜も、それに」: 名詞類の間は並列「と」、文頭は後ろの名詞の「〜も」
         self.assertEqual(self.ja('Kumain ako ng mansanas, pati na rin saging.'), '私は / 林檎とバナナを / 食べた')
