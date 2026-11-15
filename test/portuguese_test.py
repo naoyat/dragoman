@@ -37,7 +37,7 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertIn('食べるだろう', tr('Vou comer no restaurante.'))
 
     def test_clauses(self):
-        self.assertEqual(tr('Eu não sei onde ele mora.'), '私が / {{彼,それ}が どこで 住む}かを / 知らない')
+        self.assertEqual(tr('Eu não sei onde ele mora.'), '私が / {{彼,それ}が どこに 住む}かを / 知らない')
         self.assertTrue(tr('Quando ele chegou, eu o vi.').startswith('{{彼,それ}が 着いた}とき / '))
         self.assertIn('私を 愛する}と / 言った', tr('Ela disse que me ama.'))   # 補文の que
 
@@ -48,7 +48,7 @@ class AnalyzerTestCase(unittest.TestCase):
 @unittest.skipUnless(HAVE_DATA, 'ポルトガル語のデータが無い')
 class RelativeAndParticipleTestCase(unittest.TestCase):
     def test_relative_after_numeral(self):   # 数詞 + 名詞 + que (que の格は節の中の働きで)
-        self.assertEqual(tr('Vi os seis homens que moram aqui.'), '私が / {ここで 住む}六つの男を / 見た')
+        self.assertEqual(tr('Vi os seis homens que moram aqui.'), '私が / {ここに 住む}六つの男を / 見た')
         self.assertEqual(tr('O homem que vi é alto.'), '{私が 見た}男は / 高い')
 
     def test_participles(self):   # 辞書に無い過去分詞は動詞の受動で
@@ -61,7 +61,7 @@ class RelativeAndParticipleTestCase(unittest.TestCase):
         self.assertEqual(tr('Quem o menino vê?'), '少年は / 誰を / 見るか')   # 関係代名詞でなく疑問代名詞
         self.assertEqual(tr('Quem vem?'), '誰が / 来るか')   # ほかに主語が無ければ主語
         self.assertEqual(tr('Por que o menino corre?'), 'なぜ / 少年が / 走るか')   # 2語の por que
-        self.assertEqual(tr('Onde mora o menino?'), 'どこで / 少年が / 住むか')   # 倒置した主語
+        self.assertEqual(tr('Onde mora o menino?'), 'どこに / 少年が / 住むか')   # 倒置した主語
         self.assertEqual(tr('O menino dorme e a menina canta.'), '少年が / 眠る // そして / 少女が / 歌う')   # 形容詞と読む dorme
 
     def test_dashes(self):   # 「--」の入った文で落ちない

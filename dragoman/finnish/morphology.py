@@ -42,7 +42,7 @@ CONJUNCTIONS = {'ja': 'そして,〜と', 'sekä': '〜と', 'tai': 'または',
                 'jotta': '〜するために', 'kuin': '〜より,〜のように', 'kunnes': '〜するまで', 'ennen kuin': '〜する前に',
                 'sillä': 'というのは', 'eli': 'すなわち', 'joten': 'だから'}
 GLOSSES = {
-    'olla': 'ある,いる', 'tulla': '来る,なる', 'mennä': '行く', 'nähdä': '見る', 'katsoa': '見る', 'lukea': '読む',
+    'sataa': '雨が降る', 'olla': 'ある,いる', 'tulla': '来る,なる', 'mennä': '行く', 'nähdä': '見る', 'katsoa': '見る', 'lukea': '読む',
     'kirjoittaa': '書く', 'syödä': '食べる', 'juoda': '飲む', 'antaa': '与える', 'ottaa': '取る', 'saada': '得る',
     'tehdä': 'する,作る', 'sanoa': '言う', 'puhua': '話す', 'tietää': '知る', 'tuntea': '知る,感じる', 'rakastaa': '愛する',
     'pitää': '好む,保つ', 'haluta': '望む', 'voida': 'できる', 'täytyä': 'ねばならない', 'asua': '住む', 'elää': '生きる',

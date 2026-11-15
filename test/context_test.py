@@ -33,8 +33,8 @@ class ContextTestCase(unittest.TestCase):
     def test_verbs_in_context(self):
         for module, text, expected in CASES:
             with self.subTest(module=module, text=text):
-                if not available(module):
-                    self.skipTest('%s のデータが無い' % module)
+                if module != 'latin' and not available(module):
+                    continue   # データの無い言語だけ飛ばす (skipTest だと残りの例も飛ぶ)
                 self.assertIn(expected, translate(module, text))
 
     def test_suru_not_doubled(self):
@@ -49,6 +49,33 @@ class ContextTestCase(unittest.TestCase):
             self.assertIn('ご飯を / 食べた', translate('korean', '그는 밥을 먹었다.'))
         if available('mongolian'):
             self.assertIn('その人は / 来た', translate('mongolian', 'Тэр хүн ирсэн.'))   # 自動詞の前の тэр は指示詞
+
+
+# 天気の動詞 (主語を補わない・形式主語を訳さない)、行き先の対格、場所のある「住む」(言語をまたいで)
+SENTENCES = [
+    ('latin', 'Hodiē pluit.', '今日 / 雨が降る'),
+    ('french', 'Hier, il a plu.', '昨日 / 雨が降った'),
+    ('finnish', 'Eilen satoi.', '昨日 / 雨が降った'),
+    ('finnish', 'Lunta sataa.', '雪が / 降る'),                  # 名詞の主語があれば「降る」だけ
+    ('english', 'It rained yesterday.', '昨日 / 雨が降った'),
+    ('russian', 'Он пошёл домой.', '彼が / 家へ / 行った'),       # идти の語義「雨が降る」で主語を消さない
+    ('latin', 'Amīcus meus Rōmam vēnit.', '私の友人が / ローマに / 来た'),   # 行き先の対格
+    ('latin', 'Viam longam īmus.', '道を / 行く'),               # 通る所は「を」のまま
+    ('sanskrit', 'रामः वनं गच्छति।', 'へ / 行く'),
+    ('greek', 'ὁ διδάσκαλος τοῖς μαθηταῖς λέγει.', '学習者に / 言う'),   # λέγω「言う」(「集める」でなく)
+    ('finnish', 'Asumme Helsingissä.', 'ヘルシンキに / 住む'),     # 場所のある「生きる」は「住む」
+    ('german', 'Wir wohnen in Berlin.', 'ベルリンに / 住む'),
+    ('french', 'Nous habitons à Paris.', 'パリに / 住む'),
+]
+
+
+class SentenceTestCase(unittest.TestCase):
+    def test_sentences(self):
+        for module, text, expected in SENTENCES:
+            with self.subTest(module=module, text=text):
+                if module != 'latin' and not available(module):
+                    continue   # データの無い言語だけ飛ばす (skipTest だと残りの例も飛ぶ)
+                self.assertIn(expected, translate(module, text))
 
 
 if __name__ == '__main__':

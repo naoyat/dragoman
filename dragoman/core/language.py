@@ -40,6 +40,7 @@ class Language:
     genitive_precedes_head: bool = False  # 属格は後ろの名詞にだけ掛かる (ヒンディー語の लड़के की किताब「少年の本」)
     objects_follow_verb: bool = False  # 目的語が動詞の後ろに来る語順 (ロシア語)。2つの動詞の間の語を前の動詞に
     topic_first: bool = False      # 主題 (「は」の句) を訳の先頭に置く (タガログ語の焦点)
+    goal_accusative: bool = False   # 移動の動詞の対格の名詞は行き先「〜に・〜へ」(Rōmam vēnit「ローマに来た」、वनं गच्छति「森へ行く」)
     distributive_pronouns: bool = False  # コンマで区切った代名詞が後ろの分詞句の掛かり先 (印欧祖語の tam, vāgham garum vaghantam
                                          # 「一頭は重い車を引いている」: 対格の vāgham は分詞の目的語に)
     possessor_cases: tuple = ('Dat',)  # 繋辞の文で所有者を表す格 (mihi est liber「私には本がある」。サンスクリットは属格)

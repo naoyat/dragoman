@@ -31,6 +31,7 @@ SUBORDINATORS = {'yadā': ('とき', None), 'yadi': ('なら', None), 'sace': ('
                  'yasmā': ('ので', None), 'yato': ('ので', None)}
 
 PALI = language.Language(
+    goal_accusative=True,
     name='pi',
     subordinators=SUBORDINATORS,
     and_words=('ca',),

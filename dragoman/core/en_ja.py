@@ -32,7 +32,8 @@ OVERRIDES = {('minister', 'noun'): '大臣', ('government', 'noun'): '政府', (
              ('medicine', 'noun'): '薬,医学', ('lie', 'noun'): '嘘'}   # medicine「医学」・lie「状態」を先にしない
 
 # 大文字で始まる英語 (国名) の訳: 小文字の普通名詞 (japan「漆」、turkey「七面鳥」) と表が同じなので
-PROPER_OVERRIDES = {'japan': '日本', 'turkey': 'トルコ', 'mongolia': 'モンゴル', 'korea': '韓国,朝鮮'}
+PROPER_OVERRIDES = {'japan': '日本', 'turkey': 'トルコ', 'mongolia': 'モンゴル', 'korea': '韓国,朝鮮', 'berlin': 'ベルリン',
+                    'moscow': 'モスクワ', 'paris': 'パリ', 'london': 'ロンドン', 'rome': 'ローマ', 'vienna': 'ウィーン'}
 
 _db = None
 

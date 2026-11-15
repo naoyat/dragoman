@@ -22,6 +22,7 @@ SUBORDINATORS = {'cum': ('とき', None), 'ubi': ('とき', None), 'postquam': (
 
 
 LATIN = Language(
+    goal_accusative=True,
     name='la',
     and_words=('et',),
     nor_words=('neque',),

@@ -19,11 +19,11 @@ class IndirectQuestionTestCase(unittest.TestCase):
         self.assertEqual(translate(module, text), expected)
 
     def test_french(self):
-        self.check('french', 'Je ne sais pas où il habite.', '私が / {{彼,それ}が どこで 住む}かを / 知らない')
+        self.check('french', 'Je ne sais pas où il habite.', '私が / {{彼,それ}が どこに 住む}かを / 知らない')
         self.check('french', "Je ne sais pas s'il vient.", '私が / {{彼,それ}が 来る}かどうかを / 知らない')
 
     def test_german(self):
-        self.check('german', 'Ich weiß nicht, wo er wohnt.', '私が / {彼が どこで 住む}かを / 知らない')
+        self.check('german', 'Ich weiß nicht, wo er wohnt.', '私が / {彼が どこに 住む}かを / 知らない')
         self.check('german', 'Ich frage, ob er kommt.', '私が / {彼が 来る}かどうかを / 尋ねる')
 
     def test_russian(self):   # когда は接続詞「〜するとき」でなく「いつ」
@@ -31,14 +31,14 @@ class IndirectQuestionTestCase(unittest.TestCase):
         self.assertIn('}かを / 知らない', translate('russian', 'Я не знаю, где он живёт.'))   # 知る,知っている → 知らない (1つ)
 
     def test_finnish(self):
-        self.check('finnish', 'En tiedä, missä hän asuu.', '私が / {彼が どこで 住む}かを / 知らない')
+        self.check('finnish', 'En tiedä, missä hän asuu.', '私が / {彼が どこに 住む}かを / 知らない')
 
     def test_hindi(self):   # 補文の कि は訳さない
         self.assertIn('どこに 住む,とどまる}かを / 知らない', translate('hindi', 'मैं नहीं जानता कि वह कहाँ रहता है।'))
 
     def test_indonesian(self):   # di mana は1語の「どこで」
-        self.check('indonesian', 'Saya tidak tahu di mana dia tinggal.', '私が / {どこで 彼が 住む}かを / 知らない')
-        self.check('indonesian', 'Di mana kamu tinggal?', 'どこで / あなたが / 住むか')
+        self.check('indonesian', 'Saya tidak tahu di mana dia tinggal.', '私が / {どこに 彼が 住む}かを / 知らない')
+        self.check('indonesian', 'Di mana kamu tinggal?', 'どこに / あなたが / 住むか')
 
 
 class SecondNominativeTestCase(unittest.TestCase):

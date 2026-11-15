@@ -7,6 +7,8 @@ from dragoman.core.Word import Word
 from dragoman.core.AndOr import AndOr, braced
 from dragoman.core.PrepClause import PrepClause
 from dragoman.core import language
+import re
+
 from .japanese import JaVerb, copula_predicate, copula_conjunctive
 from . import verb_flags as Verb
 from .animacy import is_animate
@@ -134,6 +136,11 @@ class Predicate (LatinObject):
             accs.append(t)
         accs = [braced(acc[:-1] if acc[-1:] == 'が' else acc) for acc in accs]
         particles = [self._particle('Acc', obj) for obj in acc_objs]
+        if not any(particles) and self.language.goal_accusative:
+            goal = GOAL_PARTICLES.get((self.first_item.ja or '').split(',')[0])
+            if goal and all(isinstance(o, Word) and o.items and o.items[0].pos in ('noun', 'name') and
+                            not (o.items[0].ja or '').split(',')[0].endswith(PATH_NOUNS) for o in acc_objs):
+                particles = [goal] * len(acc_objs)   # 行き先の対格 (Rōmam vēnit「ローマに来た」、gāmaṃ gacchati「村へ行く」)
         if any(particles):
             tr.append('='.join(t + (p or 'を') for t, p in zip(accs, particles)))  # 時の対格「〜の間」など
         else:
@@ -261,6 +268,19 @@ class Predicate (LatinObject):
             case_slot['Acc'] = case_slot.get('Acc', []) + nom_acc_objs
             case_slot['Nom/Acc'] = []
 
+        weather = None
+        nom_words = self.case_slot.get('Nom', []) + self.case_slot.get('Nom/Acc', [])
+        # 天気の動詞: 最初の訳語が天気のもの (pluit・pleuvoir「雨が降る」)。
+        # идти「行く,…,雨が降る」は Он пошёл домой「彼が家へ行った」のまま
+        weather_verb = bool(WEATHER.match((verb.ja or '').split(',')[0].strip()))
+        if noms and len(noms) == 1 and weather_verb and nom_words and all(
+                isinstance(w, Word) and w.items and w.items[0].pos == 'pronoun' and
+                (w.items[0].ja or '').split(',')[0] in ('彼', 'それ', 'これ', 'あれ') for w in nom_words):
+            noms, weather = [], _weather_glosses(verb.ja)   # 形式主語 (il pleut、it rains) も訳さない
+        elif noms and weather_verb:
+            # 名詞の主語のある天気の動詞は動詞の部分だけ (Lunta sataa「雪が降る」、yağmur yağdı「雨が降った」)
+            weather = list(dict.fromkeys(re.sub(r'^(雨|雪|雹|霰|霙|雷)(（[^）]*）)?が', '', g)
+                                         for g in _weather_glosses(verb.ja)))
         if not noms and not elided and verb.attrib('mood') != 'imperative' and not (self.is_sum and case_slot.get('Inf')) and \
                 self.gap not in ('Nom', 'Nom/Acc'):   # 関係節で主語が空所なら補わない ({歌う}少女)
             pn = str(self.person()) + str(self.number())
@@ -270,6 +290,8 @@ class Predicate (LatinObject):
                 noms.append(verb.attrib('subject_ja'))   # 解析器が決めた補う主語 (前の節の nous「私たち」)
             elif verb.attrib('shared_subject'):
                 pass   # 主節と同じ主語は補わない (Ela disse que me ama「彼女が {私を 愛する}と 言った」。core/Adverbial.py)
+            elif pn == '3sg' and weather_verb:
+                weather = _weather_glosses(verb.ja)   # 天気の動詞は主語を補わない (pluit・il pleut「雨が降る」)
             elif pn in subj_ja:
                 noms.append(subj_ja[pn])
 
@@ -355,7 +377,14 @@ class Predicate (LatinObject):
                 ja = ja.split('〜')[0]
             tr.append(ja)
 
-        jas = verb.ja.split(',')
+        jas = weather or verb.ja.split(',')   # 天気の動詞は天気の訳語だけ (satoi「突然引き起こした,雨が降った」→「雨が降った」)
+        places = [k for k, t in enumerate(tr) if re.search(r"(で|\[(で|に)[^\]]*\])$", t)]
+        if jas[0] in ('生きる', '住む') and places and verb.attrib('gloss_lang', 'ja') == 'ja':
+            # 場所のある「生きる」は「住む」、場所は「〜に」(Asumme Helsingissä「ヘルシンキに住む」、
+            # Мы живём в Москве「モスクワに住む」)
+            jas = ['住む']
+            for k in places:
+                tr[k] = _existential_place(re.sub(r'\[([^\]]*)\]$', lambda m: m.group(1), tr[k]))
 
         # flags
         if verb.attrib('mood') == 'imperative':
@@ -442,6 +471,22 @@ class Predicate (LatinObject):
         return (' / '.join(tr), False)
 
 
+
+
+# 行き先の対格を取る移動の動詞の訳語 → 助詞。道・川などの通る所 (viam īre「道を行く」) は「を」のまま
+GOAL_PARTICLES = {'行く': 'へ', '来る': 'に', '帰る': 'へ', '戻る': 'へ', '向かう': 'へ', '入る': 'に', '着く': 'に',
+                  '到着する': 'に', '急ぐ': 'へ', '逃げる': 'へ', '走る': 'へ'}
+PATH_NOUNS = ('道', '路', '通り', '川', '海', '橋', '野原', '旅')
+WEATHER = re.compile(r'^(雨|雪|雹|霰|霙|雷)[^,]*(降|鳴|落)')
+
+
+def _weather_glosses(ja):
+    """訳語のうち天気を表すもの (雨が降る、雨（pluvia）が降る、雪が降る、雷が鳴る)"""
+    found = [g.strip() for g in (ja or '').split(',') if WEATHER.match(g.strip())]
+    # 「雨が降る」そのものがあればそれだけ (雨（pluvia）が降る,雨が降るように落ちる → 雨が降る)
+    plain = [re.sub(r'（[^）]*）', '', g) for g in found]
+    exact = [g for g in plain if re.fullmatch(r'(雨|雪|雹|霰|霙)が降る|雷が鳴る', g)]
+    return list(dict.fromkeys(exact)) or found
 
 
 def _nominal(obj):

@@ -50,8 +50,24 @@ def _items(rows):
     return items
 
 
+# 語義の順: 辞書の最初の語義が古い意味のもの (λέγω「集める」より「言う」を先に)
+PREFERRED_SENSES = {'λέγω': 'say'}
+# 辞書の訳語に無い・外れる意味 (ἀναγιγνώσκω は「よく知る」より「読む」がふつう)
+GLOSSES = {'ἀναγιγνώσκω': '読む,よく知る'}
+
+
 def lookup(surface):
     """表層形から辞書の項目 (dict) のリスト。見つからなければ []"""
+    items = _lookup(surface)
+    for item in items:
+        if item.get('pres1sg') in GLOSSES:
+            item.update(ja=GLOSSES[item['pres1sg']], gloss_lang='ja')
+    preferred = lambda it: it.get('pres1sg') in PREFERRED_SENSES and \
+        not (it.get('ja') or '').startswith(PREFERRED_SENSES[it['pres1sg']])
+    return sorted(items, key=preferred)
+
+
+def _lookup(surface):
     db = _connect()
     if db is None:
         return []

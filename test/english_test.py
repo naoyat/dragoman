@@ -119,10 +119,10 @@ class AnalyzerTestCase(unittest.TestCase):
 
     def test_existential_and_relative(self):
         self.assertEqual(self.ja('There is a cat in the garden.'), '庭に / 猫が / いる')
-        self.assertEqual(self.ja('The man who lives here is my teacher.'), '{ここで 住む}男は / 私の先生,教師である')
+        self.assertEqual(self.ja('The man who lives here is my teacher.'), '{ここに 住む}男は / 私の先生,教師である')
 
     def test_questions(self):
-        self.assertEqual(self.ja('Where do you live?'), 'どこで / あなたは / 住むか')   # 疑問詞のある疑問文の主語は「は」
+        self.assertEqual(self.ja('Where do you live?'), 'どこに / あなたは / 住むか')   # 疑問詞のある疑問文の主語は「は」
         self.assertEqual(self.ja('Do you like cats?'), 'あなたが / 猫を / 好むか')
         self.assertEqual(self.ja('Who is that man?'), 'その男は / 誰であるか')         # 疑問詞は補語
         self.assertEqual(self.ja('How old are you?'), 'あなたは / 何歳であるか')
@@ -135,7 +135,7 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Do you know who wrote this book?'),
                          'あなたが / {誰が この本を 書いた}かを / 知っているか')
         self.assertEqual(self.ja('I wonder whether he will come.'), '私が / {彼が 来るだろう}かどうかを / 不思議に思う,驚く')
-        self.assertEqual(self.ja('Tell me where you live.'), '私に / {どこで あなたが 住む}かを / 話せ,伝えろ')
+        self.assertEqual(self.ja('Tell me where you live.'), '私に / {どこに あなたが 住む}かを / 話せ,伝えろ')
 
     def test_adverbial_clauses(self):
         self.assertEqual(self.ja('I saw her when she came.'), '{彼女が 来た}とき / 私が / 彼女を / 見た')

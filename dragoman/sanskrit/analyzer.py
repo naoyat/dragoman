@@ -30,6 +30,7 @@ def _root_items(root):
 SUBORDINATORS = {'yadā': ('とき', None), 'yadi': ('なら', None), 'yatas': ('ので', None)}
 
 SANSKRIT = language.Language(
+    goal_accusative=True,
     name='sa',
     subordinators=SUBORDINATORS,
     and_words=('ca',),
