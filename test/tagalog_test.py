@@ -50,6 +50,8 @@ class TagalogTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Hindi ako makatulog.'), '私は / 眠ることができない')        # 可能の maka-
         self.assertEqual(self.ja('Makakabili ako ng libro.'), '私は / 本を / 買うことができるだろう')
         self.assertEqual(self.ja('Nakasuot siya ng puting damit.'), '彼は / 白い衣服を / 着ている')   # puti「白い」
+        self.assertEqual(self.ja('Inilipat niya ang mesa.'), '机は / 彼が / 移した')        # 母音・l の語根の完了 ini-
+        self.assertEqual(self.ja('Iniabot niya sa akin ang libro.'), '本は / 彼が / 私に / 手渡した')
         self.assertEqual(self.ja('Binuksan niya ang pinto.'), 'ドアは / 彼が / 開けた')    # 場所焦点でも対象 (buksan)
 
     def test_bukas(self):
@@ -96,6 +98,8 @@ class TagalogTestCase(unittest.TestCase):
                          '私は / {私が まだ 子供であった}とき / Maynilaに / 住んでいた')
         self.assertEqual(self.ja('Noong dumating siya, kumakain kami.'), '私たちは / {彼が 着いた}とき / 食べていた')
         self.assertEqual(self.ja('Nang makita ko siya, umiyak ako.'), '私は / {私が 彼を 見た}とき / 泣いた')
+        self.assertEqual(self.ja('Kumakain ako ng mansanas kahapon.'), '私は / 林檎を / 昨日 / 食べていた')   # 過去の時の副詞
+        self.assertEqual(self.ja('Nakatira siya dito noong 2010.'), '彼は / ここに / 2010年に / 住んでいた')
         self.assertEqual(self.ja('Kapag dumating siya, kakain kami.'), '私たちは / {彼が 着いた}ら / 食べるだろう')
 
     def test_pati(self):

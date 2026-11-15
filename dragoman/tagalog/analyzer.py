@@ -677,11 +677,17 @@ def lookup_all(surfaces):
     return words
 
 
+# 過去の時の副詞 (kahapon「昨日」、kanina「さっき」): 文の進行・不定の動詞を過去に
+PAST_ADVERBS = {'kahapon', 'kanina', 'noon'}
+
+
 def past_context(words):
-    """noong「〜したとき」の節のある文は過去のこと: 進行・状態は「〜していた」、不定・繋辞は「〜した・だった」
+    """noong「〜したとき」の節・過去の時の副詞 (kahapon) のある文は過去のこと: 進行・状態は「〜していた」、不定・繋辞は「〜した・だった」
     (Noong bata pa ako, nakatira ako sa Maynila「{私が まだ 子供だった}とき 私は マニラに 住んでいた」)。
     タガログ語の動詞は相だけで時制を持たないので、過去の時の節に合わせる"""
-    if not any(_pos(w) == 'conj' and script.key(w.surface) in ('noong', 'nung') for w in words):
+    past = lambda w: _pos(w) == 'conj' and script.key(w.surface) in ('noong', 'nung') or \
+        script.key(w.surface) in PAST_ADVERBS and _pos(w) == 'adv' or (_item(w) is not None and (_item(w).attrib('base') or '').startswith('noong '))
+    if not any(past(w) for w in words):
         return
     for word in words:
         item = _item(word)

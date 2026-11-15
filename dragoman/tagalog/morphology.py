@@ -80,7 +80,7 @@ GLOSSES = {'saan': ('どこ', 'adv'), 'kailan': ('いつ', 'adv'), 'bakit': ('�
            'iba': ('他の', 'adj'), 'bawat': ('それぞれの', 'adj'), 'lahat': ('すべて', 'noun'), 'isa': ('一つ', 'noun'),
            'dalawa': ('二つ', 'noun'), 'tatlo': ('三つ', 'noun'), 'pamahalaan': ('政府', 'noun'), 'bansa': ('国', 'noun'),
            'bukas': ('明日', 'adv'),   # 述語・名詞の前の「開いている」は analyzer.choose_bukas
-           'kapatid': ('兄弟', 'noun'), 'linggo': ('週', 'noun'),   # 大文字の Linggo は「日曜日」(analyzer._words)
+           'kapatid': ('兄弟', 'noun'), 'kuwarto': ('部屋', 'noun'), 'kwarto': ('部屋', 'noun'), 'linggo': ('週', 'noun'),   # 大文字の Linggo は「日曜日」(analyzer._words)
            'lunes': ('月曜日', 'noun'), 'martes': ('火曜日', 'noun'), 'miyerkoles': ('水曜日', 'noun'),
            'miyerkules': ('水曜日', 'noun'), 'huwebes': ('木曜日', 'noun'), 'biyernes': ('金曜日', 'noun'),
            'sabado': ('土曜日', 'noun'),
@@ -88,7 +88,7 @@ GLOSSES = {'saan': ('どこ', 'adv'), 'kailan': ('いつ', 'adv'), 'bakit': ('�
            'mayo': ('5月', 'noun'), 'hunyo': ('6月', 'noun'), 'hulyo': ('7月', 'noun'), 'agosto': ('8月', 'noun'),
            'setyembre': ('9月', 'noun'), 'oktubre': ('10月', 'noun'), 'nobyembre': ('11月', 'noun'),
            'disyembre': ('12月', 'noun'),
-           'kahapon': ('昨日', 'adv'), 'ngayon': ('今', 'adv'), 'mamaya': ('後で', 'adv'), 'noon': ('その時', 'adv'),
+           'kahapon': ('昨日', 'adv'), 'kanina': ('さっき', 'adv'), 'ngayon': ('今', 'adv'), 'mamaya': ('後で', 'adv'), 'noon': ('その時', 'adv'),
            'palagi': ('いつも', 'adv'), 'lagi': ('いつも', 'adv'), 'sobra': ('とても', 'adv'), 'talaga': ('本当に', 'adv'),
            'lamang': ('〜だけ', 'adv'), 'muli': ('再び', 'adv'), 'agad': ('すぐに', 'adv')}
 # 動詞の訳語を決めておく見出し (態ごとの見出しの訳語が外れるもの)
@@ -107,7 +107,7 @@ VERB_GLOSSES = {'suot': '着る', 'bili': '買う', 'kain': '食べる', 'inom':
                 'lipat': '移る', 'panganak': '生まれる', 'silang': '生まれる',   # ipinanganak・isinilang「生まれた」(i- の焦点の ang が生まれた人)
                 'sigaw': '叫ぶ', 'takot': '恐れる', 'saya': '楽しむ', 'lungkot': '悲しむ', 'ibig': '愛する'}
 # 対象焦点・場所焦点で訳語の変わる語根 (gumising「起きる」/ ginising「起こす」)
-TRANSITIVE_GLOSSES = {'lipat': '移す', 'gising': '起こす', 'tulog': '寝かせる', 'balik': '返す', 'uwi': '持ち帰る', 'labas': '出す',
+TRANSITIVE_GLOSSES = {'lipat': '移す', 'abot': '手渡す', 'gising': '起こす', 'tulog': '寝かせる', 'balik': '返す', 'uwi': '持ち帰る', 'labas': '出す',
                       'pasok': '入れる', 'alis': '取り除く', 'upo': '座らせる', 'tayo': '立てる'}
 LINKER = 'linker'
 
@@ -227,6 +227,14 @@ def candidates(word):
             if redup:
                 add(redup, 'stative', aspect_redup)
             add(rest, 'stative', aspect_plain)
+    # 母音・l・y で始まる語根の完了は -in- でなく in- / ni- を前に (inilipat ← ilipat、iniabot ← iabot、
+    # nilipat ← lipat、niluto ← luto)
+    if word.startswith('ini') and len(word) > 5 and (word[3] in VOWELS or word[3] in 'ly'):
+        rest = word[3:]
+        add(_redup(rest) or rest, 'conveyance', 'progressive' if _redup(rest) else 'completive')
+    if word.startswith('ni') and len(word) > 4 and word[2] in 'ly':
+        rest = word[2:]
+        add(_redup(rest) or rest, 'object', 'progressive' if _redup(rest) else 'completive')
     # i- (移動物・受益者焦点): isinulat / isinusulat / isusulat / isulat
     if word.startswith('i') and len(word) > 4 and word[1] not in VOWELS:
         rest = word[1:]
