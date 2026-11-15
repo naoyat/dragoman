@@ -379,6 +379,26 @@ def _supply_copula(words):
             and any(c[0] == 'Nom' for c in w.items[0]._ or [])]
     if len(free) < 2:
         return words
+    second = head[free[1]].items[0]
+    after = head[free[1] + 1] if free[1] + 1 < len(head) else None
+    suffixed = after is not None and after.items and (after.items[0].attrib('suffix') or
+                                                       getattr(after, 'attached_to', None) is head[free[1]])
+    if second.pos == 'participle' and second.attrib('voice') != 'passive' and first is None and not suffixed and \
+            second.attrib('gloss_lang', 'ja') == 'ja':
+        # 主語 + 能動の分詞の名詞文は現在の動作 (הַיֶּלֶד קוֹרֵא סֵפֶר「その子供が本を読んでいる」)。
+        # 分詞を定動詞 (現在・進行) にして、後ろの名詞は目的語に
+        number = next((c[1] for c in second._ or [] if c[0] == 'Nom'), 'sg')
+        gender = next((c[2] for c in second._ or [] if c[0] == 'Nom'), None)
+        verb = dict(second.item, pos='verb', mood='indicative', tense='progressive', voice='active', person=3,
+                    number=number, gender=gender, participle_predicate=True)
+        head[free[1]].items = [type(second)(verb)] + head[free[1]].items[1:]
+        subject = head[free[0]].items[0]
+        subject._ = [c for c in subject._ if c[0] == 'Nom'] or subject._   # 分詞の前の名詞が主語
+        for j in free[2:]:
+            item = head[j].items[0]
+            item._ = [c for c in item._ or [] if c[0] == 'Acc'] or item._   # 後ろの名詞は目的語
+        head[free[1]].participle_subject = head[free[0]]
+        return words
     at = free[0] + 1
     while at < len(head) and head[at].items and (head[at].items[0].attrib('suffix') or
                                                  any(c[0] == 'Gen' for c in head[at].items[0]._ or [])):

@@ -29,6 +29,7 @@ OVERRIDES = {('minister', 'noun'): '大臣', ('government', 'noun'): '政府', (
              ('right', 'noun'): '権利,右', ('case', 'noun'): '場合,事件', ('order', 'noun'): '命令,順序',
              ('company', 'noun'): '会社,仲間', ('people', 'noun'): '人々,民族', ('man', 'noun'): '男,人',
              ('look', 'verb'): '見る', ('look at', 'verb'): '見る',
+             ('yesterday', 'adv'): '昨日', ('today', 'adv'): '今日', ('tomorrow', 'adv'): '明日',   # 「昨日に」でなく
              ('medicine', 'noun'): '薬,医学', ('lie', 'noun'): '嘘'}   # medicine「医学」・lie「状態」を先にしない
 
 # 大文字で始まる英語 (国名) の訳: 小文字の普通名詞 (japan「漆」、turkey「七面鳥」) と表が同じなので

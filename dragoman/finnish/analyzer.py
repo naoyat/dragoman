@@ -107,12 +107,46 @@ QUESTION_ADVERBS = {'missä': 'どこで', 'mistä': 'どこから', 'mihin': '�
                     'miksi': 'なぜ', 'miten': 'どのように', 'kuinka': 'どのように'}
 
 
+# 所有の接尾辞 → (人称, 数)、格の語尾 → 格 (Stanza が見出し語を取れない語: veljelleni「私の兄弟に」、talossani)
+POSSESSIVE_ENDINGS = (('mme', '1', 'Plur'), ('nne', '2', 'Plur'), ('nsa', '3', 'Sing'), ('nsä', '3', 'Sing'),
+                      ('ni', '1', 'Sing'), ('si', '2', 'Sing'))
+CASE_ENDINGS = (('lle', 'All'), ('ssa', 'Ine'), ('ssä', 'Ine'), ('sta', 'Ela'), ('stä', 'Ela'), ('lla', 'Ade'),
+                ('llä', 'Ade'), ('lta', 'Abl'), ('ltä', 'Abl'), ('ksi', 'Tra'), ('tta', 'Abe'), ('ttä', 'Abe'))
+
+
+def _recover_possessed(text):
+    """所有の接尾辞の付いた名詞 → (見出し語, 格, 人称, 数)。辞書に無ければ None"""
+    lower = text.lower()
+    for ending, person, number in POSSESSIVE_ENDINGS:
+        if not lower.endswith(ending) or len(lower) - len(ending) < 3:
+            continue
+        stem = lower[:-len(ending)]
+        case, base = 'Nom', stem
+        for case_ending, name in CASE_ENDINGS:
+            if stem.endswith(case_ending):
+                case, base = name, stem[:-len(case_ending)]
+                break
+        # e の語幹の主格は -i (velje → veli、käde → käsi、vede → vesi)
+        stems = (base, base[:-1] + 'i' if base.endswith('e') else None, base[:-2] + 'i' if base.endswith('je') else None,
+                 base[:-2] + 'si' if base.endswith('de') else None, base[:-1] if base.endswith('n') else None)
+        for lemma in stems:
+            if lemma and morphology.gloss(lemma, 'noun')[0] is not None:
+                return lemma, case, person, number
+    return None
+
+
 def item_of(token):
     feats = morphology.morph(token)
     text, lemma, pos = token.text, token.lemma_, token.pos_
     lower = text.lower()
     if pos == 'PUNCT':
         return None
+    if pos in ('NOUN', 'VERB', 'X', 'PROPN', 'ADV') and morphology.gloss(lemma, {'VERB': 'verb', 'ADV': 'adv'}.get(pos, 'noun'))[0] is None:
+        recovered = _recover_possessed(text)
+        if recovered:
+            lemma, case, person, number = recovered
+            pos = 'NOUN'
+            feats = dict(feats, Case=case, **{'Person[psor]': person, 'Number[psor]': number})
     if lower in QUESTION_ADVERBS:   # 疑問の副詞 (missä「どこで」。mikä の格の形「何で」・文頭の大文字の見出しでなく)
         return {'surface': text, 'pos': 'adv', 'base': lower, 'ja': QUESTION_ADVERBS[lower], 'gloss_lang': 'ja'}
     number = morphology.NUMBERS.get(feats.get('Number'), 'sg')
