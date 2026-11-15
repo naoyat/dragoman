@@ -292,6 +292,9 @@ class Predicate (LatinObject):
                 pass   # 主節と同じ主語は補わない (Ela disse que me ama「彼女が {私を 愛する}と 言った」。core/Adverbial.py)
             elif pn == '3sg' and weather_verb:
                 weather = _weather_glosses(verb.ja)   # 天気の動詞は主語を補わない (pluit・il pleut「雨が降る」)
+            elif pn == '3sg' and verb.attrib('gender') in ('m', 'f'):
+                # 動詞の性で分かる主語 (ヘブライ語の וַתֹּסֶף「彼女は」、ロシア語の過去 пошёл「彼は」)
+                noms.append({'m': '彼,それ', 'f': '彼女,それ'}[verb.attrib('gender')])
             elif pn in subj_ja:
                 noms.append(subj_ja[pn])
 

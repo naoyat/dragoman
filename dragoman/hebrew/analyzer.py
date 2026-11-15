@@ -488,10 +488,35 @@ def relative_asher(words):
                                       _=[(c, n, g) for c in ('Nom', 'Acc') for n in ('sg', 'pl') for g in ('m', 'f')]))]
 
 
+def merge_yasaf(words):
+    """yāsap (hifʿil「加える」) + לְ + 不定詞は「再び〜する」(וַתֹּסֶף לָלֶדֶת「彼女は また 産んだ」。「産むことを加えた」でなく):
+    yāsap の定動詞の訳語を不定詞の動詞の訳語にして、לְ と不定詞は訳の語の列から除く (目的語は yāsap の節に残る)"""
+    out = []
+    i = 0
+    while i < len(words):
+        word = words[i]
+        item = word.items[0] if word.items else None
+        nxt = words[i + 1:i + 3]
+        if item is not None and item.pos == 'verb' and item.attrib('pres1sg') == 'יָסַף' and _finite(item) and \
+                len(nxt) == 2 and nxt[0].items and nxt[0].items[0].pos == 'preposition' and \
+                script.consonants(nxt[0].surface) == 'ל' and nxt[1].items and nxt[1].items[0].pos == 'verb' and \
+                nxt[1].items[0].attrib('mood') == 'infinitive':
+            inf = nxt[1].items[0]
+            ja = ','.join('再び' + g for g in (inf.ja or '').split(',')[:2])
+            word.items = [type(item)(dict(item.item, ja=ja, gloss_lang=inf.attrib('gloss_lang'),
+                                          base=item.attrib('base') + ' + ' + (inf.attrib('base') or '')))] + word.items[1:]
+            out.append(word)
+            i += 3
+            continue
+        out.append(word)
+        i += 1
+    return out
+
+
 def lookup_all(surfaces):
     langs = choose_languages(surfaces)
     words = [w for ix, s in enumerate(surfaces) for w in _words(s, ix, langs[ix])]
-    words = merge_kaasher(words)
+    words = merge_yasaf(merge_kaasher(words))
     relative_asher(words)
     mark_vocatives(words)
     choose_names(words)

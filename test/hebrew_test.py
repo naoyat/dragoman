@@ -176,7 +176,7 @@ class AnalyzerTestCase(unittest.TestCase):
         a = self.analyze('וַתֹּסֶף לָלֶדֶת אֶת־אָחִיו אֶת־הָבֶל׃ וַיְהִי־הֶבֶל רֹעֵה צֹאן׃')
         trs = [analysis.clauses[0].predicate.translate()[0] for analysis in a]
         self.assertIn('彼の{兄,弟,兄貴,アニキ}=ヘベルを', trs[0])   # 人名はカタカナ、人称接尾辞は名詞の属格 (並列の「と」でない)
-        self.assertIn('産む', trs[0])             # yālad「産む」
+        self.assertIn('彼女,それ}が / 彼の{兄,弟,兄貴,アニキ}=ヘベルを / 再び産んだ', trs[0])   # yālad「産む」、yāsap + לְ + 不定詞「再び〜」、女性の動詞の主語
         self.assertEqual(trs[1], 'そして / ヘベルは / 群れの羊飼いであった')   # 連語形の分詞は「〜する人」
         tr = self.analyze('וְקַיִן הָיָה עֹבֵד אֲדָמָה׃')[0].clauses[0].predicate.translate()[0]
         self.assertIn('カインは', tr)
