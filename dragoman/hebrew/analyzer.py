@@ -48,6 +48,7 @@ HEBREW = language.Language(
     pronoun_subject=True,
     genitive_follows_head=True,
     objects_follow_verb=True,
+    particle=lambda case, obj, pred: 'と' if getattr(obj, 'quote', False) else None,   # 引用「〜と言った」
 )
 
 
@@ -513,6 +514,48 @@ def merge_yasaf(words):
     return out
 
 
+SPEECH_VERBS = {'אָמַר'}
+
+
+def split_quotations(words):
+    """動詞の前に引用の名詞句を置く言う文 (הֲבֵל הֲבָלִים אָמַר קֹהֶלֶת הֲבֵל הֲבָלִים הַכֹּל הָבֶל「空しさの空しさ、と
+    コヘレトは言った。空しさの空しさ、すべては空しい」): 動詞の前の名詞句は引用「〜と」、主語の後ろは別の節。
+    後ろが前の句の繰り返しで始まれば、そこでも切る (後ろの名詞文 הַכֹּל הָבֶל に繋辞を補えるように)"""
+    for i, word in enumerate(words):
+        item = word.items[0] if word.items else None
+        if item is None or item.pos != 'verb' or item.attrib('pres1sg') not in SPEECH_VERBS or not _finite(item):
+            continue
+        start = next((k + 1 for k in range(i - 1, -1, -1) if words[k].items is None or _finite_word(words[k])), 0)
+        before = words[start:i]
+        if not before or not all(w.items and w.items[0].pos in ('noun', 'adj', 'article') for w in before):
+            continue
+        subject = words[i + 1] if i + 1 < len(words) else None
+        if subject is None or not subject.items or subject.items[0].pos not in ('noun', 'name'):
+            continue
+        for w in before:
+            if w.items[0].pos == 'noun' and not any(c[0] == 'Gen' for c in w.items[0]._ or []):
+                w.quote = True
+        end = next((k for k in range(i + 2, len(words)) if words[k].items is None), len(words))
+        if end <= i + 2:
+            continue
+        cut = [i + 2]
+        repeat = [script.consonants(w.surface) for w in before]
+        if [script.consonants(w.surface) for w in words[i + 2:i + 2 + len(before)]] == repeat and \
+                i + 2 + len(before) < end:
+            cut.append(i + 2 + len(before))
+        if len(cut) > 1:
+            # 繰り返しの句だけの名詞文 (הֲבֵל הֲבָלִים「空しさの空しさである」): 句の後ろに見えない繋辞、句は補語
+            head = words[i + 2]
+            head.items = [type(head.items[0])(dict(head.items[0].item, complement=True))] + head.items[1:]
+            words.insert(cut[1], Word(',', None))
+            words.insert(cut[1], Word('(הוּא)', [dict(COPULA, surface='(הוּא)', shared_subject=True)]))   # 主語は補わない
+            cut = cut[:1]
+        for k in reversed(cut):
+            words.insert(k, Word(',', None))
+        return words
+    return words
+
+
 def lookup_all(surfaces):
     langs = choose_languages(surfaces)
     words = [w for ix, s in enumerate(surfaces) for w in _words(s, ix, langs[ix])]
@@ -526,6 +569,7 @@ def lookup_all(surfaces):
     mark_di(words)
     mark_construct(words)
     words = attach_suffix_genitives(words)
+    words = split_quotations(words)
     words = supply_copula(words)  # 名詞文の繋辞を先に補う (後ろの1・2人称の動詞の節と分けるため)
     choose_subject(words)
     for i, word in enumerate(words):

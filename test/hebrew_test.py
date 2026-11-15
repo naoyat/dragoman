@@ -219,5 +219,17 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertTrue(tr.startswith('あなたは / 何を / した'), tr)   # 2人称の動詞の前の疑問代名詞は目的語
 
 
+@unittest.skipUnless(HAVE_DATA, 'ヘブライ語の辞書が無い')
+class QuotationTestCase(unittest.TestCase):
+    def test_ecclesiastes(self):
+        # 動詞の前の引用「〜と」、主語の後ろは別の節、繰り返しの句は名詞文 (コヘレトの言葉 1:2)
+        from dragoman.hebrew import analyzer
+        a = next(analyzer.analyze_text('הֲבֵל הֲבָלִים אָמַר קֹהֶלֶת הֲבֵל הֲבָלִים הַכֹּל הָבֶל׃'))
+        trs = [c.predicate.translate()[0] for c in a.clauses]
+        self.assertEqual(trs[0], 'コヘレトが / 空しさの空しさと / 言った,話した,指し示した,意味した')
+        self.assertEqual(trs[1], '空しさの空しさである')
+        self.assertEqual(trs[2], '{全て,全体,森羅万象}は / 空しさである')
+
+
 if __name__ == '__main__':
     unittest.main()

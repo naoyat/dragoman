@@ -606,6 +606,16 @@ def _supply_copula(clause):
                     _pos(clause[j]) in ('adj', 'noun', 'adv') and getattr(clause[j], 'linked_to', None):
                 j += 1
             return clause[:j] + [copula] + clause[j:]
+    content = [w for w in clause if w.items is not None]
+    nouns = [w for w in content if _pos(w) == 'noun' and getattr(w, 'marker', None) is None]
+    if len(nouns) == 1 and all(w is nouns[0] or _pos(w) == 'adv' for w in content) and len(content) >= 2:
+        # 名詞 + 時の副詞だけの文 (Sabado kahapon「昨日は 土曜日であった」): 名詞は補語、見えない繋辞を補う
+        noun = nouns[0]
+        _rebuild(noun, complement=True)
+        copula = Word('(ay)', [dict(COPULA, shared_subject=True)])
+        copula.token_ix = noun.token_ix
+        k = clause.index(noun) + 1
+        return clause[:k] + [copula] + clause[k:]
     return clause
 
 
