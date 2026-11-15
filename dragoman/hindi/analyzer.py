@@ -511,7 +511,9 @@ def choose_subject(words):
         start = i + 1
         direct = [w for w in clause if not getattr(w, 'ergative', False) and not getattr(w, 'ko', False) and
                   _item(w)._ and any(c[0] in ('Nom', 'Acc') for c in _item(w)._)]
-        ergative = [w for w in clause if getattr(w, 'ergative', False)]
+        ergative = [w for w in clause if getattr(w, 'ergative', False) or _item(w).attrib('pronoun_case') == 'ergative']
+        # मैंने「私が」(ने の付いた代名詞の1語) は主語、उसे (को の付いた代名詞の1語) は को の句と同じ
+        direct = [w for w in direct if w not in ergative and _item(w).attrib('pronoun_case') != 'dative']
         dative = [w for w in clause if getattr(w, 'ko', False) or (_item(w).attrib('pronoun_case') == 'dative')]
         copula = HINDI.is_copula(item.attrib('pres1sg'))
         subject = ergative[0] if ergative else None

@@ -182,12 +182,17 @@ def choose_agreeing_nouns(words):
             if not 0 <= j < len(words) or not words[j].items or words[j].items[0].pos != 'noun':
                 continue
             noun = words[j]
-            if modifier & _cngs(noun.items[0]):
-                break
             agreeing = [item for item in noun.items if item.pos == 'noun' and modifier & _cngs(item)]
             if agreeing:
                 noun.items = agreeing + [item for item in noun.items if item not in agreeing]
+                demonstrative = DEMONSTRATIVE_JA.get(word.items[0].attrib('base'))
+                if demonstrative and j == i + 1 and word.items[0].attrib('desc') == '指示代名詞':
+                    it = word.items[0]   # sā nārī「その女」(「彼女,それ女」でなく)
+                    word.items = [type(it)(dict(it.item, ja=demonstrative))] + word.items[1:]
                 break
+
+
+DEMONSTRATIVE_JA = {'tad': 'その', 'etad': 'この', 'idam': 'この', 'adas': 'あの'}
 
 
 def lookup_all(surfaces):

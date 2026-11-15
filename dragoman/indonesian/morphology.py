@@ -63,7 +63,7 @@ ADVERBS = {'sangat': 'とても', 'amat': 'とても', 'sekali': 'とても', 'j
 MODALS = {'bisa': 'can', 'dapat': 'can', 'mampu': 'can', 'boleh': 'may', 'harus': 'must', 'mesti': 'must',
           'wajib': 'must', 'mau': 'want', 'ingin': 'want', 'hendak': 'want', 'mahu': 'want', 'perlu': 'need'}
 # 訳語を決めておく語 (Wiktionary の最初の語義が外れるもの)
-GLOSSES = {'orang': ('人', 'noun'), 'anak': ('子供', 'noun'), 'buku': ('本', 'noun'), 'rumah': ('家', 'noun'),
+GLOSSES = {'adik': ('弟,妹', 'noun'), 'kakak': ('兄,姉', 'noun'), 'orang': ('人', 'noun'), 'anak': ('子供', 'noun'), 'buku': ('本', 'noun'), 'rumah': ('家', 'noun'),
            'makan': ('食べる', 'verb'), 'minum': ('飲む', 'verb'), 'pergi': ('行く', 'verb'), 'datang': ('来る', 'verb'),
            'baca': ('読む', 'verb'), 'tulis': ('書く', 'verb'), 'lihat': ('見る', 'verb'), 'beri': ('与える', 'verb'),
            'berikan': ('与える', 'verb'), 'ada': ('ある,いる', 'verb'), 'punya': ('持つ', 'verb'), 'tahu': ('知る', 'verb'),

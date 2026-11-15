@@ -66,6 +66,21 @@ SENTENCES = [
     ('finnish', 'Asumme Helsingissä.', 'ヘルシンキに / 住む'),     # 場所のある「生きる」は「住む」
     ('german', 'Wir wohnen in Berlin.', 'ベルリンに / 住む'),
     ('french', 'Nous habitons à Paris.', 'パリに / 住む'),
+    # 二重目的語 (受け手「〜に」+ 物「〜を」)
+    ('english', 'I gave my brother the book.', '私の{兄,弟}に / 本を / 与えた'),   # spaCy が同格と読む2つ目の目的語
+    ('chinese', '我给了弟弟一本书。', '弟に / 一冊の本を / 与えた'),
+    ('arabic', 'أعطيت أخي الكتاب.', '私が / 私の兄弟に / 本を / 与えた'),   # ハムザ付きの文字は母音記号でない
+    ('hindi', 'मैंने भाई को किताब दी।', '私が / 兄弟に / 本を / 与えた'),      # ने の付いた代名詞の1語 मैंने
+    ('hindi', 'मैंने उसे देखा।', '私が / {彼,彼女,それ}を / 見た'),            # को の付いた代名詞の1語 उसे
+    ('indonesian', 'Saya memberi adik saya buku.', '私の{弟,妹}に / 本を / 与える'),
+    ('indonesian', 'Ibu memberi anak itu makanan.', 'その子供に / 食べ物を / 与える'),
+    ('korean', '나는 동생에게 책을 주었다.', '{弟,妹}に / 本を'),
+    ('tagalog', 'Nagbabasa ng libro ang bata.', '子供は / 本を / 読んでいる'),   # nag- は行為者焦点
+    ('vietnamese', 'Cậu bé đọc sách.', '少年が / 本を / 読む'),
+    ('vietnamese', 'Thành phố lớn.', '都市は / 大きい'),           # 動詞の無い文の形容詞は述語
+    ('sanskrit', 'बालः पुस्तकं पठति।', '{子供,少年}が / 本を / 読む'),
+    ('sanskrit', 'सा नारी गायति।', 'その女が / 歌う'),            # 名詞の前の tad は「その」
+    ('sanskrit', 'सा जलं पिबति।', '{彼女,それ}が / 水を / 飲む'),
 ]
 
 

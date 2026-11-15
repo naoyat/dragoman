@@ -15,7 +15,7 @@
 import re
 
 from dragoman.core import analyzer as common
-from dragoman.core import language
+from dragoman.core import animacy, language
 from dragoman.core.Word import Word
 from . import dictionary, morphology
 
@@ -69,7 +69,7 @@ INDONESIAN = language.Language(
     or_words=('atau',),
     copulas=frozenset({'adalah'}),
     negations=frozenset(morphology.NEGATIONS),
-    case_particles={'Nom': 'が', 'Acc': 'を', 'Gen': 'の'},
+    case_particles={'Nom': 'が', 'Acc': 'を', 'Gen': 'の', 'Dat': 'に'},
     absolute_case=None,
     lookup=_root_items,
     predicative_adjective=predicative_adjective,
@@ -354,14 +354,16 @@ def merge_possessors(words):
         prev = out[-1] if out else None
         pitem = _item(prev) if prev is not None else None
         if item is not None and pitem is not None and pitem.pos == 'noun' and not getattr(word, 'inverted_subject', False) \
-                and item.pos in ('noun', 'pronoun') and not item.attrib('demonstrative') and not pitem.attrib('relative'):
+                and item.pos in ('noun', 'pronoun') and not item.attrib('demonstrative') and not pitem.attrib('relative') \
+                and not pitem.attrib('pronoun_possessor'):   # 代名詞の所有者の後ろは新しい名詞句 (adik saya | buku)
             if pitem.attrib('lemma') == 'bahasa' and word.surface.lower() in morphology.NAMES:
                 ja = morphology.LANGUAGE_NAMES.get(word.surface.lower(), (item.ja or '').split(',')[0]) + '語'
                 prev.items = [type(pitem)(dict(pitem.item, ja=ja, gloss_lang='ja'))]
                 prev.surface = prev.surface + ' ' + word.surface
                 continue
             # 所有者は属格の名詞に (代名詞も名詞として掛ける)
-            data = dict(item.item, pos='noun', _=[('Gen', 'sg', morphology.GENDER)], possessor=True)
+            data = dict(item.item, pos='noun', _=[('Gen', 'sg', morphology.GENDER)], possessor=True,
+                        pronoun_possessor=item.pos == 'pronoun')
             word.items = [type(item)(data)]
         out.append(word)
     return out
@@ -394,7 +396,11 @@ def mark_prepositions(words):
             _restrict(word, ('Gen', 'Nom', 'Acc'))  # 名詞 + 名詞 (rumah ayah「父の家」)
         else:
             _restrict(word, ('Nom', 'Acc'))
-        previous_noun = id(word) not in governed
+        previous_noun = id(word) not in governed and not item.attrib('pronoun_possessor')
+
+
+# 2つの目的語 (受け手 + 物) を取る語根 (memberi・mengajar・mengirimi・menunjukkan …)
+DOUBLE_OBJECT_ROOTS = {'beri', 'ajar', 'kirim', 'tunjuk', 'tanya', 'bawa'}
 
 
 def choose_subject(words):
@@ -412,7 +418,8 @@ def choose_subject(words):
         verb_ix = next((k for k, w in enumerate(clause) if _pos(w) == 'verb'), None)
         participle_ix = [k for k, w in enumerate(clause) if _pos(w) == 'participle']
         free = [k for k, w in enumerate(clause) if _pos(w) in ('noun', 'pronoun') and
-                _item(w)._ and all(c[0] != 'Gen' for c in _item(w)._) and not _item(w).attrib('suffix')]
+                _item(w)._ and all(c[0] != 'Gen' for c in _item(w)._) and not _item(w).attrib('suffix') and
+                not _item(w).attrib('demonstrative')]   # 名詞の後ろの ini・itu「この・その」は名詞に掛かる
         if verb_ix is None:
             if free:
                 _restrict(clause[free[0]], ('Nom',))
@@ -430,6 +437,17 @@ def choose_subject(words):
         # 動詞の後ろの名詞は目的語 (自動詞の表の動詞・受動・繋辞を除く: belajar bahasa「言語を学ぶ」)
         transitive = verb.attrib('voice') == 'active' and not verb.attrib('copula') and \
             verb.attrib('lemma') not in INTRANSITIVE and verb.attrib('pres1sg') not in INTRANSITIVE
+        objects = [k for k in after if _pos(clause[k]) in ('noun', 'pronoun')]
+        if transitive and len(objects) >= 2 and verb.attrib('lemma') in DOUBLE_OBJECT_ROOTS and \
+                animacy.is_animate(_item(clause[objects[0]])):
+            # 受け手 + 物の2つの目的語 (memberi adik buku「弟に 本を 与える」)
+            it = _item(clause[objects[0]])
+            it._ = [('Dat',) + tuple(c[1:]) for c in it._]
+            k = objects[0] + 1
+            if k < len(clause) and _item(clause[k]) is not None and _item(clause[k]).attrib('demonstrative'):
+                dem = _item(clause[k])   # 受け手の名詞の後ろの itu「その」も与格に (anak itu「その子供に」)
+                dem._ = list(dict.fromkeys(('Dat',) + tuple(c[1:]) for c in dem._))
+            after = [k for k in after if k != objects[0]]
         for k in after:
             if any(p < k for p in participle_ix) and not any(p < k < verb_ix for p in participle_ix) and k > verb_ix:
                 pass

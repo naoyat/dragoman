@@ -371,7 +371,7 @@ def _analyze(word):
                                 for r in dictionary.lemmas(lemma))
     for lemma, aspect in sorted(dictionary.forms(word), key=lambda f: variant(f[0])):
         rows = [r for r in dictionary.lemmas(lemma) if r['pos'] == 'verb' and r['en']]
-        if word.startswith(('naka', 'maka')):   # naka- / maka- は行為者焦点を先に (nakatulog「眠った」。「眠らせられた」でなく)
+        if word.startswith(('naka', 'maka', 'nag', 'mag')):   # naka-・maka-・nag-・mag- は行為者焦点を先に (nagbabasa「読んでいる」) (nakatulog「眠った」。「眠らせられた」でなく)
             rows.sort(key=lambda r: r['voice'] != 'actor')
         if rows:
             root = _root_of(lemma)

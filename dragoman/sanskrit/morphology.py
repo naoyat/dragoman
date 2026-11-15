@@ -35,6 +35,7 @@ PARTICIPLES = {'kta': ('participle', 'past', 'passive'), 'ktavatu~': ('participl
 PRONOUNS = {'tad', 'yad', 'idam', 'adas', 'etad', 'kim', 'asmad', 'yuzmad', 'sarva', 'anya', 'Bavat', 'svayam'}
 DETERMINERS = {'tad', 'etad', 'idam', 'adas', 'sarva', 'anya', 'yad', 'kim', 'eka'}
 # 代名詞の訳語 (Wiktionary に人称代名詞の見出しが無いので)
+TAD_BY_GENDER = {'f': '彼女,それ', 'm': '彼,それ'}   # 中性 (tat) は呼格の読みと同じ訳語のまま (まとめて除く)
 PRONOUN_GLOSSES = {'asmad': '私', 'yuzmad': 'あなた', 'tad': 'それ,彼,彼女', 'etad': 'これ', 'idam': 'これ',
                    'adas': 'あれ', 'yad': '〜するところのもの', 'kim': '何,誰', 'Bavat': 'あなた (敬称)', 'svayam': '自ら'}
 
@@ -168,6 +169,8 @@ def _subanta(e, surface):
     pos = 'pronoun' if text in PRONOUNS else (gloss[2] if gloss and gloss[2] in ('noun', 'adj', 'pronoun') else 'noun')
     item = {'pos': pos, 'base': script.iast(text), '_': [cng],
             'ja': gloss[0] if gloss else script.iast(text), 'gloss_lang': gloss[1] if gloss else 'en'}
+    if text == 'tad' and cng[0] in ('Nom', 'Acc', 'Ins', 'Dat', 'Abl', 'Gen', 'Loc') and cng[2] in TAD_BY_GENDER:
+        item['ja'] = TAD_BY_GENDER[cng[2]]   # sā「彼女」、saḥ「彼,それ」、tat「それ」 (性で分かる)
     if gloss and gloss[2] == 'name':
         item['name'] = True
     if text == 'yad':

@@ -693,6 +693,12 @@ COPULA = {'surface': '(là)', 'pos': 'verb', 'lemma': 'là', 'pres1sg': 'là', '
 
 def adjective_predicates(words):
     """形容詞の述語 (Trời đẹp) の前に見えない繋辞を補う (共通の解析器の形容詞の補語「空は 美しい」)"""
+    content = [w for w in words if w.items is not None]
+    if content and not any(_item(w).pos == 'verb' or _item(w).attrib('predicative') for w in content) and \
+            _item(content[-1]).pos == 'adj' and len(content) >= 2 and _item(content[-2]).pos == 'noun':
+        # 動詞の無い文の最後の名詞 + 形容詞は述語 (Thành phố lớn「都市は 大きい」。Stanza は名詞句と読む)
+        last = content[-1]
+        last.items = [type(_item(last))(dict(_item(last).item, predicative=True, _=_cngs(('Nom',))))]
     out = []
     for k, word in enumerate(words):
         item = _item(word)

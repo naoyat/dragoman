@@ -190,6 +190,8 @@ def _case(token):
         return ('Acc',) if _prepositional_verb(token.head) else ('Gen',)   # look after her brother の brother
     if dep == 'conj':
         return _case(token.head) if token.head.i != token.i else ('Nom', 'Acc')
+    if dep == 'appos' and token.head.dep_ == 'dative' and token.head.head.pos_ in ('VERB', 'AUX'):
+        return ('Acc',)   # spaCy が同格と読む2つ目の目的語 (I gave my brother the book の book)
     if dep == 'appos':
         return _case(token.head)
     return ('Acc',) if token.head.pos_ in ('VERB', 'AUX') and token.head.i < token.i else ('Nom',)

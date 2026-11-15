@@ -19,6 +19,9 @@ GLOSSES = {
     'sūrya': [('太陽', 'noun')],
     'śakti': [('力', 'noun')],
     'putra': [('息子', 'noun')],
+    'bāla': [('子供,少年', 'noun'), ('幼い', 'adj')],   # 先頭の語義は形容詞「幼稚な」
+    'vana': [('森', 'noun')],
+    'jala': [('水', 'noun')],
     'vaṇij': [('商人', 'noun')],
     'megha': [('雲', 'noun')],
     # 語根

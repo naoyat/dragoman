@@ -23,6 +23,7 @@ import unicodedata
 from dragoman.core import analyzer as common
 from dragoman.core import language
 from dragoman.core.Word import Word
+from dragoman.core import animacy
 from . import dictionary, morphology, script
 
 PUNCTUATION = {'.': 'period', '!': 'period', '?': 'question', '؟': 'question', '،': 'comma', ',': 'comma',
@@ -85,7 +86,7 @@ ARABIC = language.Language(
     copulas=BareSet({'كان'}),
     negations=BareSet({'لا', 'لم', 'لن', 'ما', 'ليس', 'غير'}),
     vocative_particles=BareSet({'يا'}),
-    case_particles={'Nom': 'が', 'Acc': 'を', 'Gen': 'の', 'Voc': 'よ'},
+    case_particles={'Nom': 'が', 'Acc': 'を', 'Gen': 'の', 'Voc': 'よ', 'Dat': 'に'},
     absolute_case=None,
     lookup=_root_items,
     predicative_adjective=predicative_adjective,
@@ -123,7 +124,9 @@ def _context_score(reading, prev, nxt, bare_input=False, first=False):
     pos = reading.pos
     score = 1.0
     if bare_input and pos == 'verb' and reading.feature('vox') == 'p':
-        score *= 0.3   # 母音記号の無い文の動詞は能動を先に (يكتب: yaktubu「書く」。受動 yuktabu は書き手が記号で示す)
+        score *= 0.3
+    if bare_input and pos == 'verb' and reading.feature('per') == '1' and reading.feature('asp') == 'p':
+        score *= 1.2   # 綴りの同じ -tu・-ta・-ti (أعطيت) は1人称「私が」を先に   # 母音記号の無い文の動詞は能動を先に (يكتب: yaktubu「書く」。受動 yuktabu は書き手が記号で示す)
     if first and prev is not None and nxt is not None and prev.pos in NOMINAL and prev.main.get('prc0') == 'Al_det' \
             and nxt.pos in NOMINAL and nxt.main.get('prc0') == 'Al_det' and nxt.pos != 'adj':
         # 定冠詞付きの名詞 - ? - 定冠詞付きの名詞: 主語 - 動詞 - 目的語 (المعلم مدح الولد) と読む
@@ -174,7 +177,8 @@ def choose_readings(surfaces):
                 continue
             prev = chosen[i - 1] if i > 0 else None
             nxt = chosen[i + 1] if i + 1 < len(chosen) else None
-            bare_input = not any(unicodedata.combining(c) for c in unicodedata.normalize('NFD', surfaces[i]))
+            # 母音記号の無い語 (NFD で分けるとハムザ付きの文字 أ・إ・ؤ も結合文字を含むので、母音記号だけを見る)
+            bare_input = not script.has_diacritics(surfaces[i])
             first = i == 1 or (i >= 2 and surfaces[i - 2] in PUNCTUATION)
             chosen[i] = max(cands, key=lambda r: r.score * _context_score(r, prev, nxt, bare_input, first))
     return chosen
@@ -405,6 +409,23 @@ def choose_subject(words):
                 _restrict(words[j], ('Acc',))
 
 
+# 2つの対格を取る動詞 (受け手 + 物): 前の対格が生き物なら受け手「〜に」(أَعْطَيْتُ أَخِي الكِتابَ「私の兄弟に 本を 与えた」)
+DOUBLE_OBJECT_VERBS = {'与える', '見せる', '教える', '尋ねる', '送る', '贈る', '着せる', '食べさせる'}
+
+
+def double_objects(words):
+    free = _free_nominals(words)
+    for i, word in enumerate(words):
+        verb = _item(word)
+        if not _finite(verb) or (verb.ja or '').split(',')[0] not in DOUBLE_OBJECT_VERBS or verb.attrib('voice') == 'passive':
+            continue
+        nxt = next((j for j in range(i + 1, len(words)) if _finite(_item(words[j])) or words[j].items is None), len(words))
+        objs = [j for j in free if i < j < nxt and _item(words[j])._ and all(c[0] == 'Acc' for c in _item(words[j])._)]
+        if len(objs) >= 2 and animacy.is_animate(_item(words[objs[0]])):
+            item = _item(words[objs[0]])
+            item._ = [('Dat',) + tuple(c[1:]) for c in item._]
+
+
 COPULA = {'pos': 'verb', 'pres1sg': 'كان', 'lex': 'كان', 'base': 'كان', 'ja': 'ある,いる', 'gloss_lang': 'ja',
           'voice': 'active', 'mood': 'indicative', 'tense': 'present', 'person': 3, 'number': 'sg',
           'desc': '名詞文 (繋辞なし)'}
@@ -559,6 +580,7 @@ def lookup_all(surfaces):
     mark_inna(words)
     words = supply_copula(words)
     choose_subject(words)
+    double_objects(words)
     for i, word in enumerate(words):
         word.index = i
     return words
