@@ -230,6 +230,12 @@ class QuotationTestCase(unittest.TestCase):
         self.assertEqual(trs[1], '空しさの空しさである')
         self.assertEqual(trs[2], '{全て,全体,森羅万象}は / 空しさである')
 
+    def test_participles(self):
+        from dragoman.hebrew import analyzer
+        tr = lambda text: next(analyzer.analyze_text(text)).clauses[0].predicate.translate()[0]
+        self.assertEqual(tr('יְהוָה רֹעִי'), '主 (ヤハウェ)は / 私の羊飼いである')   # 人称接尾辞の付いた分詞は「〜する人」
+        self.assertIn('読んでいる', tr('הַיֶּלֶד קוֹרֵא סֵפֶר'))   # קָרָא + סֵפֶר は「読む」
+
 
 if __name__ == '__main__':
     unittest.main()

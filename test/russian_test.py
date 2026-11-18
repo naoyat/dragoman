@@ -126,6 +126,9 @@ class AnalyzerTestCase(unittest.TestCase):
         a = analyze('Я хочу есть.')
         self.assertNotIn('ある', a.clauses[0].predicate.translate()[0])
 
+    def test_experiencer(self):
+        self.assertEqual(analyze('Ему понравился фильм.').clauses[0].predicate.translate()[0], '彼は / 映画が / 気に入った')
+
     def test_adverbial_clauses(self):
         def tr(text):
             return ' // '.join(c.predicate.translate()[0] for c in analyze(text).clauses)

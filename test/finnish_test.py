@@ -31,6 +31,10 @@ class AnalyzerTestCase(unittest.TestCase):
 
     def test_possession(self):
         self.assertEqual(self.ja('Minulla on kaksi kissaa.'), '私には / 二つの猫が / いる')         # 所格 + olla
+        self.assertEqual(self.ja('Kirjani on pöydällä.'), '机には / 私の本が / ある')   # 所有の接尾辞 (kirja + ni)
+        self.assertEqual(self.ja('Kädessäni on kirja.'), '私の手に / 本が / ある')     # 内格の場所の存在文
+        self.assertEqual(self.ja('Olen talossa.'), '私は / 家に / いる')
+        self.assertEqual(self.ja('Asun Tokiossa.'), '私が / 東京に / 住む')   # 文頭の大文字の動詞、格の付いた固有名詞
 
     def test_detect(self):
         from dragoman.main import detect

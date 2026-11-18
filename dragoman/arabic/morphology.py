@@ -303,6 +303,17 @@ def gloss(a):
     if ja:
         return ja, 'ja'
     found = entry(lex, pos, exact_only=True)
+    if pos == 'noun_prop' and (not found or found['gloss_lang'] == 'en'):
+        # 英語の説明の付いた人名 (فاطمة「Fatima, daughter of Muhammad …」) はカタカナに (ファーティマ)
+        english = (found['ja'] if found else _camel_gloss(a) or '').split(',')[0].strip()
+        from dragoman.core import en_ja
+        names = [j for j in (en_ja.lookup(english, 'noun') if english[:1].isupper() else [])
+                 if re.fullmatch('[ァ-ヿ・]+', j)]
+        if names:
+            return names[0], 'ja'
+        from . import katakana, script
+        if english[:1].isupper():
+            return katakana.katakana(script.translit(a.get('diac') or lex)), 'ja'
     if found and found['ja'].startswith('verbal noun of'):
         # 動名詞 (maṣdar)「〜すること」: 元の動詞の訳語から
         verb = re.search('[\u0621-\u064a\u064b-\u0652]+', found['ja'])

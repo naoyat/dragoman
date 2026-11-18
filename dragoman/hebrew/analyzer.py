@@ -138,6 +138,8 @@ def _words(token, ix, prefer='H'):
 
 # 連語形の分詞 + 名詞の「〜する人」の訳: (分詞の見出し, 後ろの名詞の見出し) → 訳 (Strong の番号)
 AGENT_NOUNS = {('5647', '127'): '耕し手', ('7462', '6629'): '羊飼い'}   # עֹבֵד אֲדָמָה「土の耕し手」、רֹעֵה צֹאן「羊飼い」
+# 人称接尾辞の付いた分詞の「〜する人」: 分詞の見出し → 訳 (יְהוָה רֹעִי「主は 私の羊飼いである」)
+AGENT_NOUNS_ALONE = {'7462': '羊飼い', '7473': '羊飼い', '5647': '仕える者'}
 
 # 親族の名詞 (Strong の番号): 人名と同格に並ぶ (אֶת־אָחִיו אֶת־הָבֶל「彼の弟アベルを」)
 KIN_NOUNS = ('251', '1121', '1323', '802', '1', '517', '269')   # 兄弟・息子・娘・妻・父・母・姉妹
@@ -156,6 +158,12 @@ def agent_nouns(words):
         if item is None or item.pos != 'participle' or item.attrib('state') != 'construct':
             continue
         nxt = next((w for w in words[i + 1:i + 3] if w.items and w.items[0].pos != 'article'), None)
+        lemma = (item.attrib('lemma') or '').rstrip('abcdefgh')
+        if nxt is not None and nxt.items[0].attrib('suffix') and item.attrib('voice') != 'passive':
+            # 人称接尾辞の付いた分詞は「〜する人」の名詞 (רֹעִי「私の羊飼い」。「私の 放牧する」でなく)
+            ja = AGENT_NOUNS_ALONE.get(lemma) or (item.attrib('ja') or '').split(',')[0] + '者'
+            word.items = [type(item)(dict(item.item, pos='noun', ja=ja, gloss_lang='ja'))] + word.items[1:]
+            continue
         if nxt is None or nxt.items[0].pos != 'noun':
             continue
         key = ((item.attrib('lemma') or '').rstrip('abcdefgh'), (nxt.items[0].attrib('lemma') or '').rstrip('abcdefgh'))
@@ -556,6 +564,22 @@ def split_quotations(words):
     return words
 
 
+# 目的語で決まる動詞の語義: (動詞の見出し, 目的語の見出し) → 訳 (קָרָא + סֵפֶר「本を読む」。「呼ぶ」でなく)
+OBJECT_SENSES = {('7121', '5612'): '読む'}
+
+
+def senses_by_object(words):
+    lemmas = {(w.items[0].attrib('lemma') or '').rstrip('abcdefgh') for w in words if w.items}
+    for word in words:
+        item = word.items[0] if word.items else None
+        if item is None or item.pos not in ('verb', 'participle'):
+            continue
+        lemma = (item.attrib('lemma') or '').rstrip('abcdefgh')
+        ja = next((ja for (v, o), ja in OBJECT_SENSES.items() if v == lemma and o in lemmas), None)
+        if ja:
+            word.items = [type(item)(dict(item.item, ja=ja, gloss_lang='ja'))] + word.items[1:]
+
+
 def lookup_all(surfaces):
     langs = choose_languages(surfaces)
     words = [w for ix, s in enumerate(surfaces) for w in _words(s, ix, langs[ix])]
@@ -572,6 +596,7 @@ def lookup_all(surfaces):
     words = split_quotations(words)
     words = supply_copula(words)  # 名詞文の繋辞を先に補う (後ろの1・2人称の動詞の節と分けるため)
     choose_subject(words)
+    senses_by_object(words)
     for i, word in enumerate(words):
         word.index = i
     return words

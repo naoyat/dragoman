@@ -24,6 +24,9 @@ class SegmentTestCase(unittest.TestCase):
         from dragoman.chinese.segment import segment
         self.assertEqual(segment('我是日本人。'), ['我', '是', '日本人', '。'])
         self.assertEqual(segment('我昨天买了一本书。'), ['我', '昨天', '买', '了', '一', '本', '书', '。'])   # 量詞で切る
+        self.assertEqual(segment('老师教学生中文。'), ['老师', '教', '学生', '中文', '。'])   # 同点なら後ろからの最長一致
+        self.assertIn('学生に / 中国語を', tr('老师教学生中文。'))   # 人の名詞は二重目的語の受け手
+        self.assertIn('一束の花を', tr('我买了一束花。'))
         self.assertEqual(segment('他把书放在桌子上。')[2:4], ['书', '放'])   # 辞書に無い 书放 は分け直す
         self.assertEqual(segment('我們學習中文。'), ['我們', '學習', '中文', '。'])   # 繁体字
         self.assertEqual(segment('李明住在北京。'), ['李明', '住', '在', '北京', '。'])   # 辞書に無い人名 (pkuseg は 李明住)

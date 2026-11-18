@@ -15,7 +15,7 @@ PUNCTUATION = set('。，、；：？！…—（）《》「」『』“”‘�
 NUMERALS = set('一二三四五六七八九十百千万亿两零〇几')
 DEMONSTRATIVES = ('这', '那', '哪', '每', '某', '各', '上', '下', '第')
 # よく使う量詞 (数詞・指示詞の後ろで、後ろの名詞と分ける)
-CLASSIFIERS = set('个只条张件位口头匹辆台架座栋间家所把支枝根片块杯瓶碗盘双对套份封篇首部场次回遍趟顿种样些点岁年天月分秒层群批本')
+CLASSIFIERS = set('个只条张件位口头匹辆台架座栋间家所把支枝根片块杯瓶碗盘双对套份封篇首部场次回遍趟顿种样些点岁年天月分秒层群批本束朵棵幅颗')
 HAN = '㐀-鿿豈-﫿'
 PIECES = re.compile(r'\s+|[A-Za-z0-9０-９Ａ-Ｚａ-ｚ.%%]+|[%s]+|.' % HAN)
 
@@ -43,12 +43,12 @@ def _backward(text, keys, longest):
 
 
 def _chunk(text):
-    """漢字の連なりを辞書の見出しで最長一致 (前から・後ろから。語の数・1字の語の少ないほう)"""
+    """漢字の連なりを辞書の見出しで最長一致 (前から・後ろから。語の数・1字の語の少ないほう、同点なら後ろから)"""
     keys, longest = dictionary.keys()
     longest = min(longest, 8)
     fw, bw = _forward(text, keys, longest), _backward(text, keys, longest)
     score = lambda seg: (len(seg), sum(1 for w in seg if len(w) == 1))
-    return fw if score(fw) <= score(bw) else bw
+    return fw if score(fw) < score(bw) else bw   # 同点なら後ろから (教学生 → 教 / 学生)
 
 
 def _split_classifiers(words):

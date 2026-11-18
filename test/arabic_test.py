@@ -75,6 +75,9 @@ class AnalyzerTestCase(unittest.TestCase):
         return analyzer.sentence_text(next(analyzer.analyze_text(text)).forms)
 
     def test_verbal_sentence(self):
+        self.assertEqual(self.translate('كتبت البنت رسالة.')[0], '娘が / 手紙を / 書いた')   # katabat (女性の主語)
+        self.assertEqual(self.translate('كتبت رسالة.')[0], '私が / 手紙を / 書いた')
+        self.assertTrue(self.translate('ذهبت فاطمة إلى المدرسة.')[0].startswith('ファーティマが'))   # 人名はカタカナ
         tr = self.translate('ذهب الولد إلى المدرسة.')[0]
         self.assertIn('少年', tr.split(' / ')[0])
         self.assertTrue(tr.split(' / ')[0].endswith('が'))

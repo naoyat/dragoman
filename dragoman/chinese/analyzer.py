@@ -113,9 +113,10 @@ def _case_of(token):
     if dep == 'iobj':
         return ('Dat',)
     if dep == 'compound:nn' and token.head.dep_ in ('dobj', 'obj') and token.head.head.text in GIVE_VERBS and \
-            (token.tag_ == 'PN' or any(t.tag_ in ('CD', 'M', 'OD') for t in token.doc[token.i + 1:token.head.i])):
+            (token.tag_ == 'PN' or any(t.tag_ in ('CD', 'M', 'OD') for t in token.doc[token.i + 1:token.head.i]) or
+             _is_person_text(token.text)):
         # 给我书「私に 本を 与える」、给了弟弟一本书「弟に 一冊の本を」: spaCy は受け手を 书 の複合語の前の名詞にする
-        # (数詞・量詞が間にあれば複合語でない)
+        # (数詞・量詞が間にあれば複合語でない)。人を表す名詞も受け手 (教学生中文「学生に 中国語を 教える」)
         return ('Dat',)
     if dep == 'compound:nn' and token.head.tag_ in ('NN', 'NR') and token.head.i > token.i:
         return ('Gen',)   # 名詞 + 名詞の複合語 (主体大修工程「本体の 改修の 工事」): 前の名詞は後ろの名詞に掛かる
@@ -289,11 +290,15 @@ PERSON_WORDS = ('person', 'people', 'friend', 'student', 'teacher', 'child', 'ma
                 'doctor', 'brother', 'sister', 'son', 'daughter', 'colleague', 'classmate', 'guest', 'customer')
 
 
-def _is_person(noun):
-    """人を表す名詞か (CC-CEDICT の英語の語義から: 朋友 friend、学生 student …)"""
-    rows = dictionary.lookup(noun.attrib('lemma') or noun.attrib('surface') or '')
+def _is_person_text(text):
+    rows = dictionary.lookup(text)
     en = (rows[0]['en'] if rows else '') or ''
     return any(re.search(r'\b%s\b' % w, en) for w in PERSON_WORDS)
+
+
+def _is_person(noun):
+    """人を表す名詞か (CC-CEDICT の英語の語義から: 朋友 friend、学生 student …)"""
+    return _is_person_text(noun.attrib('lemma') or noun.attrib('surface') or '')
 
 
 def classifiers(words):

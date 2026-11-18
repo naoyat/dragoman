@@ -103,7 +103,7 @@ def _verb_lemma(text):
 
 
 def _verb_data(token, feats, lemma=None):
-    lemma = lemma or token.lemma_
+    lemma = lemma or LEMMA_FIXES.get(token.text.lower(), token.lemma_)
     ja, gloss_lang, row = morphology.gloss(lemma, 'verb')
     if ja is None or gloss_lang == 'en' and lemma not in morphology.GLOSSES:
         better = _verb_lemma(token.text)
@@ -128,6 +128,11 @@ def _verb_data(token, feats, lemma=None):
 
 
 RELATIVE_FORMS = {'der', 'die', 'das', 'dem', 'den', 'dessen', 'deren', 'denen'}
+
+
+# spaCy が見出し語を取り違える動詞の形 (gefällt → fällen「切り倒す」でなく gefallen「気に入る」)
+LEMMA_FIXES = {'gefällt': 'gefallen', 'gefallt': 'gefallen', 'gefiel': 'gefallen', 'gefielen': 'gefallen',
+               'gefalle': 'gefallen'}
 
 
 def item_of(token, doc):

@@ -192,6 +192,9 @@ def _words(surfaces):
     return out
 
 
+# si・ni・kay の後ろで呼び名に使う親族の名詞 (si Nanay「母」、kay Lola「祖母に」)
+KIN_TITLES = {'nanay', 'inay', 'tatay', 'itay', 'lola', 'lolo', 'kuya', 'ate', 'tita', 'tito', 'ina', 'ama', 'bunso'}
+
 TIME_ADVERBS = {'bukas': '明日', 'kahapon': '昨日', 'ngayon': '今日'}
 TIME_OF_DAY = {'umaga': '朝', 'tanghali': '昼', 'hapon': '午後', 'gabi': '夜'}
 SKIP_ENCLITICS = ('na', 'pa', 'ba', 'po', 'ho')
@@ -361,7 +364,9 @@ def mark_phrases(words):
         personal = word.surface.lower() in ('si', 'ni', 'kay', 'sina', 'nina', 'kina')
         for w in phrase:
             w.marker = kind
-            if personal and _pos(w) == 'noun':
+            if personal and _pos(w) == 'noun' and script.key(w.surface) in KIN_TITLES:
+                _rebuild(w, proper=True)   # si Nanay「母」(呼び名に使う親族の名詞は訳す)
+            elif personal and _pos(w) == 'noun':
                 _rebuild(w, ja=w.surface, gloss_lang='ja', proper=True)  # si Juan → Juan (人の名前)
             if item.attrib('plural') or any(_pos(p) == 'plural' for p in phrase):
                 for it in w.items:
@@ -684,7 +689,17 @@ def lookup_all(surfaces):
         word.index = i
     assign_cases(words)
     past_context(words)
+    choose_ngayon(words)
     return words
+
+
+def choose_ngayon(words):
+    """ngayon「今」は、完了の動詞の文では「今日」(Kumain si Nanay ngayon「母は 今日 食べた」)"""
+    if not any(_pos(w) == 'verb' and _item(w).attrib('tense') in ('perfect', 'pluperfect') for w in words):
+        return
+    for word in words:
+        if _pos(word) == 'adv' and script.key(word.surface) == 'ngayon' and _item(word).ja == '今':
+            _rebuild(word, ja='今日')
 
 
 # 過去の時の副詞 (kahapon「昨日」、kanina「さっき」): 文の進行・不定の動詞を過去に

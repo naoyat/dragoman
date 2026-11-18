@@ -24,6 +24,7 @@ from dragoman.core import analyzer as common
 from dragoman.core import language
 from dragoman.core.Word import Word
 from dragoman.core import animacy
+from dragoman.core.Item import Item
 from . import dictionary, morphology, script
 
 PUNCTUATION = {'.': 'period', '!': 'period', '?': 'question', '؟': 'question', '،': 'comma', ',': 'comma',
@@ -128,6 +129,11 @@ def _context_score(reading, prev, nxt, bare_input=False, first=False):
     if bare_input and pos == 'verb' and reading.feature('per') == '1' and reading.feature('asp') == 'p' and \
             not re.match(r'(rain|snow)\b', morphology.gloss(reading.main)[0] or ''):
         score *= 1.2   # 綴りの同じ -tu・-ta・-ti (أعطيت) は1人称「私が」を先に (天気の أمطرت「雨が降った」は除く)   # 母音記号の無い文の動詞は能動を先に (يكتب: yaktubu「書く」。受動 yuktabu は書き手が記号で示す)
+    if bare_input and pos == 'verb' and reading.feature('asp') == 'p' and reading.feature('per') == '3' and \
+            reading.feature('gen') == 'f' and nxt is not None and nxt.feature('gen') == 'f' and \
+            (nxt.pos in NOMINAL - {'adj'} and nxt.main.get('prc0') == 'Al_det' and
+             animacy.is_animate(Item({'surface': '', 'pos': 'noun', 'ja': morphology.gloss(nxt.main)[0] or ''})) or nxt.pos == 'noun_prop'):
+        score *= 2   # 動詞 + 女性の主語 (كتبت البنت「娘が書いた」、ذهبت فاطمة「ファーティマが行った」): katabat を1人称より先に
     if first and prev is not None and nxt is not None and prev.pos in NOMINAL and prev.main.get('prc0') == 'Al_det' \
             and nxt.pos in NOMINAL and nxt.main.get('prc0') == 'Al_det' and nxt.pos != 'adj':
         # 定冠詞付きの名詞 - ? - 定冠詞付きの名詞: 主語 - 動詞 - 目的語 (المعلم مدح الولد) と読む

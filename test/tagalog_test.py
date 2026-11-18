@@ -99,6 +99,7 @@ class TagalogTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Noong dumating siya, kumakain kami.'), '私たちは / {彼が 着いた}とき / 食べていた')
         self.assertEqual(self.ja('Nang makita ko siya, umiyak ako.'), '私は / {私が 彼を 見た}とき / 泣いた')
         self.assertEqual(self.ja('Kumakain ako ng mansanas kahapon.'), '私は / 林檎を / 昨日 / 食べていた')   # 過去の時の副詞
+        self.assertEqual(self.ja('Kumain si Nanay ngayon.'), '母は / 今日 / 食べた')   # si + 親族の名詞、完了の ngayon
         self.assertEqual(self.ja('Nakatira siya dito noong 2010.'), '彼は / ここに / 2010年に / 住んでいた')
         self.assertEqual(self.ja('Kapag dumating siya, kakain kami.'), '私たちは / {彼が 着いた}ら / 食べるだろう')
 

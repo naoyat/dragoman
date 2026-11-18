@@ -63,6 +63,7 @@ FINNISH = language.Language(
     genitive_precedes_head=True,
     objects_follow_verb=True,
     possessor_cases=('Ade',),
+    place_cases=('Ine',),
 )
 
 
@@ -141,7 +142,11 @@ def item_of(token):
     lower = text.lower()
     if pos == 'PUNCT':
         return None
-    if pos in ('NOUN', 'VERB', 'X', 'PROPN', 'ADV') and morphology.gloss(lemma, {'VERB': 'verb', 'ADV': 'adv'}.get(pos, 'noun'))[0] is None:
+    found = morphology.gloss(lemma, {'VERB': 'verb', 'ADV': 'adv'}.get(pos, 'noun'))
+    # 辞書が別の見出しに寄せて引いた語 (kirjani → kirja、kädessäni → käsi) も、所有の接尾辞・格の語尾を外して読み直す
+    redirected = pos in ('NOUN', 'PROPN') and found[2] and found[2].get('key') != lemma.lower() and \
+        lower.endswith(tuple(e for e, _, _ in POSSESSIVE_ENDINGS))
+    if pos in ('NOUN', 'VERB', 'X', 'PROPN', 'ADV') and found[0] is None or redirected:
         recovered = _recover_possessed(text)
         if recovered:
             lemma, case, person, number = recovered
@@ -277,11 +282,48 @@ def merge_verbs(words, doc):
     return out
 
 
+# 人称の語尾 → (人称, 数) (文頭の大文字の動詞の読み直しに)
+PERSON_ENDINGS = (('mme', 1, 'pl'), ('tte', 2, 'pl'), ('vat', 3, 'pl'), ('vät', 3, 'pl'), ('n', 1, 'sg'), ('t', 2, 'sg'))
+
+
+def _initial_verb(token, doc):
+    """文頭の大文字の動詞を spaCy が名詞に読む (Asun Tokiossa の Asun → asu「服装」の属格) とき、動詞の無い文なら
+    人称の語尾を外した語幹 + a/ä が動詞として辞書にあれば、その現在形に (asua「住む」の1人称単数)"""
+    if token.i != 0 or not token.text[:1].isupper() or token.pos_ not in ('NOUN', 'PROPN') or \
+            any(t.pos_ in ('VERB', 'AUX') for t in doc):
+        return None
+    lower = token.text.lower()
+    for ending, person, number in PERSON_ENDINGS:
+        stem = lower[:-len(ending)]
+        if not lower.endswith(ending) or len(stem) < 2:
+            continue
+        for lemma in (stem + 'a', stem + 'ä'):
+            ja, gloss_lang, _ = morphology.gloss(lemma, 'verb')
+            if ja is not None:
+                return {'surface': token.text, 'pos': 'verb', 'lemma': lemma, 'pres1sg': lemma, 'base': lemma, 'ja': ja,
+                        'gloss_lang': gloss_lang, 'voice': 'active', 'mood': 'indicative', 'tense': 'present',
+                        'person': person, 'number': number, 'main': True, 'part_past': False}
+    return None
+
+
+def _proper_case(data, token):
+    """格の語尾の付いたままの固有名詞 (Tokiossa) は語尾を外して引く (Tokio「東京」)"""
+    if not data or data.get('pos') != 'noun' or not data.get('proper') or data.get('lemma') != token.text:
+        return data
+    for ending, case in CASE_ENDINGS + (('n', 'Gen'),):
+        base = token.text[:-len(ending)]
+        if token.text.endswith(ending) and len(base) >= 2:
+            ja, gloss_lang, _ = morphology.gloss(base, 'name')
+            if ja is not None and gloss_lang == 'ja':
+                return dict(data, base=base, lemma=base, ja=ja, _=_cngs(case, 'sg'), case_name=morphology.CASE_NAMES.get(case))
+    return data
+
+
 def lookup_all(surfaces):
     doc = morphology.parse(surfaces)
     words = []
     for token in doc:
-        data = item_of(token)
+        data = _initial_verb(token, doc) or _proper_case(item_of(token), token)
         word = Word(token.text, None if data is None else [data])
         word.token_ix = token.i
         word.doc_i = token.i

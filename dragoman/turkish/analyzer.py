@@ -708,8 +708,13 @@ def mark_topic(words):
         if _pos(w) == 'verb' or w.items is None:
             return
         if _pos(w) in ('noun', 'pronoun') and _item(w)._ and _item(w)._[0][0] == 'Nom':
-            if not (getattr(w, 'record', None) or {}).get('indefinite'):
-                w.topic = True   # bir の付いた不定の名詞 (Bir kız geldi「娘が来た」) は主題にしない
+            k = words.index(w)
+            leading_adverb = any(_pos(x) == 'adv' for x in words[start:k])
+            before_verb = k + 1 == first_verb and _pos(w) == 'noun'
+            if not (getattr(w, 'record', None) or {}).get('indefinite') and not (leading_adverb and before_verb):
+                # bir の付いた不定の名詞 (Bir kız geldi「娘が来た」) は主題にしない。副詞の後ろで動詞の直前の
+                # 裸の名詞 (Dün yağmur yağdı「昨日 雨が 降った」) も新しい事柄なので「が」
+                w.topic = True
             return
         if _pos(w) in ('noun', 'pronoun'):
             return

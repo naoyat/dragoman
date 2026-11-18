@@ -33,6 +33,7 @@ class AnalyzerTestCase(unittest.TestCase):
     def test_separable_and_existential(self):
         self.assertEqual(self.ja('Er ruft seine Mutter an.'), '彼が / 彼の母を / 電話する')
         self.assertEqual(self.ja('Es gibt keinen Zucker.'), '砂糖が / ない,いない')
+        self.assertEqual(self.ja('Mir gefällt der Tee.'), '私は / 茶が / 気に入る')   # 経験者の与格 (fällen でなく)
 
     def test_adverbial_clauses(self):
         self.assertEqual(self.ja('Ich bleibe zu Hause, weil es regnet.'), '{雨が降る}ので / 私が / 家[へ,のところへ] / とどまる')

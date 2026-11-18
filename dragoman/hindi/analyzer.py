@@ -347,12 +347,46 @@ def merge_verb_groups(words):
     return out
 
 
+# 名詞 + होना・आना で「〜が好きだ」のように経験者を与格に取る述語 (मुझे चाय पसंद है「私は 茶が 好きだ」)
+EXPERIENCER_NOUNS = {'पसंद': '好きだ'}
+
+
+def merge_experiencer(words):
+    """経験者の与格を取る名詞 + होना・आना (पसंद है「好きだ」) を1つの動詞に。与格の句は「〜は」(core/Predicate.py)"""
+    out = []
+    for word in words:
+        item = _item(word)
+        negation = out[-1] if out and out[-1].surface in morphology.NEGATIONS else None
+        k = len(out) - (2 if negation is not None else 1)
+        prev = _item(out[k]) if k >= 0 else None
+        if item is not None and item.pos == 'verb' and item.attrib('lemma') in ('होना', 'आना') and \
+                prev is not None and prev.attrib('lemma') in EXPERIENCER_NOUNS:
+            if negation is not None:
+                out.pop()
+            noun = out.pop()
+            if negation is not None:
+                out.append(negation)   # पसंद नहीं है: 否定は前へ
+            data = dict(item.item, ja=EXPERIENCER_NOUNS[prev.attrib('lemma')], experiencer=True,
+                        lemma=prev.attrib('lemma') + ' ' + item.attrib('lemma'), pres1sg=None,
+                        surface=noun.surface + ' ' + word.surface,
+                        roman=' '.join(_item(w).attrib('roman') or w.surface for w in (noun, word)))
+            merged = Word(data['surface'], [data])
+            merged.token_ix = noun.token_ix
+            merged.token_ixs = tuple(i for w in (noun, word) for i in (getattr(w, 'token_ixs', None) or (w.token_ix,)))
+            out.append(merged)
+            continue
+        out.append(word)
+    return out
+
+
 def _single(word):
     """1語の動詞: 未完了分詞だけ (否定の नहीं पढ़ता) は現在、完了分詞は過去"""
     item = _item(word)
     kind = item.attrib('form')
     if kind == 'habitual':
         item.item['tense'] = 'present'
+    elif item.attrib('lemma') == 'होना' and item.attrib('tense') == 'past':
+        item.item['tense'] = 'perfect'   # था「〜であった」
     return word
 
 
@@ -553,7 +587,7 @@ def choose_subject(words):
         for w in dative:
             if w is subject:
                 continue
-            if has_object or item.attrib('lemma') in DATIVE_VERBS or copula:
+            if has_object or item.attrib('lemma') in DATIVE_VERBS or copula or item.attrib('experiencer'):
                 _restrict_or_recase(w, 'Dat')
             else:
                 _restrict_or_recase(w, 'Acc')
@@ -590,6 +624,7 @@ def lookup_all(surfaces):
     mark_indefinite(words)
     mark_possessive_postpositions(words)
     words = merge_verb_groups(words)
+    words = merge_experiencer(words)
     words = mark_postpositions(words)
     choose_subject(words)
     for i, word in enumerate(words):

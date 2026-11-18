@@ -30,6 +30,7 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Güzel bir kız geldi.'), '美しい{娘,少女}が / 来た')   # kız は間投詞でなく名詞、bir の主語は「が」
         self.assertEqual(self.ja('Bir güzel kız geldi.'), '美しい{娘,少女}が / 来た')
         self.assertEqual(self.ja('Kız geldi.'), '{娘,少女}は / 来た')
+        self.assertEqual(self.ja('Dün yağmur yağdı.'), '昨日 / 雨が / 降った')   # 副詞の後ろの動詞の直前の名詞は「が」
         self.assertEqual(self.ja('Şarkı söyledi.'), '{彼,彼女,それ}が / 歌を / 歌った')   # şarkı「歌」、不定の目的語
         self.assertEqual(self.ja('Çok güzel bir ev aldık.'), '我々が / とても美しい家を / 取った')   # çok + 形容詞
         self.assertEqual(self.ja('Ev güzel.'), '家は / 美しい')   # 読みの順が実行ごとに変わらない

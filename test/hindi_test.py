@@ -46,6 +46,11 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertTrue(tr.startswith('{少年'))
         self.assertIn('本を', tr)
 
+    def test_experiencer(self):
+        self.assertEqual(self.translate('मुझे चाय पसंद है।')[0], '私は / 茶が / 好きだ')   # 与格の経験者 + पसंद है
+        self.assertEqual(self.translate('मुझे चाय पसंद नहीं है।')[0], '私は / 茶が / 好きではない')
+        self.assertEqual(self.translate('शहर बड़ा था।')[0], '{町,都市}は / 大きかった')   # था「〜であった」
+
     def test_ergative(self):
         tr = self.translate('लड़के ने किताब पढ़ी।')[0]
         self.assertTrue(tr.split(' / ')[0].endswith('が'))     # ने の付いた主語

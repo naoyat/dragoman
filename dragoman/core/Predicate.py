@@ -30,6 +30,10 @@ def english_verb_label(verb, negated=False):
     return '[%s]' % '・'.join(labels) if labels else ''
 
 
+# 経験者を与格に取る述語の訳語 (Мне нравится чай、Mir gefällt der Tee「私は 茶が 好きだ・気に入る」)
+EXPERIENCER_JA = ('好きだ', '気に入る')
+
+
 class Predicate (LatinObject):
     def __init__(self, verb):
         self.verb = verb
@@ -109,12 +113,16 @@ class Predicate (LatinObject):
         if not self.is_sum:
             return False
         noms = case_slot.get('Nom', []) + (case_slot.get('Nom/Acc', []) if self.person() == 3 else [])
+        if not noms and self.person() in (1, 2) and not case_slot.get('Acc') and not self.gap and \
+                any(case_slot.get(case) for case in self.language.place_cases):
+            return 'personal'   # 主語の無い1・2人称と場所の格 (Olen talossa「私は 家に いる」)
         if len(noms) != 1 or not _nominal(noms[0]) or case_slot.get('Acc'):
             return False  # 対格があれば存在文ではない (繋辞は対格を取らない)
         if isinstance(noms[0], Word) and noms[0].items and noms[0].items[0].attrib('complement') and \
                 self.gap in ('Nom', 'Nom/Acc'):
             return False  # 関係節の主語が空所で、残りは補語 (qui est ce qu'on nomme …「{…}ことである」)
-        place = any(isinstance(case, tuple) for case in case_slot if case_slot[case]) or bool(case_slot.get('Loc'))
+        place = any(isinstance(case, tuple) for case in case_slot if case_slot[case]) or \
+            any(case_slot.get(case) for case in ('Loc',) + self.language.place_cases)
         possessor = any(case_slot.get(case) for case in self.language.possessor_cases)
         if self.first_item.attrib('existential'):
             pass
@@ -177,7 +185,7 @@ class Predicate (LatinObject):
 
         sum_complement = []
         is_existential = self._existential(case_slot)
-        if is_existential and self._personal_subject(case_slot):
+        if is_existential == 'personal' or is_existential and self._personal_subject(case_slot):
             # 人称代名詞が主語なら主語を先に「は」で (私たちは劇場にいた)。場所は「〜に」
             is_existential = 'personal'
         elif is_existential:
@@ -186,7 +194,8 @@ class Predicate (LatinObject):
             # ただし否定の文は「〜には」が自然 (部屋には机がない、シチリアにはケレースがいなかった)
             negative = self._negative()
             for case, objs in list(case_slot.items()):
-                if not objs or not (isinstance(case, tuple) or case == 'Loc' or case in self.language.possessor_cases):
+                place_case = case == 'Loc' or case in self.language.place_cases
+                if not objs or not (isinstance(case, tuple) or place_case or case in self.language.possessor_cases):
                     continue
                 for obj in objs:
                     t, neg = obj.translate(existential=True) if isinstance(obj, PrepClause) else obj.translate()
@@ -195,7 +204,7 @@ class Predicate (LatinObject):
                         place = t if isinstance(obj, PrepClause) else _existential_place(t)
                         tr.append(place + 'は' if negative and not place.endswith('には') else place)
                     else:
-                        tr.append(t + ('に' if case == 'Loc' and not negative else 'には'))
+                        tr.append(t + ('に' if place_case and not negative else 'には'))
                 case_slot[case] = []
         # Nominative
         noms = []
@@ -298,6 +307,7 @@ class Predicate (LatinObject):
             elif pn in subj_ja:
                 noms.append(subj_ja[pn])
 
+        subject_ix = len(tr)
         if noms:
             nom_case_ja = 'が'
             if self.is_sum and not self.subordinate and (not is_existential or is_existential == 'personal'):
@@ -323,6 +333,15 @@ class Predicate (LatinObject):
         for case, objs in list(case_slot.items()):
             if case in ('Nom', 'Nom/Acc', 'Acc', 'Inf', 'Q'): continue
             if not objs: continue
+            if case == 'Dat' and (verb.attrib('experiencer') or (verb.ja or '').split(',')[0] in EXPERIENCER_JA):
+                # 経験者の与格は主題として先に (मुझे चाय पसंद है「私は 茶が 好きだ」、Mir gefällt der Tee)
+                ts = []
+                for obj in objs:
+                    t, neg = obj.translate()
+                    negated = negated or neg
+                    ts.append(braced(t))
+                tr.insert(subject_ix, '='.join(ts) + 'は')
+                continue
             if isinstance(case, tuple):
                 # prep-clause
                 case_ja = '' # case.encode('utf-8')
@@ -338,7 +357,8 @@ class Predicate (LatinObject):
                     t = _existential_place(t)
                 trs.append(t)
             particles = [self._particle(case, obj) for obj in objs] if not isinstance(case, tuple) else []
-            if is_existential == 'personal' and (case == 'Loc' or case in self.language.possessor_cases):
+            if is_existential == 'personal' and (case in ('Loc',) + self.language.place_cases or
+                                                 case in self.language.possessor_cases):
                 particles = ['に'] * len(objs)
             if existential_place:
                 trs = [t[:-2] + 'に' if t.endswith('には') else t for t in trs]  # 私たちは劇場にいた
