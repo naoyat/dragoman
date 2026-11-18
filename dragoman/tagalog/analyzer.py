@@ -594,6 +594,24 @@ def supply_copula(words):
 def _supply_copula(clause):
     if not clause or any(_pos(w) == 'verb' for w in clause):
         return clause
+    if script.key(clause[0].surface) == 'nasaan' and any(_pos(x) in ('pronoun', 'noun') for x in clause[1:]):
+        # nasaan「どこにある・いる」: Nasaan ka?「あなたは どこに いるか」
+        _rebuild(clause[0], pos='adv', ja='どこに', interrogative=True)
+        for x in clause[1:]:
+            if _pos(x) in ('pronoun', 'noun'):
+                _restrict(x, ('Nom',))
+        copula = Word('(nasaan)', [dict(COPULA, existential=True)])
+        copula.token_ix = clause[0].token_ix
+        return clause + [copula]
+    if script.key(clause[0].surface) == 'nasa' and any(getattr(x, 'marker', None) == 'ang' or
+                                                       _pos(x) == 'pronoun' for x in clause[1:]):
+        # nasa「〜にある・いる」(na + sa): Nasa bahay si Nanay「母は 家に いる」
+        k = 1
+        while k < len(clause) and getattr(clause[k], 'marker', None) == 'sa':
+            k += 1
+        copula = Word('(nasa)', [dict(COPULA, existential=True)])
+        copula.token_ix = clause[0].token_ix
+        return clause[:k] + [copula] + clause[k:]
     for k, w in enumerate(clause):
         # 代名詞の述語 (Ikaw ang …「〜はあなたである」): ang の形の代名詞のすぐ後ろに ang 名詞句
         predicate_pronoun = _pos(w) == 'pronoun' and k == 0 and \
@@ -690,7 +708,19 @@ def lookup_all(surfaces):
     assign_cases(words)
     past_context(words)
     choose_ngayon(words)
+    choose_saan(words)
     return words
+
+
+def choose_saan(words):
+    """saan「どこ」: 住む・行く・来るの文なら「どこに」、ほかの動詞なら「どこで」(Saan ka nakatira?「どこに 住んでいるか」)"""
+    verb = next((_item(w) for w in words if _pos(w) == 'verb'), None)
+    if verb is None:
+        return
+    goal = (verb.ja or '').split(',')[0] in ('住む', '行く', '来る', '帰る', '着く', '置く')
+    for word in words:
+        if _pos(word) == 'adv' and script.key(word.surface) == 'saan' and _item(word).ja == 'どこ':
+            _rebuild(word, ja='どこに' if goal else 'どこで')
 
 
 def choose_ngayon(words):

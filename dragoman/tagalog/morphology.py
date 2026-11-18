@@ -31,7 +31,7 @@ VOICE_NAMES = {'actor': '行為者焦点', 'object': '対象焦点', 'locative':
 # 標識: 語 → (種類, 複数)
 MARKERS = {'ang': ('ang', False), 'si': ('ang', False), 'sina': ('ang', True), 'ng': ('ng', False),
            'ni': ('ng', False), 'nina': ('ng', True), 'sa': ('sa', False), 'kay': ('sa', False),
-           'kina': ('sa', True), 'ang mga': ('ang', True), 'ng mga': ('ng', True), 'sa mga': ('sa', True)}
+           'kina': ('sa', True), 'nasa': ('sa', False), 'nasa mga': ('sa', True), 'ang mga': ('ang', True), 'ng mga': ('ng', True), 'sa mga': ('sa', True)}
 # 代名詞: 語 → (訳, 標識の種類, 人称, 数)
 PRONOUNS = {
     'ako': ('私', 'ang', 1, 'sg'), 'ko': ('私', 'ng', 1, 'sg'), 'akin': ('私', 'sa', 1, 'sg'),
@@ -61,7 +61,8 @@ ENCLITICS = {'na': ('もう', 'adv'), 'pa': ('まだ', 'adv'), 'ba': ('か', 'qu
              'nga': ('本当に', 'adv'), 'pala': ('なんと', 'adv'), 'kasi': ('〜なので', 'adv'), 'yata': ('たぶん', 'adv'),
              'sana': ('〜ならいいのに', 'adv'), 'muna': ('まず', 'adv'), 'man': ('〜でも', 'adv')}
 # 訳語を決めておく語 (Wiktionary の最初の語義が外れるもの)
-GLOSSES = {'saan': ('どこ', 'adv'), 'kailan': ('いつ', 'adv'), 'bakit': ('なぜ', 'adv'), 'paano': ('どのように', 'adv'),
+GLOSSES = {'maynila': ('マニラ', 'noun'), 'pilipinas': ('フィリピン', 'noun'), 'cebu': ('セブ', 'noun'),
+           'davao': ('ダバオ', 'noun'), 'saan': ('どこ', 'adv'), 'kailan': ('いつ', 'adv'), 'bakit': ('なぜ', 'adv'), 'paano': ('どのように', 'adv'),
            'ilan': ('いくつ', 'adv'), 'gaano': ('どれほど', 'adv'),   # 疑問の副詞
            'puti': ('白い', 'adj'), 'itim': ('黒い', 'adj'), 'pula': ('赤い', 'adj'),   # 色 (puti「刈ること」でなく)
            'bata': ('子供', 'noun'), 'lalaki': ('男', 'noun'), 'babae': ('女', 'noun'), 'isda': ('魚', 'noun'),

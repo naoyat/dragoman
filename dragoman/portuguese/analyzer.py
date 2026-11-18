@@ -612,6 +612,31 @@ def genitive_de(words):
     return out
 
 
+def gostar_de(words):
+    """gostar de + 名詞「〜が好きだ」: de を落として名詞を目的語に、訳語を「好きだ」に (Eu gosto de chá「私は 茶が 好きだ」。
+    助詞は core/Predicate.LIKE_JA)。gostar de + 不定詞は merge_verbs の「〜のが好きだ」"""
+    out = []
+    for i, word in enumerate(words):
+        item = _item(word)
+        if item is not None and item.pos == 'preposition' and item.attrib('base') == 'de':
+            k = len(out) - 1
+            while k >= 0 and _pos(out[k]) == 'adv':
+                k -= 1
+            j = i + 1
+            while j < len(words) and _pos(words[j]) in ('article', 'adj'):
+                j += 1
+            verb = _item(out[k]) if k >= 0 else None
+            if verb is not None and verb.pos == 'verb' and verb.attrib('base') == 'gostar' and j < len(words) and \
+                    _pos(words[j]) in ('noun', 'pronoun'):
+                out[k].items = [type(verb)(dict(verb.item, ja='好きだ', gloss_lang='ja'))] + out[k].items[1:]
+                it = _item(words[j])
+                words[j].items = [type(it)(dict(it.item, _=[('Acc',) + c[1:] for c in it._ or [('Acc', 'sg', 'm')]]))]
+                word.merged_into = True
+                continue
+        out.append(word)
+    return out
+
+
 def dative_clitics(words):
     """名詞の目的語 (対格) のある文の人の接語 (me・te・nos・vos) は与格「〜に」(Você me deu o livro「私に本を」)"""
     if not any(_pos(w) == 'noun' and _item(w)._ and _item(w)._[0][0] == 'Acc' for w in words):
@@ -708,6 +733,7 @@ def lookup_all(surfaces):
     mark_proclitics(words)
     words = merge_verbs(words, doc)
     words = genitive_de(words)
+    words = gostar_de(words)
     words = attach_articles(words)
     dative_clitics(words)
     existential(words)

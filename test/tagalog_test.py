@@ -44,7 +44,7 @@ class TagalogTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Binili ng lalaki ang isda.'), '魚は / 男が / 買った')       # 対象焦点
         self.assertEqual(self.ja('Binilhan ng lalaki ng isda ang tindahan.'), '店には / 男が / 魚を / 買った')  # 場所焦点
         self.assertEqual(self.ja('Kumakain ako ng kanin.'), '私は / ご飯を / 食べている')    # 進行
-        self.assertEqual(self.ja('Nakatira ako sa Maynila.'), '私は / Maynilaに / 住んでいる')   # 状態の naka-
+        self.assertEqual(self.ja('Nakatira ako sa Maynila.'), '私は / マニラに / 住んでいる')   # 状態の naka-
         self.assertEqual(self.ja('Nakaupo siya sa silya.'), '彼は / 椅子に / 座っている')
         self.assertEqual(self.ja('Nakatulog ang bata.'), '子供は / 眠った')                 # naka- の完了 (行為者焦点)
         self.assertEqual(self.ja('Hindi ako makatulog.'), '私は / 眠ることができない')        # 可能の maka-
@@ -84,22 +84,25 @@ class TagalogTestCase(unittest.TestCase):
         self.assertEqual(self.ja('Kumain kami sa bahay ni Juan sa Sabado.'), '私たちは / Juanの家で / 土曜日に / 食べた')
         self.assertEqual(self.ja('Bumili ako ng isda sa palengke.'), '私は / 市場で / 魚を / 買った')
         self.assertEqual(self.ja('Bumili ako ng libro kay Juan.'), '私は / Juanから / 本を / 買った')
-        self.assertEqual(self.ja('Pumunta ako sa Maynila.'), '私は / Maynilaに / 行った')
-        self.assertEqual(self.ja('Nakatira ako sa Maynila.'), '私は / Maynilaに / 住んでいる')
+        self.assertEqual(self.ja('Pumunta ako sa Maynila.'), '私は / マニラに / 行った')
+        self.assertEqual(self.ja('Nakatira ako sa Maynila.'), '私は / マニラに / 住んでいる')
         # ipinanganak「生まれた」、noong・sa + 年・月
         self.assertEqual(self.ja('Ipinanganak ako sa Mayo.'), '私は / 5月に / 生まれた')
         self.assertEqual(self.ja('Ipinanganak siya noong 1990.'), '彼は / 1990年に / 生まれた')
         self.assertEqual(self.ja('Dumating siya noong Lunes.'), '彼は / 月曜日に / 着いた')
-        self.assertEqual(self.ja('Lumipat kami sa Cebu sa 2020.'), '私たちは / Cebuに / 2020年に / 移った')
+        self.assertEqual(self.ja('Lumipat kami sa Cebu sa 2020.'), '私たちは / セブに / 2020年に / 移った')
 
     def test_clause_tense(self):
         # noong の文は過去 (進行・状態は「〜していた」)、節の中の焦点は「が」、nang は主節の時制、kapag は「〜たら」
         self.assertEqual(self.ja('Noong bata pa ako, nakatira ako sa Maynila.'),
-                         '私は / {私が まだ 子供であった}とき / Maynilaに / 住んでいた')
+                         '私は / {私が まだ 子供であった}とき / マニラに / 住んでいた')
         self.assertEqual(self.ja('Noong dumating siya, kumakain kami.'), '私たちは / {彼が 着いた}とき / 食べていた')
         self.assertEqual(self.ja('Nang makita ko siya, umiyak ako.'), '私は / {私が 彼を 見た}とき / 泣いた')
         self.assertEqual(self.ja('Kumakain ako ng mansanas kahapon.'), '私は / 林檎を / 昨日 / 食べていた')   # 過去の時の副詞
         self.assertEqual(self.ja('Kumain si Nanay ngayon.'), '母は / 今日 / 食べた')   # si + 親族の名詞、完了の ngayon
+        self.assertEqual(self.ja('Nasa bahay si Nanay.'), '母は / 家に / いる')        # nasa「〜にいる」
+        self.assertEqual(self.ja('Nasaan ang libro?'), '本は / どこに / あるか')
+        self.assertEqual(self.ja('Saan ka nakatira?'), 'あなたは / どこに / 住んでいるか')
         self.assertEqual(self.ja('Nakatira siya dito noong 2010.'), '彼は / ここに / 2010年に / 住んでいた')
         self.assertEqual(self.ja('Kapag dumating siya, kakain kami.'), '私たちは / {彼が 着いた}ら / 食べるだろう')
 

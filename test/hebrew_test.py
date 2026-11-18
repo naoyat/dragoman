@@ -235,6 +235,7 @@ class QuotationTestCase(unittest.TestCase):
         tr = lambda text: next(analyzer.analyze_text(text)).clauses[0].predicate.translate()[0]
         self.assertEqual(tr('יְהוָה רֹעִי'), '主 (ヤハウェ)は / 私の羊飼いである')   # 人称接尾辞の付いた分詞は「〜する人」
         self.assertIn('読んでいる', tr('הַיֶּלֶד קוֹרֵא סֵפֶר'))   # קָרָא + סֵפֶר は「読む」
+        self.assertEqual(tr('וַיִּקְרָא אֱלֹהִים לָאוֹר יוֹם'), 'そして / {神,エロヒム,エロ―ヒム}が / ひかりを / 昼と / 呼んだ')   # קָרָא לְX Y
 
 
 if __name__ == '__main__':

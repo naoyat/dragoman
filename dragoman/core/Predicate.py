@@ -32,6 +32,8 @@ def english_verb_label(verb, negated=False):
 
 # 経験者を与格に取る述語の訳語 (Мне нравится чай、Mir gefällt der Tee「私は 茶が 好きだ・気に入る」)
 EXPERIENCER_JA = ('好きだ', '気に入る')
+# 目的語を「〜が」で取る述語の訳語 (主語は「〜は」)
+LIKE_JA = ('好きだ', '嫌いだ', '必要だ', '欲しい')
 
 
 class Predicate (LatinObject):
@@ -165,6 +167,8 @@ class Predicate (LatinObject):
             accs.append(t)
         accs = [braced(acc[:-1] if acc[-1:] == 'が' else acc) for acc in accs]
         particles = [self._particle('Acc', obj) for obj in acc_objs]
+        if not any(particles) and (self.first_item.ja or '').split(',')[0] in LIKE_JA:
+            particles = ['が'] * len(acc_objs)   # 好きだ・嫌いだ の目的語は「〜が」(Eu gosto de chá「茶が 好きだ」)
         if not any(particles) and self.language.goal_accusative:
             goal = GOAL_PARTICLES.get((self.first_item.ja or '').split(',')[0])
             if goal and all(isinstance(o, Word) and o.items and o.items[0].pos in ('noun', 'name') and
@@ -342,6 +346,9 @@ class Predicate (LatinObject):
                 nom_case_ja = 'は'
             if getattr(self, 'question', False) and self._asks_other_than_subject():
                 nom_case_ja = 'は'   # 疑問詞のある疑問文の主語は主題 (あなたは どこで 住むか、駅は どこに あるか)
+            like = (verb.ja or '').split(',')[0]
+            if (like in LIKE_JA and case_slot.get('Acc') or like.endswith('のが好きだ')) and not self.subordinate:
+                nom_case_ja = 'は'   # 私は 茶が 好きだ
             nom_particle = next((p for p in (self._particle('Nom', o) for o in self.case_slot.get('Nom', [])) if p), None)
             if nom_particle:
                 nom_case_ja = nom_particle  # 言語の設定で決まる主格の助詞 (タガログ語の焦点「は」)

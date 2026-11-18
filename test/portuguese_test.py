@@ -23,6 +23,10 @@ class AnalyzerTestCase(unittest.TestCase):
     def test_svo_and_genitive(self):   # 名詞 + de (da) + 名詞は属格、前置詞と冠詞の縮約形 (na) は前置詞
         self.assertEqual(tr('O menino leu o livro da professora na escola.'), '少年が / 学校[で,に] / 先生の本を / 読んだ')
 
+    def test_gostar_de(self):   # gostar de + 名詞「〜が好きだ」
+        self.assertEqual(tr('Eu gosto de chá.'), '私は / 茶が / 好きだ')
+        self.assertEqual(tr('Ela não gosta de café.'), '{彼女,それ}は / コーヒーが / 好きではない')
+
     def test_clitics(self):
         self.assertEqual(tr('Você me deu o livro?'), 'あなたが / 私に / 本を / 与えたか')   # 目的語の名詞があれば me は与格
         self.assertEqual(tr('Dei-lhe o livro.'), '私が / {彼,彼女,あなた}に / 本を / 与えた')   # ハイフンの接語

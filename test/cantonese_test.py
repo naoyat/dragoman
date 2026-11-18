@@ -56,7 +56,7 @@ class CantoneseTestCase(unittest.TestCase):
             '我唔知佢喺邊度。': '私が / {彼が どこ いる,ある}かを / 知らない',
             '我想去香港。': '私が / 香港に / 行きたい',
             '佢識講廣東話。': '彼が / 広東語を / 話すことができる',
-            '我好鍾意睇戲。': 'とても / 私が / 映画を / 見るのが好きだ',
+            '我好鍾意睇戲。': 'とても / 私は / 映画を / 見るのが好きだ',
         }
         for text, expected in cases.items():
             self.assertEqual(tr(text), expected, text)

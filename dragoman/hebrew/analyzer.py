@@ -580,6 +580,42 @@ def senses_by_object(words):
             word.items = [type(item)(dict(item.item, ja=ja, gloss_lang='ja'))] + word.items[1:]
 
 
+# 「XをYと呼ぶ」の名前の訳: (呼ばれるものの見出し, 名前の見出し) → 訳 (創世記1:5 光を「昼」、闇を「夜」と)
+NAMING_SENSES = {('216', '3117'): '昼'}
+
+
+def _key(word):
+    return (word.items[0].attrib('lemma') or '').rstrip('abcdefgh') if word.items else ''
+
+
+def naming(words):
+    """קָרָא + לְ + X + Y「XをYと呼ぶ」(וַיִּקְרָא אֱלֹהִים לָאוֹר יוֹם「神は 光を 昼と 呼んだ」、וְלַחֹשֶׁךְ קָרָא לָיְלָה「闇を 夜と」):
+    לְ は目的語の標識に、名前は「〜と」の副詞に"""
+    clause_starts = [0] + [i for i, w in enumerate(words) if w.items and w.items[0].pos == 'conj']
+    for start, end in zip(clause_starts, clause_starts[1:] + [len(words)]):
+        clause = words[start:end]
+        verb = next((w for w in clause if w.items and w.items[0].pos == 'verb' and _key(w) == '7121'), None)
+        if verb is None:
+            continue
+        for k, w in enumerate(clause):
+            if not (w.items and w.items[0].pos == 'preposition' and script.consonants(w.surface) == 'ל'):
+                continue
+            rest = [x for x in clause[k + 1:] if x.items and x.items[0].pos != 'article']
+            if not rest or rest[0].items[0].pos != 'noun':
+                continue
+            thing = rest[0]
+            after = [x for x in rest[1:] if x is not verb]
+            name = after[0] if after and after[0].items[0].pos in ('noun', 'name') and \
+                (clause.index(after[0]) == clause.index(thing) + 1 or clause.index(verb) > clause.index(thing)) else None
+            if name is None:
+                continue
+            it = w.items[0]
+            w.items = [type(it)(dict(it.item, pos='article', desc='目的語の標識', ja=''))]
+            n = name.items[0]
+            ja = NAMING_SENSES.get((_key(thing), _key(name))) or (n.ja or '').split(',')[0]
+            name.items = [type(n)(dict(n.item, pos='adv', ja=ja + 'と', gloss_lang='ja'))]
+
+
 def lookup_all(surfaces):
     langs = choose_languages(surfaces)
     words = [w for ix, s in enumerate(surfaces) for w in _words(s, ix, langs[ix])]
@@ -589,6 +625,7 @@ def lookup_all(surfaces):
     choose_names(words)
     agent_nouns(words)
     choose_construct(words)
+    naming(words)
     attach_markers(words)
     mark_di(words)
     mark_construct(words)
