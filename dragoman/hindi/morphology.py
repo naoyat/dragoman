@@ -83,6 +83,12 @@ PRONOUNS = {
     'इन': ('यह', 'in', 3, 'pl', 'oblique'), 'इन्होंने': ('यह', 'inhõne', 3, 'pl', 'ergative'),
     'उन्हों': ('वह', 'unhõ', 3, 'pl', 'oblique'), 'इन्हों': ('यह', 'inhõ', 3, 'pl', 'oblique'),  # ウルドゥー語の انہوں نے
     'इन्हें': ('यह', 'inhẽ', 3, 'pl', 'dative'),
+    # 斜格 + को を1語に書いた形 (उनको「彼らに・を」)
+    'उसको': ('वह', 'usko', 3, 'sg', 'dative'), 'इसको': ('यह', 'isko', 3, 'sg', 'dative'),
+    'उनको': ('वह', 'unko', 3, 'pl', 'dative'), 'इनको': ('यह', 'inko', 3, 'pl', 'dative'),
+    'मुझको': ('मैं', 'mujhko', 1, 'sg', 'dative'), 'हमको': ('हम', 'hamko', 1, 'pl', 'dative'),
+    'तुमको': ('तुम', 'tumko', 2, 'pl', 'dative'), 'आपको': ('आप', 'āpko', 2, 'pl', 'dative'),
+    'किसको': ('कौन', 'kisko', 3, 'sg', 'dative'),
     'कौन': ('कौन', 'kaun', 3, 'sg', 'direct'), 'किस': ('कौन', 'kis', 3, 'sg', 'oblique'),
     'किसने': ('कौन', 'kisne', 3, 'sg', 'ergative'), 'किसे': ('कौन', 'kise', 3, 'sg', 'dative'),
     'कोई': ('कोई', 'koī', 3, 'sg', 'direct'), 'किसी': ('कोई', 'kisī', 3, 'sg', 'oblique'),
@@ -91,6 +97,7 @@ PRONOUNS = {
 }
 PRONOUN_GLOSSES = {'मैं': '私', 'तू': 'お前', 'हम': '私たち', 'तुम': '君', 'आप': 'あなた', 'वह': '彼,彼女,それ',
                    'यह': 'これ,彼,彼女', 'कौन': '誰', 'कोई': '誰か', 'कुछ': '何か,いくらか', 'सब': 'すべて,みな'}
+PLURAL_PRONOUN_GLOSSES = {'वह': '彼ら,それら', 'यह': 'これら,彼ら'}   # वे・ये (उन・इन)
 # 所有の形容詞 (属格の代名詞): 語幹 → (転写の語幹, 訳)。-ā / -ī / -e で後ろの名詞に一致
 POSSESSIVES = {'मेर': ('mer', '私の'), 'तेर': ('ter', 'お前の'), 'हमार': ('hamār', '私たちの'), 'तुम्हार': ('tumhār', '君の'),
                'आपक': ('āpk', 'あなたの'), 'उसक': ('usk', '彼の,彼女の,その'), 'इसक': ('isk', 'この,これの'),
@@ -264,6 +271,23 @@ def _verb_items(word, readings):
     return out
 
 
+# 語形の表に無い未完了分詞 (जाती「行く」の女性形): 語尾 → 形の印
+HABITUAL_ENDINGS = (('ती', {'participle', 'habitual', 'singular', 'feminine'}),
+                    ('तीं', {'participle', 'habitual', 'plural', 'feminine'}),
+                    ('ता', {'participle', 'habitual', 'singular', 'masculine'}),
+                    ('ते', {'participle', 'habitual', 'plural', 'masculine'}))
+
+
+def _regular_forms(word):
+    """語形の表に無い形を、規則的な未完了分詞として読む (語幹 + ना が辞書の動詞のときだけ)"""
+    for ending, tags in HABITUAL_ENDINGS:
+        if word.endswith(ending) and len(word) > len(ending):
+            lemma = word[:-len(ending)] + 'ना'
+            if any(e['pos'] == 'verb' for e in dictionary.lemmas(lemma)):
+                return [(lemma, 'verb', set(tags))]
+    return []
+
+
 @functools.lru_cache(maxsize=50000)
 def analyses(token):
     """語 → 項目 (dict) のリスト (先のものほど確からしい)"""
@@ -286,7 +310,8 @@ def analyses(token):
         lemma, roman, person, number, kind = PRONOUNS[word]
         cases = {'direct': ['Nom', 'Acc'], 'oblique': ['Obl'], 'ergative': ['Nom'], 'dative': ['Dat', 'Acc']}[kind]
         out.append({'surface': word, 'pos': 'pronoun', 'lemma': lemma, 'base': roman, 'roman': roman, 'compact': True,
-                    'ja': PRONOUN_GLOSSES.get(lemma, lemma), 'gloss_lang': 'ja', 'person': person,
+                    'ja': PLURAL_PRONOUN_GLOSSES.get(lemma) if number == 'pl' and lemma in PLURAL_PRONOUN_GLOSSES else
+                    PRONOUN_GLOSSES.get(lemma, lemma), 'gloss_lang': 'ja', 'person': person,
                     'pronoun_case': kind, '_': [(c, number, g) for c in cases for g in ('m', 'f')],
                     **({'correlative': True} if lemma == 'वह' else {})})   # जो … वह の相関の語 (前の関係節の先行詞)
     for stem, (roman, ja) in POSSESSIVES.items():
@@ -299,7 +324,7 @@ def analyses(token):
                 out.append({'surface': word, 'pos': 'adj', 'lemma': stem + 'ा', 'base': roman + 'ā', 'ja': ja,
                             'gloss_lang': 'ja', 'roman': script.translit(word), 'compact': True, 'possessive': True,
                             '_': cngs})
-    readings = dictionary.forms(word)
+    readings = dictionary.forms(word) or _regular_forms(word)
     if not any(i['pos'] == 'pronoun' or i.get('possessive') for i in out):
         out += _verb_items(word, readings)
         out += _nominal_items(word, readings)

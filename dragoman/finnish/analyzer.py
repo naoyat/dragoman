@@ -104,6 +104,8 @@ def _case_of(token, feats):
     return case
 
 
+# 場所の副詞 → (訳, 格)
+PLACE_ADVERBS = {'kotona': ('家', 'Ine'), 'ulkona': ('外', 'Ine'), 'täällä': ('ここ', 'Ine'), 'siellä': ('そこ', 'Ine')}
 QUESTION_ADVERBS = {'missä': 'どこで', 'mistä': 'どこから', 'mihin': 'どこへ', 'minne': 'どこへ', 'milloin': 'いつ',
                     'miksi': 'なぜ', 'miten': 'どのように', 'kuinka': 'どのように'}
 
@@ -152,6 +154,10 @@ def item_of(token):
             lemma, case, person, number = recovered
             pos = 'NOUN'
             feats = dict(feats, Case=case, **{'Person[psor]': person, 'Number[psor]': number})
+    if lower in PLACE_ADVERBS:   # kotona「家に」: 場所の格の名詞と同じに (Olin kotona「私は 家に いた」)
+        ja, case = PLACE_ADVERBS[lower]
+        return {'surface': text, 'pos': 'noun', 'base': lower, 'lemma': lower, 'ja': ja, 'gloss_lang': 'ja',
+                '_': _cngs(case, 'sg'), 'main': True, 'case_name': '場所の副詞'}
     if lower in QUESTION_ADVERBS:   # 疑問の副詞 (missä「どこで」。mikä の格の形「何で」・文頭の大文字の見出しでなく)
         return {'surface': text, 'pos': 'adv', 'base': lower, 'ja': QUESTION_ADVERBS[lower], 'gloss_lang': 'ja'}
     number = morphology.NUMBERS.get(feats.get('Number'), 'sg')
@@ -244,7 +250,16 @@ def merge_verbs(words, doc):
             continue
         head = by_i.get(token.head.i)
         hitem = _item(head) if head is not None else None
-        if token.dep_ == 'aux' and hitem is not None and hitem.pos == 'verb' and token.i < token.head.i:
+        nxt = by_i.get(token.i + 1)
+        if item.attrib('negation_verb') and (hitem is None or hitem.pos != 'verb') and nxt is not None and \
+                _item(nxt) is not None and _item(nxt).pos == 'verb':
+            # 名詞に掛かる ei (Talossa ei ole kissaa: spaCy は ei・ole を Talossa に掛ける) は直後の動詞と
+            head, hitem = nxt, _item(nxt)
+            if token.dep_ == 'aux':
+                token_head_i = token.i + 1
+        else:
+            token_head_i = token.head.i
+        if token.dep_ == 'aux' and hitem is not None and hitem.pos == 'verb' and token.i < token_head_i:
             data = dict(hitem.item)
             data.update(person=item.attrib('person'), number=item.attrib('number'), mood='indicative',
                         surface=word.surface + ' … ' + head.surface)

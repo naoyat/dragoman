@@ -18,6 +18,7 @@ import re
 from dragoman.core import analyzer as common
 from dragoman.core import language
 from dragoman.core.Word import Word
+from dragoman.core import animacy
 from . import dictionary, morphology, script
 
 PUNCTUATION = {'।': 'period', '॥': 'period', '.': 'period', '!': 'period', '?': 'question', ',': 'comma',
@@ -198,6 +199,10 @@ def choose_items(surfaces):
                 s *= 1.3  # 機能語の表の読み (कल「昨日・明日」、बहुत「とても」) を辞書の形容詞より先に
             if item['pos'] == 'postposition' and has_verb and (_is_verbal_helper(nxt) or verbal_position and nxt_punct):
                 s *= 0.2  # की・के の後ろが助動詞・文末なら करना の完了分詞 (स्थापित की गई「設置された」)
+            if item['pos'] == 'verb' and item.get('form') == 'infinitive' and nxt is not None and \
+                    item.get('lemma') == script.key(item['dev']) and \
+                    _keys(nxt) & {script.key('चाहिए'), script.key('चाहिये')}:
+                s *= 3  # 不定詞 + चाहिए「〜べきだ」(मुझे जाना चाहिए の जाना は जानना「知る」の完了分詞でなく)
             if item['pos'] == 'verb' and item.get('form') == 'stem' and before_helper:
                 s *= 3  # रहा・सकता などの前は語幹 (पी रही है「飲んでいる」)
             if item['pos'] == 'verb':
@@ -261,6 +266,21 @@ def _recase(word, case):
     item._ = list(dict.fromkeys(new)) or item._
 
 
+def mark_kya(words):
+    """क्या: 文頭なら「はい・いいえ」の疑問の印 (訳さない。文末の ? で「〜か」)、ほかは疑問の代名詞「何」
+    (आप क्या पढ़ते हैं?「あなたは 何を 読むか」、यह क्या है?「これは 何であるか」)"""
+    out = []
+    for word in words:
+        item = _item(word)
+        if item is not None and script.key(word.surface) == script.key('क्या'):
+            if not [w for w in out if w.items is not None]:
+                continue
+            word.items = [type(item)(dict(item.item, pos='pronoun', ja='何', interrogative=True, person=3,
+                                          _=[(c, 'sg', g) for c in ('Nom', 'Acc') for g in ('m', 'f')]))]
+        out.append(word)
+    return out
+
+
 def mark_demonstratives(words):
     """यह / वह (इस / उस) のすぐ後ろが名詞なら指示の形容詞「この / その」(यह किताब「この本」)"""
     for i, word in enumerate(words[:-1]):
@@ -270,6 +290,18 @@ def mark_demonstratives(words):
             continue
         if item.attrib('pronoun_case') == 'direct' and i + 2 < len(words) and _pos(words[i + 2]) == 'postposition':
             continue  # वह घर में है「彼は家にいる」(指示の形容詞なら斜格の उस घर में)
+        after = _item(words[i + 2]) if i + 2 < len(words) else None
+        if nxt.pos == 'adj' and after is not None and after.pos == 'verb' and \
+                HINDI.is_copula(after.attrib('pres1sg') or after.attrib('lemma')):
+            continue  # वह बीमार थी「彼女は病気だった」: 形容詞 + 繋辞は述語 (「その病気の」でなく)
+        if nxt.pos == 'noun' and after is not None and after.pos == 'verb' and \
+                after.attrib('lemma') in MOTION_VERBS and not animacy.is_animate(nxt):
+            continue  # वह घर गया「彼は 家に 行った」: 移動の動詞の直前の物の名詞は行き先 (「その家が行った」でなく)
+        last = _item(words[i + 3]) if i + 3 < len(words) else None
+        rest = [w for w in words[i + 4:] if w.items is not None]
+        if i == 0 and nxt.pos == 'adj' and after is not None and after.pos == 'noun' and last is not None and \
+                last.pos == 'verb' and HINDI.is_copula(last.attrib('pres1sg') or last.attrib('lemma')) and not rest:
+            continue  # वह बड़ा घर है「それは 大きい家である」: 文頭の指示詞 + 形容詞 + 名詞 + 繋辞だけの文は代名詞が主語
         ja = next(v for w, v in DEMONSTRATIVE_PRONOUNS.items() if script.key(w) == script.key(word.surface))[0]
         cases = {c[0] for c in item._ or []}
         if cases == {'Obl'}:
@@ -356,6 +388,13 @@ def merge_experiencer(words):
     out = []
     for word in words:
         item = _item(word)
+        if item is not None and item.pos == 'verb' and script.key(word.surface) == script.key('चाहिए') and \
+                not item.attrib('merged'):
+            # 1語の चाहिए「必要だ」(मुझे पानी चाहिए「私は 水が 必要だ」。不定詞 + चाहिए「〜べきだ」は merge_verb_groups)
+            word.items = [type(item)(dict(item.item, ja='必要だ', experiencer=True, mood='indicative', tense='present',
+                                          person=3, number='sg', persons=[], pres1sg=None))]
+            out.append(word)
+            continue
         negation = out[-1] if out and out[-1].surface in morphology.NEGATIONS else None
         k = len(out) - (2 if negation is not None else 1)
         prev = _item(out[k]) if k >= 0 else None
@@ -435,6 +474,7 @@ def _merge(group):
         ja = main.ja.split(',')[0] + ('べきだ' if 'चाहना' in lemmas else 'なければならない')
         tense = 'imperfect' if aux_tense == 'past' else 'present'
         form = '義務 (不定詞 + %s)' % ('cāhie' if 'चाहना' in lemmas else 'honā')
+        data['experiencer'] = True   # 義務の主体は与格 (मुझे जाना चाहिए「私は 行くべきだ」)
     elif kind == 'habitual':
         tense = 'imperfect' if aux_tense == 'past' else 'present'
         form = '習慣 (未完了分詞 + honā)'
@@ -563,10 +603,13 @@ def choose_subject(words):
                 if it.pos == 'pronoun' and it.attrib('person') is not None:
                     if not item.attrib('persons'):
                         return True  # 人称の分からない分詞で終わる動詞 (नहीं बोलता, नहीं बोल सकता)
-                    return it.attrib('person') == person
+                    persons = item.attrib('persons') or [person]
+                    # 敬称の आप「あなた」は3人称複数の形 (हैं) と一致する
+                    return it.attrib('person') in persons or (it.attrib('lemma') == 'आप' and 3 in persons)
                 return any(c[0] == 'Nom' and (number is None or c[1] == number) and (gender is None or c[2] == gender)
                            for c in it._)
-            subject = next((w for w in direct if agrees(w)), direct[0] if direct and (copula or not dative) else None)
+            ordered = sorted(direct, key=lambda w: bool(_item(w).attrib('interrogative')))   # 疑問の क्या は後回し
+            subject = next((w for w in ordered if agrees(w)), ordered[0] if ordered and (copula or not dative) else None)
         for w in direct:
             k = words.index(w)
             after_relative = k > 0 and _item(words[k - 1]) is not None and \
@@ -620,6 +663,7 @@ def lookup_all(surfaces):
         if len(ixs) > 1:
             word.token_ixs = ixs
         words.append(word)
+    words = mark_kya(words)
     mark_demonstratives(words)
     mark_indefinite(words)
     mark_possessive_postpositions(words)
@@ -627,9 +671,26 @@ def lookup_all(surfaces):
     words = merge_experiencer(words)
     words = mark_postpositions(words)
     choose_subject(words)
+    narrow_pronoun_gender(words)
     for i, word in enumerate(words):
         word.index = i
     return words
+
+
+def narrow_pronoun_gender(words):
+    """3人称の代名詞の主語 (वह「彼,彼女,それ」) を動詞の性で絞る (वह बीमार थी「彼女は」、वह गया「彼は」)"""
+    verb = next((_item(w) for w in words if _finite(_item(w))), None)
+    gender = verb.attrib('gender') if verb is not None else None
+    if gender not in ('m', 'f') or verb.attrib('number') == 'pl':
+        return
+    for word in words:
+        item = _item(word)
+        if item is not None and item.pos == 'pronoun' and item.ja in ('彼,彼女,それ', 'これ,彼,彼女') and \
+                any(c[0] == 'Nom' for c in item._ or []) and not getattr(word, 'ergative', False):
+            ja = {'m': '彼,それ', 'f': '彼女,それ'}[gender] if item.ja.startswith('彼') else \
+                {'m': 'これ,彼', 'f': 'これ,彼女'}[gender]
+            word.items = [type(item)(dict(item.item, ja=ja))] + word.items[1:]
+            return
 
 
 def sentence_text(surfaces, romans=None):

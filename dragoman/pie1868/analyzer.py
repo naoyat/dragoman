@@ -28,6 +28,7 @@ def particle(case, obj, pred):
 
 
 PIE = language.Language(
+    free_word_order=True,
     name='pie1868',
     and_words=('ka',),
     copulas=frozenset({'as'}),

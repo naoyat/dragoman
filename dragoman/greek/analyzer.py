@@ -20,6 +20,7 @@ SUBORDINATORS = {'ὅτε': ('とき', None), 'ὅταν': ('とき', None), '�
                  'ἕως': ('まで', 'present'), 'ἵνα': ('ように', 'present')}
 
 GREEK = language.Language(
+    free_word_order=True,
     name='grc',
     subordinators=SUBORDINATORS,
     and_words=('καί',),

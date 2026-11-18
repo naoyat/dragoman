@@ -39,7 +39,7 @@ class AnalyzerTestCase(unittest.TestCase):
 
     def test_copula(self):
         self.assertEqual(self.ja('Ben öğretmenim.'), '私は / 先生である')
-        self.assertEqual(self.ja('Kitap masada.'), '机に / 本は / ある')     # 位格の述語は存在
+        self.assertEqual(self.ja('Kitap masada.'), '本は / 机に / ある')     # 位格の述語は存在
         self.assertEqual(self.ja('Bu ev çok büyük değil.'), 'この家は / とても大きくない')
 
     def test_literal(self):

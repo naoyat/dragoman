@@ -50,6 +50,17 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertEqual(self.translate('मुझे चाय पसंद है।')[0], '私は / 茶が / 好きだ')   # 与格の経験者 + पसंद है
         self.assertEqual(self.translate('मुझे चाय पसंद नहीं है।')[0], '私は / 茶が / 好きではない')
         self.assertEqual(self.translate('शहर बड़ा था।')[0], '{町,都市}は / 大きかった')   # था「〜であった」
+        self.assertEqual(self.translate('मुझे पानी चाहिए।')[0], '私は / 水が / 必要だ')   # 1語の चाहिए
+        self.assertEqual(self.translate('मुझे जाना चाहिए।')[0], '私は / 行くべきだ')     # 不定詞 + चाहिए
+        self.assertEqual(self.translate('आपको क्या चाहिए?')[0], 'あなたは / 何が / 必要か')
+
+    def test_pronouns_and_questions(self):
+        self.assertEqual(self.translate('वह बीमार थी।')[0], '{彼女,それ}は / 病気であった')   # 形容詞 + 繋辞は述語、動詞の性
+        self.assertEqual(self.translate('वह घर गया।')[0], '{彼,それ}が / 家に / 行った')
+        self.assertEqual(self.translate('वह स्कूल जाती है।')[0], '{彼女,それ}が / 学校に / 行く')   # 語形の表に無い जाती
+        self.assertEqual(self.translate('मैंने उनको देखा।')[0], '私が / {彼ら,それら}を / 見た')
+        self.assertEqual(self.translate('आप क्या पढ़ते हैं?')[0], 'あなたは / 何を / 読むか,学ぶか')
+        self.assertEqual(self.translate('क्या आप हिंदी बोलते हैं?')[0], 'あなたが / ヒンディー語を / 話すか')
 
     def test_ergative(self):
         tr = self.translate('लड़के ने किताब पढ़ी।')[0]
@@ -59,7 +70,7 @@ class AnalyzerTestCase(unittest.TestCase):
 
     def test_dative_and_genitive(self):
         self.assertIn('私に / 本を', self.translate('उसने मुझे एक किताब दी।')[0])
-        self.assertIn('{少年,息子の}母が', self.translate('लड़के की माँ घर पर है।')[0])
+        self.assertIn('{少年,息子の}母は', self.translate('लड़के की माँ घर पर है।')[0])
 
     def test_verb_groups(self):
         self.assertTrue(self.translate('लड़की पानी पी रही है।')[0].endswith('飲んでいる'))

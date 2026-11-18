@@ -516,6 +516,8 @@ def _copula_parts(gloss, adjective):
     gloss = RENTAISHI.get(gloss, gloss)
     if gloss.endswith(('ている', 'でいる')) and len(gloss) > 3:
         return gloss[:-2], 'te'   # 状態の訳語 (開いている → 開いていた・開いていない)
+    if adjective and gloss.endswith('で') and len(gloss) > 2 and not gloss.endswith(('ので', 'んで')):
+        return gloss[:-1], 'da'   # 連用の形の訳語 (बीमार「病気で」→ 病気であった。「病気でであった」でなく)
     kind = complement_type(gloss, adjective)
     if kind == 'i':
         return ('よ' if gloss == 'いい' else gloss[:-1]), 'i'  # いい → よかった

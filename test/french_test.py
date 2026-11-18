@@ -24,7 +24,7 @@ class AnalyzerTestCase(unittest.TestCase):
 
     def test_roles_and_articles(self):
         self.assertEqual(self.ja("Le garçon lit un livre à l'école."), '少年が / 学校[に,で] / 本を / 読む')   # lit を動詞に
-        self.assertEqual(self.ja('Le livre du professeur est sur la table.'), '机の上に / 先生の本が / ある')
+        self.assertEqual(self.ja('Le livre du professeur est sur la table.'), '先生の本は / 机の上に / ある')
         self.assertEqual(self.ja('Je veux manger du pain.'), '私が / パンを / 食べたい')            # 部分冠詞
         self.assertEqual(self.ja('Nous parlons du film.'), '私たちが / 映画について / 話す')    # parler de
 

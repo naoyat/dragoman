@@ -81,7 +81,7 @@ class AnalyzerTestCase(unittest.TestCase):
         self.assertIn('美しい花を', tr[0])
         tr, roman = self.run_text('کتاب علی روی میز است.')
         self.assertTrue(roman.startswith('ketâb-e ali'))
-        self.assertIn('Aliの本が', tr[0])
+        self.assertIn('Aliの本は', tr[0])
 
     def test_copula(self):
         self.assertEqual(self.run_text('این کتاب خوب است.')[0][0], 'この本は / 良い')

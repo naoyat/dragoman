@@ -43,6 +43,7 @@ class Language:
     goal_accusative: bool = False   # 移動の動詞の対格の名詞は行き先「〜に・〜へ」(Rōmam vēnit「ローマに来た」、वनं गच्छति「森へ行く」)
     distributive_pronouns: bool = False  # コンマで区切った代名詞が後ろの分詞句の掛かり先 (印欧祖語の tam, vāgham garum vaghantam
                                          # 「一頭は重い車を引いている」: 対格の vāgham は分詞の目的語に)
+    free_word_order: bool = False  # 語順で主題が決まらない (ラテン語・ギリシア語・サンスクリット): 存在文は場所を先に
     place_cases: tuple = ()        # 存在の文で場所を表す格 (フィンランド語の内格 Talossa on kissa「家に猫がいる」)
     possessor_cases: tuple = ('Dat',)  # 繋辞の文で所有者を表す格 (mihi est liber「私には本がある」。サンスクリットは属格)
     question_moods: tuple = ('subjunctive',)  # 間接疑問の節の動詞の法 (ギリシア語は直説法・希求法も)

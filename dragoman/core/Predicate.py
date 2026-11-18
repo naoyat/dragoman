@@ -105,6 +105,27 @@ class Predicate (LatinObject):
         return len(noms) == 1 and isinstance(noms[0], Word) and noms[0].items[0].pos == 'pronoun' and \
             _animate(noms[0])
 
+    def _subject_first(self, case_slot):
+        """存在文の主語 (名詞1つ) が場所の句すべてより前にあり、所有者の格が無い"""
+        noms = case_slot.get('Nom', [])
+        if len(noms) != 1 or not isinstance(noms[0], Word) or getattr(noms[0], 'index', None) is None:
+            return False
+        possessors = [o for case in self.language.possessor_cases for o in case_slot.get(case, [])]
+        if any(_animate(o) for o in possessors):
+            return False   # 所有者 (Minulla on kirja「私には 本が ある」)
+        places = [o for case, objs in case_slot.items() if isinstance(case, tuple) or case == 'Loc' or
+                  case in self.language.place_cases for o in objs] + possessors   # 物の所格は場所 (pöydällä)
+
+        def first(obj):
+            if isinstance(obj, Word):
+                return getattr(obj, 'index', None)
+            ixs = [getattr(w, 'index', None) for w in getattr(obj, 'words', []) or []]
+            ixs = [i for i in ixs if i is not None]
+            return min(ixs) if ixs else None
+        starts = [first(o) for o in places]
+        return bool(starts) and all(i is not None and i > noms[0].index for i in starts) and \
+            noms[0].index < getattr(self.verb, 'index', 10 ** 6)
+
     def _existential(self, case_slot):
         """存在・所有の文か: 繋辞で、主格が名詞類1つだけ (補語の形容詞が無い) で、所有者 (与格、述語の枠に残った属格) か
         場所 (前置詞句・処格) がある (Mihi est liber, Est in hortō rosa, У меня есть книга, ἔστι μοι βιβλίον)。
@@ -185,6 +206,11 @@ class Predicate (LatinObject):
 
         sum_complement = []
         is_existential = self._existential(case_slot)
+        existential_animate = is_existential in ('animate', 'personal')
+        if is_existential and is_existential != 'personal' and not self.language.free_word_order and \
+                self._subject_first(case_slot):
+            # 主語が場所より前の存在文は主語を主題に (Kirja on pöydällä「本は 机の上に ある」、Книга на столе)
+            is_existential = 'personal'
         if is_existential == 'personal' or is_existential and self._personal_subject(case_slot):
             # 人称代名詞が主語なら主語を先に「は」で (私たちは劇場にいた)。場所は「〜に」
             is_existential = 'personal'
@@ -297,6 +323,8 @@ class Predicate (LatinObject):
                        '1pl':'我々', '2pl':'あなた方', '3pl':'彼ら,彼女ら,それら'}
             if verb.attrib('subject_ja'):
                 noms.append(verb.attrib('subject_ja'))   # 解析器が決めた補う主語 (前の節の nous「私たち」)
+            elif (verb.attrib('experiencer') or (verb.ja or '').split(',')[0] in EXPERIENCER_JA) and case_slot.get('Dat'):
+                pass   # 経験者の与格が主題 (मुझे जाना चाहिए「私は 行くべきだ」): 主語は補わない
             elif verb.attrib('shared_subject'):
                 pass   # 主節と同じ主語は補わない (Ela disse que me ama「彼女が {私を 愛する}と 言った」。core/Adverbial.py)
             elif pn == '3sg' and weather_verb:
@@ -444,7 +472,7 @@ class Predicate (LatinObject):
             verb_tr = ','.join(dict.fromkeys(JaVerb(ja).form(flag, negated and not self.is_sum) for ja in jas))
         if is_existential:
             # 存在・所有: 「ある / いる」(否定は「ない / いない」)
-            verb_tr = JaVerb('いる' if is_existential in ('animate', 'personal') else 'ある').form(flag & ~Verb.ING,
+            verb_tr = JaVerb('いる' if existential_animate or self._personal_subject(case_slot) else 'ある').form(flag & ~Verb.ING,
                                                                                                 negated)
             negated = False
         elif self.is_sum and not sum_complement and verb.attrib('gloss_lang', 'ja') == 'ja':
@@ -481,7 +509,9 @@ class Predicate (LatinObject):
             verb_tr = ','.join(v + 'ように' for v in verb_tr.split(','))
         if getattr(self, 'question', False) and not flag & Verb.IMPERATIVE:
             # 直接疑問 (住むか・来たか)。補語の訳語の候補 (医者,医師である) は最後にだけ
-            verb_tr = verb_tr + 'か' if self.is_sum and sum_complement else ','.join(v + 'か' for v in verb_tr.split(','))
+            verb_tr = verb_tr + 'か' if self.is_sum and sum_complement else \
+                ','.join((v[:-1] if v.endswith(('好きだ', '必要だ', 'べきだ')) else v) + 'か' for v in verb_tr.split(','))
+            # 「〜だ」で終わる述語は「だ」を落として (必要か。「必要だか」でなく)
         tr.append(verb_tr)
 
 #        tr.append(self.first_item.ja )

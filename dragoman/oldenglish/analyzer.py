@@ -52,6 +52,7 @@ CONJUNCTIONAL_PREPOSITIONS = ('siþþan', 'syþþan', 'ær', 'oþ')   # 前置�
 
 
 OLD_ENGLISH = language.Language(
+    free_word_order=True,
     name='ang',
     subordinators=ADVERBIAL_SUBORDINATORS,
     and_words=('and',),
